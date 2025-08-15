@@ -1,0 +1,11 @@
+{
+  "name": "pixoo-daemon",
+  "main": "daemon.js",
+  "scripts": {
+    "start": "node daemon.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.9.0",
+    "sharp": "^0.33.5"
+  }
+}
