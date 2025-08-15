@@ -5,6 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
+const { getContext } = require("./lib/device-adapter");
 
 // MQTT connection config and device list (semicolon-separated IPs)
 const brokerUrl = process.env.MQTT_BROKER || "mqtt://localhost:1883";
@@ -48,7 +49,7 @@ client.on("connect", () => {
   });
 });
 
-client.on("message", (topic, message) => {
+client.on("message", async (topic, message) => {
   try {
     // Parse message payload and extract device IP from topic
     const payload = JSON.parse(message.toString());
@@ -73,9 +74,14 @@ client.on("message", (topic, message) => {
     }
 
     console.log(`📥 State update for ${deviceIp} → scene: ${sceneName}`);
-    renderer(payload);
+
+    // Build rendering context (device + per-scene state)
+    const ctx = getContext(deviceIp, sceneName, payload);
+
+    // Run scene
+    await renderer(ctx);
   } catch (err) {
-    console.error("❌ Error parsing MQTT message:", err);
+    console.error("❌ Error parsing/handling MQTT message:", err);
   }
 });
 
