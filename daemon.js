@@ -127,13 +127,8 @@ client.on("message", async (topic, message) => {
         return;
       }
 
-      const key = JSON.stringify({ scene: sceneName, state: payload });
-      const prev = lastState[deviceIp];
-      if (prev && prev.key === key) {
-        console.log(`⏩ No change for ${deviceIp}, skipping render`);
-        return;
-      }
-      lastState[deviceIp] = { key, payload, sceneName };
+      // Just remember last payload for re-render after driver switch
+      lastState[deviceIp] = { payload, sceneName };
 
       const ts = new Date().toLocaleString("de-AT");
       console.log(
