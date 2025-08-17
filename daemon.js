@@ -132,8 +132,9 @@ client.on("message", async (topic, message) => {
       }
       lastState[deviceIp] = { key, payload, sceneName };
 
+      const ts = new Date().toLocaleString("de-AT");
       console.log(
-        `📥 State update for ${deviceIp} → scene: ${sceneName} (driver: ${getDriverForDevice(
+        `[${ts}] 📥 State update for ${deviceIp} → scene: ${sceneName} (driver: ${getDriverForDevice(
           deviceIp
         )})`
       );
