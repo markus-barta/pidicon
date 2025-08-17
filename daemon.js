@@ -35,7 +35,9 @@ fs.readdirSync(path.join(__dirname, "scenes")).forEach((file) => {
 });
 
 const startTs = new Date().toLocaleString("de-AT");
-console.log(`[${startTs}] Starting Pixoo Daemon...`);
+console.log(`**************************************************`);
+console.log(`  Starting Pixoo Daemon at [${startTs}] ...`);
+console.log(`**************************************************`);
 console.log("MQTT Broker:", brokerUrl);
 console.log("Devices:", devices);
 console.log("Loaded scenes:", Array.from(scenes.keys()));
