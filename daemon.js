@@ -16,6 +16,9 @@ const mqttPass = process.env.MOSQITTO_PASS_MS24;
 // Stores last state per device IP to avoid redundant renders
 const lastState = {};
 
+// Default scene per device (set via MQTT)
+const deviceDefaults = new Map(); // deviceIp -> sceneName
+
 // Scene registry: scene name -> render function
 const scenes = new Map();
 
@@ -40,46 +43,65 @@ const client = mqtt.connect(brokerUrl, {
 // On connect, subscribe to per-device state updates
 client.on("connect", () => {
   console.log("✅ Connected to MQTT broker as", mqttUser);
-  client.subscribe("pixoo/+/state/upd", (err) => {
-    if (err) {
-      console.error("❌ MQTT subscribe error:", err);
-    } else {
-      console.log("📡 Subscribed to pixoo/+/state/upd");
-    }
+  client.subscribe(["pixoo/+/state/upd", "pixoo/+/scene/set"], (err) => {
+    if (err) console.error("❌ MQTT subscribe error:", err);
+    else
+      console.log(
+        "📡 Subscribed to pixoo/+/state/upd and pixoo/+/scene/set"
+      );
   });
 });
 
 client.on("message", async (topic, message) => {
   try {
-    // Parse message payload and extract device IP from topic
     const payload = JSON.parse(message.toString());
-    const parts = topic.split("/"); // pixoo/<device>/state/upd
+    const parts = topic.split("/"); // pixoo/<device>/<section>/<action?>
     const deviceIp = parts[1];
+    const section = parts[2];
+    const action = parts[3];
 
-    // Skip if state unchanged for this device
-    const prev = lastState[deviceIp];
-    const same = prev && JSON.stringify(prev) === JSON.stringify(payload);
-    if (same) {
-      console.log(`⏩ No change for ${deviceIp}, skipping render`);
+    // Handle scene/set
+    if (section === "scene" && action === "set") {
+      const name = payload?.name;
+      if (!name) {
+        console.warn(`⚠️ scene/set for ${deviceIp} missing 'name'`);
+        return;
+      }
+      deviceDefaults.set(deviceIp, name);
+      console.log(`🎛️ Default scene for ${deviceIp} set to '${name}'`);
+      // Optional ack
+      client.publish(
+        `pixoo/${deviceIp}/scene`,
+        JSON.stringify({ default: name, ts: Date.now() })
+      );
       return;
     }
-    lastState[deviceIp] = payload;
 
-    // Select scene (fallback to default) and dispatch to renderer
-    const sceneName = payload.scene || "power_price";
-    const renderer = scenes.get(sceneName);
-    if (!renderer) {
-      console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
+    // Handle state/upd
+    if (section === "state" && action === "upd") {
+      // Resolve effective scene: payload.scene > saved default > fallback
+      const sceneName =
+        payload.scene || deviceDefaults.get(deviceIp) || "power_price";
+      const renderer = scenes.get(sceneName);
+      if (!renderer) {
+        console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
+        return;
+      }
+
+      // Change detection includes scene
+      const currentKey = JSON.stringify({ scene: sceneName, state: payload });
+      const prevKey = lastState[deviceIp];
+      if (prevKey && prevKey === currentKey) {
+        console.log(`⏩ No change for ${deviceIp}, skipping render`);
+        return;
+      }
+      lastState[deviceIp] = currentKey;
+
+      console.log(`📥 State update for ${deviceIp} → scene: ${sceneName}`);
+      const ctx = getContext(deviceIp, sceneName, payload);
+      await renderer(ctx);
       return;
     }
-
-    console.log(`📥 State update for ${deviceIp} → scene: ${sceneName}`);
-
-    // Build rendering context (device + per-scene state)
-    const ctx = getContext(deviceIp, sceneName, payload);
-
-    // Run scene
-    await renderer(ctx);
   } catch (err) {
     console.error("❌ Error parsing/handling MQTT message:", err);
   }
