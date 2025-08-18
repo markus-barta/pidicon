@@ -31,7 +31,10 @@ const scenes = new Map();
 fs.readdirSync(path.join(__dirname, "scenes")).forEach((file) => {
   if (file.endsWith(".js")) {
     const scene = require(path.join(__dirname, "scenes", file));
-    scenes.set(scene.name, scene.render);
+    scenes.set(scene.name, {
+      render: scene.render,
+      renderMode: scene.renderMode || "full",
+    });
   }
 });
 
@@ -133,11 +136,11 @@ client.on("message", async (topic, message) => {
       if (prev && prev.payload) {
         try {
           const sceneName = prev.sceneName || "power_price";
-          const renderer = scenes.get(sceneName);
-          if (renderer) {
+          const scene = scenes.get(sceneName);
+          if (scene) {
             const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
             try {
-              await renderer(ctx);
+              await scene.render(ctx, scene.renderMode);
               publishMetrics(deviceIp);
             } catch (err) {
               console.error(`❌ Render error for ${deviceIp}:`, err.message);
@@ -163,8 +166,8 @@ client.on("message", async (topic, message) => {
     if (section === "state" && action === "upd") {
       const sceneName =
         payload.scene || deviceDefaults.get(deviceIp) || "power_price";
-      const renderer = scenes.get(sceneName);
-      if (!renderer) {
+      const scene = scenes.get(sceneName);
+      if (!scene) {
         console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
         return;
       }
@@ -180,7 +183,7 @@ client.on("message", async (topic, message) => {
       );
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
       try {
-        await renderer(ctx);
+        await scene.render(ctx, scene.renderMode);
         publishMetrics(deviceIp);
       } catch (err) {
         console.error(`❌ Render error for ${deviceIp}:`, err.message);
