@@ -289,6 +289,6 @@ module.exports = {
       await renderBars(series);
     }
 
-    await device.push();
+    await device.push("power_price", ctx.publishOk);
   },
 };

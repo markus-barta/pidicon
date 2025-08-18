@@ -16,7 +16,7 @@ module.exports = {
 		}
 	  }
   
-	  await device.push();
+	  await device.push("test_fill", ctx.publishOk);
 	  console.log(`🧪 test_fill rendered with color: ${JSON.stringify(color)}`);
 	},
   };
