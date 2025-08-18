@@ -1,7 +1,7 @@
 // scenes/test_fill.js
 module.exports = {
 	name: "test_fill",
-	renderMode: "incremental", // 👈 tell daemon to use incremental mode
+	renderMode: "incremental", // use incremental mode
 	render: async (ctx) => {
 	  const { device, state } = ctx;
   
@@ -18,9 +18,11 @@ module.exports = {
 		}
 	  }
   
-	  // Push in incremental mode
-	  await device.push("test_fill", ctx.publishOk, "incremental");
+	  // Push in incremental mode and capture diffPixels
+	  const diffPixels = await device.push("test_fill", ctx.publishOk, "incremental");
   
-	  console.log(`🧪 test_fill rendered with color: ${JSON.stringify(color)}`);
+	  console.log(
+		`🧪 test_fill rendered with color: ${JSON.stringify(color)}, diffPixels=${diffPixels}`
+	  );
 	},
   };
