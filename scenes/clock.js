@@ -12,6 +12,6 @@ module.exports = {
 	  await device.drawTextRgbaAligned(":", [12, 2], color, "left");
 	  await device.drawTextRgbaAligned(mm, [15, 2], color, "left");
   
-	  await device.push();
+	  await device.push("clock", ctx.publishOk);
 	},
   };

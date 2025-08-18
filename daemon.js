@@ -9,11 +9,12 @@ const {
   getContext,
   setDriverForDevice,
   getDriverForDevice,
+  devices,
 } = require("./lib/device-adapter");
 
 // MQTT connection config and device list (semicolon-separated IPs)
 const brokerUrl = process.env.MQTT_BROKER || "mqtt://localhost:1883";
-const devices = (process.env.PIXOO_DEVICES || "").split(";");
+const deviceList = (process.env.PIXOO_DEVICES || "").split(";");
 const mqttUser = process.env.MOSQITTO_USER_MS24;
 const mqttPass = process.env.MOSQITTO_PASS_MS24;
 
@@ -39,13 +40,40 @@ console.log(`**************************************************`);
 console.log(`  Starting Pixoo Daemon at [${startTs}] ...`);
 console.log(`**************************************************`);
 console.log("MQTT Broker:", brokerUrl);
-console.log("Devices:", devices);
+console.log("Devices:", deviceList);
 console.log("Loaded scenes:", Array.from(scenes.keys()));
 
 const client = mqtt.connect(brokerUrl, {
   username: mqttUser,
   password: mqttPass,
 });
+
+function publishMetrics(deviceIp) {
+  const dev = devices.get(deviceIp);
+  if (!dev) return;
+  const metrics = dev.getMetrics();
+  client.publish(`pixoo/${deviceIp}/metrics`, JSON.stringify(metrics));
+}
+
+function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
+  const msg = {
+    scene: sceneName,
+    frametime,
+    diffPixels,
+    pushes: metrics.pushes,
+    skipped: metrics.skipped,
+    errors: metrics.errors,
+    ts: Date.now(),
+  };
+
+  // Log locally
+  console.log(
+    `✅ OK [${deviceIp}] scene=${sceneName} frametime=${frametime}ms diffPixels=${diffPixels} pushes=${metrics.pushes} skipped=${metrics.skipped} errors=${metrics.errors}`
+  );
+
+  // Publish to MQTT
+  client.publish(`pixoo/${deviceIp}/ok`, JSON.stringify(msg));
+}
 
 // On connect, subscribe to per-device state updates
 client.on("connect", () => {
@@ -107,8 +135,22 @@ client.on("message", async (topic, message) => {
           const sceneName = prev.sceneName || "power_price";
           const renderer = scenes.get(sceneName);
           if (renderer) {
-            const ctx = getContext(deviceIp, sceneName, prev.payload);
-            await renderer(ctx);
+            const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
+            try {
+              await renderer(ctx);
+              publishMetrics(deviceIp);
+            } catch (err) {
+              console.error(`❌ Render error for ${deviceIp}:`, err.message);
+              client.publish(
+                `pixoo/${deviceIp}/error`,
+                JSON.stringify({
+                  error: err.message,
+                  scene: sceneName,
+                  ts: Date.now(),
+                })
+              );
+              publishMetrics(deviceIp);
+            }
           }
         } catch (e) {
           console.warn(`⚠️ Re-render after driver switch failed: ${e.message}`);
@@ -136,8 +178,22 @@ client.on("message", async (topic, message) => {
           deviceIp
         )})`
       );
-      const ctx = getContext(deviceIp, sceneName, payload);
-      await renderer(ctx);
+      const ctx = getContext(deviceIp, sceneName, payload, publishOk);
+      try {
+        await renderer(ctx);
+        publishMetrics(deviceIp);
+      } catch (err) {
+        console.error(`❌ Render error for ${deviceIp}:`, err.message);
+        client.publish(
+          `pixoo/${deviceIp}/error`,
+          JSON.stringify({
+            error: err.message,
+            scene: sceneName,
+            ts: Date.now(),
+          })
+        );
+        publishMetrics(deviceIp);
+      }
       return;
     }
   } catch (err) {
