@@ -11,6 +11,7 @@ const {
   getDriverForDevice,
   devices,
 } = require("./lib/device-adapter");
+const { softReset } = require("./lib/pixoo-http");
 
 // MQTT connection config and device list (semicolon-separated IPs)
 const brokerUrl = process.env.MQTT_BROKER || "mqtt://localhost:1883";
@@ -82,12 +83,12 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
 client.on("connect", () => {
   console.log("✅ Connected to MQTT broker as", mqttUser);
   client.subscribe(
-    ["pixoo/+/state/upd", "pixoo/+/scene/set", "pixoo/+/driver/set"],
+    ["pixoo/+/state/upd", "pixoo/+/scene/set", "pixoo/+/driver/set", "pixoo/+/reset/set"],
     (err) => {
       if (err) console.error("❌ MQTT subscribe error:", err);
       else
         console.log(
-          "📡 Subscribed to pixoo/+/state/upd, scene/set, driver/set"
+          "📡 Subscribed to pixoo/+/state/upd, scene/set, driver/set, reset/set"
         );
     }
   );
@@ -159,6 +160,17 @@ client.on("message", async (topic, message) => {
           console.warn(`⚠️ Re-render after driver switch failed: ${e.message}`);
         }
       }
+      return;
+    }
+
+    // 4) Reset command
+    if (section === "reset" && action === "set") {
+      console.log(`🔄 Reset requested for ${deviceIp}`);
+      const ok = await softReset(deviceIp);
+      client.publish(
+        `pixoo/${deviceIp}/reset`,
+        JSON.stringify({ ok, ts: Date.now() })
+      );
       return;
     }
 
