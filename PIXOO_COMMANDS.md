@@ -45,6 +45,18 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"sweep"}'
 ```
 
+### Extended Loop Mode
+```bash
+# Run continuous performance test for 5 minutes (300 seconds)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":150,"duration":300000}'
+
+# Custom duration (10 minutes = 600000ms)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":120,"duration":600000}'
+
+# Stop loop mode
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","stop":true}'
+```
+
 ## 🎨 Scene Testing Commands
 
 ### Other Scenes
@@ -109,12 +121,14 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 3. **Use burst mode** for stress testing
 4. **Monitor frametime logs** for detailed analysis
 
-**Expected Results (during 30-second continuous test):**
-- Green background: Excellent performance (<160ms avg frametime)
-- Yellow background: Good performance (160-200ms avg frametime)
-- Orange background: Borderline performance (200-300ms avg frametime)
-- Red background: Poor performance (>300ms avg frametime)
-- Countdown timer shows remaining test time
-- FPS counter updates in real-time
-- Performance bar visualizes current frametime
-- Console logs detailed statistics every 10 frames
+**Expected Results:**
+- **Continuous/Loop Mode**: Shows real-time countdown (minutes:seconds for loop mode)
+- **Burst Mode**: Shows progress `2s/10s` with rapid-fire updates
+- **Sweep Mode**: Shows current cycle and interval being tested
+- **Color Coding**:
+  - 🟢 Green background: Excellent performance (<160ms avg frametime)
+  - 🟡 Yellow background: Good performance (160-200ms avg frametime)
+  - 🟠 Orange background: Borderline (200-300ms avg frametime)
+  - 🔴 Red background: Poor performance (>300ms avg frametime)
+- **Real-time Updates**: FPS counter, performance bar, statistics
+- **Console Logs**: Detailed statistics every 10 frames

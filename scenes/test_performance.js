@@ -11,11 +11,11 @@ module.exports = {
 	  const { device, state, getState, setState } = ctx;
 
 	  // Configuration with defaults - focused on 100-200ms sweet spot
-	  const mode = state.mode || "continuous"; // burst, continuous, sweep
+	  const mode = state.mode || "continuous"; // burst, continuous, sweep, loop
 	  const testInterval = state.interval || 150; // milliseconds between frames (start at 150ms)
-	  const testDuration = state.duration || 30000; // test duration in ms (30 seconds default)
+	  const loopDuration = state.duration || 300000; // loop duration in ms (5 minutes default for loop mode)
 	  const startTime = getState("startTime") || Date.now();
-	  const testEndTime = startTime + testDuration;
+	  const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 30000);
 
 	  // Performance tracking
 	  const frameTimes = getState("frameTimes") || [];
@@ -40,15 +40,16 @@ module.exports = {
 	  const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
 
 	  // Test logic - render continuously for the test duration
-	  let shouldRender = now <= testEndTime; // Keep rendering until test duration expires
+	  let shouldRender = now <= loopEndTime; // Keep rendering until loop duration expires
 	  let displayText = `${currentInterval}ms\nWAITING FOR DATA`;
 
 	  if (mode === "burst") {
 	    // Burst mode: rapid-fire frames for a short period
-	    if (testActive && elapsed < testDuration) {
+	    const burstDuration = 10000; // 10 seconds for burst mode
+	    if (testActive && elapsed < burstDuration) {
 	      const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	      displayText = `BURST ${currentInterval}ms\n${Math.round(elapsed/1000)}s/${Math.round(testDuration/1000)}s\nFPS:${fps}`;
-	    } else if (testActive && elapsed >= testDuration) {
+	      displayText = `BURST ${currentInterval}ms\n${Math.round(elapsed/1000)}s/${Math.round(burstDuration/1000)}s\nFPS:${fps}`;
+	    } else if (testActive && elapsed >= burstDuration) {
 	      setState("testActive", false);
 	      displayText = "BURST COMPLETE";
 	    } else {
@@ -57,8 +58,15 @@ module.exports = {
 	  } else if (mode === "continuous") {
 	    // Continuous mode: steady interval testing - always render for real performance data
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	    const remaining = Math.max(0, Math.round((testEndTime - now) / 1000));
+	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    displayText = `${currentInterval}ms\nFPS:${fps}\n${remaining}s left`;
+	  } else if (mode === "loop") {
+	    // Loop mode: extended continuous testing for long-term performance analysis
+	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
+	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
+	    const minutes = Math.floor(remaining / 60);
+	    const seconds = remaining % 60;
+	    displayText = `LOOP ${currentInterval}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left`;
 	  } else if (mode === "sweep") {
 	    // Sweep mode: focused on 100-200ms sweet spot (known working range)
 	    const intervals = [100, 120, 140, 160, 180, 200]; // 100-200ms range
@@ -71,20 +79,26 @@ module.exports = {
 	    }
 
 	    const cycle = Math.floor(elapsed / 4000) + 1;
-	    const remaining = Math.max(0, Math.round((testEndTime - now) / 1000));
+	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\n${remaining}s left`;
 	  }
 
 	  // Check if test duration has expired
-	  if (now > testEndTime) {
-	    displayText = `TEST COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
+	  if (now > loopEndTime) {
+	    displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
 	  }
 
 	  // For burst mode, only render if active or ready
 	  if (mode === "burst" && !testActive && elapsed >= 100) {
 	    shouldRender = false;
 	    displayText = "BURST READY\nSend MQTT to start";
+	  }
+
+	  // Special handling for loop mode - keep running until explicitly stopped
+	  if (mode === "loop" && state.stop) {
+	    shouldRender = false;
+	    displayText = "LOOP STOPPED\nBY USER";
 	  }
 
 
