@@ -10,6 +10,7 @@ const {
   setDriverForDevice,
   getDriverForDevice,
   devices,
+  resolveDriver,
 } = require("./lib/device-adapter");
 const { softReset } = require("./lib/pixoo-http");
 
@@ -41,10 +42,18 @@ fs.readdirSync(path.join(__dirname, "scenes")).forEach((file) => {
 
 const startTs = new Date().toLocaleString("de-AT");
 console.log(`**************************************************`);
-console.log(`  Starting Pixoo Daemon at [${startTs}] ...`);
+console.log(`Starting Pixoo Daemon at [${startTs}] ...`);
 console.log(`**************************************************`);
 console.log("MQTT Broker:", brokerUrl);
-console.log("Devices:", deviceList);
+//console.log("Devices:", deviceList);
+if (deviceList.length > 0 && deviceList[0] !== "") {
+  console.log("Devices and Drivers:");
+  deviceList.forEach(ip => {
+    if (ip.trim()) {
+      console.log(`  ${ip} → ${resolveDriver(ip)}`);
+    }
+  });
+}
 console.log("Loaded scenes:", Array.from(scenes.keys()));
 
 const client = mqtt.connect(brokerUrl, {
