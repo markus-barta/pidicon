@@ -16,7 +16,7 @@ const {
 const { softReset } = require("./lib/pixoo-http");
 
 // MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
-const brokerUrl = process.env.MQTT_BROKER || "mqtt://localhost:1883";
+const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
 const mqttUser = process.env.MOSQITTO_USER_MS24;
 const mqttPass = process.env.MOSQITTO_PASS_MS24;
 
