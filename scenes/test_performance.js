@@ -71,8 +71,9 @@ module.exports = {
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
-	    displayText = `LOOP ${currentInterval}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left`;
-	    } else if (mode === "sweep") {
+	    const iteration = getState("_loopIteration") || 0;
+	    displayText = `LOOP ${currentInterval}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left\nITER:${iteration}`;
+	  } else if (mode === "sweep") {
     // Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
     const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
     const sweepIndex = Math.floor(elapsed / 3000) % intervals.length; // 3s per interval
@@ -89,22 +90,36 @@ module.exports = {
 	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\n${remaining}s left`;
 	  }
 
-	  // Check if test duration has expired
-	  if (now > loopEndTime) {
-	    displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
-	  }
+	    // Check if test duration has expired
+  if (now > loopEndTime) {
+    // Clear any pending loop timer
+    const loopTimer = getState("loopTimer");
+    if (loopTimer) {
+      clearTimeout(loopTimer);
+      setState("loopTimer", null);
+    }
+    setState("loopScheduled", false);
+    displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
+  }
 
-	  // For burst mode, only render if active or ready
-	  if (mode === "burst" && !testActive && elapsed >= 100) {
-	    shouldRender = false;
-	    displayText = "BURST READY\nSend MQTT to start";
-	  }
+  // For burst mode, only render if active or ready
+  if (mode === "burst" && !testActive && elapsed >= 100) {
+    shouldRender = false;
+    displayText = "BURST READY\nSend MQTT to start";
+  }
 
-	  // Special handling for loop mode - keep running until explicitly stopped
-	  if (mode === "loop" && state.stop) {
-	    shouldRender = false;
-	    displayText = "LOOP STOPPED\nBY USER";
-	  }
+  // Special handling for loop mode - keep running until explicitly stopped
+  if (mode === "loop" && state.stop) {
+    // Clear any pending loop timer
+    const loopTimer = getState("loopTimer");
+    if (loopTimer) {
+      clearTimeout(loopTimer);
+      setState("loopTimer", null);
+    }
+    setState("loopScheduled", false);
+    shouldRender = false;
+    displayText = "LOOP STOPPED\nBY USER";
+  }
 
 
 
@@ -161,16 +176,114 @@ module.exports = {
 	    }
 	  }
 
-	  // Log performance data every 10 frames
-	  if (ctx.frametime !== undefined && frameTimes.length % 10 === 0) {
-	    console.log(`🎯 [PERF TEST] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
-	  }
+	    // Log performance data every 10 frames
+  if (ctx.frametime !== undefined && frameTimes.length % 10 === 0) {
+    console.log(`🎯 [PERF TEST] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
+  }
 
-	  // Debug logging for first few renders
-	  if (frameTimes.length <= 5) {
-	    console.log(`🔍 [DEBUG] Render ${frameTimes.length}: shouldRender=${shouldRender}, mode=${mode}, elapsed=${Math.round(elapsed/1000)}s, displayText="${displayText.replace(/\n/g, ' | ')}"`);
-	  }
+  // Debug logging for first few renders
+  if (frameTimes.length <= 5) {
+    console.log(`🔍 [DEBUG] Render ${frameTimes.length}: shouldRender=${shouldRender}, mode=${mode}, elapsed:${Math.round(elapsed/1000)}s, displayText="${displayText.replace(/\n/g, ' | ')}"`);
+  }
 
-	  await device.push("test_performance", ctx.publishOk);
+  // Self-sustaining loop for continuous testing
+  if (mode === "loop" && shouldRender && !state.stop) {
+    // Check if we already have a loop scheduled to prevent duplicates
+    if (getState("loopScheduled")) {
+      console.log(`⏭️  Loop already scheduled, skipping duplicate`);
+      return;
+    }
+
+    // Calculate when to send next MQTT message to continue the loop
+    const nextMessageDelay = Math.max(1000, Math.min(5000, currentInterval * 2)); // 1-5 seconds between messages
+    const remainingDuration = Math.max(0, (loopEndTime - now) / 1000); // remaining seconds
+
+    console.log(`🔄 [LOOP] Scheduling next iteration in ${nextMessageDelay}ms (remaining: ${Math.round(remainingDuration)}s)`);
+
+    // Mark loop as scheduled to prevent duplicates
+    setState("loopScheduled", true);
+
+    // Use setTimeout to send MQTT message for next iteration
+    const loopTimer = setTimeout(() => {
+      try {
+        console.log(`🚀 [LOOP] Executing scheduled continuation...`);
+
+        // Create a new MQTT client for this message
+        const mqtt = require('mqtt');
+        const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
+
+        const client = mqtt.connect(brokerUrl, {
+          username: process.env.MOSQITTO_USER_MS24,
+          password: process.env.MOSQITTO_PASS_MS24,
+          connectTimeout: 5000,
+          reconnectPeriod: 0, // Don't reconnect, just fail
+        });
+
+        let connectionTimeout = setTimeout(() => {
+          console.log(`⚠️  MQTT connection timeout`);
+          client.end();
+        }, 5000);
+
+        client.on('connect', () => {
+          clearTimeout(connectionTimeout);
+          console.log(`📡 [LOOP] Connected to MQTT, sending continuation message`);
+
+          // Get device IP from environment or use fallback
+          const deviceIp = process.env.PIXOO_DEVICES ?
+            process.env.PIXOO_DEVICES.split(';')[0].trim() :
+            '192.168.1.159';
+
+          const loopIteration = (getState("_loopIteration") || 0) + 1;
+          const maxIterations = Math.ceil(loopDuration / 1000) + 10; // Max iterations + buffer
+
+          // Safety check: prevent infinite loops
+          if (loopIteration > maxIterations) {
+            console.log(`🛑 [LOOP] Maximum iterations (${maxIterations}) reached, stopping loop`);
+            setState("loopScheduled", false);
+            return;
+          }
+
+          const payload = JSON.stringify({
+            scene: "test_performance",
+            mode: "loop",
+            interval: currentInterval,
+            duration: loopDuration, // Use original duration, not remaining
+            _loopIteration: loopIteration
+          });
+
+          console.log(`📤 [LOOP] Publishing to pixoo/${deviceIp}/state/upd: ${payload}`);
+          client.publish(`pixoo/${deviceIp}/state/upd`, payload, { qos: 1 }, (err) => {
+            if (err) {
+              console.log(`❌ [LOOP] Failed to publish: ${err.message}`);
+            } else {
+              console.log(`✅ [LOOP] Successfully published continuation message`);
+            }
+            client.end();
+          });
+        });
+
+        client.on('error', (err) => {
+          clearTimeout(connectionTimeout);
+          console.log(`⚠️  [LOOP] MQTT connection failed: ${err.message}`);
+          setState("loopScheduled", false); // Reset flag on error
+        });
+
+        client.on('close', () => {
+          console.log(`🔌 [LOOP] MQTT connection closed`);
+          setState("loopScheduled", false); // Reset flag when done
+        });
+
+      } catch (err) {
+        console.log(`⚠️  [LOOP] Exception in loop continuation: ${err.message}`);
+        console.log(`📊 [LOOP] Stack trace: ${err.stack}`);
+        setState("loopScheduled", false); // Reset flag on error
+      }
+    }, nextMessageDelay);
+
+    // Store timer ID for potential cleanup
+    setState("loopTimer", loopTimer);
+  }
+
+  await device.push("test_performance", ctx.publishOk);
 	},
   };
