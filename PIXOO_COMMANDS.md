@@ -8,23 +8,25 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ```
 
 ### Performance Interval Tests (100-200ms Sweet Spot)
+**Note**: Tests run continuously for 30 seconds (default) showing real-time performance data.
+
 ```bash
-# 100ms (minimum)
+# 100ms (minimum) - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":100}'
 
-# 120ms
+# 120ms - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":120}'
 
-# 140ms
+# 140ms - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":140}'
 
-# 160ms
+# 160ms - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":160}'
 
-# 180ms
+# 180ms - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":180}'
 
-# 200ms (maximum)
+# 200ms (maximum) - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":200}'
 ```
 
@@ -107,8 +109,12 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 3. **Use burst mode** for stress testing
 4. **Monitor frametime logs** for detailed analysis
 
-**Expected Results:**
-- Green background: Excellent performance (<160ms avg)
-- Yellow background: Good performance (160-200ms avg)
-- Orange background: Borderline (200-300ms avg)
-- Red background: Poor performance (>300ms avg)
+**Expected Results (during 30-second continuous test):**
+- Green background: Excellent performance (<160ms avg frametime)
+- Yellow background: Good performance (160-200ms avg frametime)
+- Orange background: Borderline performance (200-300ms avg frametime)
+- Red background: Poor performance (>300ms avg frametime)
+- Countdown timer shows remaining test time
+- FPS counter updates in real-time
+- Performance bar visualizes current frametime
+- Console logs detailed statistics every 10 frames
