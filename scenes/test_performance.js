@@ -37,15 +37,15 @@ module.exports = {
 	  const minFrametime = frameTimes.length > 0 ? Math.min(...frameTimes) : 0;
 	  const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
 
-	  // Test logic
-	  let shouldRender = false;
-	  let displayText = "";
+	  // Test logic - ALWAYS render for continuous performance testing
+	  let shouldRender = true; // Always render for performance testing!
+	  let displayText = `${currentInterval}ms\nWAITING FOR DATA`;
 
 	  if (mode === "burst") {
 	    // Burst mode: rapid-fire frames for a short period
 	    if (testActive && elapsed < testDuration) {
-	      shouldRender = timeSinceLast >= currentInterval;
-	      displayText = `BURST ${currentInterval}ms\n${Math.round(elapsed/1000)}s/${Math.round(testDuration/1000)}s`;
+	      const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
+	      displayText = `BURST ${currentInterval}ms\n${Math.round(elapsed/1000)}s/${Math.round(testDuration/1000)}s\nFPS:${fps}`;
 	    } else if (testActive && elapsed >= testDuration) {
 	      setState("testActive", false);
 	      displayText = "BURST COMPLETE";
@@ -53,8 +53,7 @@ module.exports = {
 	      displayText = "BURST READY\nSend MQTT to start";
 	    }
 	  } else if (mode === "continuous") {
-	    // Continuous mode: steady interval testing
-	    shouldRender = timeSinceLast >= currentInterval;
+	    // Continuous mode: steady interval testing - always render for real performance data
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    displayText = `${currentInterval}ms\nFPS:${fps}\nAVG:${Math.round(avgFrametime)}ms`;
 	  } else if (mode === "sweep") {
@@ -63,52 +62,23 @@ module.exports = {
 	    const sweepIndex = Math.floor(elapsed / 4000) % intervals.length; // 4s per interval
 	    const sweepInterval = intervals[sweepIndex];
 
-	    shouldRender = timeSinceLast >= sweepInterval;
+	    // Always render, but update the interval for the sweep
 	    if (shouldRender) {
 	      setState("currentInterval", sweepInterval);
 	    }
 
-	    const cycle = Math.floor(elapsed / 3000) + 1;
-	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\n${frameTimes.length} samples`;
+	    const cycle = Math.floor(elapsed / 4000) + 1;
+	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
+	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFPS:${fps}`;
 	  }
 
-	  // Visual rendering
-	  await device.clear();
-
-	  // Background color based on performance (optimized for 100-200ms range)
-	  let bgColor = [0, 0, 0, 255]; // Black background
-	  if (avgFrametime > 300) bgColor = [120, 0, 0, 255]; // Red for very slow (>300ms)
-	  else if (avgFrametime > 200) bgColor = [100, 50, 0, 255]; // Orange for slow (200-300ms)
-	  else if (avgFrametime > 160) bgColor = [100, 100, 0, 255]; // Yellow for medium (160-200ms)
-	  else if (avgFrametime >= 100) bgColor = [0, 100, 0, 255]; // Green for good (100-160ms)
-	  else if (avgFrametime > 0) bgColor = [0, 150, 0, 255]; // Bright green for excellent (<100ms)
-
-	  // Draw background rectangle
-	  await device.drawRectangleRgba([0, 0], [64, 64], bgColor);
-
-	  // Draw performance text
-	  const textColor = [255, 255, 255, 255];
-	  const lines = displayText.split('\n');
-
-	  for (let i = 0; i < lines.length; i++) {
-	    await device.drawTextRgbaAligned(lines[i], [2, 2 + (i * 6)], textColor, "left");
+	  // For burst mode, only render if active or ready
+	  if (mode === "burst" && !testActive && elapsed >= 100) {
+	    shouldRender = false;
+	    displayText = "BURST READY\nSend MQTT to start";
 	  }
 
-	  // Draw performance bar (visual indicator of frametime)
-	  if (avgFrametime > 0) {
-	    const barWidth = Math.min(60, Math.round(avgFrametime / 5)); // Scale for 100-200ms range
-	    const barColor = avgFrametime > 200 ? [255, 0, 0, 255] :    // Red for slow
-	                     avgFrametime > 160 ? [255, 165, 0, 255] :  // Orange for medium
-	                     avgFrametime > 100 ? [255, 255, 0, 255] :  // Yellow for good
-	                     [0, 255, 0, 255];                          // Green for excellent
-	    await device.drawRectangleRgba([2, 50], [barWidth, 4], barColor);
-	  }
 
-	  // Draw statistics at bottom
-	  if (frameTimes.length > 0) {
-	    const statsText = `${frameTimes.length}F MIN:${Math.round(minFrametime)} AVG:${Math.round(avgFrametime)} MAX:${Math.round(maxFrametime)}`;
-	    await device.drawTextRgbaAligned(statsText, [2, 56], [200, 200, 200, 255], "left");
-	  }
 
 	  // Update state for next render
 	  setState("lastRender", now);
@@ -121,7 +91,48 @@ module.exports = {
 	    setState("testActive", true);
 	  }
 
-	  // Log performance data
+	  // Always push to collect performance data, but only update display if shouldRender
+	  if (shouldRender) {
+	    // Update the visual display
+	    await device.clear();
+
+	    // Background color based on performance (optimized for 100-200ms range)
+	    let bgColor = [0, 0, 0, 255]; // Black background
+	    if (avgFrametime > 300) bgColor = [120, 0, 0, 255]; // Red for very slow (>300ms)
+	    else if (avgFrametime > 200) bgColor = [100, 50, 0, 255]; // Orange for slow (200-300ms)
+	    else if (avgFrametime > 160) bgColor = [100, 100, 0, 255]; // Yellow for medium (160-200ms)
+	    else if (avgFrametime >= 100) bgColor = [0, 100, 0, 255]; // Green for good (100-160ms)
+	    else if (avgFrametime > 0) bgColor = [0, 150, 0, 255]; // Bright green for excellent (<100ms)
+
+	    // Draw background rectangle
+	    await device.drawRectangleRgba([0, 0], [64, 64], bgColor);
+
+	    // Draw performance text
+	    const textColor = [255, 255, 255, 255];
+	    const lines = displayText.split('\n');
+
+	    for (let i = 0; i < lines.length; i++) {
+	      await device.drawTextRgbaAligned(lines[i], [2, 2 + (i * 6)], textColor, "left");
+	    }
+
+	    // Draw performance bar (visual indicator of frametime)
+	    if (avgFrametime > 0) {
+	      const barWidth = Math.min(60, Math.round(avgFrametime / 5)); // Scale for 100-200ms range
+	      const barColor = avgFrametime > 200 ? [255, 0, 0, 255] :    // Red for slow
+	                       avgFrametime > 160 ? [255, 165, 0, 255] :  // Orange for medium
+	                       avgFrametime > 100 ? [255, 255, 0, 255] :  // Yellow for good
+	                       [0, 255, 0, 255];                          // Green for excellent
+	      await device.drawRectangleRgba([2, 50], [barWidth, 4], barColor);
+	    }
+
+	    // Draw statistics at bottom
+	    if (frameTimes.length > 0) {
+	      const statsText = `${frameTimes.length}F MIN:${Math.round(minFrametime)} AVG:${Math.round(avgFrametime)} MAX:${Math.round(maxFrametime)}`;
+	      await device.drawTextRgbaAligned(statsText, [2, 56], [200, 200, 200, 255], "left");
+	    }
+	  }
+
+	  // Log performance data every 10 frames
 	  if (ctx.frametime !== undefined && frameTimes.length % 10 === 0) {
 	    console.log(`🎯 [PERF TEST] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}`);
 	  }
