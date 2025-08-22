@@ -1,10 +1,9 @@
 // scenes/test_pattern.js
-// Visual test scene for alignment, colors, and incremental diffs.
+// Visual test scene for alignment, colors, and full-frame rendering.
 // Switch mode via MQTT payload: { "mode": "checker" } or { "mode": "gradient" }
 
 module.exports = {
 	name: "test_pattern",
-	renderMode: "incremental", // use incremental diffs
 	render: async (ctx) => {
 	  const { device, state } = ctx;
 	  const mode = state.mode || "checker"; // default = checkerboard
@@ -35,12 +34,8 @@ module.exports = {
 		}
 	  }
   
-	  // Push in incremental mode
-	  const diffPixels = await device.push(
-		"test_pattern",
-		ctx.publishOk,
-		"incremental"
-	  );
+	  // Push in full-frame mode
+	  const diffPixels = await device.push("test_pattern", ctx.publishOk);
   
 	  console.log(
 		`🧪 test_pattern rendered in mode=${mode}, diffPixels=${diffPixels}`
