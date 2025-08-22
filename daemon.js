@@ -11,12 +11,12 @@ const {
   getDriverForDevice,
   devices,
   resolveDriver,
+  deviceDrivers,
 } = require("./lib/device-adapter");
 const { softReset } = require("./lib/pixoo-http");
 
-// MQTT connection config and device list (semicolon-separated IPs)
+// MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
 const brokerUrl = process.env.MQTT_BROKER || "mqtt://localhost:1883";
-const deviceList = (process.env.PIXOO_DEVICES || "").split(";");
 const mqttUser = process.env.MOSQITTO_USER_MS24;
 const mqttPass = process.env.MOSQITTO_PASS_MS24;
 
@@ -45,14 +45,13 @@ console.log(`**************************************************`);
 console.log(`Starting Pixoo Daemon at [${startTs}] ...`);
 console.log(`**************************************************`);
 console.log("MQTT Broker:", brokerUrl);
-//console.log("Devices:", deviceList);
-if (deviceList.length > 0 && deviceList[0] !== "") {
-  console.log("Devices and Drivers:");
-  deviceList.forEach(ip => {
-    if (ip.trim()) {
-      console.log(`  ${ip} → ${resolveDriver(ip)}`);
-    }
+if (deviceDrivers.size > 0) {
+  console.log("Configured Devices and Drivers:");
+  Array.from(deviceDrivers.entries()).forEach(([ip, driver]) => {
+    console.log(`  ${ip} → ${driver}`);
   });
+} else {
+  console.log("No device targets configured (use PIXOO_DEVICE_TARGETS env var or DEVICE_TARGETS_OVERRIDE in code)");
 }
 console.log("Loaded scenes:", Array.from(scenes.keys()));
 
