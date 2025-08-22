@@ -72,11 +72,11 @@ module.exports = {
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
 	    displayText = `LOOP ${currentInterval}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left`;
-	  } else if (mode === "sweep") {
-	    // Sweep mode: focused on 100-200ms sweet spot (known working range)
-	    const intervals = [100, 120, 140, 160, 180, 200]; // 100-200ms range
-	    const sweepIndex = Math.floor(elapsed / 4000) % intervals.length; // 4s per interval
-	    const sweepInterval = intervals[sweepIndex];
+	    } else if (mode === "sweep") {
+    // Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
+    const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
+    const sweepIndex = Math.floor(elapsed / 3000) % intervals.length; // 3s per interval
+    const sweepInterval = intervals[sweepIndex];
 
 	    // Always render, but update the interval for the sweep
 	    if (shouldRender) {
@@ -124,13 +124,14 @@ module.exports = {
 	    // Update the visual display
 	    await device.clear();
 
-	    // Background color based on performance (optimized for 100-200ms range)
+	    // Background color based on performance (optimized for 180-250ms realistic range)
 	    let bgColor = [0, 0, 0, 255]; // Black background
-	    if (avgFrametime > 300) bgColor = [120, 0, 0, 255]; // Red for very slow (>300ms)
-	    else if (avgFrametime > 200) bgColor = [100, 50, 0, 255]; // Orange for slow (200-300ms)
-	    else if (avgFrametime > 160) bgColor = [100, 100, 0, 255]; // Yellow for medium (160-200ms)
-	    else if (avgFrametime >= 100) bgColor = [0, 100, 0, 255]; // Green for good (100-160ms)
-	    else if (avgFrametime > 0) bgColor = [0, 150, 0, 255]; // Bright green for excellent (<100ms)
+	    if (avgFrametime > 350) bgColor = [120, 0, 0, 255]; // Red for very slow (>350ms)
+	    else if (avgFrametime > 280) bgColor = [100, 50, 0, 255]; // Orange for slow (280-350ms)
+	    else if (avgFrametime > 220) bgColor = [100, 100, 0, 255]; // Yellow for medium (220-280ms)
+	    else if (avgFrametime > 160) bgColor = [0, 100, 0, 255]; // Green for good (160-220ms)
+	    else if (avgFrametime >= 100) bgColor = [0, 150, 0, 255]; // Bright green for excellent (100-160ms)
+	    else if (avgFrametime > 0) bgColor = [0, 200, 0, 255]; // Very bright green for outstanding (<100ms)
 
 	    // Draw background rectangle
 	    await device.drawRectangleRgba([0, 0], [64, 64], bgColor);
@@ -145,10 +146,10 @@ module.exports = {
 
 	    // Draw performance bar (visual indicator of frametime)
 	    if (avgFrametime > 0) {
-	      const barWidth = Math.min(60, Math.round(avgFrametime / 5)); // Scale for 100-200ms range
-	      const barColor = avgFrametime > 200 ? [255, 0, 0, 255] :    // Red for slow
-	                       avgFrametime > 160 ? [255, 165, 0, 255] :  // Orange for medium
-	                       avgFrametime > 100 ? [255, 255, 0, 255] :  // Yellow for good
+	      const barWidth = Math.min(60, Math.round(avgFrametime / 6)); // Scale for 100-350ms range
+	      const barColor = avgFrametime > 280 ? [255, 0, 0, 255] :    // Red for slow
+	                       avgFrametime > 220 ? [255, 165, 0, 255] :  // Orange for medium
+	                       avgFrametime > 160 ? [255, 255, 0, 255] :  // Yellow for good
 	                       [0, 255, 0, 255];                          // Green for excellent
 	      await device.drawRectangleRgba([2, 50], [barWidth, 4], barColor);
 	    }

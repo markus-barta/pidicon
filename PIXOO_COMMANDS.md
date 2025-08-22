@@ -7,27 +7,27 @@
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance"}'
 ```
 
-### Performance Interval Tests (100-200ms Sweet Spot)
+### Performance Interval Tests (Realistic 100-350ms Range)
 **Note**: Tests run continuously for 30 seconds (default) showing real-time performance data.
 
 ```bash
-# 100ms (minimum) - runs for 30 seconds continuously
+# 100ms (minimum, very fast) - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":100}'
 
-# 120ms - runs for 30 seconds continuously
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":120}'
+# 150ms (default, balanced) - runs for 30 seconds continuously
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":150}'
 
-# 140ms - runs for 30 seconds continuously
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":140}'
-
-# 160ms - runs for 30 seconds continuously
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":160}'
-
-# 180ms - runs for 30 seconds continuously
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":180}'
-
-# 200ms (maximum) - runs for 30 seconds continuously
+# 200ms (good range) - runs for 30 seconds continuously
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":200}'
+
+# 250ms (expected sweet spot) - runs for 30 seconds continuously
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":250}'
+
+# 300ms (upper range) - runs for 30 seconds continuously
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":300}'
+
+# 350ms (maximum, slow) - runs for 30 seconds continuously
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","interval":350}'
 ```
 
 ### Burst Mode Tests
@@ -41,7 +41,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ### Auto Sweep Mode
 ```bash
-# Automatically test all intervals (100→120→140→160→180→200ms, 4s each)
+# Automatically test all intervals (100→130→160→190→220→250→280→310→350ms, 3s each)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"sweep"}'
 ```
 
@@ -56,6 +56,56 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 # Stop loop mode
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","stop":true}'
 ```
+
+## 📋 Parameter Explanations
+
+### Performance Test Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `scene` | string | (required) | Must be `"test_performance"` |
+| `mode` | string | `"continuous"` | Test mode: `"continuous"`, `"burst"`, `"sweep"`, `"loop"` |
+| `interval` | number | `150` | Target update interval in milliseconds (100-350ms recommended) |
+| `duration` | number | `30000` (30s) | Test duration in milliseconds (only for loop mode) |
+| `stop` | boolean | `false` | Stop a running loop mode test early |
+
+### Test Modes Explained
+
+#### **Continuous Mode**
+- **Purpose**: Steady performance testing at a fixed interval
+- **Duration**: 30 seconds (default)
+- **Display**: Shows FPS, average frametime, countdown timer
+- **Use Case**: Test specific intervals to find optimal performance
+
+#### **Burst Mode**
+- **Purpose**: Rapid-fire testing for stress testing
+- **Duration**: 10 seconds of continuous updates
+- **Display**: Shows progress `2s/10s`, rapid FPS updates
+- **Use Case**: Test device limits with minimal delays
+
+#### **Sweep Mode**
+- **Purpose**: Automatic testing of multiple intervals
+- **Duration**: ~27 seconds (9 intervals × 3 seconds each)
+- **Display**: Shows current cycle and interval being tested
+- **Use Case**: Get overview of performance across all intervals
+
+#### **Loop Mode**
+- **Purpose**: Extended testing for long-term analysis
+- **Duration**: Configurable (default: 5 minutes)
+- **Display**: Shows countdown in minutes:seconds format
+- **Use Case**: Long-term performance monitoring and stability testing
+
+### Interval Recommendations
+
+| Range | Performance Level | Color Code | Use Case |
+|-------|------------------|------------|----------|
+| 100-160ms | Excellent | Bright Green | Minimal latency, high responsiveness |
+| 160-220ms | Good | Green | Balanced performance, good user experience |
+| 220-280ms | Acceptable | Yellow | Noticeable but tolerable delay |
+| 280-350ms | Slow | Orange | Heavy lag, reduced usability |
+| >350ms | Very Slow | Red | Significant delays, poor experience |
+
+**Expected Sweet Spot**: 180-250ms range for most practical applications
 
 ## 🎨 Scene Testing Commands
 
@@ -125,10 +175,18 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - **Continuous/Loop Mode**: Shows real-time countdown (minutes:seconds for loop mode)
 - **Burst Mode**: Shows progress `2s/10s` with rapid-fire updates
 - **Sweep Mode**: Shows current cycle and interval being tested
-- **Color Coding**:
-  - 🟢 Green background: Excellent performance (<160ms avg frametime)
-  - 🟡 Yellow background: Good performance (160-200ms avg frametime)
-  - 🟠 Orange background: Borderline (200-300ms avg frametime)
-  - 🔴 Red background: Poor performance (>300ms avg frametime)
+- **Color Coding** (based on average frametime):
+  - 🟢 Bright Green: Excellent performance (100-160ms avg frametime)
+  - 🟢 Green: Good performance (160-220ms avg frametime)
+  - 🟡 Yellow: Acceptable performance (220-280ms avg frametime)
+  - 🟠 Orange: Slow performance (280-350ms avg frametime)
+  - 🔴 Red: Very slow performance (>350ms avg frametime)
 - **Real-time Updates**: FPS counter, performance bar, statistics
 - **Console Logs**: Detailed statistics every 10 frames
+
+**Performance Analysis Guide:**
+- **100-160ms**: Outstanding performance, minimal noticeable delay
+- **160-220ms**: Good performance, responsive feel
+- **220-280ms**: Acceptable for most use cases, some lag noticeable
+- **280-350ms**: Slow but functional, heavy lag present
+- **>350ms**: Very slow, significant delays affecting usability
