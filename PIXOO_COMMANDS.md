@@ -45,17 +45,24 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"sweep"}'
 ```
 
-### Extended Loop Mode
+### Extended Loop Mode (Self-Sustaining)
 ```bash
 # Run continuous performance test for 5 minutes (300 seconds)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":150,"duration":300000}'
+# The scene will automatically send MQTT messages to continue the loop
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":250,"duration":300000}'
 
 # Custom duration (10 minutes = 600000ms)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":120,"duration":600000}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"loop","interval":200,"duration":600000}'
 
-# Stop loop mode
+# Stop loop mode (sends stop signal)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","stop":true}'
 ```
+
+**Loop Mode Features:**
+- ✅ **Self-sustaining**: Automatically schedules next iteration
+- ✅ **Smart timing**: Adjusts message frequency based on test interval
+- ✅ **Error resilient**: Handles MQTT connection issues gracefully
+- ✅ **Stoppable**: Can be stopped anytime with `stop: true`
 
 ## 📋 Parameter Explanations
 
@@ -89,10 +96,12 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - **Display**: Shows current cycle and interval being tested
 - **Use Case**: Get overview of performance across all intervals
 
-#### **Loop Mode**
-- **Purpose**: Extended testing for long-term analysis
+#### **Loop Mode** (Self-Sustaining)
+- **Purpose**: Extended testing for long-term analysis with automatic continuation
 - **Duration**: Configurable (default: 5 minutes)
 - **Display**: Shows countdown in minutes:seconds format
+- **Self-sustaining**: Automatically sends MQTT messages to continue the test
+- **Smart timing**: Message frequency adapts to test interval (1-5 seconds between messages)
 - **Use Case**: Long-term performance monitoring and stability testing
 
 ### Interval Recommendations
