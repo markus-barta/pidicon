@@ -86,16 +86,18 @@ module.exports = {
 	  } else if (mode === "continuous") {
 	    // Continuous mode: steady interval testing - always render for real performance data
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
+	    const currentFrametime = ctx.frametime || 0;
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
-	    displayText = `${currentInterval}ms\nFPS:${fps}\n${remaining}s left`;
+	    displayText = `${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${remaining}s left`;
 	  } else if (mode === "loop") {
 	    // Loop mode: extended continuous testing for long-term performance analysis
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
+	    const currentFrametime = ctx.frametime || 0;
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
 	    const iteration = getState("_loopIteration") || 0;
-	    displayText = `LOOP ${currentInterval}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left\nITER:${iteration}`;
+	    displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left`;
 	  } else if (mode === "sweep") {
     // Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
     const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
@@ -108,9 +110,10 @@ module.exports = {
 	    }
 
 	    const cycle = Math.floor(elapsed / 4000) + 1;
+	    const currentFrametime = ctx.frametime || 0;
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\n${remaining}s left`;
+	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${remaining}s left`;
 	  }
 
 	    // Check if test duration has expired
