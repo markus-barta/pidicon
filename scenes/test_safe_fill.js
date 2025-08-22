@@ -1,7 +1,6 @@
 // scenes/test_safe_fill.js
 module.exports = {
 	name: "test_safe_fill",
-	renderMode: "full", // force full-frame mode
 	render: async (ctx) => {
 	  const { device, state } = ctx;
   
@@ -17,11 +16,7 @@ module.exports = {
 	  }
   
 	  // Push in full-frame mode
-	  const diffPixels = await device.push(
-		"test_safe_fill",
-		ctx.publishOk,
-		"full"
-	  );
+	  const diffPixels = await device.push("test_safe_fill", ctx.publishOk);
   
 	  console.log(
 		`🧪 test_safe_fill rendered with color: ${JSON.stringify(

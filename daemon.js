@@ -35,7 +35,6 @@ fs.readdirSync(path.join(__dirname, "scenes")).forEach((file) => {
     const scene = require(path.join(__dirname, "scenes", file));
     scenes.set(scene.name, {
       render: scene.render,
-      renderMode: scene.renderMode || "full",
     });
   }
 });
@@ -149,7 +148,7 @@ client.on("message", async (topic, message) => {
           if (scene) {
             const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
             try {
-              await scene.render(ctx, scene.renderMode);
+              await scene.render(ctx);
               publishMetrics(deviceIp);
             } catch (err) {
               console.error(`❌ Render error for ${deviceIp}:`, err.message);
@@ -171,7 +170,7 @@ client.on("message", async (topic, message) => {
       return;
     }
 
-    // 4) Reset command
+    // 3) Reset command
     if (section === "reset" && action === "set") {
       console.log(`🔄 Reset requested for ${deviceIp}`);
       const ok = await softReset(deviceIp);
@@ -182,7 +181,7 @@ client.on("message", async (topic, message) => {
       return;
     }
 
-    // 3) State update
+    // 4) State update
     if (section === "state" && action === "upd") {
       const sceneName =
         payload.scene || deviceDefaults.get(deviceIp) || "power_price";
@@ -203,7 +202,7 @@ client.on("message", async (topic, message) => {
       );
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
       try {
-        await scene.render(ctx, scene.renderMode);
+        await scene.render(ctx);
         publishMetrics(deviceIp);
       } catch (err) {
         console.error(`❌ Render error for ${deviceIp}:`, err.message);
