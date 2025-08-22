@@ -53,6 +53,26 @@ if (deviceDrivers.size > 0) {
   console.log("No device targets configured (use PIXOO_DEVICE_TARGETS env var or DEVICE_TARGETS_OVERRIDE in code)");
 }
 console.log("Loaded scenes:", Array.from(scenes.keys()));
+console.log("");
+
+// Display available commands from markdown file
+try {
+  const fs = require("fs");
+  const path = require("path");
+  const commandsPath = path.join(__dirname, "PIXOO_COMMANDS.md");
+  if (fs.existsSync(commandsPath)) {
+    console.log("📋 Available Commands (copy & paste):");
+    console.log("====================================");
+    const commandsContent = fs.readFileSync(commandsPath, "utf8");
+    console.log(commandsContent);
+    console.log("====================================");
+  } else {
+    console.log("⚠️  PIXOO_COMMANDS.md not found");
+  }
+} catch (err) {
+  console.log("⚠️  Could not read PIXOO_COMMANDS.md:", err.message);
+}
+console.log("");
 
 const client = mqtt.connect(brokerUrl, {
   username: mqttUser,
