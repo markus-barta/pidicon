@@ -20,7 +20,17 @@ module.exports = {
     // This is a continuation message - preserve the original startTime and iteration
     const continuationIteration = state._loopIteration || 0;
     setState("_loopIteration", continuationIteration);
-    console.log(`🔄 [LOOP] Continuation message received, iteration: ${continuationIteration}`);
+
+    // Clear any existing timer and reset flags for continuation
+    const existingTimer = getState("loopTimer");
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      setState("loopTimer", null);
+      console.log(`🧹 [LOOP] Cleared existing timer for continuation`);
+    }
+
+    setState("loopScheduled", false);
+    console.log(`🔄 [LOOP] Continuation message received, iteration: ${continuationIteration}, ready for next scheduling`);
   }
 
   // Only set startTime once at the beginning of the test
@@ -202,9 +212,17 @@ module.exports = {
   // Self-sustaining loop for continuous testing
   if (mode === "loop" && shouldRender && !state.stop) {
     // Check if we already have a loop scheduled to prevent duplicates
-    if (getState("loopScheduled")) {
-      console.log(`⏭️  Loop already scheduled, skipping duplicate`);
+    // But allow continuation messages to schedule new iterations
+    const isContinuation = state._isLoopContinuation;
+    const loopAlreadyScheduled = getState("loopScheduled");
+
+    if (loopAlreadyScheduled && !isContinuation) {
+      console.log(`⏭️  Loop already scheduled and not a continuation, skipping duplicate`);
       return;
+    }
+
+    if (loopAlreadyScheduled && isContinuation) {
+      console.log(`🔄  Loop already scheduled but processing continuation, continuing...`);
     }
 
     // Calculate when to send next MQTT message to continue the loop
