@@ -118,7 +118,63 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ## 🎨 Scene Testing Commands
 
-### Other Scenes
+## 🎨 Color Fill Scene Commands
+
+### Understanding Color Format
+The color parameter uses **RGBA format**: `[Red, Green, Blue, Alpha]`
+- **Red/Green/Blue**: 0-255 (0 = none, 255 = full intensity)
+- **Alpha**: 0-255 (0 = transparent, 255 = opaque)
+- **Examples**:
+  - Red: `[255, 0, 0, 255]`
+  - Green: `[0, 255, 0, 255]`
+  - Blue: `[0, 0, 255, 255]`
+  - White: `[255, 255, 255, 255]`
+  - Black: `[0, 0, 0, 255]`
+
+### Color Fill with Custom Colors
+```bash
+# Default red fill (no color parameter needed)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill"}'
+
+# Blue fill (as requested!)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[0,0,255,255]}'
+
+# Green fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[0,255,0,255]}'
+
+# White fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[255,255,255,255]}'
+
+# Black fill (clear screen)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[0,0,0,255]}'
+
+# Purple/Magenta fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[255,0,255,255]}'
+
+# Cyan fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[0,255,255,255]}'
+
+# Yellow fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[255,255,0,255]}'
+
+# Orange fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[255,165,0,255]}'
+
+# Pink fill
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill","color":[255,192,203,255]}'
+
+# Custom colors - try your own!
+# Dark blue: [0, 0, 139, 255]
+# Navy: [0, 0, 128, 255]
+# Sky blue: [135, 206, 235, 255]
+# Turquoise: [64, 224, 208, 255]
+# Lime green: [50, 205, 50, 255]
+# Gold: [255, 215, 0, 255]
+# Silver: [192, 192, 192, 255]
+# Gray: [128, 128, 128, 255]
+```
+
+### Other Test Scenes
 ```bash
 # Clock scene (with seconds and milliseconds)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"clock"}'
@@ -126,9 +182,10 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 # Power price scene
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"power_price"}'
 
-# Test scenes
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_fill"}'
+# Pattern test scene
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_pattern"}'
+
+# Safe fill test scene
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_safe_fill"}'
 ```
 
