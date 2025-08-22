@@ -14,7 +14,12 @@ module.exports = {
 	  const mode = state.mode || "continuous"; // burst, continuous, sweep, loop
 	  const testInterval = state.interval || 150; // milliseconds between frames (start at 150ms)
 	  const loopDuration = state.duration || 300000; // loop duration in ms (5 minutes default for loop mode)
-	  const startTime = getState("startTime") || Date.now();
+	  // Only set startTime once at the beginning of the test
+	  let startTime = getState("startTime");
+	  if (!startTime) {
+	    startTime = Date.now();
+	    setState("startTime", startTime);
+	  }
 	  const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 30000);
 
 	  // Performance tracking
@@ -157,7 +162,12 @@ module.exports = {
 
 	  // Log performance data every 10 frames
 	  if (ctx.frametime !== undefined && frameTimes.length % 10 === 0) {
-	    console.log(`🎯 [PERF TEST] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}`);
+	    console.log(`🎯 [PERF TEST] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
+	  }
+
+	  // Debug logging for first few renders
+	  if (frameTimes.length <= 5) {
+	    console.log(`🔍 [DEBUG] Render ${frameTimes.length}: shouldRender=${shouldRender}, mode=${mode}, elapsed=${Math.round(elapsed/1000)}s, displayText="${displayText.replace(/\n/g, ' | ')}"`);
 	  }
 
 	  await device.push("test_performance", ctx.publishOk);
