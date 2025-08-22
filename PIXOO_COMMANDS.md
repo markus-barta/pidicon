@@ -97,7 +97,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 3. **Watch the logs:**
    ```bash
-   docker compose logs -f pixoo-daemon
+   docker logs pixoo-daemon -f --timestamps --tail 1500
    ```
 
 ## 🎯 Performance Testing Strategy
