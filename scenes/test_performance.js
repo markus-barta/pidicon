@@ -7,20 +7,30 @@
 module.exports = {
 	name: "test_performance",
 	render: async (ctx) => {
-	  // Performance test runs continuously for 30 seconds after being triggered
-	  const { device, state, getState, setState } = ctx;
+	    // Performance test runs continuously for 30 seconds after being triggered
+  const { device, state, getState, setState } = ctx;
 
-	  // Configuration with defaults - focused on 100-200ms sweet spot
-	  const mode = state.mode || "continuous"; // burst, continuous, sweep, loop
-	  const testInterval = state.interval || 150; // milliseconds between frames (start at 150ms)
-	  const loopDuration = state.duration || 300000; // loop duration in ms (5 minutes default for loop mode)
-	  // Only set startTime once at the beginning of the test
-	  let startTime = getState("startTime");
-	  if (!startTime) {
-	    startTime = Date.now();
-	    setState("startTime", startTime);
-	  }
-	  const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 30000);
+  // Configuration with defaults - focused on 100-200ms sweet spot
+  const mode = state.mode || "continuous"; // burst, continuous, sweep, loop
+  const testInterval = state.interval || 150; // milliseconds between frames (start at 150ms)
+  const loopDuration = state.duration || 300000; // loop duration in ms (5 minutes default for loop mode)
+
+  // Handle loop continuation messages differently
+  if (state._isLoopContinuation) {
+    // This is a continuation message - preserve the original startTime and iteration
+    const continuationIteration = state._loopIteration || 0;
+    setState("_loopIteration", continuationIteration);
+    console.log(`🔄 [LOOP] Continuation message received, iteration: ${continuationIteration}`);
+  }
+
+  // Only set startTime once at the beginning of the test
+  let startTime = getState("startTime");
+  if (!startTime) {
+    startTime = Date.now();
+    setState("startTime", startTime);
+    console.log(`🎯 [LOOP] Starting new test at ${new Date(startTime).toLocaleTimeString()}`);
+  }
+  const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 30000);
 
 	  // Performance tracking
 	  const frameTimes = getState("frameTimes") || [];
@@ -32,17 +42,20 @@ module.exports = {
 	  const elapsed = now - startTime;
 	  const timeSinceLast = now - lastRender;
 
-	  // Update performance stats
-	  if (ctx.frametime !== undefined) {
-	    frameTimes.push(ctx.frametime);
-	    if (frameTimes.length > 100) frameTimes.shift(); // Keep last 100 frames
-	  }
+	    // Update performance stats
+  if (ctx.frametime !== undefined && ctx.frametime > 0) {
+    frameTimes.push(ctx.frametime);
+    if (frameTimes.length > 100) frameTimes.shift(); // Keep last 100 frames
+    console.log(`📊 [PERF] Frame ${frameTimes.length}: frametime=${ctx.frametime}ms`);
+  }
 
-	  // Calculate statistics
-	  const avgFrametime = frameTimes.length > 0 ?
-	    frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length : 0;
-	  const minFrametime = frameTimes.length > 0 ? Math.min(...frameTimes) : 0;
-	  const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
+  // Calculate statistics
+  const avgFrametime = frameTimes.length > 0 ?
+    frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length : 0;
+  const minFrametime = frameTimes.length > 0 ? Math.min(...frameTimes) : 0;
+  const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
+
+  console.log(`📈 [STATS] Frames:${frameTimes.length} Avg:${Math.round(avgFrametime)}ms Min:${Math.round(minFrametime)}ms Max:${Math.round(maxFrametime)}ms`);
 
 	  // Test logic - render continuously for the test duration
 	  let shouldRender = now <= loopEndTime; // Keep rendering until loop duration expires
@@ -248,7 +261,8 @@ module.exports = {
             mode: "loop",
             interval: currentInterval,
             duration: loopDuration, // Use original duration, not remaining
-            _loopIteration: loopIteration
+            _loopIteration: loopIteration,
+            _isLoopContinuation: true // Mark this as a continuation message
           });
 
           console.log(`📤 [LOOP] Publishing to pixoo/${deviceIp}/state/upd: ${payload}`);
