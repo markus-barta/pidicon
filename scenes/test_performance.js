@@ -7,13 +7,15 @@
 module.exports = {
 	name: "test_performance",
 	render: async (ctx) => {
+	  // Performance test runs continuously for 30 seconds after being triggered
 	  const { device, state, getState, setState } = ctx;
 
 	  // Configuration with defaults - focused on 100-200ms sweet spot
 	  const mode = state.mode || "continuous"; // burst, continuous, sweep
 	  const testInterval = state.interval || 150; // milliseconds between frames (start at 150ms)
-	  const testDuration = state.duration || 5000; // test duration in ms
+	  const testDuration = state.duration || 30000; // test duration in ms (30 seconds default)
 	  const startTime = getState("startTime") || Date.now();
+	  const testEndTime = startTime + testDuration;
 
 	  // Performance tracking
 	  const frameTimes = getState("frameTimes") || [];
@@ -37,8 +39,8 @@ module.exports = {
 	  const minFrametime = frameTimes.length > 0 ? Math.min(...frameTimes) : 0;
 	  const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
 
-	  // Test logic - ALWAYS render for continuous performance testing
-	  let shouldRender = true; // Always render for performance testing!
+	  // Test logic - render continuously for the test duration
+	  let shouldRender = now <= testEndTime; // Keep rendering until test duration expires
 	  let displayText = `${currentInterval}ms\nWAITING FOR DATA`;
 
 	  if (mode === "burst") {
@@ -55,7 +57,8 @@ module.exports = {
 	  } else if (mode === "continuous") {
 	    // Continuous mode: steady interval testing - always render for real performance data
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	    displayText = `${currentInterval}ms\nFPS:${fps}\nAVG:${Math.round(avgFrametime)}ms`;
+	    const remaining = Math.max(0, Math.round((testEndTime - now) / 1000));
+	    displayText = `${currentInterval}ms\nFPS:${fps}\n${remaining}s left`;
 	  } else if (mode === "sweep") {
 	    // Sweep mode: focused on 100-200ms sweet spot (known working range)
 	    const intervals = [100, 120, 140, 160, 180, 200]; // 100-200ms range
@@ -68,8 +71,14 @@ module.exports = {
 	    }
 
 	    const cycle = Math.floor(elapsed / 4000) + 1;
+	    const remaining = Math.max(0, Math.round((testEndTime - now) / 1000));
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFPS:${fps}`;
+	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\n${remaining}s left`;
+	  }
+
+	  // Check if test duration has expired
+	  if (now > testEndTime) {
+	    displayText = `TEST COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
 	  }
 
 	  // For burst mode, only render if active or ready
