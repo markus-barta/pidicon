@@ -92,6 +92,8 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **Test re-run capability**: Automatic cleanup allows immediate test re-runs
 - ✅ **Enhanced statistics**: "FRAMES" with gray labels, values in white
 - ✅ **Gray time display**: Time left shown in gray for better visual hierarchy
+- ✅ **Precise millisecond display**: Milliseconds rounded to 3 digits maximum
+- ✅ **Optimized statistics positioning**: Properly spaced labels and values
 - ✅ **Configurable scaling**: 1-500ms range with ~25ms per pixel resolution
 - ✅ **Color gradient**: Blue→Green→Yellow→Orange→Red performance spectrum
 - ✅ **Chart axes**: Dark gray x/y axes for reference
