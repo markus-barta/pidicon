@@ -106,9 +106,9 @@ async function render(ctx) {
     // Clean up variables at start of new test
     let startTime = getState("startTime");
 
-    // Reset logic: new MQTT messages trigger reset
+    // Reset logic: any new MQTT message triggers full reset
     const isNewMessage = !state._isLoopContinuation && !state._isContinuation;
-    const isFreshStart = !startTime || (isNewMessage && !getState("testCompleted"));
+    const isFreshStart = !startTime || isNewMessage;
 
     if (isFreshStart) {
         // Clear screen first
@@ -256,13 +256,20 @@ async function render(ctx) {
             await device.push("test_performance_v3", ctx.publishOk);
             console.log(`🏁 [PERF V3] Test completed: ${frameTimes.length} samples, avg: ${Math.round(avgFrametime)}ms`);
             setState("testCompleted", true);
+            // Clear any scheduled continuation
+            const existingTimer = getState("loopTimer");
+            if (existingTimer) {
+                clearTimeout(existingTimer);
+                setState("loopTimer", null);
+            }
+            setState("loopScheduled", false);
             return;
         }
 
         // Continue test with adaptive timing
         if (useAdaptiveTiming) {
             const nextMessageDelay = Math.max(50, Math.min(2000, (frametime || currentInterval) + 10));
-            setTimeout(() => {
+            const loopTimer = setTimeout(() => {
                 try {
                     const mqttClient = require('mqtt').connect(
                         `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`,
@@ -289,12 +296,19 @@ async function render(ctx) {
                         mqttClient.end();
                     });
 
-                    mqttClient.on('error', () => mqttClient.end());
-                    mqttClient.on('close', () => {});
+                    mqttClient.on('error', () => {
+                        try { setState("loopScheduled", false); setState("loopTimer", null); } catch (_) {}
+                        mqttClient.end();
+                    });
+                    mqttClient.on('close', () => {
+                        try { setState("loopScheduled", false); setState("loopTimer", null); } catch (_) {}
+                    });
                 } catch (err) {
                     console.error(`❌ [PERF V3] Continuation error:`, err.message);
                 }
             }, nextMessageDelay);
+            setState("loopTimer", loopTimer);
+            setState("loopScheduled", true);
         }
 
         // Push frame after drawing when rendering
