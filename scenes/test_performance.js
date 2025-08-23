@@ -88,19 +88,21 @@ module.exports = {
 	    // Continuous mode: steady interval testing - always render for real performance data
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    const currentFrametime = ctx.frametime || 0;
-	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
+	    const rawRemaining = (loopEndTime - now) / 1000;
+	    const remaining = Math.max(0, Math.floor(rawRemaining));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
-	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+	    const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 	    displayText = `${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 	  } else if (mode === "loop") {
 	    // Loop mode: extended continuous testing for long-term performance analysis
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    const currentFrametime = ctx.frametime || 0;
-	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
+	    const rawRemaining = (loopEndTime - now) / 1000;
+	    const remaining = Math.max(0, Math.floor(rawRemaining));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
-	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+	    const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 	    const iteration = getState("_loopIteration") || 0;
 	    displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 	  } else if (mode === "sweep") {
@@ -116,10 +118,11 @@ module.exports = {
 
 	    const cycle = Math.floor(elapsed / 4000) + 1;
 	    const currentFrametime = ctx.frametime || 0;
-	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
+	    const rawRemaining = (loopEndTime - now) / 1000;
+	    const remaining = Math.max(0, Math.floor(rawRemaining));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
-	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+	    const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
 	  }
