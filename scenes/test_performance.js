@@ -185,20 +185,23 @@ module.exports = {
 	      await device.drawTextRgbaAligned(lines[i], [2, 2 + (i * 6)], textColor, "left");
 	    }
 
-	    // Draw performance bar (visual indicator of frametime)
+	    // Draw performance bar (moved up from bottom)
 	    if (avgFrametime > 0) {
 	      const barWidth = Math.min(60, Math.round(avgFrametime / 6)); // Scale for 100-350ms range
 	      const barColor = avgFrametime > 280 ? [255, 0, 0, 255] :    // Red for slow
 	                       avgFrametime > 220 ? [255, 165, 0, 255] :  // Orange for medium
 	                       avgFrametime > 160 ? [255, 255, 0, 255] :  // Yellow for good
 	                       [0, 255, 0, 255];                          // Green for excellent
-	      await device.drawRectangleRgba([2, 50], [barWidth, 4], barColor);
+	      await device.drawRectangleRgba([2, 45], [barWidth, 4], barColor); // Moved up from 50 to 45
 	    }
 
-	    // Draw statistics at bottom
+	    // Draw statistics (reformatted to fit better)
 	    if (frameTimes.length > 0) {
-	      const statsText = `${frameTimes.length}F MIN:${Math.round(minFrametime)} AVG:${Math.round(avgFrametime)} MAX:${Math.round(maxFrametime)}`;
-	      await device.drawTextRgbaAligned(statsText, [2, 56], [200, 200, 200, 255], "left");
+	      const frameCountText = `${frameTimes.length}F MIN:${Math.round(minFrametime)}`;
+	      const avgMaxText = `AVG:${Math.round(avgFrametime)} MAX:${Math.round(maxFrametime)}`;
+
+	      await device.drawTextRgbaAligned(frameCountText, [2, 52], [200, 200, 200, 255], "left");
+	      await device.drawTextRgbaAligned(avgMaxText, [2, 58], [200, 200, 200, 255], "left");
 	    }
 	  }
 
