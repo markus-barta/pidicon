@@ -83,7 +83,7 @@ function drawLine(device, x1, y1, x2, y2, color) {
 }
 
 async function render(ctx) {
-    const { device, state, env, getState, setState, ctx: renderCtx } = ctx;
+    const { device, state, env, getState, setState, frametime } = ctx;
     const now = Date.now();
 
     // Initialize test state
@@ -94,12 +94,13 @@ async function render(ctx) {
         setState("frameTimes", []);
         setState("lastChartUpdate", now);
         console.log(`🎯 [PERF V3] Test started at ${new Date(now).toLocaleTimeString()}`);
+    console.log(`🔍 [PERF V3] Frametime available: ${frametime !== undefined}, value: ${frametime || 'undefined'}`);
     }
 
     // Update performance tracking
-    if (renderCtx.frametime !== undefined && renderCtx.frametime > 0) {
+    if (frametime !== undefined && frametime > 0) {
         const frameTimes = getState("frameTimes") || [];
-        frameTimes.push(renderCtx.frametime);
+        frameTimes.push(frametime);
         if (frameTimes.length > 100) frameTimes.shift();
         setState("frameTimes", frameTimes);
     }
@@ -115,7 +116,7 @@ async function render(ctx) {
     const useAdaptiveTiming = state.adaptiveTiming || false;
     const baseInterval = state.interval || 150;
     const currentInterval = useAdaptiveTiming ?
-        Math.max(50, Math.min(2000, (renderCtx.frametime || baseInterval) + 10)) :
+        Math.max(50, Math.min(2000, (frametime || baseInterval) + 10)) :
         baseInterval;
 
     // Clear screen
@@ -134,16 +135,16 @@ async function render(ctx) {
     const lastChartUpdate = getState("lastChartUpdate") || now;
 
     if (now - lastChartUpdate >= 100 && chartX < 64) {
-        const frametime = renderCtx.frametime || baseInterval;
+        const chartFrametime = frametime || baseInterval;
         const normalizedFrametime = Math.min(CHART_CONFIG.MAX_FRAMETIME,
-            Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime));
+            Math.max(CHART_CONFIG.MIN_FRAMETIME, chartFrametime));
         const ratio = (normalizedFrametime - CHART_CONFIG.MIN_FRAMETIME) /
             (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
         const yOffset = Math.round(ratio * CHART_CONFIG.RANGE_HEIGHT);
         const yPos = CHART_CONFIG.START_Y - 1 - yOffset;
 
         const chartData = getState("chartData") || [];
-        const chartColor = getPerformanceColor(frametime);
+        const chartColor = getPerformanceColor(chartFrametime);
         chartData.push({ x: chartX, y: yPos, color: chartColor });
 
         if (chartData.length > 1) {
@@ -159,7 +160,7 @@ async function render(ctx) {
 
     // Display mode and timing info
     const modeDisplay = useAdaptiveTiming ? `${mode.toUpperCase()} FT+` : mode.toUpperCase();
-    const intervalDisplay = useAdaptiveTiming ? `${Math.round(renderCtx.frametime || 0)}ms` : `${currentInterval}ms`;
+    const intervalDisplay = useAdaptiveTiming ? `${Math.round(frametime || 0)}ms` : `${currentInterval}ms`;
     const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 
     // Draw text with proper alignment
@@ -206,6 +207,7 @@ async function render(ctx) {
                 });
 
                 mqttClient.on('error', () => mqttClient.end());
+                mqttClient.on('close', () => {});
             } catch (err) {
                 console.error(`❌ [PERF V3] Continuation error:`, err.message);
             }
