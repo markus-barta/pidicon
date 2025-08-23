@@ -149,11 +149,11 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
-			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
+			const remainingMs = Math.max(0, Math.round(estimatedRemainingMs % 1000)); // Round to 3 digits
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
 			const timeDisplay = remainingIterations > 0 ?
-				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "loop") {
@@ -165,11 +165,11 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
-			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
+			const remainingMs = Math.max(0, Math.round(estimatedRemainingMs % 1000)); // Round to 3 digits
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
 			const timeDisplay = remainingIterations > 0 ?
-				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
 			const iteration = getState("_loopIteration") || 0;
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
@@ -191,11 +191,11 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
-			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
+			const remainingMs = Math.max(0, Math.round(estimatedRemainingMs % 1000)); // Round to 3 digits
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
 			const timeDisplay = remainingIterations > 0 ?
-				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
@@ -401,18 +401,18 @@ module.exports = {
 				const avgValue = Math.round(avgFrametime);
 				const maxValue = Math.round(maxFrametime);
 
-				// Draw labels in gray, values in white
-				await drawTextRgbaAlignedWithBg(device, " FRAMES ", [2, 52], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, frameCount.toString(), [2 + 8*4, 52], [255, 255, 255, 255], "left", true);
+				// Draw labels in gray, values in white with corrected positioning
+				await drawTextRgbaAlignedWithBg(device, " FRAMES ", [0, 52], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, frameCount.toString(), [25, 52], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " MIN:", [2, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [2 + 5*4, 58], [255, 255, 255, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, " MIN:", [0, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [16, 58], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " AVG:", [2 + 12*4, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [2 + 17*4, 58], [255, 255, 255, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, " AVG:", [20, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [35, 58], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " MAX:", [2 + 25*4, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [2 + 30*4, 58], [255, 255, 255, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, " MAX:", [45, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [60, 58], [255, 255, 255, 255], "left", true);
 			}
 		}
 
