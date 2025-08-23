@@ -221,9 +221,19 @@ module.exports = {
 
 	    for (let i = 0; i < lines.length; i++) {
 	      const isDoneText = displayText === "Done";
-	      const textColor = isDoneText ? [255, 255, 255, 127] : [255, 255, 255, 255]; // 50% opacity for "Done"
-	      const align = isDoneText ? "center" : "left"; // Center "Done" text
-	      const x = isDoneText ? 32 : 2; // Center position for "Done"
+	      const isBottomTwoLines = lines.length > 2 && i >= lines.length - 2; // Last two lines are statistics
+
+	      // DEBUG: Always render bottom two lines at 50% opacity to test alpha
+	      const textColor = isDoneText ? [255, 255, 255, 127] :
+	                       isBottomTwoLines ? [255, 255, 255, 127] : // DEBUG: 50% opacity for stats
+	                       [255, 255, 255, 255];
+
+	      const align = isDoneText ? "center" : "left";
+	      const x = isDoneText ? 32 : 2;
+
+	      // DEBUG: Log alpha values
+	      console.log(`🎨 [ALPHA DEBUG] Line ${i}: "${lines[i]}" - Alpha: ${textColor[3]} (isDone: ${isDoneText}, isBottomTwo: ${isBottomTwoLines})`);
+
 	      await device.drawTextRgbaAligned(lines[i], [x, 2 + (i * 6)], textColor, align);
 	    }
 
