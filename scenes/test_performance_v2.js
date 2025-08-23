@@ -2,9 +2,46 @@
 // Performance testing scene 2.0 with incremental rendering
 // Features:
 // - Labels half-transparent, values fully opaque
-// - Moving pixel chart above performance bar
-// - No fullscreen background, performance bar as color indicator
+// - Detailed performance chart with gradient colors
+// - No fullscreen background
 // - Incremental rendering with background clearing
+// - Configurable chart parameters
+
+// Chart configuration constants
+const CHART_CONFIG = {
+  START_Y: 50,           // Starting Y position for chart
+  RANGE_HEIGHT: 20,      // Height of chart in pixels (zoomed for detail)
+  MIN_FRAMETIME: 1,      // Minimum frametime for scaling (1ms)
+  MAX_FRAMETIME: 500,    // Maximum frametime for scaling (500ms)
+  AXIS_COLOR: [64, 64, 64, 255], // Dark gray for axes
+  CHART_START_X: 1       // Start chart at x=1 (leave space for y-axis)
+};
+
+// Color gradient function for performance levels
+function getPerformanceColor(frametime) {
+  const ratio = (frametime - CHART_CONFIG.MIN_FRAMETIME) / (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
+
+  if (ratio <= 0.2) {
+    // Blue to blue-green (0-100ms)
+    return [0, Math.round(255 * (ratio / 0.2)), Math.round(255 * ratio), 255];
+  } else if (ratio <= 0.4) {
+    // Blue-green to green (100-200ms)
+    const subRatio = (ratio - 0.2) / 0.2;
+    return [0, 255, Math.round(128 + 127 * subRatio), 255];
+  } else if (ratio <= 0.6) {
+    // Green to yellow-green (200-300ms)
+    const subRatio = (ratio - 0.4) / 0.2;
+    return [Math.round(255 * subRatio), 255, Math.round(255 * (1 - subRatio)), 255];
+  } else if (ratio <= 0.8) {
+    // Yellow to orange (300-400ms)
+    const subRatio = (ratio - 0.6) / 0.2;
+    return [255, Math.round(255 * (1 - subRatio)), 0, 255];
+  } else {
+    // Orange to red (400-500ms+)
+    const subRatio = Math.min(1, (ratio - 0.8) / 0.2);
+    return [255, Math.round(128 * (1 - subRatio)), 0, 255];
+  }
+}
 
 module.exports = {
 	name: "test_performance_v2",
@@ -40,7 +77,7 @@ module.exports = {
 			setState("startTime", startTime);
 			// Reset chart data for new test
 			setState("chartData", []);
-			setState("chartX", 0);
+			setState("chartX", CHART_CONFIG.CHART_START_X);
 			setState("lastChartUpdate", startTime);
 		}
 		const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 60000); // Cap at 60 seconds
@@ -202,45 +239,53 @@ module.exports = {
 			// Clear screen with black background (no fullscreen color)
 			await device.clear();
 
-			// Draw performance bar as background color indicator
-			if (avgFrametime > 0) {
-				const barWidth = Math.min(60, Math.round(avgFrametime / 6)); // Scale for 100-350ms range
-				const barColor = avgFrametime > 280 ? [255, 0, 0, 255] :    // Red for slow
-				                 avgFrametime > 220 ? [255, 165, 0, 255] :  // Orange for medium
-				                 avgFrametime > 160 ? [255, 255, 0, 255] :  // Yellow for good
-				                 [0, 255, 0, 255];                          // Green for excellent
-				await device.drawRectangleRgba([2, 45], [barWidth, 4], barColor);
+			// Draw chart axes in dark gray
+			// Y-axis (vertical line)
+			for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y <= CHART_CONFIG.START_Y; y++) {
+				await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
+			}
+			// X-axis (horizontal line)
+			for (let x = CHART_CONFIG.CHART_START_X; x < 64; x++) {
+				await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
+			}
 
-				// Draw line chart showing performance over time
-				const chartData = getState("chartData") || [];
-				const chartX = getState("chartX") || 0;
-				const lastChartUpdate = getState("lastChartUpdate") || now;
+			// Draw detailed performance chart
+			const chartData = getState("chartData") || [];
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
+			const lastChartUpdate = getState("lastChartUpdate") || now;
 
-				// Update chart every 100ms with new data point
-				if (now - lastChartUpdate >= 100 && chartX < 64) {
-					// Calculate Y position based on frametime (start at y=32, decrease by 1px per 100ms)
-					const baseY = 32;
-					const maxFrametime = 1000; // 1 second max for scaling
-					const yOffset = Math.min(32, Math.round((ctx.frametime || 0) / 30)); // Scale to 32 pixels
-					const yPos = Math.max(0, baseY - yOffset);
+			// Update chart every 100ms with new data point
+			if (now - lastChartUpdate >= 100 && chartX < 64) {
+				// Calculate Y position based on frametime with new scaling
+				const frametime = ctx.frametime || 0;
+				const normalizedFrametime = Math.min(CHART_CONFIG.MAX_FRAMETIME,
+					Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime));
 
-					// Add new data point
-					chartData.push({ x: chartX, y: yPos, color: barColor });
-					if (chartData.length > 64) chartData.shift(); // Keep only last 64 points
+				// Scale to 20px range (about 25ms per pixel)
+				const ratio = (normalizedFrametime - CHART_CONFIG.MIN_FRAMETIME) /
+					(CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
+				const yOffset = Math.round(ratio * CHART_CONFIG.RANGE_HEIGHT);
+				const yPos = CHART_CONFIG.START_Y - yOffset;
 
-					setState("chartData", chartData);
-					setState("chartX", chartX + 1);
-					setState("lastChartUpdate", now);
+				// Get color from gradient
+				const chartColor = getPerformanceColor(frametime);
+
+				// Add new data point
+				chartData.push({ x: chartX, y: yPos, color: chartColor });
+				if (chartData.length > 64 - CHART_CONFIG.CHART_START_X) {
+					chartData.shift(); // Keep only points within chart area
 				}
 
-				// Draw the chart line
-				if (chartData.length > 1) {
-					for (let i = 1; i < chartData.length; i++) {
-						const prev = chartData[i - 1];
-						const curr = chartData[i];
-						// Draw line between points
-						await device.drawPixelRgba([curr.x, curr.y], curr.color);
-					}
+				setState("chartData", chartData);
+				setState("chartX", chartX + 1);
+				setState("lastChartUpdate", now);
+			}
+
+			// Draw the chart line
+			if (chartData.length > 1) {
+				for (let i = 0; i < chartData.length; i++) {
+					const point = chartData[i];
+					await device.drawPixelRgba([point.x, point.y], point.color);
 				}
 			}
 
@@ -305,11 +350,11 @@ module.exports = {
 			}
 
 			// Get current chart position to determine if we should continue
-			const chartX = getState("chartX") || 0;
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 
-			// Stop if we've completed all 64 iterations or exceeded time limit
+			// Stop if we've completed all chart positions or exceeded time limit
 			if (chartX >= 64 || now >= loopEndTime) {
-				console.log(`🏁 [LOOP V2] Test completed: ${chartX}/64 iterations, time: ${Math.round((now - startTime) / 1000)}s`);
+				console.log(`🏁 [LOOP V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, time: ${Math.round((now - startTime) / 1000)}s`);
 				setState("loopScheduled", false);
 				return;
 			}
@@ -318,10 +363,11 @@ module.exports = {
 			// The delay is based on the actual rendering complexity
 			const frametimeDelay = ctx.frametime || testInterval;
 			const nextMessageDelay = Math.max(50, Math.min(2000, frametimeDelay * 2)); // 50ms to 2s based on frametime
-			const remainingIterations = 64 - chartX;
 			const remainingDuration = Math.max(0, (loopEndTime - now) / 1000);
 
-			console.log(`🔄 [LOOP V2] Iteration ${chartX}/64, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingIterations} iterations, ${Math.round(remainingDuration)}s`);
+			const chartPoints = chartX - CHART_CONFIG.CHART_START_X;
+			const remainingPoints = 63 - chartPoints;
+			console.log(`🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingPoints} points, ${Math.round(remainingDuration)}s`);
 
 			// Mark loop as scheduled to prevent duplicates
 			setState("loopScheduled", true);
@@ -357,11 +403,11 @@ module.exports = {
 							'192.168.1.159';
 
 						const loopIteration = (getState("_loopIteration") || 0) + 1;
-						const chartX = getState("chartX") || 0;
+						const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 
-						// Safety check: prevent infinite loops (max 64 iterations)
-						if (loopIteration > 70 || chartX >= 64) { // Allow some buffer
-							console.log(`🛑 [LOOP V2] Maximum iterations reached (${chartX}/64), stopping loop`);
+						// Safety check: prevent infinite loops (max chart positions)
+						if (loopIteration > 80 || chartX >= 64) { // Allow some buffer
+							console.log(`🛑 [LOOP V2] Maximum chart positions reached (${chartX - CHART_CONFIG.CHART_START_X}/63), stopping loop`);
 							setState("loopScheduled", false);
 							return;
 						}

@@ -80,12 +80,15 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 - ✅ **Incremental rendering**: Only redraws changed text with background clearing
 - ✅ **Label/value separation**: Labels (50% opacity), values (100% opacity)
-- ✅ **Line chart**: Shows performance trend over time (starts at y=32, updates every 100ms)
-- ✅ **No fullscreen background**: Clean display with performance bar as color indicator
+- ✅ **Detailed performance chart**: Line chart with gradient colors (starts at y=50, 20px range)
+- ✅ **No fullscreen background**: Clean display with chart visualization
 - ✅ **Enhanced "Done" display**: Centered with 50% opacity
-- ✅ **Fixed 64 iterations**: Exactly 64 data points for chart consistency
+- ✅ **Fixed 63 chart points**: Exactly 63 data points for detailed analysis
 - ✅ **Frametime-based delays**: Continuous rendering based on scene complexity
 - ✅ **60-second time cap**: Maximum test duration to prevent runaway loops
+- ✅ **Configurable scaling**: 1-500ms range with ~25ms per pixel resolution
+- ✅ **Color gradient**: Blue→Green→Yellow→Orange→Red performance spectrum
+- ✅ **Chart axes**: Dark gray x/y axes for reference
 
 
 **Loop Mode Features:**
