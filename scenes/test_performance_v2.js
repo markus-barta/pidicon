@@ -200,6 +200,9 @@ module.exports = {
 			const sweepIndex = getState("sweepIndex") || 0;
 			const currentSweepInterval = intervals[sweepIndex];
 
+			// Define chartX for sweep mode
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
+
 			// Debug: Log sweep mode entry
 			console.log(`🎯 [SWEEP] Mode entered: sweepIndex=${sweepIndex}, interval=${currentSweepInterval}ms, chartX=${chartX}, testCompleted=${getState("testCompleted")}`);
 
