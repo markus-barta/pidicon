@@ -70,15 +70,33 @@ module.exports = {
 			setState("loopScheduled", false);
 		}
 
-		// Only set startTime once at the beginning of the test
+		// Clean up variables at start of new test
 		let startTime = getState("startTime");
-		if (!startTime) {
-			startTime = Date.now();
-			setState("startTime", startTime);
-			// Reset chart data for new test
+		if (!startTime || state.resetTest) {
+			// Clear screen first
+			await device.clear();
+
+			// Reset all test variables
+			setState("startTime", Date.now());
 			setState("chartData", []);
 			setState("chartX", CHART_CONFIG.CHART_START_X);
-			setState("lastChartUpdate", startTime);
+			setState("lastChartUpdate", Date.now());
+			setState("frameTimes", []);
+			setState("testCompleted", false);
+			setState("completionTime", null);
+			setState("burstCompleteTime", null);
+			setState("loopStoppedTime", null);
+			setState("loopScheduled", false);
+			setState("testActive", false);
+
+			// Clear any existing loop timer
+			const existingTimer = getState("loopTimer");
+			if (existingTimer) {
+				clearTimeout(existingTimer);
+				setState("loopTimer", null);
+			}
+
+			startTime = getState("startTime");
 		}
 		const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 60000); // Cap at 60 seconds
 
@@ -131,9 +149,12 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
-			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			const timeDisplay = remainingIterations > 0 ?
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				"00:00,000";
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "loop") {
 			// Loop mode: extended continuous testing for long-term performance analysis
@@ -144,9 +165,12 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
-			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			const timeDisplay = remainingIterations > 0 ?
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				"00:00,000";
 			const iteration = getState("_loopIteration") || 0;
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "sweep") {
@@ -167,9 +191,12 @@ module.exports = {
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
 			const estimatedRemainingMs = remainingIterations * avgFrametime;
 			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const remainingMs = Math.max(0, estimatedRemainingMs % 1000);
 			const minutes = Math.floor(remainingSeconds / 60);
 			const seconds = remainingSeconds % 60;
-			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			const timeDisplay = remainingIterations > 0 ?
+				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0')}` :
+				"00:00,000";
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
 		}
@@ -290,11 +317,43 @@ module.exports = {
 				setState("lastChartUpdate", now);
 			}
 
-			// Draw the chart line
-			if (chartData.length > 1) {
-				for (let i = 0; i < chartData.length; i++) {
-					const point = chartData[i];
-					await device.drawPixelRgba([point.x, point.y], point.color);
+			// Draw the chart line connecting points
+			if (chartData.length > 0) {
+				// Draw first point
+				const firstPoint = chartData[0];
+				await device.drawPixelRgba([firstPoint.x, firstPoint.y], firstPoint.color);
+
+				// Draw lines connecting subsequent points
+				if (chartData.length > 1) {
+					for (let i = 1; i < chartData.length; i++) {
+						const prev = chartData[i - 1];
+						const curr = chartData[i];
+
+						// Draw line between consecutive points
+						const dx = Math.abs(curr.x - prev.x);
+						const dy = Math.abs(curr.y - prev.y);
+						const sx = prev.x < curr.x ? 1 : -1;
+						const sy = prev.y < curr.y ? 1 : -1;
+						let err = dx - dy;
+						let x = prev.x;
+						let y = prev.y;
+
+						while (true) {
+							await device.drawPixelRgba([x, y], curr.color);
+
+							if (x === curr.x && y === curr.y) break;
+
+							const e2 = 2 * err;
+							if (e2 > -dy) {
+								err -= dy;
+								x += sx;
+							}
+							if (e2 < dx) {
+								err += dx;
+								y += sy;
+							}
+						}
+					}
 				}
 			}
 
@@ -306,21 +365,27 @@ module.exports = {
 
 				// For non-"Done" text, separate labels from values
 				if (!isDoneText) {
-					// Draw labels (half transparent) and values (fully opaque) separately
-					const labelMatches = line.match(/^([^0-9]+)(.*)$/);
-					if (labelMatches) {
-						const label = labelMatches[1];
-						const value = labelMatches[2];
-
-						// Draw label with 50% opacity (incremental rendering)
-						await drawTextRgbaAlignedWithBg(device, label, [2, 2 + (i * 6)], [255, 255, 255, 127], "left", true);
-
-						// Draw value with 100% opacity (incremental rendering)
-						const labelWidth = await getTextWidth(label);
-						await drawTextRgbaAlignedWithBg(device, value, [2 + labelWidth, 2 + (i * 6)], [255, 255, 255, 255], "left", true);
+					// Special handling for time left line (contains "left")
+					if (line.includes(" left")) {
+						// Time left line - make it gray
+						await drawTextRgbaAlignedWithBg(device, line, [2, 2 + (i * 6)], [128, 128, 128, 255], "left", true);
 					} else {
-						// Fallback for lines that don't match pattern
-						await drawTextRgbaAlignedWithBg(device, line, [2, 2 + (i * 6)], [255, 255, 255, 255], "left", true);
+						// Draw labels (half transparent) and values (fully opaque) separately
+						const labelMatches = line.match(/^([^0-9]+)(.*)$/);
+						if (labelMatches) {
+							const label = labelMatches[1];
+							const value = labelMatches[2];
+
+							// Draw label with 50% opacity (incremental rendering)
+							await drawTextRgbaAlignedWithBg(device, label, [2, 2 + (i * 6)], [255, 255, 255, 127], "left", true);
+
+							// Draw value with 100% opacity (incremental rendering)
+							const labelWidth = await getTextWidth(label);
+							await drawTextRgbaAlignedWithBg(device, value, [2 + labelWidth, 2 + (i * 6)], [255, 255, 255, 255], "left", true);
+						} else {
+							// Fallback for lines that don't match pattern
+							await drawTextRgbaAlignedWithBg(device, line, [2, 2 + (i * 6)], [255, 255, 255, 255], "left", true);
+						}
 					}
 				} else {
 					// "Done" text - center it with 50% opacity
@@ -330,11 +395,24 @@ module.exports = {
 
 			// Draw statistics at bottom with incremental rendering
 			if (frameTimes.length > 0) {
-				const frameCountText = `${frameTimes.length}F MIN:${Math.round(minFrametime)}`;
-				const avgMaxText = `AVG:${Math.round(avgFrametime)} MAX:${Math.round(maxFrametime)}`;
+				// Create stats text with proper formatting
+				const frameCount = frameTimes.length;
+				const minValue = Math.round(minFrametime);
+				const avgValue = Math.round(avgFrametime);
+				const maxValue = Math.round(maxFrametime);
 
-				await drawTextRgbaAlignedWithBg(device, frameCountText, [2, 52], [200, 200, 200, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, avgMaxText, [2, 58], [200, 200, 200, 255], "left", true);
+				// Draw labels in gray, values in white
+				await drawTextRgbaAlignedWithBg(device, " FRAMES ", [2, 52], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, frameCount.toString(), [2 + 8*4, 52], [255, 255, 255, 255], "left", true);
+
+				await drawTextRgbaAlignedWithBg(device, " MIN:", [2, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [2 + 5*4, 58], [255, 255, 255, 255], "left", true);
+
+				await drawTextRgbaAlignedWithBg(device, " AVG:", [2 + 12*4, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [2 + 17*4, 58], [255, 255, 255, 255], "left", true);
+
+				await drawTextRgbaAlignedWithBg(device, " MAX:", [2 + 25*4, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [2 + 30*4, 58], [255, 255, 255, 255], "left", true);
 			}
 		}
 
