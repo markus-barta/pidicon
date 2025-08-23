@@ -83,7 +83,8 @@ function drawLine(device, x1, y1, x2, y2, color) {
 }
 
 async function render(ctx) {
-    const { device, state, env, getState, setState, frametime } = ctx;
+    const { device, state, env, getState, setState } = ctx;
+    const frametime = ctx.frametime;
     const now = Date.now();
 
     // Initialize test state
