@@ -124,6 +124,7 @@ async function render(ctx) {
         setState("completionTime", null);
         setState("testActive", false);
         setState("_loopIteration", 0);
+        setState("axesDrawn", false);
 
         // Clear any existing loop timer
         const existingTimer = getState("loopTimer");
@@ -194,14 +195,15 @@ async function render(ctx) {
 
     // Clear screen and render if shouldRender is true
     if (shouldRender) {
-        await device.clear();
-
-        // Draw chart axes
-        for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
-            await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
-        }
-        for (let x = CHART_CONFIG.CHART_START_X; x < 63; x++) {
-            await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
+        // Draw chart axes once (incremental rendering)
+        if (!getState("axesDrawn")) {
+            for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
+                await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
+            }
+            for (let x = CHART_CONFIG.CHART_START_X; x < 63; x++) {
+                await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
+            }
+            setState("axesDrawn", true);
         }
 
         // Update chart every 100ms
@@ -232,26 +234,25 @@ async function render(ctx) {
             setState("lastChartUpdate", now);
         }
 
-        // Display mode and timing info
+        // Display mode and timing info (clear small bg to prevent smearing)
         const useAdaptiveTiming = state.adaptiveTiming || false;
         const modeDisplay = useAdaptiveTiming ? `${mode.toUpperCase()} FT+` : mode.toUpperCase();
         const intervalDisplay = useAdaptiveTiming ? `${Math.round(frametime || 0)}ms` : `${currentInterval}ms`;
         const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 
-        // Draw text with proper alignment
-        await device.drawTextRgbaAligned(`${modeDisplay}`, [2, 2], [255, 255, 255, 255], "left");
-        await device.drawTextRgbaAligned(`${intervalDisplay}`, [2, 10], [255, 255, 255, 255], "left");
-        await device.drawTextRgbaAligned(`FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left");
+        await drawTextRgbaAlignedWithBg(device, `${modeDisplay}`, [2, 2], [255, 255, 255, 255], "left", true);
+        await drawTextRgbaAlignedWithBg(device, `${intervalDisplay}`, [2, 10], [255, 255, 255, 255], "left", true);
+        await drawTextRgbaAlignedWithBg(device, `FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left", true);
 
-        // Draw statistics at bottom
+        // Draw statistics at bottom (with background clear)
         if (frameTimes.length > 0) {
-            await device.drawTextRgbaAligned(`FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left");
-            await device.drawTextRgbaAligned(`AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left");
+            await drawTextRgbaAlignedWithBg(device, `FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left", true);
+            await drawTextRgbaAlignedWithBg(device, `AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left", true);
         }
 
         // Completion check
         if (chartX >= 64) {
-            await device.drawTextRgbaAligned("COMPLETE", [32, 32], [255, 255, 255, 127], "center");
+            await drawTextRgbaAlignedWithBg(device, "COMPLETE", [32, 32], [255, 255, 255, 127], "center", true);
             // Ensure frame is pushed before exiting
             await device.push("test_performance_v3", ctx.publishOk);
             console.log(`🏁 [PERF V3] Test completed: ${frameTimes.length} samples, avg: ${Math.round(avgFrametime)}ms`);
@@ -320,3 +321,17 @@ async function render(ctx) {
 }
 
 module.exports = { name, render };
+
+// Helper: incremental text with optional small background clear box
+async function drawTextRgbaAlignedWithBg(device, text, pos, color, align = "left", clearBg = false) {
+    const [x, y] = pos;
+    if (clearBg) {
+        const approxWidth = Math.min(64, String(text ?? "").length * 4);
+        await device.drawRectangleRgba(
+            align === "center" ? [Math.max(0, x - Math.floor(approxWidth / 2)), y] : align === "right" ? [Math.max(0, x - approxWidth), y] : [x, y],
+            [approxWidth, 6],
+            [0, 0, 0, 255]
+        );
+    }
+    return await device.drawTextRgbaAligned(text, [x, y], color, align);
+}
