@@ -163,7 +163,7 @@ client.on("message", async (topic, message) => {
       const prev = lastState[deviceIp];
       if (prev && prev.payload) {
         try {
-          const sceneName = prev.sceneName || "power_price";
+          const sceneName = prev.sceneName || "empty";
           const scene = scenes.get(sceneName);
           if (scene) {
             const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
@@ -204,7 +204,7 @@ client.on("message", async (topic, message) => {
     // 4) State update
     if (section === "state" && action === "upd") {
       const sceneName =
-        payload.scene || deviceDefaults.get(deviceIp) || "power_price";
+        payload.scene || deviceDefaults.get(deviceIp) || "empty";
       const scene = scenes.get(sceneName);
       if (!scene) {
         console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
