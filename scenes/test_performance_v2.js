@@ -218,8 +218,10 @@ module.exports = {
 			const sweepChartStart = getState("sweepChartStart") || chartX;
 			const pointsCollected = chartX - sweepChartStart;
 
-			// Debug: Log sweep progress
-			console.log(`🔍 [SWEEP] Progress: points=${pointsCollected}/64, elapsed=${Math.round((now - sweepStartTime)/1000)}s, chartX=${chartX}, sweepChartStart=${sweepChartStart}`);
+			// Debug: Log sweep progress less frequently
+			if (pointsCollected % 10 === 0 || pointsCollected >= 64) {
+				console.log(`🔍 [SWEEP] Progress: ${pointsCollected}/64 points (${Math.round((now - sweepStartTime)/1000)}s elapsed)`);
+			}
 
 			if (pointsCollected >= 64 || (now - sweepStartTime) >= 30000) {
 				console.log(`🎯 [SWEEP] Interval ${sweepIndex + 1} completed: ${pointsCollected} points in ${Math.round((now - sweepStartTime)/1000)}s`);
@@ -327,14 +329,17 @@ module.exports = {
 			// Clear screen with black background (no fullscreen color)
 			await device.clear();
 
-			// Draw chart axes in dark gray
+			// Chart opacity constant (75% = 191/255)
+			const CHART_OPACITY = 191;
+
+			// Draw chart axes in dark gray with opacity
 			// Y-axis (vertical line)
 			for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
-				await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
+				await device.drawPixelRgba([0, y], [...CHART_CONFIG.AXIS_COLOR.slice(0, 3), CHART_OPACITY]);
 			}
 			// X-axis (horizontal line) - don't draw at the very edge
 			for (let x = CHART_CONFIG.CHART_START_X; x < 63; x++) {
-				await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
+				await device.drawPixelRgba([x, CHART_CONFIG.START_Y], [...CHART_CONFIG.AXIS_COLOR.slice(0, 3), CHART_OPACITY]);
 			}
 
 			// Draw detailed performance chart
@@ -355,8 +360,9 @@ module.exports = {
 				const yOffset = Math.round(ratio * CHART_CONFIG.RANGE_HEIGHT);
 				const yPos = CHART_CONFIG.START_Y - 1 - yOffset; // Start 1 pixel higher to avoid axis
 
-				// Get color from gradient
-				const chartColor = getPerformanceColor(frametime);
+				// Get color from gradient and apply opacity
+				const baseColor = getPerformanceColor(frametime);
+				const chartColor = [...baseColor.slice(0, 3), CHART_OPACITY]; // Apply opacity to chart lines
 
 				// Add new data point
 				chartData.push({ x: chartX, y: yPos, color: chartColor });
