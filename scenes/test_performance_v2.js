@@ -407,15 +407,15 @@ module.exports = {
 				// Draw labels in gray, values in white with corrected positioning
 				await drawTextRgbaAlignedWithBg(device, "FRAMES ", [0, 52], [128, 128, 128, 255], "left", true);
 				await drawTextRgbaAlignedWithBg(device, frameCount.toString(), [25, 52], [255, 255, 255, 255], "left", true);
+				
+				await drawTextRgbaAlignedWithBg(device, "AV:", [32, 52], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [44, 52], [255, 255, 255, 255], "left", true);
 
 				await drawTextRgbaAlignedWithBg(device, "LO:", [0, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [16, 58], [255, 255, 255, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [12, 58], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, "AV:", [20, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [35, 58], [255, 255, 255, 255], "left", true);
-
-				await drawTextRgbaAlignedWithBg(device, "HI:", [45, 58], [128, 128, 128, 255], "left", true);
-				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [60, 58], [255, 255, 255, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, "HI:", [32, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [44, 58], [255, 255, 255, 255], "left", true);
 			}
 		}
 
