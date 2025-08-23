@@ -130,8 +130,14 @@ module.exports = {
 		const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
 
 		// Test logic - render continuously for the test duration
-		let shouldRender = now <= loopEndTime; // Keep rendering until loop duration expires
+		// For sweep mode, keep rendering until test is completed
+		let shouldRender = mode === "sweep" ?
+			!getState("testCompleted") :
+			now <= loopEndTime; // Keep rendering until loop duration expires
 		let displayText = "READY";
+
+		// Debug: Log which mode is being processed
+		console.log(`🎮 [MODE] Processing mode: ${mode}, shouldRender: ${shouldRender}, testCompleted: ${getState("testCompleted")}`);
 
 		// Mode-specific display logic
 		if (mode === "burst") {
@@ -194,6 +200,9 @@ module.exports = {
 			const sweepIndex = getState("sweepIndex") || 0;
 			const currentSweepInterval = intervals[sweepIndex];
 
+			// Debug: Log sweep mode entry
+			console.log(`🎯 [SWEEP] Mode entered: sweepIndex=${sweepIndex}, interval=${currentSweepInterval}ms, chartX=${chartX}, testCompleted=${getState("testCompleted")}`);
+
 			// Initialize sweep state if not set
 			if (getState("sweepIndex") === undefined) {
 				setState("sweepIndex", 0);
@@ -206,14 +215,20 @@ module.exports = {
 			const sweepChartStart = getState("sweepChartStart") || chartX;
 			const pointsCollected = chartX - sweepChartStart;
 
+			// Debug: Log sweep progress
+			console.log(`🔍 [SWEEP] Progress: points=${pointsCollected}/64, elapsed=${Math.round((now - sweepStartTime)/1000)}s, chartX=${chartX}, sweepChartStart=${sweepChartStart}`);
+
 			if (pointsCollected >= 64 || (now - sweepStartTime) >= 30000) {
+				console.log(`🎯 [SWEEP] Interval ${sweepIndex + 1} completed: ${pointsCollected} points in ${Math.round((now - sweepStartTime)/1000)}s`);
 				// Move to next interval or finish
 				const nextIndex = sweepIndex + 1;
 				if (nextIndex >= intervals.length) {
-					// Sweep complete
+					// All intervals completed
+					console.log(`🏁 [SWEEP] All intervals completed: ${intervals.length} intervals tested`);
 					setState("testCompleted", true);
 					setState("completionTime", now);
-					displayText = `SWEEP COMPLETE\n${intervals.length} intervals tested\nAVG:${Math.round(avgFrametime)}ms`;
+					setState("loopScheduled", false);
+					return;
 				} else {
 					// Start next interval
 					setState("sweepIndex", nextIndex);
@@ -237,8 +252,8 @@ module.exports = {
 			displayText = `SWEEP ${cycle}/${intervals.length}\n${currentSweepInterval}ms\nFT:${currentFrametime}ms\n${progressPercent}% complete`;
 		}
 
-		// Check if test duration has expired
-		if (now > loopEndTime) {
+		// Check if test duration has expired (but not for sweep mode)
+		if (now > loopEndTime && mode !== "sweep") {
 			// Clear any pending loop timer
 			const loopTimer = getState("loopTimer");
 			if (loopTimer) {
@@ -455,6 +470,9 @@ module.exports = {
 			console.log(`🎯 [PERF TEST V2] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
 		}
 
+		// Final debug log to see what happens at the end of render
+		console.log(`🏁 [RENDER END] mode=${mode}, displayText="${displayText.replace(/\n/g, ' | ')}", shouldRender=${shouldRender}, testCompleted=${getState("testCompleted")}`);
+
 		// Calculate delay based on adaptive timing setting
 		const useAdaptiveTiming = state.adaptiveTiming || false;
 		const frametimeDelay = ctx.frametime || testInterval;
@@ -465,6 +483,9 @@ module.exports = {
 		// Self-sustaining loop for modes with adaptive delays or sweep mode
 		const shouldContinue = (useAdaptiveTiming && shouldRender && !state.stop) ||
 		                      (mode === "sweep" && shouldRender && !state.testCompleted);
+
+		// Debug: Log continuation logic
+		console.log(`🔄 [CONTINUATION] mode=${mode}, useAdaptiveTiming=${useAdaptiveTiming}, shouldRender=${shouldRender}, stop=${state.stop}, testCompleted=${state.testCompleted}, shouldContinue=${shouldContinue}`);
 
 		if (shouldContinue) {
 			// Check if we already have a loop scheduled to prevent duplicates
