@@ -126,21 +126,27 @@ module.exports = {
 			// Continuous mode: steady interval testing - always render for real performance data
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			const currentFrametime = ctx.frametime || 0;
-			const rawRemaining = (loopEndTime - now) / 1000;
-			const remaining = Math.max(0, Math.floor(rawRemaining));
-			const minutes = Math.floor(remaining / 60);
-			const seconds = remaining % 60;
-			const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			// Calculate remaining time based on remaining iterations * average frametime
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
+			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
+			const estimatedRemainingMs = remainingIterations * avgFrametime;
+			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const minutes = Math.floor(remainingSeconds / 60);
+			const seconds = remainingSeconds % 60;
+			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "loop") {
 			// Loop mode: extended continuous testing for long-term performance analysis
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			const currentFrametime = ctx.frametime || 0;
-			const rawRemaining = (loopEndTime - now) / 1000;
-			const remaining = Math.max(0, Math.floor(rawRemaining));
-			const minutes = Math.floor(remaining / 60);
-			const seconds = remaining % 60;
-			const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			// Calculate remaining time based on remaining iterations * average frametime
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
+			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
+			const estimatedRemainingMs = remainingIterations * avgFrametime;
+			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const minutes = Math.floor(remainingSeconds / 60);
+			const seconds = remainingSeconds % 60;
+			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 			const iteration = getState("_loopIteration") || 0;
 			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "sweep") {
@@ -156,11 +162,14 @@ module.exports = {
 
 			const cycle = Math.floor(elapsed / 4000) + 1;
 			const currentFrametime = ctx.frametime || 0;
-			const rawRemaining = (loopEndTime - now) / 1000;
-			const remaining = Math.max(0, Math.floor(rawRemaining));
-			const minutes = Math.floor(remaining / 60);
-			const seconds = remaining % 60;
-			const timeDisplay = rawRemaining > 0.1 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+			// Calculate remaining time based on remaining iterations * average frametime
+			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
+			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
+			const estimatedRemainingMs = remainingIterations * avgFrametime;
+			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			const minutes = Math.floor(remainingSeconds / 60);
+			const seconds = remainingSeconds % 60;
+			const timeDisplay = remainingIterations > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
 		}
@@ -241,11 +250,11 @@ module.exports = {
 
 			// Draw chart axes in dark gray
 			// Y-axis (vertical line)
-			for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y <= CHART_CONFIG.START_Y; y++) {
+			for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
 				await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
 			}
-			// X-axis (horizontal line)
-			for (let x = CHART_CONFIG.CHART_START_X; x < 64; x++) {
+			// X-axis (horizontal line) - don't draw at the very edge
+			for (let x = CHART_CONFIG.CHART_START_X; x < 63; x++) {
 				await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
 			}
 
@@ -265,7 +274,7 @@ module.exports = {
 				const ratio = (normalizedFrametime - CHART_CONFIG.MIN_FRAMETIME) /
 					(CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
 				const yOffset = Math.round(ratio * CHART_CONFIG.RANGE_HEIGHT);
-				const yPos = CHART_CONFIG.START_Y - yOffset;
+				const yPos = CHART_CONFIG.START_Y - 1 - yOffset; // Start 1 pixel higher to avoid axis
 
 				// Get color from gradient
 				const chartColor = getPerformanceColor(frametime);
@@ -363,11 +372,12 @@ module.exports = {
 			// The delay is based on the actual rendering complexity
 			const frametimeDelay = ctx.frametime || testInterval;
 			const nextMessageDelay = Math.max(50, Math.min(2000, frametimeDelay * 2)); // 50ms to 2s based on frametime
-			const remainingDuration = Math.max(0, (loopEndTime - now) / 1000);
 
 			const chartPoints = chartX - CHART_CONFIG.CHART_START_X;
 			const remainingPoints = 63 - chartPoints;
-			console.log(`🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingPoints} points, ${Math.round(remainingDuration)}s`);
+			const estimatedRemainingMs = remainingPoints * avgFrametime;
+			const estimatedSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
+			console.log(`🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingPoints} points, ~${estimatedSeconds}s`);
 
 			// Mark loop as scheduled to prevent duplicates
 			setState("loopScheduled", true);
