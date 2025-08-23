@@ -72,11 +72,16 @@ module.exports = {
 
 		// Clean up variables at start of new test
 		let startTime = getState("startTime");
-		if (!startTime || state.resetTest) {
+
+		// Reset logic: new MQTT messages trigger reset, completed tests stay completed until new message
+		const isNewMessage = !state._isLoopContinuation && !state._isContinuation;
+		const isFreshStart = !startTime || (isNewMessage && !getState("testCompleted"));
+
+		if (isFreshStart) {
 			// Clear screen first
 			await device.clear();
 
-			// Reset all test variables
+			// Reset all test variables for fresh start
 			setState("startTime", Date.now());
 			setState("chartData", []);
 			setState("chartX", CHART_CONFIG.CHART_START_X);
@@ -88,6 +93,7 @@ module.exports = {
 			setState("loopStoppedTime", null);
 			setState("loopScheduled", false);
 			setState("testActive", false);
+			setState("_loopIteration", 0);
 
 			// Clear any existing loop timer
 			const existingTimer = getState("loopTimer");
@@ -96,6 +102,7 @@ module.exports = {
 				setState("loopTimer", null);
 			}
 
+			console.log(`🎯 [TEST V2] Starting fresh test run - isNewMessage: ${isNewMessage}, testCompleted: ${getState("testCompleted")}`);
 			startTime = getState("startTime");
 		}
 		const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 60000); // Cap at 60 seconds
@@ -216,24 +223,20 @@ module.exports = {
 			if (!testCompleted) {
 				setState("testCompleted", true);
 				setState("completionTime", now);
+				console.log(`🏁 [TEST V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, ${frameTimes.length} samples`);
 			}
 
-			// Show "Done" with 50% opacity after a brief delay
-			const completionTime = getState("completionTime") || now;
-			if (now - completionTime > 2000) { // Show "Done" after 2 seconds
-				displayText = "Done";
-			} else {
-				displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
-			}
+			// Show completion message, but don't reset automatically
+			displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
 		}
 
-		// Handle "Done" display for burst mode completion
+		// Handle burst mode completion
 		const burstCompleteTime = getState("burstCompleteTime");
 		if (burstCompleteTime && now - burstCompleteTime > 2000) {
 			displayText = "Done";
 		}
 
-		// Handle "Done" display for stopped loop
+		// Handle stopped loop
 		const loopStoppedTime = getState("loopStoppedTime");
 		if (loopStoppedTime && now - loopStoppedTime > 2000) {
 			displayText = "Done";
@@ -402,16 +405,16 @@ module.exports = {
 				const maxValue = Math.round(maxFrametime);
 
 				// Draw labels in gray, values in white with corrected positioning
-				await drawTextRgbaAlignedWithBg(device, " FRAMES ", [0, 52], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, "FRAMES ", [0, 52], [128, 128, 128, 255], "left", true);
 				await drawTextRgbaAlignedWithBg(device, frameCount.toString(), [25, 52], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " MIN:", [0, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, "LO:", [0, 58], [128, 128, 128, 255], "left", true);
 				await drawTextRgbaAlignedWithBg(device, minValue.toString(), [16, 58], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " AVG:", [20, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, "AV:", [20, 58], [128, 128, 128, 255], "left", true);
 				await drawTextRgbaAlignedWithBg(device, avgValue.toString(), [35, 58], [255, 255, 255, 255], "left", true);
 
-				await drawTextRgbaAlignedWithBg(device, " MAX:", [45, 58], [128, 128, 128, 255], "left", true);
+				await drawTextRgbaAlignedWithBg(device, "HI:", [45, 58], [128, 128, 128, 255], "left", true);
 				await drawTextRgbaAlignedWithBg(device, maxValue.toString(), [60, 58], [255, 255, 255, 255], "left", true);
 			}
 		}

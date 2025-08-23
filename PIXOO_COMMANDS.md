@@ -90,6 +90,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **Axis-aware chart**: Chart starts 1 pixel above axes to avoid overlap
 - ✅ **Connected chart lines**: Line chart connects data points instead of individual dots
 - ✅ **Test re-run capability**: Automatic cleanup allows immediate test re-runs
+- ✅ **Multiple consecutive tests**: Send multiple MQTT messages to run tests consecutively
 - ✅ **Enhanced statistics**: "FRAMES" with gray labels, values in white
 - ✅ **Gray time display**: Time left shown in gray for better visual hierarchy
 - ✅ **Precise millisecond display**: Milliseconds rounded to 3 digits maximum
