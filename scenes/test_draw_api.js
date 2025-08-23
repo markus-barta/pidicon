@@ -45,7 +45,7 @@ async function testPixels(device) {
         }
     }
 
-    await device.drawTextRgba("PIXEL TEST", [16, 30], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("PIXEL TEST", [16, 30], [255, 255, 255, 255], "center");
 }
 
 async function testRectangles(device) {
@@ -63,7 +63,7 @@ async function testRectangles(device) {
     await device.drawRectangleRgba([45, 25], [15, 15], [255, 0, 255, 255]);
     await device.drawRectangleRgba([45, 45], [15, 15], [0, 255, 255, 255]);
 
-    await device.drawTextRgba("RECTANGLES", [16, 55], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("RECTANGLES", [16, 55], [255, 255, 255, 255], "center");
 }
 
 async function testLines(device) {
@@ -86,7 +86,7 @@ async function testLines(device) {
     await device.drawLineRgba([5, 5], [58, 58], [255, 0, 0, 255]);    // Red diagonal
     await device.drawLineRgba([58, 5], [5, 58], [0, 255, 0, 255]);    // Green diagonal
 
-    await device.drawTextRgba("LINES", [32, 30], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("LINES", [32, 30], [255, 255, 255, 255], "center");
 }
 
 async function testText(device) {
@@ -94,20 +94,20 @@ async function testText(device) {
     console.log(`📝 [TEXT TEST] Drawing text`);
 
     // Test different alignments
-    await device.drawTextRgba("LEFT", [0, 5], [255, 255, 255, 255], "left");
-    await device.drawTextRgba("CENTER", [32, 15], [255, 255, 255, 255], "center");
-    await device.drawTextRgba("RIGHT", [63, 25], [255, 255, 255, 255], "right");
+    await device.drawTextRgbaAligned("LEFT", [0, 5], [255, 255, 255, 255], "left");
+    await device.drawTextRgbaAligned("CENTER", [32, 15], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("RIGHT", [63, 25], [255, 255, 255, 255], "right");
 
     // Test different colors
-    await device.drawTextRgba("RED", [5, 35], [255, 0, 0, 255], "left");
-    await device.drawTextRgba("GREEN", [5, 43], [0, 255, 0, 255], "left");
-    await device.drawTextRgba("BLUE", [5, 51], [0, 0, 255, 255], "left");
+    await device.drawTextRgbaAligned("RED", [5, 35], [255, 0, 0, 255], "left");
+    await device.drawTextRgbaAligned("GREEN", [5, 43], [0, 255, 0, 255], "left");
+    await device.drawTextRgbaAligned("BLUE", [5, 51], [0, 0, 255, 255], "left");
 
     // Test alpha
-    await device.drawTextRgba("50% ALPHA", [20, 35], [255, 255, 255, 127], "center");
-    await device.drawTextRgba("100% ALPHA", [20, 43], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("50% ALPHA", [20, 35], [255, 255, 255, 127], "center");
+    await device.drawTextRgbaAligned("100% ALPHA", [20, 43], [255, 255, 255, 255], "center");
 
-    await device.drawTextRgba("TEXT TEST", [16, 59], [255, 255, 0, 255], "center");
+    await device.drawTextRgbaAligned("TEXT TEST", [16, 59], [255, 255, 0, 255], "center");
 }
 
 async function testGradients(device) {
@@ -146,7 +146,7 @@ async function testGradients(device) {
         }
     }
 
-    await device.drawTextRgba("GRADIENTS", [16, 2], [0, 0, 0, 255], "center");
+    await device.drawTextRgbaAligned("GRADIENTS", [16, 2], [0, 0, 0, 255], "center");
 }
 
 async function testAll(device) {
@@ -159,8 +159,8 @@ async function testAll(device) {
     await device.drawLineRgba([38, 2], [50, 16], [0, 0, 255, 255]);          // Blue line
 
     // Section 2: Text rendering (top-right)
-    await device.drawTextRgba("API", [35, 5], [255, 255, 255, 255], "left");
-    await device.drawTextRgba("TEST", [35, 13], [255, 255, 0, 255], "left");
+    await device.drawTextRgbaAligned("API", [35, 5], [255, 255, 255, 255], "left");
+    await device.drawTextRgbaAligned("TEST", [35, 13], [255, 255, 0, 255], "left");
 
     // Section 3: Pixel patterns (middle)
     for (let x = 2; x < 30; x += 3) {
@@ -182,7 +182,7 @@ async function testAll(device) {
     await device.fillRectangleRgba([45, 52], [10, 10], [255, 255, 255, 64]);   // 25% white
     await device.fillRectangleRgba([57, 52], [5, 5], [255, 0, 0, 127]);        // 50% red
 
-    await device.drawTextRgba("FULL API TEST", [16, 59], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("FULL API TEST", [16, 59], [255, 255, 255, 255], "center");
 }
 
 module.exports = { name, render };
