@@ -86,6 +86,8 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **Fixed 63 chart points**: Exactly 63 data points for detailed analysis
 - ✅ **Frametime-based delays**: Continuous rendering based on scene complexity
 - ✅ **60-second time cap**: Maximum test duration to prevent runaway loops
+- ✅ **Accurate time estimation**: Time left calculated from remaining iterations × average frametime
+- ✅ **Axis-aware chart**: Chart starts 1 pixel above axes to avoid overlap
 - ✅ **Configurable scaling**: 1-500ms range with ~25ms per pixel resolution
 - ✅ **Color gradient**: Blue→Green→Yellow→Orange→Red performance spectrum
 - ✅ **Chart axes**: Dark gray x/y axes for reference
