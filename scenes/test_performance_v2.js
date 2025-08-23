@@ -162,7 +162,7 @@ module.exports = {
 			const timeDisplay = remainingIterations > 0 ?
 				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
-			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
+			displayText = `CONTINUOUS ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "loop") {
 			// Loop mode: extended continuous testing for long-term performance analysis
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
@@ -179,7 +179,7 @@ module.exports = {
 				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
 			const iteration = getState("_loopIteration") || 0;
-			displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
+			displayText = `AUTO LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "sweep") {
 			// Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
 			const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
@@ -227,7 +227,9 @@ module.exports = {
 			}
 
 			// Show completion message, but don't reset automatically
-			displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
+			const modeName = mode === "continuous" ? "CONTINUOUS" :
+			                mode === "loop" ? "AUTO LOOP" : mode.toUpperCase();
+			displayText = `${modeName} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
 		}
 
 		// Handle burst mode completion
@@ -259,7 +261,7 @@ module.exports = {
 			setState("loopScheduled", false);
 			setState("loopStoppedTime", now);
 			shouldRender = false;
-			displayText = "LOOP STOPPED\nBY USER";
+			displayText = "AUTO LOOP STOPPED\nBY USER";
 		}
 
 		// Update state for next render

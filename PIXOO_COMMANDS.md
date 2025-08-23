@@ -64,16 +64,22 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ### Performance Test V2 Commands (New Incremental Rendering)
 ```bash
-# Default performance test v2 (with incremental rendering and moving pixel chart)
+# Default performance test v2 (continuous mode with incremental rendering and chart)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2"}'
 
-# Performance test v2 with custom interval
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","interval":200}'
+# Performance test v2 in continuous mode with custom interval
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"continuous","interval":200}'
 
-# Performance test v2 in loop mode (64 iterations, 60s max, frametime-based delays)
+# Performance test v2 in auto loop mode (self-sustaining, 64 iterations, 60s max)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"loop","interval":250}'
 
-# Stop performance test v2 loop
+# Performance test v2 in burst mode (rapid-fire testing for 10 seconds)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"burst","interval":120}'
+
+# Performance test v2 in sweep mode (auto-test multiple intervals: 100-350ms)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"sweep"}'
+
+# Stop any running performance test v2
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","stop":true}'
 
 **Performance Test V2 Features:**
@@ -100,11 +106,30 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **Chart axes**: Dark gray x/y axes for reference
 
 
-**Loop Mode Features:**
-- ✅ **Self-sustaining**: Automatically schedules next iteration
-- ✅ **Smart timing**: Adjusts message frequency based on test interval
+**Test Mode Features:**
+
+**Continuous Mode:**
+- ✅ **Steady testing**: Fixed interval performance analysis
+- ✅ **Real-time display**: Shows CONTINUOUS, frametime, FPS, and countdown
+- ✅ **Visual chart**: 64-point performance chart with color gradient
+- ✅ **64 iterations**: Fixed test duration with detailed analysis
+
+**Auto Loop Mode:**
+- ✅ **Self-sustaining**: Automatically schedules next iteration via MQTT
+- ✅ **Frametime-based delays**: Loop timing adapts to scene complexity
+- ✅ **60-second cap**: Maximum test duration to prevent runaway loops
 - ✅ **Error resilient**: Handles MQTT connection issues gracefully
 - ✅ **Stoppable**: Can be stopped anytime with `stop: true`
+
+**Burst Mode:**
+- ✅ **Rapid-fire testing**: 10-second high-frequency stress test
+- ✅ **Progress tracking**: Real-time progress display (2s/10s)
+- ✅ **Performance stress**: Tests device limits with minimal delays
+
+**Sweep Mode:**
+- ✅ **Comprehensive testing**: Auto-tests 9 intervals (100-350ms)
+- ✅ **3-second cycles**: Each interval tested for 3 seconds
+- ✅ **Full range analysis**: Complete performance overview
 
 ## 📋 Parameter Explanations
 
@@ -120,31 +145,33 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ### Test Modes Explained
 
-#### **Continuous Mode**
+#### **Continuous Mode** (Default)
 - **Purpose**: Steady performance testing at a fixed interval
-- **Duration**: 30 seconds (default)
-- **Display**: Shows FPS, average frametime, countdown timer
-- **Use Case**: Test specific intervals to find optimal performance
+- **Duration**: Until 64 chart points collected (typically ~30-60 seconds)
+- **Display**: Shows "CONTINUOUS [interval]ms", frametime, FPS, and countdown
+- **Chart**: 64-point performance chart with color gradient
+- **Use Case**: Detailed analysis of specific intervals with visual feedback
 
-#### **Burst Mode**
-- **Purpose**: Rapid-fire testing for stress testing
-- **Duration**: 10 seconds of continuous updates
-- **Display**: Shows progress `2s/10s`, rapid FPS updates
-- **Use Case**: Test device limits with minimal delays
+#### **Auto Loop Mode** (Self-Sustaining)
+- **Purpose**: Extended testing with automatic continuation via MQTT
+- **Duration**: Until 64 chart points collected or 60 seconds max
+- **Display**: Shows "AUTO LOOP [interval]ms", frametime, FPS, and countdown
+- **Self-sustaining**: Automatically schedules next iteration based on frametime
+- **Smart timing**: Loop delay adapts to scene complexity for continuous rendering
+- **Use Case**: Long-term performance analysis with minimal user intervention
 
-#### **Sweep Mode**
+#### **Burst Mode** (Stress Testing)
+- **Purpose**: Rapid-fire testing to stress test device limits
+- **Duration**: Fixed 10 seconds of continuous updates
+- **Display**: Shows "BURST [interval]ms", progress "2s/10s", rapid FPS updates
+- **Use Case**: Test device performance under high-frequency conditions
+
+#### **Sweep Mode** (Comprehensive Testing)
 - **Purpose**: Automatic testing of multiple intervals
 - **Duration**: ~27 seconds (9 intervals × 3 seconds each)
-- **Display**: Shows current cycle and interval being tested
-- **Use Case**: Get overview of performance across all intervals
-
-#### **Loop Mode** (Self-Sustaining)
-- **Purpose**: Extended testing for long-term analysis with automatic continuation
-- **Duration**: Configurable (default: 5 minutes)
-- **Display**: Shows countdown in minutes:seconds format
-- **Self-sustaining**: Automatically sends MQTT messages to continue the test
-- **Smart timing**: Message frequency adapts to test interval (1-5 seconds between messages)
-- **Use Case**: Long-term performance monitoring and stability testing
+- **Display**: Shows "SWEEP CYCLE:[cycle]", current interval, frametime
+- **Intervals**: 100, 130, 160, 190, 220, 250, 280, 310, 350ms
+- **Use Case**: Get complete performance overview across all realistic intervals
 
 ### Interval Recommendations
 
