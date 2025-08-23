@@ -79,6 +79,38 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 # Performance test v2 in sweep mode (auto-test multiple intervals: 100-350ms)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"sweep"}'
 
+# Performance test v2 with ADAPTIVE TIMING (frametime + 10ms for optimal delays)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","adaptiveTiming":true}'
+
+# Performance test v2 in continuous mode with adaptive timing
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"continuous","adaptiveTiming":true}'
+
+# Performance test v2 in auto loop mode with adaptive timing (optimal continuous rendering)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"loop","adaptiveTiming":true}'
+
+### **Practical Examples:**
+
+**🎯 For Performance Optimization (Use Adaptive):**
+```bash
+# Optimal timing - adapts to your scene's actual performance
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","adaptiveTiming":true}'
+# Result: Each frame waits exactly frametime + 10ms = optimal refresh rate
+```
+
+**📊 For Comparative Testing (Use Fixed):**
+```bash
+# Fixed timing - compare exact same conditions
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","interval":200}'
+# Result: Always waits exactly 200ms between frames for consistent comparison
+```
+
+**⚡ For Device Stress Testing (Use Fixed Low Intervals):**
+```bash
+# Fixed rapid timing - stress test device limits
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"burst","interval":50}'
+# Result: Forces 50ms intervals regardless of frametime for stress testing
+```
+
 # Stop any running performance test v2
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","stop":true}'
 
@@ -90,7 +122,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **No fullscreen background**: Clean display with chart visualization
 - ✅ **Enhanced "Done" display**: Centered with 50% opacity
 - ✅ **Fixed 63 chart points**: Exactly 63 data points for detailed analysis
-- ✅ **Frametime-based delays**: Continuous rendering based on scene complexity
+- ✅ **Adaptive timing**: Use frametime + 10ms for optimal rendering delays
 - ✅ **60-second time cap**: Maximum test duration to prevent runaway loops
 - ✅ **Accurate time estimation**: Time left with milliseconds (mm:ss,sss format)
 - ✅ **Axis-aware chart**: Chart starts 1 pixel above axes to avoid overlap
@@ -104,19 +136,23 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - ✅ **Configurable scaling**: 1-500ms range with ~25ms per pixel resolution
 - ✅ **Color gradient**: Blue→Green→Yellow→Orange→Red performance spectrum
 - ✅ **Chart axes**: Dark gray x/y axes for reference
+- ✅ **Fixed sweep mode**: Now properly tests each interval for complete charts
 
 
 **Test Mode Features:**
 
 **Continuous Mode:**
-- ✅ **Steady testing**: Fixed interval performance analysis
+- ✅ **Steady testing**: Fixed or adaptive interval performance analysis
+- ✅ **Adaptive timing**: Use `adaptiveTiming: true` for frametime-based delays
 - ✅ **Real-time display**: Shows CONTINUOUS, frametime, FPS, and countdown
 - ✅ **Visual chart**: 64-point performance chart with color gradient
 - ✅ **64 iterations**: Fixed test duration with detailed analysis
+- ✅ **Smart delays**: Frametime + 10ms buffer for optimal rendering
 
 **Auto Loop Mode:**
 - ✅ **Self-sustaining**: Automatically schedules next iteration via MQTT
 - ✅ **Frametime-based delays**: Loop timing adapts to scene complexity
+- ✅ **Adaptive timing**: Use `adaptiveTiming: true` for frametime-based delays
 - ✅ **60-second cap**: Maximum test duration to prevent runaway loops
 - ✅ **Error resilient**: Handles MQTT connection issues gracefully
 - ✅ **Stoppable**: Can be stopped anytime with `stop: true`
@@ -139,8 +175,40 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 |-----------|------|---------|-------------|
 | `scene` | string | (required) | Must be `"test_performance"` |
 | `mode` | string | `"continuous"` | Test mode: `"continuous"`, `"burst"`, `"sweep"`, `"loop"` |
-| `interval` | number | `150` | Target update interval in milliseconds (100-350ms recommended) |
+| `interval` | number | `150` | Initial timing for adaptive mode, or fixed interval for non-adaptive mode (100-350ms recommended) |
+| `adaptiveTiming` | boolean | `false` | Use frametime + 10ms for optimal delays instead of fixed interval |
 | `duration` | number | `30000` (30s) | Test duration in milliseconds (only for loop mode) |
+
+### Timing Strategy Philosophy
+
+**When to Use Fixed Intervals (`adaptiveTiming: false`):**
+- **Comparative testing**: Want to compare exact same timing across multiple runs
+- **Device limit testing**: Need specific intervals to find device capabilities
+- **Burst mode**: Rapid-fire testing with controlled timing patterns
+- **Consistency**: Need predictable, repeatable timing for scientific comparison
+
+**When to Use Adaptive Timing (`adaptiveTiming: true`):**
+- **Optimal performance**: Want best possible rendering speed for your scene
+- **Production usage**: Real-world performance optimization
+- **Dynamic content**: Scenes with varying complexity over time
+- **Resource efficiency**: Minimize wasted time between frames
+
+**The interval parameter serves as:**
+1. **Initial timing** for adaptive mode (first frame timing)
+2. **Fixed timing** when adaptive mode is disabled
+3. **Fallback timing** when frametime data isn't available
+4. **Reference point** for performance comparisons
+
+### **Timing Strategy Quick Reference**
+
+| Scenario | Use Case | Recommended Setting | Why |
+|----------|----------|-------------------|-----|
+| **🎯 Optimal Performance** | Production scenes, real-time displays | `adaptiveTiming: true` | Adapts to actual scene complexity for best refresh rate |
+| **📊 Scientific Comparison** | A/B testing, benchmark comparisons | `adaptiveTiming: false` + fixed `interval` | Identical conditions for fair comparison |
+| **⚡ Device Stress Testing** | Finding device limits, capacity testing | `adaptiveTiming: false` + low `interval` | Forces specific timing patterns for stress testing |
+| **🔄 Burst Mode** | Rapid-fire performance analysis | `adaptiveTiming: false` + low `interval` | Controlled rapid timing for short bursts |
+| **📈 Sweep Mode** | Comprehensive interval analysis | `adaptiveTiming: false` (default) | Tests multiple fixed intervals systematically |
+| **🎮 Interactive Testing** | Manual testing, debugging | Either approach | Depends on what you're trying to achieve |
 | `stop` | boolean | `false` | Stop a running loop mode test early |
 
 ### Test Modes Explained

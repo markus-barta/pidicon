@@ -151,6 +151,7 @@ module.exports = {
 			// Continuous mode: steady interval testing - always render for real performance data
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			const currentFrametime = ctx.frametime || 0;
+
 			// Calculate remaining time based on remaining iterations * average frametime
 			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
@@ -162,11 +163,15 @@ module.exports = {
 			const timeDisplay = remainingIterations > 0 ?
 				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
-			displayText = `CONTINUOUS ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
+
+			// Show frametime-based info if using adaptive timing
+			const adaptiveInfo = state.adaptiveTiming ? "FT+" : "";
+			displayText = `CONTINUOUS ${currentInterval}ms${adaptiveInfo}\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 		} else if (mode === "loop") {
 			// Loop mode: extended continuous testing for long-term performance analysis
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 			const currentFrametime = ctx.frametime || 0;
+
 			// Calculate remaining time based on remaining iterations * average frametime
 			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
@@ -178,34 +183,58 @@ module.exports = {
 			const timeDisplay = remainingIterations > 0 ?
 				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
 				"00:00,000";
-			const iteration = getState("_loopIteration") || 0;
-			displayText = `AUTO LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
-		} else if (mode === "sweep") {
-			// Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
-			const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
-			const sweepIndex = Math.floor(elapsed / 3000) % intervals.length; // 3s per interval
-			const sweepInterval = intervals[sweepIndex];
 
-			// Always render, but update the interval for the sweep
-			if (shouldRender) {
-				setState("currentInterval", sweepInterval);
+			// Show frametime-based info if using adaptive timing
+			const adaptiveInfo = state.adaptiveTiming ? "FT+" : "";
+			const iteration = getState("_loopIteration") || 0;
+			displayText = `AUTO LOOP ${currentInterval}ms${adaptiveInfo}\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
+		} else if (mode === "sweep") {
+			// Sweep mode: test each interval for a complete 64-point chart
+			const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
+			const sweepIndex = getState("sweepIndex") || 0;
+			const currentSweepInterval = intervals[sweepIndex];
+
+			// Initialize sweep state if not set
+			if (getState("sweepIndex") === undefined) {
+				setState("sweepIndex", 0);
+				setState("sweepStartTime", now);
+				setState("sweepChartStart", chartX);
 			}
 
-			const cycle = Math.floor(elapsed / 4000) + 1;
+			// Check if we should move to next interval (after 64 points or 30 seconds)
+			const sweepStartTime = getState("sweepStartTime") || now;
+			const sweepChartStart = getState("sweepChartStart") || chartX;
+			const pointsCollected = chartX - sweepChartStart;
+
+			if (pointsCollected >= 64 || (now - sweepStartTime) >= 30000) {
+				// Move to next interval or finish
+				const nextIndex = sweepIndex + 1;
+				if (nextIndex >= intervals.length) {
+					// Sweep complete
+					setState("testCompleted", true);
+					setState("completionTime", now);
+					displayText = `SWEEP COMPLETE\n${intervals.length} intervals tested\nAVG:${Math.round(avgFrametime)}ms`;
+				} else {
+					// Start next interval
+					setState("sweepIndex", nextIndex);
+					setState("sweepStartTime", now);
+					setState("sweepChartStart", chartX);
+					console.log(`🎯 [SWEEP] Moving to interval ${intervals[nextIndex]}ms (${nextIndex + 1}/${intervals.length})`);
+				}
+			}
+
+			// Update interval for current sweep
+			if (shouldRender) {
+				setState("currentInterval", currentSweepInterval);
+			}
+
+			const cycle = sweepIndex + 1;
 			const currentFrametime = ctx.frametime || 0;
-			// Calculate remaining time based on remaining iterations * average frametime
-			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
-			const remainingIterations = Math.max(0, 63 - (chartX - CHART_CONFIG.CHART_START_X));
-			const estimatedRemainingMs = remainingIterations * avgFrametime;
-			const remainingSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
-			const remainingMs = Math.max(0, Math.round(estimatedRemainingMs % 1000)); // Round to 3 digits
-			const minutes = Math.floor(remainingSeconds / 60);
-			const seconds = remainingSeconds % 60;
-			const timeDisplay = remainingIterations > 0 ?
-				`${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')},${remainingMs.toString().padStart(3,'0').slice(0,3)}` :
-				"00:00,000";
 			const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-			displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
+
+			// Calculate progress within current interval
+			const progressPercent = Math.min(100, Math.round((pointsCollected / 64) * 100));
+			displayText = `SWEEP ${cycle}/${intervals.length}\n${currentSweepInterval}ms\nFT:${currentFrametime}ms\n${progressPercent}% complete`;
 		}
 
 		// Check if test duration has expired
@@ -426,8 +455,15 @@ module.exports = {
 			console.log(`🎯 [PERF TEST V2] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
 		}
 
-		// Self-sustaining loop for continuous testing with frametime-based delays
-		if (mode === "loop" && shouldRender && !state.stop) {
+		// Calculate delay based on adaptive timing setting
+		const useAdaptiveTiming = state.adaptiveTiming || false;
+		const frametimeDelay = ctx.frametime || testInterval;
+		const adaptiveDelay = Math.max(50, Math.min(2000, frametimeDelay + 10)); // frametime + 10ms buffer
+		const fixedDelay = testInterval; // Use the interval parameter as fixed delay
+		const nextMessageDelay = useAdaptiveTiming ? adaptiveDelay : fixedDelay;
+
+		// Self-sustaining loop for continuous and loop modes with adaptive delays
+		if (((mode === "loop" || mode === "continuous") && useAdaptiveTiming) && shouldRender && !state.stop) {
 			// Check if we already have a loop scheduled to prevent duplicates
 			const isContinuation = state._isLoopContinuation;
 			const loopAlreadyScheduled = getState("loopScheduled");
@@ -451,16 +487,15 @@ module.exports = {
 				return;
 			}
 
-			// Use frametime-based delay for continuous rendering
-			// The delay is based on the actual rendering complexity
-			const frametimeDelay = ctx.frametime || testInterval;
-			const nextMessageDelay = Math.max(50, Math.min(2000, frametimeDelay * 2)); // 50ms to 2s based on frametime
+			// Use adaptive delay for continuous rendering
+			// The delay adapts to the actual rendering complexity for optimal performance
 
 			const chartPoints = chartX - CHART_CONFIG.CHART_START_X;
 			const remainingPoints = 63 - chartPoints;
 			const estimatedRemainingMs = remainingPoints * avgFrametime;
 			const estimatedSeconds = Math.max(0, Math.floor(estimatedRemainingMs / 1000));
-			console.log(`🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingPoints} points, ~${estimatedSeconds}s`);
+			const delayType = useAdaptiveTiming ? "adaptive" : "fixed";
+			console.log(`🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms (${delayType}), remaining: ${remainingPoints} points, ~${estimatedSeconds}s`);
 
 			// Mark loop as scheduled to prevent duplicates
 			setState("loopScheduled", true);
