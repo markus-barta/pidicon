@@ -95,7 +95,7 @@ async function render(ctx) {
         setState("frameTimes", []);
         setState("lastChartUpdate", now);
         console.log(`🎯 [PERF V3] Test started at ${new Date(now).toLocaleTimeString()}`);
-    console.log(`🔍 [PERF V3] Frametime available: ${frametime !== undefined}, value: ${frametime || 'undefined'}, type: ${typeof frametime}`);
+        console.log(`🔍 [PERF V3] Frametime available: ${frametime !== undefined}, value: ${frametime || 'undefined'}, type: ${typeof frametime}`);
     }
 
     // Update performance tracking
