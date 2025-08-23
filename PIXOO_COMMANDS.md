@@ -56,6 +56,28 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 # Stop loop mode (sends stop signal)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","stop":true}'
+
+### Performance Test V2 Commands (New Incremental Rendering)
+```bash
+# Default performance test v2 (with incremental rendering and moving pixel chart)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2"}'
+
+# Performance test v2 with custom interval
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","interval":200}'
+
+# Performance test v2 in loop mode (5 minutes)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"loop","interval":250,"duration":300000}'
+
+# Stop performance test v2 loop
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","stop":true}'
+```
+
+**Performance Test V2 Features:**
+- ✅ **Incremental rendering**: Only redraws changed text with background clearing
+- ✅ **Label/value separation**: Labels (50% opacity), values (100% opacity)
+- ✅ **Moving pixel chart**: Shows performance trend at y=16
+- ✅ **No fullscreen background**: Clean display with performance bar as color indicator
+- ✅ **Enhanced "Done" display**: Centered with 50% opacity
 ```
 
 **Loop Mode Features:**
@@ -212,6 +234,9 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 # Set power_price as default
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/scene/set -m '{"name":"power_price"}'
+
+# Set performance test v2 as default
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/scene/set -m '{"name":"test_performance_v2"}'
 ```
 
 ## 📝 Usage Instructions
