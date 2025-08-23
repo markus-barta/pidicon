@@ -3,6 +3,7 @@
 ## 🎯 Available Scenes
 
 ### Core Scenes
+
 - **`empty`** - Black screen (device "off" state)
 - **`fill`** - Fill screen with specified color
 - **`test_performance_v3`** - Performance testing with adaptive timing
@@ -41,17 +42,21 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ## 📋 Parameters
 
 ### Fill Scene
+
 - **`color`** (optional): RGBA array `[R,G,B,A]` (0-255), default `[255,0,0,255]` (red)
 
 ### Performance Test V3
+
 - **`adaptiveTiming`** (optional): `true` for frametime-based delays, `false` for fixed interval
 - **`interval`** (optional): Fixed interval in ms (100-350 recommended)
 - **`stop`** (optional): `true` to stop running tests
 
 ### Draw API Test
+
 - **`test`** (optional): `"pixels"`, `"rectangles"`, `"lines"`, `"text"`, `"gradients"`, or `"all"` (default)
 
 ## 🎨 Color Reference
+
 - **Red**: `[255,0,0,255]`
 - **Green**: `[0,255,0,255]`
 - **Blue**: `[0,0,255,255]`

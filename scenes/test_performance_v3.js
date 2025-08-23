@@ -252,6 +252,8 @@ async function render(ctx) {
         // Completion check
         if (chartX >= 64) {
             await device.drawTextRgbaAligned("COMPLETE", [32, 32], [255, 255, 255, 127], "center");
+            // Ensure frame is pushed before exiting
+            await device.push("test_performance_v3", ctx.publishOk);
             console.log(`🏁 [PERF V3] Test completed: ${frameTimes.length} samples, avg: ${Math.round(avgFrametime)}ms`);
             setState("testCompleted", true);
             return;
@@ -281,7 +283,9 @@ async function render(ctx) {
                             _loopIteration: (getState("_loopIteration") || 0) + 1,
                             _isLoopContinuation: true
                         });
-                        mqttClient.publish(`pixoo/${process.env.PIXOO_DEVICE_TARGETS || '192.168.1.159'}/state/upd`, payload);
+                        // Publish to the current device host (matches daemon topic format)
+                        const targetHost = (ctx && ctx.env && ctx.env.host) ? ctx.env.host : (process.env.PIXOO_DEVICES ? process.env.PIXOO_DEVICES.split(';')[0].trim() : '192.168.1.159');
+                        mqttClient.publish(`pixoo/${targetHost}/state/upd`, payload, { qos: 1 });
                         mqttClient.end();
                     });
 
@@ -292,6 +296,9 @@ async function render(ctx) {
                 }
             }, nextMessageDelay);
         }
+
+        // Push frame after drawing when rendering
+        await device.push("test_performance_v3", ctx.publishOk);
     }
 
     // Update render timestamp
