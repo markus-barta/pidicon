@@ -38,10 +38,12 @@ module.exports = {
 		if (!startTime) {
 			startTime = Date.now();
 			setState("startTime", startTime);
-			// Reset chart position for new test
-			setState("chartPosition", 0);
+			// Reset chart data for new test
+			setState("chartData", []);
+			setState("chartX", 0);
+			setState("lastChartUpdate", startTime);
 		}
-		const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 30000);
+		const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 60000); // Cap at 60 seconds
 
 		// Performance tracking
 		const frameTimes = getState("frameTimes") || [];
@@ -209,11 +211,36 @@ module.exports = {
 				                 [0, 255, 0, 255];                          // Green for excellent
 				await device.drawRectangleRgba([2, 45], [barWidth, 4], barColor);
 
-				// Draw moving pixel chart above the bar
-				const chartPosition = getState("chartPosition") || 0;
-				if (chartPosition < 64) { // Don't go beyond screen width
-					await device.drawPixelRgba([chartPosition, 16], barColor);
-					setState("chartPosition", chartPosition + 1);
+				// Draw line chart showing performance over time
+				const chartData = getState("chartData") || [];
+				const chartX = getState("chartX") || 0;
+				const lastChartUpdate = getState("lastChartUpdate") || now;
+
+				// Update chart every 100ms with new data point
+				if (now - lastChartUpdate >= 100 && chartX < 64) {
+					// Calculate Y position based on frametime (start at y=32, decrease by 1px per 100ms)
+					const baseY = 32;
+					const maxFrametime = 1000; // 1 second max for scaling
+					const yOffset = Math.min(32, Math.round((ctx.frametime || 0) / 30)); // Scale to 32 pixels
+					const yPos = Math.max(0, baseY - yOffset);
+
+					// Add new data point
+					chartData.push({ x: chartX, y: yPos, color: barColor });
+					if (chartData.length > 64) chartData.shift(); // Keep only last 64 points
+
+					setState("chartData", chartData);
+					setState("chartX", chartX + 1);
+					setState("lastChartUpdate", now);
+				}
+
+				// Draw the chart line
+				if (chartData.length > 1) {
+					for (let i = 1; i < chartData.length; i++) {
+						const prev = chartData[i - 1];
+						const curr = chartData[i];
+						// Draw line between points
+						await device.drawPixelRgba([curr.x, curr.y], curr.color);
+					}
 				}
 			}
 
@@ -262,7 +289,7 @@ module.exports = {
 			console.log(`🎯 [PERF TEST V2] ${mode} mode, interval:${currentInterval}ms, frametime:${ctx.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed/1000)}s`);
 		}
 
-		// Self-sustaining loop for continuous testing
+		// Self-sustaining loop for continuous testing with frametime-based delays
 		if (mode === "loop" && shouldRender && !state.stop) {
 			// Check if we already have a loop scheduled to prevent duplicates
 			const isContinuation = state._isLoopContinuation;
@@ -277,11 +304,24 @@ module.exports = {
 				console.log(`🔄  Loop already scheduled but processing continuation, continuing...`);
 			}
 
-			// Calculate when to send next MQTT message to continue the loop
-			const nextMessageDelay = Math.max(1000, Math.min(5000, currentInterval * 2)); // 1-5 seconds between messages
-			const remainingDuration = Math.max(0, (loopEndTime - now) / 1000); // remaining seconds
+			// Get current chart position to determine if we should continue
+			const chartX = getState("chartX") || 0;
 
-			console.log(`🔄 [LOOP V2] Scheduling next iteration in ${nextMessageDelay}ms (remaining: ${Math.round(remainingDuration)}s)`);
+			// Stop if we've completed all 64 iterations or exceeded time limit
+			if (chartX >= 64 || now >= loopEndTime) {
+				console.log(`🏁 [LOOP V2] Test completed: ${chartX}/64 iterations, time: ${Math.round((now - startTime) / 1000)}s`);
+				setState("loopScheduled", false);
+				return;
+			}
+
+			// Use frametime-based delay for continuous rendering
+			// The delay is based on the actual rendering complexity
+			const frametimeDelay = ctx.frametime || testInterval;
+			const nextMessageDelay = Math.max(50, Math.min(2000, frametimeDelay * 2)); // 50ms to 2s based on frametime
+			const remainingIterations = 64 - chartX;
+			const remainingDuration = Math.max(0, (loopEndTime - now) / 1000);
+
+			console.log(`🔄 [LOOP V2] Iteration ${chartX}/64, frametime: ${ctx.frametime}ms, delay: ${nextMessageDelay}ms, remaining: ${remainingIterations} iterations, ${Math.round(remainingDuration)}s`);
 
 			// Mark loop as scheduled to prevent duplicates
 			setState("loopScheduled", true);
@@ -317,11 +357,11 @@ module.exports = {
 							'192.168.1.159';
 
 						const loopIteration = (getState("_loopIteration") || 0) + 1;
-						const maxIterations = Math.ceil(loopDuration / 1000) + 10; // Max iterations + buffer
+						const chartX = getState("chartX") || 0;
 
-						// Safety check: prevent infinite loops
-						if (loopIteration > maxIterations) {
-							console.log(`🛑 [LOOP V2] Maximum iterations (${maxIterations}) reached, stopping loop`);
+						// Safety check: prevent infinite loops (max 64 iterations)
+						if (loopIteration > 70 || chartX >= 64) { // Allow some buffer
+							console.log(`🛑 [LOOP V2] Maximum iterations reached (${chartX}/64), stopping loop`);
 							setState("loopScheduled", false);
 							return;
 						}

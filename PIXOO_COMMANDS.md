@@ -3,11 +3,13 @@
 ## 🎯 Quick Start Commands (Copy & Paste)
 
 ### Default Performance Test
+
 ```bash
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance"}'
 ```
 
 ### Performance Interval Tests (Realistic 100-350ms Range)
+
 **Note**: Tests run continuously for 30 seconds (default) showing real-time performance data.
 
 ```bash
@@ -31,6 +33,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ```
 
 ### Burst Mode Tests
+
 ```bash
 # 10-second burst at 120ms
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"burst","interval":120,"duration":10000}'
@@ -40,12 +43,14 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ```
 
 ### Auto Sweep Mode
+
 ```bash
 # Automatically test all intervals (100→130→160→190→220→250→280→310→350ms, 3s each)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance","mode":"sweep"}'
 ```
 
 ### Extended Loop Mode (Self-Sustaining)
+
 ```bash
 # Run continuous performance test for 5 minutes (300 seconds)
 # The scene will automatically send MQTT messages to continue the loop
@@ -65,20 +70,23 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 # Performance test v2 with custom interval
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","interval":200}'
 
-# Performance test v2 in loop mode (5 minutes)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"loop","interval":250,"duration":300000}'
+# Performance test v2 in loop mode (64 iterations, 60s max, frametime-based delays)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","mode":"loop","interval":250}'
 
 # Stop performance test v2 loop
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v2","stop":true}'
-```
 
 **Performance Test V2 Features:**
+
 - ✅ **Incremental rendering**: Only redraws changed text with background clearing
 - ✅ **Label/value separation**: Labels (50% opacity), values (100% opacity)
-- ✅ **Moving pixel chart**: Shows performance trend at y=16
+- ✅ **Line chart**: Shows performance trend over time (starts at y=32, updates every 100ms)
 - ✅ **No fullscreen background**: Clean display with performance bar as color indicator
 - ✅ **Enhanced "Done" display**: Centered with 50% opacity
-```
+- ✅ **Fixed 64 iterations**: Exactly 64 data points for chart consistency
+- ✅ **Frametime-based delays**: Continuous rendering based on scene complexity
+- ✅ **60-second time cap**: Maximum test duration to prevent runaway loops
+
 
 **Loop Mode Features:**
 - ✅ **Self-sustaining**: Automatically schedules next iteration
@@ -197,6 +205,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ```
 
 ### Other Test Scenes
+
 ```bash
 # Clock scene (with seconds and milliseconds)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"clock"}'
@@ -214,6 +223,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ## 🔧 Driver Control Commands
 
 ### Switch Drivers
+
 ```bash
 # Switch to real hardware
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/driver/set -m '{"driver":"real"}'
@@ -225,6 +235,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ## 🎛️ Scene Default Commands
 
 ### Set Default Scene
+
 ```bash
 # Set performance test as default
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/scene/set -m '{"name":"test_performance"}'
@@ -242,6 +253,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 ## 📝 Usage Instructions
 
 1. **Set your environment variables:**
+
    ```bash
    export MOSQITTO_HOST_MS24=miniserver24
    export MOSQITTO_USER_MS24=smarthome
@@ -251,6 +263,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 2. **Copy and paste any command above** directly into your terminal
 
 3. **Watch the logs:**
+
    ```bash
    docker logs pixoo-daemon -f --timestamps --tail 1500
    ```
@@ -263,6 +276,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 4. **Monitor frametime logs** for detailed analysis
 
 **Expected Results:**
+
 - **Continuous/Loop Mode**: Shows real-time countdown (minutes:seconds for loop mode)
 - **Burst Mode**: Shows progress `2s/10s` with rapid-fire updates
 - **Sweep Mode**: Shows current cycle and interval being tested
@@ -276,6 +290,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - **Console Logs**: Detailed statistics every 10 frames
 
 **Performance Analysis Guide:**
+
 - **100-160ms**: Outstanding performance, minimal noticeable delay
 - **160-220ms**: Good performance, responsive feel
 - **220-280ms**: Acceptable for most use cases, some lag noticeable
