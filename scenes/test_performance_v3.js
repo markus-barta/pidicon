@@ -94,7 +94,7 @@ async function render(ctx) {
         setState("frameTimes", []);
         setState("lastChartUpdate", now);
         console.log(`🎯 [PERF V3] Test started at ${new Date(now).toLocaleTimeString()}`);
-    console.log(`🔍 [PERF V3] Frametime available: ${frametime !== undefined}, value: ${frametime || 'undefined'}`);
+    console.log(`🔍 [PERF V3] Frametime available: ${frametime !== undefined}, value: ${frametime || 'undefined'}, type: ${typeof frametime}`);
     }
 
     // Update performance tracking
@@ -164,19 +164,19 @@ async function render(ctx) {
     const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 
     // Draw text with proper alignment
-    await device.drawTextRgba(`${modeDisplay}`, [2, 2], [255, 255, 255, 255], "left");
-    await device.drawTextRgba(`${intervalDisplay}`, [2, 10], [255, 255, 255, 255], "left");
-    await device.drawTextRgba(`FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left");
+    await device.drawTextRgbaAligned(`${modeDisplay}`, [2, 2], [255, 255, 255, 255], "left");
+    await device.drawTextRgbaAligned(`${intervalDisplay}`, [2, 10], [255, 255, 255, 255], "left");
+    await device.drawTextRgbaAligned(`FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left");
 
     // Draw statistics at bottom
     if (frameTimes.length > 0) {
-        await device.drawTextRgba(`FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left");
-        await device.drawTextRgba(`AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left");
+        await device.drawTextRgbaAligned(`FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left");
+        await device.drawTextRgbaAligned(`AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left");
     }
 
     // Completion check
     if (chartX >= 64) {
-        await device.drawTextRgba("COMPLETE", [32, 32], [255, 255, 255, 127], "center");
+        await device.drawTextRgbaAligned("COMPLETE", [32, 32], [255, 255, 255, 127], "center");
         console.log(`🏁 [PERF V3] Test completed: ${frameTimes.length} samples, avg: ${Math.round(avgFrametime)}ms`);
         return;
     }
