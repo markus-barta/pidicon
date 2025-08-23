@@ -79,6 +79,7 @@ module.exports = {
 	      displayText = `BURST ${currentInterval}ms\n${Math.round(elapsed/1000)}s/${Math.round(burstDuration/1000)}s\nFPS:${fps}`;
 	    } else if (testActive && elapsed >= burstDuration) {
 	      setState("testActive", false);
+	      setState("burstCompleteTime", now);
 	      displayText = "BURST COMPLETE";
 	    } else {
 	      displayText = "BURST READY\nSend MQTT to start";
@@ -88,7 +89,10 @@ module.exports = {
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 	    const currentFrametime = ctx.frametime || 0;
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
-	    displayText = `${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${remaining}s left`;
+	    const minutes = Math.floor(remaining / 60);
+	    const seconds = remaining % 60;
+	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
+	    displayText = `${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 	  } else if (mode === "loop") {
 	    // Loop mode: extended continuous testing for long-term performance analysis
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
@@ -96,8 +100,9 @@ module.exports = {
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
 	    const minutes = Math.floor(remaining / 60);
 	    const seconds = remaining % 60;
+	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 	    const iteration = getState("_loopIteration") || 0;
-	    displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${minutes}:${seconds.toString().padStart(2,'0')} left`;
+	    displayText = `LOOP ${currentInterval}ms\nFT:${currentFrametime}ms\nFPS:${fps}\n${timeDisplay} left`;
 	  } else if (mode === "sweep") {
     // Sweep mode: comprehensive testing from 100ms to 350ms (realistic range)
     const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350]; // 100-350ms range
@@ -112,8 +117,11 @@ module.exports = {
 	    const cycle = Math.floor(elapsed / 4000) + 1;
 	    const currentFrametime = ctx.frametime || 0;
 	    const remaining = Math.max(0, Math.round((loopEndTime - now) / 1000));
+	    const minutes = Math.floor(remaining / 60);
+	    const seconds = remaining % 60;
+	    const timeDisplay = remaining > 0 ? `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}` : "00:00";
 	    const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
-	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${remaining}s left`;
+	    displayText = `SWEEP CYCLE:${cycle}\n${sweepInterval}ms\nFT:${currentFrametime}ms\n${timeDisplay} left`;
 	  }
 
 	    // Check if test duration has expired
@@ -125,7 +133,34 @@ module.exports = {
       setState("loopTimer", null);
     }
     setState("loopScheduled", false);
-    displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
+
+    // Mark test as completed for "Done" display
+    const testCompleted = getState("testCompleted");
+    if (!testCompleted) {
+      setState("testCompleted", true);
+      setState("completionTime", now);
+    }
+
+    // Show "Done" with 50% opacity after a brief delay
+    const completionTime = getState("completionTime") || now;
+    if (now - completionTime > 2000) { // Show "Done" after 2 seconds
+      displayText = "Done";
+      // The opacity will be handled in the rendering section below
+    } else {
+      displayText = `${mode.toUpperCase()} COMPLETE\n${frameTimes.length} samples\nAVG:${Math.round(avgFrametime)}ms`;
+    }
+  }
+
+  // Handle "Done" display for burst mode completion
+  const burstCompleteTime = getState("burstCompleteTime");
+  if (burstCompleteTime && now - burstCompleteTime > 2000) {
+    displayText = "Done";
+  }
+
+  // Handle "Done" display for stopped loop
+  const loopStoppedTime = getState("loopStoppedTime");
+  if (loopStoppedTime && now - loopStoppedTime > 2000) {
+    displayText = "Done";
   }
 
   // For burst mode, only render if active or ready
@@ -144,6 +179,7 @@ module.exports = {
     }
     setState("loopScheduled", false);
     shouldRender = false;
+    setState("loopStoppedTime", now);
     displayText = "LOOP STOPPED\nBY USER";
   }
 
@@ -178,11 +214,14 @@ module.exports = {
 	    await device.drawRectangleRgba([0, 0], [64, 64], bgColor);
 
 	    // Draw performance text
-	    const textColor = [255, 255, 255, 255];
 	    const lines = displayText.split('\n');
 
 	    for (let i = 0; i < lines.length; i++) {
-	      await device.drawTextRgbaAligned(lines[i], [2, 2 + (i * 6)], textColor, "left");
+	      const isDoneText = displayText === "Done";
+	      const textColor = isDoneText ? [255, 255, 255, 127] : [255, 255, 255, 255]; // 50% opacity for "Done"
+	      const align = isDoneText ? "center" : "left"; // Center "Done" text
+	      const x = isDoneText ? 32 : 2; // Center position for "Done"
+	      await device.drawTextRgbaAligned(lines[i], [x, 2 + (i * 6)], textColor, align);
 	    }
 
 	    // Draw performance bar (moved up from bottom)
