@@ -462,8 +462,11 @@ module.exports = {
 		const fixedDelay = testInterval; // Use the interval parameter as fixed delay
 		const nextMessageDelay = useAdaptiveTiming ? adaptiveDelay : fixedDelay;
 
-		// Self-sustaining loop for continuous and loop modes with adaptive delays
-		if (((mode === "loop" || mode === "continuous") && useAdaptiveTiming) && shouldRender && !state.stop) {
+		// Self-sustaining loop for modes with adaptive delays or sweep mode
+		const shouldContinue = (useAdaptiveTiming && shouldRender && !state.stop) ||
+		                      (mode === "sweep" && shouldRender && !state.testCompleted);
+
+		if (shouldContinue) {
 			// Check if we already have a loop scheduled to prevent duplicates
 			const isContinuation = state._isLoopContinuation;
 			const loopAlreadyScheduled = getState("loopScheduled");
@@ -480,11 +483,47 @@ module.exports = {
 			// Get current chart position to determine if we should continue
 			const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 
-			// Stop if we've completed all chart positions or exceeded time limit
-			if (chartX >= 64 || now >= loopEndTime) {
-				console.log(`🏁 [LOOP V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, time: ${Math.round((now - startTime) / 1000)}s`);
-				setState("loopScheduled", false);
-				return;
+			// Handle sweep mode completion differently
+			if (mode === "sweep") {
+				const sweepIndex = getState("sweepIndex") || 0;
+				const intervals = [100, 130, 160, 190, 220, 250, 280, 310, 350];
+				const sweepStartTime = getState("sweepStartTime") || now;
+				const sweepChartStart = getState("sweepChartStart") || chartX;
+				const pointsCollected = chartX - sweepChartStart;
+
+				// Check if current interval is complete
+				if (pointsCollected >= 64 || (now - sweepStartTime) >= 30000) {
+					const nextIndex = sweepIndex + 1;
+					if (nextIndex >= intervals.length) {
+						// All intervals completed
+						console.log(`🏁 [SWEEP] All intervals completed: ${intervals.length} intervals tested`);
+						setState("testCompleted", true);
+						setState("completionTime", now);
+						setState("loopScheduled", false);
+						return;
+					} else {
+						// Move to next interval - reset chart for new interval
+						console.log(`🎯 [SWEEP] Moving to interval ${intervals[nextIndex]}ms (${nextIndex + 1}/${intervals.length})`);
+						setState("sweepIndex", nextIndex);
+						setState("sweepStartTime", now);
+						setState("sweepChartStart", chartX);
+
+						// Clear chart data for new interval (but keep frametime history)
+						setState("chartData", []);
+						setState("chartX", CHART_CONFIG.CHART_START_X);
+						setState("lastChartUpdate", now);
+						setState("startTime", now); // Reset start time for new interval
+
+						// Don't return here - continue to schedule next iteration
+					}
+				}
+			} else {
+				// Original loop mode logic
+				if (chartX >= 64 || now >= loopEndTime) {
+					console.log(`🏁 [LOOP V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, time: ${Math.round((now - startTime) / 1000)}s`);
+					setState("loopScheduled", false);
+					return;
+				}
 			}
 
 			// Use adaptive delay for continuous rendering
@@ -523,7 +562,7 @@ module.exports = {
 
 					client.on('connect', () => {
 						clearTimeout(connectionTimeout);
-						console.log(`📡 [LOOP V2] Connected to MQTT, sending continuation message`);
+						console.log(`📡 [${mode.toUpperCase()} V2] Connected to MQTT, sending continuation message`);
 
 						// Get device IP from environment or use fallback
 						const deviceIp = process.env.PIXOO_DEVICES ?
@@ -533,28 +572,45 @@ module.exports = {
 						const loopIteration = (getState("_loopIteration") || 0) + 1;
 						const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
 
-						// Safety check: prevent infinite loops (max chart positions)
-						if (loopIteration > 80 || chartX >= 64) { // Allow some buffer
-							console.log(`🛑 [LOOP V2] Maximum chart positions reached (${chartX - CHART_CONFIG.CHART_START_X}/63), stopping loop`);
+						// Safety check: prevent infinite loops (max chart positions or iterations)
+						const maxIterations = mode === "sweep" ? 200 : 80; // More iterations for sweep mode
+						const maxChartX = mode === "sweep" ? 1000 : 64; // Much higher for sweep mode
+
+						if (loopIteration > maxIterations || chartX >= maxChartX) {
+							console.log(`🛑 [${mode.toUpperCase()} V2] Maximum limit reached (iter: ${loopIteration}, chartX: ${chartX}), stopping`);
 							setState("loopScheduled", false);
 							return;
 						}
 
-						const payload = JSON.stringify({
+						// Build payload based on current mode
+						let continuationPayload = {
 							scene: "test_performance_v2",
-							mode: "loop",
+							mode: mode,
 							interval: currentInterval,
-							duration: loopDuration, // Use original duration, not remaining
 							_loopIteration: loopIteration,
 							_isLoopContinuation: true // Mark this as a continuation message
-						});
+						};
 
-						console.log(`📤 [LOOP V2] Publishing to pixoo/${deviceIp}/state/upd: ${payload}`);
+						// Add mode-specific parameters
+						if (mode === "loop") {
+							continuationPayload.duration = loopDuration;
+						} else if (mode === "sweep") {
+							// For sweep mode, preserve adaptive timing if enabled
+							if (useAdaptiveTiming) {
+								continuationPayload.adaptiveTiming = true;
+							}
+						} else if (useAdaptiveTiming) {
+							continuationPayload.adaptiveTiming = true;
+						}
+
+						const payload = JSON.stringify(continuationPayload);
+
+						console.log(`📤 [${mode.toUpperCase()} V2] Publishing to pixoo/${deviceIp}/state/upd: ${payload}`);
 						client.publish(`pixoo/${deviceIp}/state/upd`, payload, { qos: 1 }, (err) => {
 							if (err) {
-								console.log(`❌ [LOOP V2] Failed to publish: ${err.message}`);
+								console.log(`❌ [${mode.toUpperCase()} V2] Failed to publish: ${err.message}`);
 							} else {
-								console.log(`✅ [LOOP V2] Successfully published continuation message`);
+								console.log(`✅ [${mode.toUpperCase()} V2] Successfully published continuation message`);
 							}
 							client.end();
 						});
@@ -562,18 +618,18 @@ module.exports = {
 
 					client.on('error', (err) => {
 						clearTimeout(connectionTimeout);
-						console.log(`⚠️  [LOOP V2] MQTT connection failed: ${err.message}`);
+						console.log(`⚠️  [${mode.toUpperCase()} V2] MQTT connection failed: ${err.message}`);
 						setState("loopScheduled", false); // Reset flag on error
 					});
 
 					client.on('close', () => {
-						console.log(`🔌 [LOOP V2] MQTT connection closed`);
+						console.log(`🔌 [${mode.toUpperCase()} V2] MQTT connection closed`);
 						setState("loopScheduled", false); // Reset flag when done
 					});
 
 				} catch (err) {
-					console.log(`⚠️  [LOOP V2] Exception in loop continuation: ${err.message}`);
-					console.log(`📊 [LOOP V2] Stack trace: ${err.stack}`);
+					console.log(`⚠️  [${mode.toUpperCase()} V2] Exception in continuation: ${err.message}`);
+					console.log(`📊 [${mode.toUpperCase()} V2] Stack trace: ${err.stack}`);
 					setState("loopScheduled", false); // Reset flag on error
 				}
 			}, nextMessageDelay);
