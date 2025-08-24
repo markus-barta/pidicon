@@ -594,7 +594,7 @@ class TextRenderer {
      * Renders test completion message
      */
     async renderCompletion() {
-        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", false);
+        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", true, BACKGROUND_COLORS.TRANSPARENT_BLACK_50); // Semi-transparent black background
     }
 }
 
@@ -714,6 +714,6 @@ function scheduleContinuation(ctx, config, delay) {
 }
 
 // Import shared rendering utilities
-const { drawTextRgbaAlignedWithBg, drawLine, clearRectangle } = require('../lib/rendering-utils');
+const { drawTextRgbaAlignedWithBg, drawLine, clearRectangle, BACKGROUND_COLORS } = require('../lib/rendering-utils');
 
 module.exports = { name: SCENE_NAME, render };
