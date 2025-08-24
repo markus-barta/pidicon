@@ -127,39 +127,6 @@ function getPerformanceColor(frametime) {
     COLOR_CACHE.set(cacheKey, color);
     return color;
 }
-
-/**
- * High-performance line drawing using optimized DDA algorithm
- * @param {Object} device - Device interface for pixel operations
- * @param {number} x1 - Start X coordinate
- * @param {number} y1 - Start Y coordinate
- * @param {number} x2 - End X coordinate
- * @param {number} y2 - End Y coordinate
- * @param {number[]} color - RGBA color array
- */
-function drawLine(device, x1, y1, x2, y2, color) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const steps = Math.max(Math.abs(dx), Math.abs(dy));
-
-    if (steps === 0) {
-        device.drawPixelRgba([x1, y1], color);
-        return;
-    }
-
-    const xInc = dx / steps;
-    const yInc = dy / steps;
-    let x = x1;
-    let y = y1;
-
-    // Batch pixel operations for better performance
-    for (let i = 0; i <= steps; i++) {
-        device.drawPixelRgba([Math.round(x), Math.round(y)], color);
-        x += xInc;
-        y += yInc;
-    }
-}
-
 /**
  * Professional State Manager for performance test
  * @class
@@ -388,6 +355,16 @@ async function render(ctx) {
 
             // Check for test completion
             if (chartRenderer.isComplete()) {
+                // Update display content to show completion time
+                const completionContent = {
+                    modeText: displayContent.modeText,
+                    timingText: "0ms",
+                    fpsText: `0 FPS 00:00,000`,
+                    frametime: 0,
+                    metrics: performanceTracker.getMetrics()
+                };
+
+                await textRenderer.render(completionContent, now);
                 await textRenderer.renderCompletion();
                 await device.push(SCENE_NAME, publishOk);
 
@@ -472,6 +449,9 @@ class ChartRenderer {
      */
     async renderAxes() {
         if (this.getState("axesDrawn")) return;
+
+        await clearRectangle(this.device, 0, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT, 1, CHART_CONFIG.RANGE_HEIGHT);
+        await clearRectangle(this.device, CHART_CONFIG.CHART_START_X, CHART_CONFIG.START_Y, 64 - CHART_CONFIG.CHART_START_X, 1);
 
         // Batch draw Y-axis
         for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
@@ -598,15 +578,15 @@ class TextRenderer {
      */
     async renderStatistics(metrics) {
         if (metrics.sampleCount > 0) {
-            // Clear larger area for statistics to prevent any smearing
-            await this.device.drawRectangleRgba([0, 50], [45, 14], CHART_CONFIG.BG_COLOR);
+            // Clear area below the chart axis (axis is at y=50, so start at y=51)
+            await this.device.drawRectangleRgba([0, 51], [35, 13], CHART_CONFIG.BG_COLOR);
 
-            // Render labels (gray) and values (white) separately
-            await drawTextRgbaAlignedWithBg(this.device, "FRAMES: ", [2, 52], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [32, 52], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            // Render labels (gray) and values (white) separately, positioned below axis
+            await drawTextRgbaAlignedWithBg(this.device, "FRAMES: ", [2, 53], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [28, 53], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
 
-            await drawTextRgbaAlignedWithBg(this.device, "AVG: ", [2, 58], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [24, 58], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, "AVG: ", [2, 59], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [20, 59], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
         }
     }
 
@@ -643,15 +623,6 @@ function generateDisplayContent(config, frametime, getState, performanceTracker)
         modeText = `${modeLabel} ${adaptiveLabel}`;
         timingText = config.adaptiveTiming ? `${Math.round(currentFrametime)}ms` : `${config.testInterval}ms`;
         fpsText = `${metrics.fps} FPS`;
-
-        if (remainingIterations > 0) {
-            const estimatedMs = remainingIterations * metrics.avgFrametime;
-            const seconds = Math.floor(estimatedMs / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const displaySeconds = seconds % 60;
-            const displayMs = Math.round(estimatedMs % 1000);
-            fpsText += ` ${minutes.toString().padStart(2,'0')}:${displaySeconds.toString().padStart(2,'0')},${displayMs.toString().padStart(3,'0').slice(0,3)} left`;
-        }
     }
 
     return {
@@ -742,36 +713,7 @@ function scheduleContinuation(ctx, config, delay) {
     setState("loopScheduled", true);
 }
 
-module.exports = { name: SCENE_NAME, render };
-
-// Robust helper: incremental text with aggressive background clear box
-async function drawTextRgbaAlignedWithBg(device, text, pos, color, align = "left", clearBg = false) {
-    const [x, y] = pos;
-
-    if (clearBg) {
-        const str = String(text ?? "");
-        const charCount = str.length;
-
-        // Very conservative width estimation - add extra padding
-        let estimatedWidth = 0;
-        for (const char of str) {
-            if (char === ' ' || char === ':') estimatedWidth += 3;
-            else if (char === 'M' || char === 'W') estimatedWidth += 5;
-            else if (char >= '0' && char <= '9') estimatedWidth += 4;
-            else estimatedWidth += 4;
-        }
-
-        // Add generous padding and ensure minimum width
-        const width = Math.max(8, Math.min(64, estimatedWidth + 4));
-
-        const bgX = align === "center" ? Math.max(0, x - Math.floor(width / 2)) :
-                   align === "right" ? Math.max(0, x - width) : x;
-
-        // Clear background with black rectangle - use device method for reliability
-        await device.drawRectangleRgba([bgX, y], [width, 7], [0, 0, 0, 255]);
-    }
-
-    return device.drawTextRgbaAligned(text, [x, y], color, align);
-}
+// Import shared rendering utilities
+const { drawTextRgbaAlignedWithBg, drawLine, clearRectangle } = require('../lib/rendering-utils');
 
 module.exports = { name: SCENE_NAME, render };
