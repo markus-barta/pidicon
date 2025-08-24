@@ -19,7 +19,15 @@ const SCENE_NAME = 'advanced_chart';
  */
 async function render(ctx) {
     const { device, state, getState, setState } = ctx;
-    const { ADVANCED_FEATURES } = require('../lib/device-adapter');
+    const deviceAdapter = require('../lib/device-adapter');
+    const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES || {
+        GRADIENT_RENDERING: false,
+        ADVANCED_CHART: false,
+        ENHANCED_TEXT: false,
+        IMAGE_PROCESSING: false,
+        ANIMATIONS: false,
+        PERFORMANCE_MONITORING: true
+    };
 
     // Check if advanced chart is enabled
     if (!ADVANCED_FEATURES.ADVANCED_CHART) {
