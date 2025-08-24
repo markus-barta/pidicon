@@ -290,8 +290,9 @@ class PerformanceTracker {
  * @param {number} ctx.frametime - Current frame time
  */
 async function render(ctx) {
+    const { device, state, getState, setState, publishOk, frametime } = ctx;
+
     try {
-        const { device, state, getState, setState, publishOk, frametime } = ctx;
         const deviceAdapter = require('../lib/device-adapter');
         const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES || {
             GRADIENT_RENDERING: false,
@@ -365,7 +366,7 @@ async function render(ctx) {
         performanceTracker.logPerformance(config.mode, shouldRender);
 
         // Create professional chart and text renderers
-        const chartRenderer = new ChartRenderer(device, getState, setState, performanceTracker);
+        const chartRenderer = new ChartRenderer(device, getState, setState, performanceTracker, gradientRenderer, ADVANCED_FEATURES);
         const textRenderer = new TextRenderer(device, getState, setState, performanceTracker);
 
         // Generate display content based on mode
@@ -432,8 +433,8 @@ async function render(ctx) {
             if (typeof setState === 'function') {
                 setState("testCompleted", true);
             }
-            if (publishOk) {
-                publishOk(ctx.device?.host || 'unknown', SCENE_NAME, 0, 0, { pushes: 0, skipped: 0, errors: 1, lastFrametime: 0 });
+            if (typeof publishOk === 'function') {
+                publishOk(device?.host || 'unknown', SCENE_NAME, 0, 0, { pushes: 0, skipped: 0, errors: 1, lastFrametime: 0 });
             }
         } catch (recoveryError) {
             console.error(`❌ [PERF V3] Recovery failed:`, recoveryError);
@@ -451,12 +452,16 @@ class ChartRenderer {
      * @param {Function} getState - State getter function
      * @param {Function} setState - State setter function
      * @param {PerformanceTracker} performanceTracker - Performance tracker instance
+     * @param {Object} gradientRenderer - Gradient renderer instance (optional)
+     * @param {Object} advancedFeatures - Advanced features configuration
      */
-    constructor(device, getState, setState, performanceTracker) {
+    constructor(device, getState, setState, performanceTracker, gradientRenderer, advancedFeatures) {
         this.device = device;
         this.getState = getState;
         this.setState = setState;
         this.performanceTracker = performanceTracker;
+        this.gradientRenderer = gradientRenderer;
+        this.advancedFeatures = advancedFeatures;
     }
 
     /**
@@ -527,9 +532,9 @@ class ChartRenderer {
             const curr = chartData[chartData.length - 1];
 
             // Use advanced gradient rendering if available
-            if (gradientRenderer && ADVANCED_FEATURES.GRADIENT_RENDERING) {
+            if (this.gradientRenderer && this.advancedFeatures.GRADIENT_RENDERING) {
                 // Create gradient between consecutive points
-                await gradientRenderer.drawVerticalPreset(
+                await this.gradientRenderer.drawVerticalPreset(
                     [prev.x, Math.min(prev.y, curr.y)],
                     [curr.x, Math.max(prev.y, curr.y)],
                     'power',
