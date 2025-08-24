@@ -582,11 +582,11 @@ class TextRenderer {
             await this.device.drawRectangleRgba([0, 51], [35, 13], CHART_CONFIG.BG_COLOR);
 
             // Render labels (gray) and values (white) separately, positioned below axis
-            await drawTextRgbaAlignedWithBg(this.device, "FRAMES: ", [2, 53], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [28, 53], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, "FRAME: ", [2, 53], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [26, 53], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
 
             await drawTextRgbaAlignedWithBg(this.device, "AVG: ", [2, 59], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [20, 59], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [18, 59], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
         }
     }
 
@@ -594,7 +594,7 @@ class TextRenderer {
      * Renders test completion message
      */
     async renderCompletion() {
-        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", true);
+        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", false);
     }
 }
 
