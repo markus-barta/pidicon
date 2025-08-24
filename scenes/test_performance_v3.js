@@ -292,10 +292,25 @@ class PerformanceTracker {
 async function render(ctx) {
     try {
         const { device, state, getState, setState, publishOk, frametime } = ctx;
+        const { ADVANCED_FEATURES } = require('../lib/device-adapter');
 
         // Initialize professional state management
         const stateManager = new PerformanceTestState(getState, setState);
         const performanceTracker = new PerformanceTracker(stateManager);
+
+        // Initialize advanced renderers if features are enabled
+        let gradientRenderer = null;
+        let advancedChart = null;
+
+        if (ADVANCED_FEATURES.GRADIENT_RENDERING) {
+            const { createGradientRenderer } = require('../lib/gradient-renderer');
+            gradientRenderer = createGradientRenderer(device);
+        }
+
+        if (ADVANCED_FEATURES.ADVANCED_CHART) {
+            const { createAdvancedChartRenderer } = require('../lib/advanced-chart');
+            advancedChart = createAdvancedChartRenderer(device);
+        }
 
         // Extract configuration with validation
         const config = {
@@ -500,7 +515,20 @@ class ChartRenderer {
         if (chartData.length > 1) {
             const prev = chartData[chartData.length - 2];
             const curr = chartData[chartData.length - 1];
-            drawLine(this.device, prev.x, prev.y, curr.x, curr.y, curr.color);
+
+            // Use advanced gradient rendering if available
+            if (gradientRenderer && ADVANCED_FEATURES.GRADIENT_RENDERING) {
+                // Create gradient between consecutive points
+                await gradientRenderer.drawVerticalPreset(
+                    [prev.x, Math.min(prev.y, curr.y)],
+                    [curr.x, Math.max(prev.y, curr.y)],
+                    'power',
+                    255
+                );
+            } else {
+                // Fallback to simple line drawing
+                drawLine(this.device, prev.x, prev.y, curr.x, curr.y, curr.color);
+            }
         }
 
         this.setState("chartData", chartData);
