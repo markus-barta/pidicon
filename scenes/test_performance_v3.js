@@ -581,11 +581,14 @@ class TextRenderer {
         if (modeText) {
             await drawTextRgbaAlignedWithBg(this.device, modeText, [2, 2], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
         }
-        if (timingText) {
+        // Combine FPS and frametime on same line like gaming overlays
+        if (timingText && fpsText) {
+            const combinedText = `${fpsText}/${timingText}`;
+            await drawTextRgbaAlignedWithBg(this.device, combinedText, [2, 10], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
+        } else if (timingText) {
             await drawTextRgbaAlignedWithBg(this.device, timingText, [2, 10], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
-        }
-        if (fpsText) {
-            await drawTextRgbaAlignedWithBg(this.device, fpsText, [2, 18], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
+        } else if (fpsText) {
+            await drawTextRgbaAlignedWithBg(this.device, fpsText, [2, 10], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
         }
     }
 
@@ -595,8 +598,15 @@ class TextRenderer {
      */
     async renderStatistics(metrics) {
         if (metrics.sampleCount > 0) {
-            await drawTextRgbaAlignedWithBg(this.device, `FRAMES: ${metrics.sampleCount}`, [2, 52], CHART_CONFIG.TEXT_COLOR_STATS, "left", true);
-            await drawTextRgbaAlignedWithBg(this.device, `AVG: ${Math.round(metrics.avgFrametime)}ms`, [2, 58], CHART_CONFIG.TEXT_COLOR_HEADER, "left", true);
+            // Clear larger area for statistics to prevent any smearing
+            await this.device.drawRectangleRgba([0, 50], [45, 14], CHART_CONFIG.BG_COLOR);
+
+            // Render labels (gray) and values (white) separately
+            await drawTextRgbaAlignedWithBg(this.device, "FRAMES: ", [2, 52], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [32, 52], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+
+            await drawTextRgbaAlignedWithBg(this.device, "AVG: ", [2, 58], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [24, 58], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
         }
     }
 
@@ -623,7 +633,7 @@ function generateDisplayContent(config, frametime, getState, performanceTracker)
 
     let modeText = '';
     let timingText = '';
-    let fpsText = `FPS: ${metrics.fps}`;
+    let fpsText = '';
 
     if (config.mode === TEST_MODES.CONTINUOUS || config.mode === TEST_MODES.LOOP) {
         const modeLabel = config.mode === TEST_MODES.LOOP ? "AUTO LOOP" : "CONTINUOUS";
@@ -632,6 +642,7 @@ function generateDisplayContent(config, frametime, getState, performanceTracker)
 
         modeText = `${modeLabel} ${adaptiveLabel}`;
         timingText = config.adaptiveTiming ? `${Math.round(currentFrametime)}ms` : `${config.testInterval}ms`;
+        fpsText = `${metrics.fps} FPS`;
 
         if (remainingIterations > 0) {
             const estimatedMs = remainingIterations * metrics.avgFrametime;
@@ -733,33 +744,34 @@ function scheduleContinuation(ctx, config, delay) {
 
 module.exports = { name: SCENE_NAME, render };
 
-// Robust helper: incremental text with proper background clear box
+// Robust helper: incremental text with aggressive background clear box
 async function drawTextRgbaAlignedWithBg(device, text, pos, color, align = "left", clearBg = false) {
     const [x, y] = pos;
 
     if (clearBg) {
-        // Get actual text width by drawing it temporarily (or estimate conservatively)
         const str = String(text ?? "");
         const charCount = str.length;
 
-        // Conservative width estimation based on character types
+        // Very conservative width estimation - add extra padding
         let estimatedWidth = 0;
         for (const char of str) {
-            if (char === ' ' || char === ':') estimatedWidth += 2;
-            else if (char === 'M' || char === 'W') estimatedWidth += 4;
-            else if (char >= '0' && char <= '9') estimatedWidth += 3;
-            else estimatedWidth += 3;
+            if (char === ' ' || char === ':') estimatedWidth += 3;
+            else if (char === 'M' || char === 'W') estimatedWidth += 5;
+            else if (char >= '0' && char <= '9') estimatedWidth += 4;
+            else estimatedWidth += 4;
         }
 
-        // Add some padding and ensure minimum width
-        const width = Math.max(6, Math.min(64, estimatedWidth + 2));
+        // Add generous padding and ensure minimum width
+        const width = Math.max(8, Math.min(64, estimatedWidth + 4));
 
         const bgX = align === "center" ? Math.max(0, x - Math.floor(width / 2)) :
                    align === "right" ? Math.max(0, x - width) : x;
 
-        // Clear background with black rectangle (use device method for reliability)
-        await device.drawRectangleRgba([bgX, y], [width, 6], [0, 0, 0, 255]);
+        // Clear background with black rectangle - use device method for reliability
+        await device.drawRectangleRgba([bgX, y], [width, 7], [0, 0, 0, 255]);
     }
 
     return device.drawTextRgbaAligned(text, [x, y], color, align);
 }
+
+module.exports = { name: SCENE_NAME, render };
