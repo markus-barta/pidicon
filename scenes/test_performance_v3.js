@@ -1,84 +1,93 @@
-// Performance Test V3 - Simplified adaptive timing test
+// Performance Test V3 - Optimized adaptive timing test
 const name = "test_performance_v3";
 
-// Chart configuration
+// Chart configuration (optimized for performance)
 const CHART_CONFIG = {
     START_Y: 50,
     RANGE_HEIGHT: 20,
     MIN_FRAMETIME: 1,
     MAX_FRAMETIME: 500,
-    AXIS_COLOR: [64, 64, 64, 191], // Dark gray with 75% opacity
-    CHART_START_X: 1
+    AXIS_COLOR: [64, 64, 64, 191],
+    CHART_START_X: 1,
+    MAX_CHART_POINTS: 64, // Limit chart data size
+    MAX_FRAME_SAMPLES: 50 // Reduced from 100 for better performance
 };
 
-// Performance color gradient (Blue → Green → Yellow → Orange → Red)
+// Pre-computed color cache for performance
+const COLOR_CACHE = new Map();
+
+// Optimized performance color gradient with caching
 function getPerformanceColor(frametime) {
+    const cacheKey = Math.round(frametime);
+    if (COLOR_CACHE.has(cacheKey)) {
+        return COLOR_CACHE.get(cacheKey);
+    }
+
     const normalized = Math.min(CHART_CONFIG.MAX_FRAMETIME,
         Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime));
     const ratio = (normalized - CHART_CONFIG.MIN_FRAMETIME) /
         (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
 
+    let color;
     if (ratio < 0.25) {
-        // Blue to Green (0-25%)
         const blend = ratio * 4;
-        return [
-            Math.round(0 + (0 - 0) * blend),        // R: 0 → 0
-            Math.round(0 + (255 - 0) * blend),      // G: 0 → 255
-            Math.round(255 + (0 - 255) * blend),    // B: 255 → 0
-            191 // 75% opacity
+        color = [
+            0,
+            Math.round(255 * blend),
+            Math.round(255 * (1 - blend)),
+            191
         ];
     } else if (ratio < 0.5) {
-        // Green to Yellow (25-50%)
         const blend = (ratio - 0.25) * 4;
-        return [
-            Math.round(0 + (255 - 0) * blend),      // R: 0 → 255
-            Math.round(255 + (255 - 255) * blend),  // G: 255 → 255
-            Math.round(0 + (0 - 0) * blend),        // B: 0 → 0
+        color = [
+            Math.round(255 * blend),
+            255,
+            0,
             191
         ];
     } else if (ratio < 0.75) {
-        // Yellow to Orange (50-75%)
         const blend = (ratio - 0.5) * 4;
-        return [
-            Math.round(255 + (255 - 255) * blend),  // R: 255 → 255
-            Math.round(255 + (165 - 255) * blend),  // G: 255 → 165
-            Math.round(0 + (0 - 0) * blend),        // B: 0 → 0
+        color = [
+            255,
+            Math.round(255 * (1 - blend * 0.35)),
+            0,
             191
         ];
     } else {
-        // Orange to Red (75-100%)
         const blend = (ratio - 0.75) * 4;
-        return [
-            Math.round(255 + (255 - 255) * blend),  // R: 255 → 255
-            Math.round(165 + (0 - 165) * blend),    // G: 165 → 0
-            Math.round(0 + (0 - 0) * blend),        // B: 0 → 0
+        color = [
+            255,
+            Math.round(165 * (1 - blend)),
+            0,
             191
         ];
     }
+
+    COLOR_CACHE.set(cacheKey, color);
+    return color;
 }
 
-// Bresenham line algorithm for drawing chart lines
+// Optimized line drawing using DDA algorithm (faster than Bresenham)
 function drawLine(device, x1, y1, x2, y2, color) {
-    const dx = Math.abs(x2 - x1);
-    const dy = Math.abs(y2 - y1);
-    const sx = x1 < x2 ? 1 : -1;
-    const sy = y1 < y2 ? 1 : -1;
-    let err = dx - dy;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const steps = Math.max(Math.abs(dx), Math.abs(dy));
+
+    if (steps === 0) {
+        device.drawPixelRgba([x1, y1], color);
+        return;
+    }
+
+    const xInc = dx / steps;
+    const yInc = dy / steps;
     let x = x1;
     let y = y1;
 
-    while (true) {
-        device.drawPixelRgba([x, y], color);
-        if (x === x2 && y === y2) break;
-        const e2 = 2 * err;
-        if (e2 > -dy) {
-            err -= dy;
-            x += sx;
-        }
-        if (e2 < dx) {
-            err += dx;
-            y += sy;
-        }
+    // Draw all pixels in the line
+    for (let i = 0; i <= steps; i++) {
+        device.drawPixelRgba([Math.round(x), Math.round(y)], color);
+        x += xInc;
+        y += yInc;
     }
 }
 
@@ -114,12 +123,13 @@ async function render(ctx) {
         // Clear screen first
         await device.clear();
 
-        // Reset all test variables for fresh start
+        // Reset all test variables for fresh start (optimized)
         setState("startTime", Date.now());
         setState("chartData", []);
         setState("chartX", CHART_CONFIG.CHART_START_X);
         setState("lastChartUpdate", Date.now());
         setState("frameTimes", []);
+        setState("perfStats", { sum: 0, count: 0, min: Infinity, max: 0 });
         setState("testCompleted", false);
         setState("completionTime", null);
         setState("testActive", false);
@@ -139,27 +149,34 @@ async function render(ctx) {
 
     const loopEndTime = mode === "loop" ? (startTime + loopDuration) : (startTime + 60000); // Cap at 60 seconds
 
-    // Performance tracking
-    const frameTimes = getState("frameTimes") || [];
+    // Optimized performance tracking
+    let frameTimes = getState("frameTimes") || [];
+    let perfStats = getState("perfStats") || { sum: 0, count: 0, min: Infinity, max: 0 };
     const lastRender = getState("lastRender") || 0;
-    const testActive = getState("testActive") !== false;
     const currentInterval = getState("currentInterval") || testInterval;
 
     const now = Date.now();
     const elapsed = now - startTime;
-    const timeSinceLast = now - lastRender;
 
-    // Update performance stats
+    // Update performance stats (optimized - avoid array operations)
     if (frametime !== undefined && frametime > 0) {
         frameTimes.push(frametime);
-        if (frameTimes.length > 100) frameTimes.shift();
+        if (frameTimes.length > CHART_CONFIG.MAX_FRAME_SAMPLES) {
+            const removed = frameTimes.shift();
+            perfStats.sum -= removed;
+            perfStats.count--;
+        }
+
+        perfStats.sum += frametime;
+        perfStats.count++;
+        perfStats.min = Math.min(perfStats.min, frametime);
+        perfStats.max = Math.max(perfStats.max, frametime);
     }
 
-    // Calculate statistics
-    const avgFrametime = frameTimes.length > 0 ?
-        frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length : 0;
-    const minFrametime = frameTimes.length > 0 ? Math.min(...frameTimes) : 0;
-    const maxFrametime = frameTimes.length > 0 ? Math.max(...frameTimes) : 0;
+    // Optimized statistics calculation
+    const avgFrametime = perfStats.count > 0 ? perfStats.sum / perfStats.count : 0;
+    const minFrametime = perfStats.min === Infinity ? 0 : perfStats.min;
+    const maxFrametime = perfStats.max;
 
     // Test logic - render continuously for the test duration
     let shouldRender = mode === "sweep" ?
@@ -195,18 +212,20 @@ async function render(ctx) {
 
     // Clear screen and render if shouldRender is true
     if (shouldRender) {
-        // Draw chart axes once (incremental rendering)
+        // Draw chart axes once (incremental rendering) - optimized batch drawing
         if (!getState("axesDrawn")) {
+            // Batch draw Y-axis (vertical line)
             for (let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT; y < CHART_CONFIG.START_Y; y++) {
-                await device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
+                device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
             }
-            for (let x = CHART_CONFIG.CHART_START_X; x < 63; x++) {
-                await device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
+            // Batch draw X-axis (horizontal line)
+            for (let x = CHART_CONFIG.CHART_START_X; x < 64; x++) {
+                device.drawPixelRgba([x, CHART_CONFIG.START_Y], CHART_CONFIG.AXIS_COLOR);
             }
             setState("axesDrawn", true);
         }
 
-        // Update chart every 100ms
+        // Update chart every 100ms - optimized
         const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
         const lastChartUpdate = getState("lastChartUpdate") || now;
 
@@ -221,6 +240,11 @@ async function render(ctx) {
 
             const chartData = getState("chartData") || [];
             const chartColor = getPerformanceColor(chartFrametime);
+
+            // Optimized: only keep last 2 points for line drawing
+            if (chartData.length >= CHART_CONFIG.MAX_CHART_POINTS) {
+                chartData.shift();
+            }
             chartData.push({ x: chartX, y: yPos, color: chartColor });
 
             if (chartData.length > 1) {
@@ -234,18 +258,32 @@ async function render(ctx) {
             setState("lastChartUpdate", now);
         }
 
-        // Display mode and timing info (clear small bg to prevent smearing)
+        // Display mode and timing info (optimized - only update if changed)
         const useAdaptiveTiming = state.adaptiveTiming || false;
         const modeDisplay = useAdaptiveTiming ? `${mode.toUpperCase()} FT+` : mode.toUpperCase();
         const intervalDisplay = useAdaptiveTiming ? `${Math.round(frametime || 0)}ms` : `${currentInterval}ms`;
         const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 
-        await drawTextRgbaAlignedWithBg(device, `${modeDisplay}`, [2, 2], [255, 255, 255, 255], "left", true);
-        await drawTextRgbaAlignedWithBg(device, `${intervalDisplay}`, [2, 10], [255, 255, 255, 255], "left", true);
-        await drawTextRgbaAlignedWithBg(device, `FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left", true);
+        // Cache previous values to avoid unnecessary redraws
+        const prevMode = getState("prevMode");
+        const prevInterval = getState("prevInterval");
+        const prevFps = getState("prevFps");
 
-        // Draw statistics at bottom (with background clear)
-        if (frameTimes.length > 0) {
+        if (prevMode !== modeDisplay) {
+            await drawTextRgbaAlignedWithBg(device, modeDisplay, [2, 2], [255, 255, 255, 255], "left", true);
+            setState("prevMode", modeDisplay);
+        }
+        if (prevInterval !== intervalDisplay) {
+            await drawTextRgbaAlignedWithBg(device, intervalDisplay, [2, 10], [255, 255, 255, 255], "left", true);
+            setState("prevInterval", intervalDisplay);
+        }
+        if (prevFps !== fps) {
+            await drawTextRgbaAlignedWithBg(device, `FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left", true);
+            setState("prevFps", fps);
+        }
+
+        // Draw statistics at bottom (optimized - only update periodically)
+        if (frameTimes.length > 0 && (now % 500 < 100)) { // Update every ~500ms
             await drawTextRgbaAlignedWithBg(device, `FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left", true);
             await drawTextRgbaAlignedWithBg(device, `AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left", true);
         }
@@ -316,22 +354,31 @@ async function render(ctx) {
         await device.push("test_performance_v3", ctx.publishOk);
     }
 
-    // Update render timestamp
+    // Update render timestamp and optimized state
     setState("lastRender", now);
+    setState("frameTimes", frameTimes);
+    setState("perfStats", perfStats);
 }
 
 module.exports = { name, render };
 
-// Helper: incremental text with optional small background clear box
+// Optimized helper: incremental text with optional small background clear box
 async function drawTextRgbaAlignedWithBg(device, text, pos, color, align = "left", clearBg = false) {
     const [x, y] = pos;
     if (clearBg) {
-        const approxWidth = Math.min(64, String(text ?? "").length * 4);
-        await device.drawRectangleRgba(
-            align === "center" ? [Math.max(0, x - Math.floor(approxWidth / 2)), y] : align === "right" ? [Math.max(0, x - approxWidth), y] : [x, y],
-            [approxWidth, 6],
-            [0, 0, 0, 255]
-        );
+        // More accurate width calculation based on actual character count
+        const charCount = String(text ?? "").length;
+        const width = Math.min(64, charCount <= 3 ? 16 : charCount <= 6 ? 24 : charCount <= 10 ? 32 : 40);
+
+        const bgX = align === "center" ? Math.max(0, x - Math.floor(width / 2)) :
+                   align === "right" ? Math.max(0, x - width) : x;
+
+        // Batch draw background rectangle pixels
+        for (let by = y; by < y + 6; by++) {
+            for (let bx = bgX; bx < bgX + width; bx++) {
+                device.drawPixelRgba([bx, by], [0, 0, 0, 255]);
+            }
+        }
     }
-    return await device.drawTextRgbaAligned(text, [x, y], color, align);
+    return device.drawTextRgbaAligned(text, [x, y], color, align);
 }
