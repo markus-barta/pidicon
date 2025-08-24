@@ -594,7 +594,7 @@ class TextRenderer {
      * Renders test completion message
      */
     async renderCompletion() {
-        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", true, BACKGROUND_COLORS.TRANSPARENT_BLACK_50); // Semi-transparent black background
+        await drawTextRgbaAlignedWithBg(this.device, "COMPLETE", [32, 32], CHART_CONFIG.TEXT_COLOR_COMPLETE, "center", true, BACKGROUND_COLORS.TRANSPARENT_BLACK_75); // Semi-transparent black background
     }
 }
 
