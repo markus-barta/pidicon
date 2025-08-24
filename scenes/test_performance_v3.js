@@ -292,7 +292,15 @@ class PerformanceTracker {
 async function render(ctx) {
     try {
         const { device, state, getState, setState, publishOk, frametime } = ctx;
-        const { ADVANCED_FEATURES } = require('../lib/device-adapter');
+        const deviceAdapter = require('../lib/device-adapter');
+        const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES || {
+            GRADIENT_RENDERING: false,
+            ADVANCED_CHART: false,
+            ENHANCED_TEXT: false,
+            IMAGE_PROCESSING: false,
+            ANIMATIONS: false,
+            PERFORMANCE_MONITORING: true
+        };
 
         // Initialize professional state management
         const stateManager = new PerformanceTestState(getState, setState);
@@ -421,7 +429,9 @@ async function render(ctx) {
         console.error(`❌ [PERF V3] Critical render error:`, error);
         // Attempt graceful recovery
         try {
-            setState("testCompleted", true);
+            if (typeof setState === 'function') {
+                setState("testCompleted", true);
+            }
             if (publishOk) {
                 publishOk(ctx.device?.host || 'unknown', SCENE_NAME, 0, 0, { pushes: 0, skipped: 0, errors: 1, lastFrametime: 0 });
             }
