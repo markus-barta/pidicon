@@ -123,7 +123,7 @@ async function render(ctx) {
         // Clear screen first
         await device.clear();
 
-        // Reset all test variables for fresh start (optimized)
+        // Reset all test variables for fresh start
         setState("startTime", Date.now());
         setState("chartData", []);
         setState("chartX", CHART_CONFIG.CHART_START_X);
@@ -136,6 +136,11 @@ async function render(ctx) {
         setState("_loopIteration", 0);
         setState("axesDrawn", false);
 
+        // Reset cached values for change detection
+        setState("prevMode", null);
+        setState("prevInterval", null);
+        setState("prevFps", null);
+
         // Clear any existing loop timer
         const existingTimer = getState("loopTimer");
         if (existingTimer) {
@@ -144,6 +149,9 @@ async function render(ctx) {
         }
 
         console.log(`🎯 [PERF V3] Starting fresh test run - isNewMessage: ${isNewMessage}, testCompleted: ${getState("testCompleted")}`);
+
+        // Ensure header is drawn on fresh start by setting a flag
+        setState("headerDrawn", false);
         startTime = getState("startTime");
     }
 
@@ -258,32 +266,26 @@ async function render(ctx) {
             setState("lastChartUpdate", now);
         }
 
-        // Display mode and timing info (optimized - only update if changed)
+        // Display mode and timing info (always draw header for reliability)
         const useAdaptiveTiming = state.adaptiveTiming || false;
         const modeDisplay = useAdaptiveTiming ? `${mode.toUpperCase()} FT+` : mode.toUpperCase();
         const intervalDisplay = useAdaptiveTiming ? `${Math.round(frametime || 0)}ms` : `${currentInterval}ms`;
         const fps = avgFrametime > 0 ? Math.round(1000 / avgFrametime) : 0;
 
-        // Cache previous values to avoid unnecessary redraws
-        const prevMode = getState("prevMode");
-        const prevInterval = getState("prevInterval");
-        const prevFps = getState("prevFps");
-
-        if (prevMode !== modeDisplay) {
-            await drawTextRgbaAlignedWithBg(device, modeDisplay, [2, 2], [255, 255, 255, 255], "left", true);
-            setState("prevMode", modeDisplay);
-        }
-        if (prevInterval !== intervalDisplay) {
-            await drawTextRgbaAlignedWithBg(device, intervalDisplay, [2, 10], [255, 255, 255, 255], "left", true);
-            setState("prevInterval", intervalDisplay);
-        }
-        if (prevFps !== fps) {
-            await drawTextRgbaAlignedWithBg(device, `FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left", true);
-            setState("prevFps", fps);
+        // Always draw header text for reliability across multiple runs
+        const headerDrawn = getState("headerDrawn");
+        if (!headerDrawn) {
+            // Draw header background first
+            await device.drawRectangleRgba([0, 0], [40, 24], [0, 0, 0, 255]);
+            setState("headerDrawn", true);
         }
 
-        // Draw statistics at bottom (optimized - only update periodically)
-        if (frameTimes.length > 0 && (now % 500 < 100)) { // Update every ~500ms
+        await drawTextRgbaAlignedWithBg(device, modeDisplay, [2, 2], [255, 255, 255, 255], "left", true);
+        await drawTextRgbaAlignedWithBg(device, intervalDisplay, [2, 10], [255, 255, 255, 255], "left", true);
+        await drawTextRgbaAlignedWithBg(device, `FPS: ${fps}`, [2, 18], [255, 255, 255, 255], "left", true);
+
+        // Draw statistics at bottom (always update for accuracy)
+        if (frameTimes.length > 0) {
             await drawTextRgbaAlignedWithBg(device, `FRAMES: ${frameTimes.length}`, [0, 52], [128, 128, 128, 255], "left", true);
             await drawTextRgbaAlignedWithBg(device, `AVG: ${Math.round(avgFrametime)}ms`, [0, 58], [255, 255, 255, 255], "left", true);
         }
@@ -362,23 +364,33 @@ async function render(ctx) {
 
 module.exports = { name, render };
 
-// Optimized helper: incremental text with optional small background clear box
+// Robust helper: incremental text with proper background clear box
 async function drawTextRgbaAlignedWithBg(device, text, pos, color, align = "left", clearBg = false) {
     const [x, y] = pos;
+
     if (clearBg) {
-        // More accurate width calculation based on actual character count
-        const charCount = String(text ?? "").length;
-        const width = Math.min(64, charCount <= 3 ? 16 : charCount <= 6 ? 24 : charCount <= 10 ? 32 : 40);
+        // Get actual text width by drawing it temporarily (or estimate conservatively)
+        const str = String(text ?? "");
+        const charCount = str.length;
+
+        // Conservative width estimation based on character types
+        let estimatedWidth = 0;
+        for (const char of str) {
+            if (char === ' ' || char === ':') estimatedWidth += 2;
+            else if (char === 'M' || char === 'W') estimatedWidth += 4;
+            else if (char >= '0' && char <= '9') estimatedWidth += 3;
+            else estimatedWidth += 3;
+        }
+
+        // Add some padding and ensure minimum width
+        const width = Math.max(6, Math.min(64, estimatedWidth + 2));
 
         const bgX = align === "center" ? Math.max(0, x - Math.floor(width / 2)) :
                    align === "right" ? Math.max(0, x - width) : x;
 
-        // Batch draw background rectangle pixels
-        for (let by = y; by < y + 6; by++) {
-            for (let bx = bgX; bx < bgX + width; bx++) {
-                device.drawPixelRgba([bx, by], [0, 0, 0, 255]);
-            }
-        }
+        // Clear background with black rectangle (use device method for reliability)
+        await device.drawRectangleRgba([bgX, y], [width, 6], [0, 0, 0, 255]);
     }
+
     return device.drawTextRgbaAligned(text, [x, y], color, align);
 }
