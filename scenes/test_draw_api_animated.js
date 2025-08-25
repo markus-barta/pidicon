@@ -30,14 +30,23 @@ async function render(ctx) {
     // Configuration
     const duration = state.duration || 80; // ~80 frames
     const startTime = getState("startTime") || Date.now();
-    const frameCount = getState("frameCount") || 0;
+    // Use frameCount from state if provided (for animation continuation)
+    let frameCount = getState("frameCount") || 0;
+    if (state.frameCount !== undefined) {
+        frameCount = state.frameCount;
+        setState("frameCount", frameCount);
+    }
 
     // Initialize on first run
     if (frameCount === 0) {
         setState("startTime", startTime);
         setState("frameCount", 0);
+        setState("animationScheduled", false);
         console.log(`🎬 [ANIMATED DEMO] Starting ${duration}-frame animation`);
     }
+
+    // Reset animation scheduling flag for this frame
+    setState("animationScheduled", false);
 
     // Clear screen for fresh frame
     await device.clear();
@@ -75,17 +84,57 @@ async function render(ctx) {
     setState("frameCount", nextFrame);
 
     if (nextFrame >= duration) {
-        // Animation complete
+        // Animation complete - reset for next run
         console.log(`🏁 [ANIMATED DEMO] Animation complete after ${duration} frames`);
         setState("frameCount", 0); // Reset for next run
-        return;
+        return; // End this animation cycle
     }
 
-    // Schedule next frame (simple timing)
-    setTimeout(() => {
-        // This will trigger another render call via MQTT continuation
-        // For now, just end this render cycle
-    }, 1000 / 30); // ~30fps
+    // Schedule next frame via MQTT (similar to performance tests)
+    if (!getState("animationScheduled")) {
+        setTimeout(async () => {
+            try {
+                const mqtt = require('mqtt');
+                const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
+
+                const client = mqtt.connect(brokerUrl, {
+                    username: process.env.MOSQITTO_USER_MS24,
+                    password: process.env.MOSQITTO_PASS_MS24,
+                    connectTimeout: 5000,
+                    reconnectPeriod: 0
+                });
+
+                client.on('connect', () => {
+                    try {
+                        const payload = JSON.stringify({
+                            scene: name,
+                            frameCount: nextFrame,
+                            _isAnimationFrame: true
+                        });
+
+                        const targetHost = process.env.PIXOO_DEVICES ?
+                            process.env.PIXOO_DEVICES.split(';')[0].trim() : '192.168.1.159';
+
+                        client.publish(`pixoo/${targetHost}/state/upd`, payload, { qos: 1 });
+                        client.end();
+                    } catch (publishError) {
+                        console.error(`❌ [ANIMATION] MQTT publish error:`, publishError);
+                        client.end();
+                    }
+                });
+
+                client.on('error', (error) => {
+                    console.error(`❌ [ANIMATION] MQTT connection error:`, error.message);
+                    client.end();
+                });
+
+            } catch (error) {
+                console.error(`❌ [ANIMATION] Setup error:`, error);
+            }
+        }, 1000 / 15); // ~15fps for demo
+
+        setState("animationScheduled", true);
+    }
 }
 
 async function drawAnimatedBackground(device, time, progress, frameCount) {
