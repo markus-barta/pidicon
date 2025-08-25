@@ -264,6 +264,15 @@ client.on("message", async (topic, message) => {
         )})`
       );
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
+
+      // Clear screen when switching to a new scene (unless it's the same scene)
+      const lastScene = lastState[deviceIp]?.sceneName;
+      if (lastScene && lastScene !== sceneName) {
+        const device = require('./lib/device-adapter').getDevice(deviceIp);
+        await device.clear();
+        console.log(`🧹 [SCENE] Cleared screen when switching from '${lastScene}' to '${sceneName}'`);
+      }
+
       try {
         await scene.render(ctx);
 
