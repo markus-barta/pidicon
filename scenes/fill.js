@@ -6,18 +6,27 @@
 // {"scene":"fill","color":[255,255,0,255]}   - Yellow fill
 // {"scene":"fill","color":[128,128,128,255]} - Gray fill
 // @author: Sonic + Cursor + Markus Barta (mba)
+
 const name = "fill";
 
+// Import shared utilities
+const { isValidColor, validateSceneContext } = require('../lib/performance-utils');
+
 async function render(ctx) {
+    // Validate scene context
+    if (!validateSceneContext(ctx, name)) {
+        return;
+    }
+
     const { device, state } = ctx;
 
     // Default to red if no color specified
     const defaultColor = [255, 0, 0, 255]; // Red
     const color = state.color || defaultColor;
 
-    // Validate color format (RGBA array)
-    if (!Array.isArray(color) || color.length !== 4) {
-        console.error(`❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A]`);
+    // Validate color format using shared utility
+    if (!isValidColor(color)) {
+        console.error(`❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`);
         return;
     }
 

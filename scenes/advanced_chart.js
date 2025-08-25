@@ -2,7 +2,6 @@
  * @fileoverview Advanced Chart Scene - Professional data visualization
  * @description Demonstrates the advanced chart rendering capabilities extracted from legacy Node-RED code.
  * Shows sophisticated chart features like negative values, overflow handling, and gradient rendering.
- * Only available when PIXOO_ENABLE_ADVANCED_CHART=true
  * @version 1.0.0
  * @author: Sonic + Cursor + Markus Barta (mba)
  * @license MIT
@@ -18,48 +17,25 @@
 
 const SCENE_NAME = 'advanced_chart';
 
+// Import shared utilities
+const { validateSceneContext } = require('../lib/performance-utils');
+
 /**
  * Advanced Chart Scene - Professional data visualization
  * @param {Object} ctx - Render context
  * @returns {Promise<void>}
  */
 async function render(ctx) {
-    const { device, state, getState, setState } = ctx;
-    const deviceAdapter = require('../lib/device-adapter');
-    const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES || {
-        GRADIENT_RENDERING: false,
-        ADVANCED_CHART: false,
-        ENHANCED_TEXT: false,
-        IMAGE_PROCESSING: false,
-        ANIMATIONS: false,
-        PERFORMANCE_MONITORING: true
-    };
-
-    // Check if advanced chart is enabled
-    if (!ADVANCED_FEATURES.ADVANCED_CHART) {
-        // Fallback to simple message if feature not enabled
-        await device.clear();
-
-        const message = [
-            "Advanced Chart",
-            "Not Enabled",
-            "",
-            "Set env var:",
-            "PIXOO_ENABLE_ADVANCED_CHART=true"
-        ];
-
-        for (let i = 0; i < message.length; i++) {
-            await device.drawTextRgbaAligned(
-                message[i],
-                [32, 10 + i * 8],
-                [255, 255, 255, 255],
-                "center"
-            );
-        }
-
-        await device.push(SCENE_NAME);
+    // Validate scene context
+    if (!validateSceneContext(ctx, SCENE_NAME)) {
         return;
     }
+
+    const { device, state, getState, setState } = ctx;
+    const deviceAdapter = require('../lib/device-adapter');
+    const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES;
+
+    // Advanced chart is always available
 
     // Initialize advanced chart renderer
     const { createAdvancedChartRenderer } = require('../lib/advanced-chart');
