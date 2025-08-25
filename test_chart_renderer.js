@@ -1,5 +1,6 @@
 /**
  * Quick test to verify ChartRenderer instantiation works
+ * @author: Claude + Cursor + Markus Barta (mba)
  */
 
 try {

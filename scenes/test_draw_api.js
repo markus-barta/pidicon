@@ -1,4 +1,12 @@
 // Test Draw API Scene - Comprehensive API testing
+// MQTT Commands:
+// {"scene":"test_draw_api","test":"all"}        - Run all API tests
+// {"scene":"test_draw_api","test":"pixels"}     - Test pixel drawing
+// {"scene":"test_draw_api","test":"rectangles"} - Test rectangle drawing
+// {"scene":"test_draw_api","test":"lines"}      - Test line drawing
+// {"scene":"test_draw_api","test":"text"}       - Test text rendering
+// {"scene":"test_draw_api","test":"gradients"}  - Test gradient rendering
+// @author: Claude + Cursor + Markus Barta (mba)
 const name = "test_draw_api";
 
 async function render(ctx) {

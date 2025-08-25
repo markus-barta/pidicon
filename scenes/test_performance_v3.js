@@ -3,9 +3,15 @@
  * @description Advanced performance testing scene with real-time metrics, adaptive timing,
  * and professional-grade architecture for the Pixoo device ecosystem.
  * @version 3.0.0
- * @author Senior Development Team
+ * @author: Claude + Cursor + Markus Barta (mba)
  * @license MIT
  */
+
+// MQTT Commands:
+// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 150ms interval
+// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode
+// {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
+// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode
 
 'use strict';
 
