@@ -56,16 +56,16 @@ async function render(ctx) {
         console.log(`🧪 [TEST] Drawing simple pixel...`);
         await device.drawPixelRgba([32, 32], [255, 0, 0, 255]);
         console.log(`✅ [TEST] Simple pixel drawn successfully`);
-        return; // Exit early for first few frames to test
+        // Don't return early - let device.push() send the frame
+    } else {
+        // Draw animated elements
+        await drawAnimatedBackground(device, time, progress, frameCount);
+        await drawMovingShapes(device, time, progress);
+        await drawSweepingLines(device, time, progress);
+        await drawAnimatedText(device, time, progress);
+        await drawParticleSystem(device, time, progress);
+        await drawFinalOverlay(device, time, progress);
     }
-
-    // Draw animated elements
-    await drawAnimatedBackground(device, time, progress, frameCount);
-    await drawMovingShapes(device, time, progress);
-    await drawSweepingLines(device, time, progress);
-    await drawAnimatedText(device, time, progress);
-    await drawParticleSystem(device, time, progress);
-    await drawFinalOverlay(device, time, progress);
 
     // Push frame to device
     await device.push(name, publishOk);
