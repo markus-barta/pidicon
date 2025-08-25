@@ -1,6 +1,6 @@
 // Empty Scene - Black screen (device "off" state)
 // MQTT Command: {"scene":"empty"}
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 const name = "empty";
 
 async function render(ctx) {

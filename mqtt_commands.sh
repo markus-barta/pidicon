@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pixoo Commands Display Script
 # Shows the available commands from PIXOO_COMMANDS.md
-# @author: Claude + Cursor + Markus Barta (mba)
+# @author: Sonic + Cursor + Markus Barta (mba)
 
 echo "🚀 Pixoo Performance Test Commands"
 echo "=================================="

@@ -1,6 +1,6 @@
 // Complete Pixoo Font Definition - Extracted from Node-RED Implementation
 // This is the full character set from the original working implementation
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 
 // Font dimensions
 const FONT_WIDTH = 3;

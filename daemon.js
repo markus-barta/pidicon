@@ -2,7 +2,7 @@
 // - Loads scene modules from `./scenes`
 // - Subscribes to MQTT updates per device
 // - Routes each state update to the selected scene renderer
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");

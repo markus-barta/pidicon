@@ -5,7 +5,7 @@
 // {"scene":"fill","color":[0,0,255,255]}     - Blue fill
 // {"scene":"fill","color":[255,255,0,255]}   - Yellow fill
 // {"scene":"fill","color":[128,128,128,255]} - Gray fill
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 const name = "fill";
 
 async function render(ctx) {
