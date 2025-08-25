@@ -13,10 +13,13 @@ async function render(ctx) {
         return;
     }
 
-    const { device } = ctx;
+    const { device, publishOk } = ctx;
 
     // Clear screen to black (device appears "off")
     await device.clear();
+
+    // Push the cleared frame to actually update the device
+    await device.push(name, publishOk);
 
     console.log(`🖤 [EMPTY] Screen cleared to black`);
 }
