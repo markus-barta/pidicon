@@ -4,9 +4,15 @@
  * Shows sophisticated chart features like negative values, overflow handling, and gradient rendering.
  * Only available when PIXOO_ENABLE_ADVANCED_CHART=true
  * @version 1.0.0
- * @author Senior Development Team
+ * @author: Claude + Cursor + Markus Barta (mba)
  * @license MIT
  */
+
+// MQTT Commands:
+// {"scene":"advanced_chart","mode":"demo","dataType":"power","updateInterval":2000,"scale":5}       - Power price demo
+// {"scene":"advanced_chart","mode":"demo","dataType":"temperature","updateInterval":2000,"scale":1}  - Temperature demo
+// {"scene":"advanced_chart","mode":"demo","dataType":"random","updateInterval":2000,"scale":2}        - Random data demo
+// {"scene":"advanced_chart","dataType":"power","scale":10}                                           - High scale power demo
 
 'use strict';
 

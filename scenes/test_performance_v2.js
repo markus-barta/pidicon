@@ -7,6 +7,15 @@
 // - Incremental rendering with background clearing
 // - Configurable chart parameters
 
+// MQTT Commands:
+// {"scene":"test_performance_v2","mode":"continuous","interval":150}                    - Continuous mode, 150ms interval
+// {"scene":"test_performance_v2","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode
+// {"scene":"test_performance_v2","mode":"burst","interval":50}                         - Burst mode, 50ms interval
+// {"scene":"test_performance_v2","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
+// {"scene":"test_performance_v2","mode":"sweep"}                                       - Sweep mode through different intervals
+
+// @author: Claude + Cursor + Markus Barta (mba)
+
 // Chart configuration constants
 const CHART_CONFIG = {
   START_Y: 50,           // Starting Y position for chart

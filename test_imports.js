@@ -1,5 +1,6 @@
 /**
  * Quick test to verify ADVANCED_FEATURES import is working
+ * @author: Claude + Cursor + Markus Barta (mba)
  */
 
 try {
