@@ -397,12 +397,14 @@ async function render(ctx) {
             // Check for test completion
             if (chartRenderer.isComplete()) {
                 // Update display content to show completion time
+                const finalMetrics = performanceTracker.getMetrics();
+                const lastFrametime = frametime || finalMetrics.avgFrametime;
                 const completionContent = {
                     modeText: displayContent.modeText,
-                    timingText: "0ms",
-                    fpsText: `0 FPS 00:00,000`,
-                    frametime: 0,
-                    metrics: performanceTracker.getMetrics()
+                    timingText: `${Math.round(lastFrametime)}ms`,
+                    fpsText: `${finalMetrics.fps} FPS`,
+                    frametime: lastFrametime,
+                    metrics: finalMetrics
                 };
 
                 await textRenderer.render(completionContent, now);
@@ -633,20 +635,26 @@ class TextRenderer {
     }
 
     /**
-     * Renders performance statistics at bottom
+     * Renders performance statistics at bottom (copied from v2)
      * @param {Object} metrics - Performance metrics
      */
     async renderStatistics(metrics) {
         if (metrics.sampleCount > 0) {
             // Clear area below the chart axis (axis is at y=50, so start at y=51)
-            await this.device.drawRectangleRgba([0, 51], [35, 13], CHART_CONFIG.BG_COLOR);
+            await this.device.drawRectangleRgba([0, 51], [64, 13], CHART_CONFIG.BG_COLOR);
 
-            // Render labels (gray) and values (white) separately, positioned below axis
-            await drawTextRgbaAlignedWithBg(this.device, "FRAME: ", [2, 53], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [26, 53], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            // Draw labels in gray, values in white with exact positioning from v2
+            await drawTextRgbaAlignedWithBg(this.device, "FRAMES ", [0, 52], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, metrics.sampleCount.toString(), [25, 52], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
 
-            await drawTextRgbaAlignedWithBg(this.device, "AVG: ", [2, 59], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
-            await drawTextRgbaAlignedWithBg(this.device, `${Math.round(metrics.avgFrametime)}ms`, [18, 59], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, "AV:", [36, 52], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, Math.round(metrics.avgFrametime).toString(), [48, 52], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+
+            await drawTextRgbaAlignedWithBg(this.device, "LO:", [0, 58], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, Math.round(metrics.minFrametime).toString(), [12, 58], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
+
+            await drawTextRgbaAlignedWithBg(this.device, "HI:", [36, 58], CHART_CONFIG.TEXT_COLOR_STATS, "left", false);
+            await drawTextRgbaAlignedWithBg(this.device, Math.round(metrics.maxFrametime).toString(), [48, 58], CHART_CONFIG.TEXT_COLOR_HEADER, "left", false);
         }
     }
 
@@ -668,8 +676,6 @@ class TextRenderer {
  */
 function generateDisplayContent(config, frametime, getState, performanceTracker) {
     const metrics = performanceTracker.getMetrics();
-    const chartX = getState("chartX") || CHART_CONFIG.CHART_START_X;
-    const remainingIterations = Math.max(0, CHART_CONFIG.MAX_CHART_POINTS - (chartX - CHART_CONFIG.CHART_START_X));
 
     let modeText = '';
     let timingText = '';
