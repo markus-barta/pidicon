@@ -85,7 +85,12 @@ async function drawAnimatedBackground(device, time, progress) {
 
             // Subtle animated background
             if (intensity > 10) {
-                await device.drawPixelRgba([x, y], [intensity * 0.1, intensity * 0.05, intensity * 0.2, 60]);
+                await device.drawPixelRgba([x, y], [
+                    Math.round(intensity * 0.1),
+                    Math.round(intensity * 0.05),
+                    Math.round(intensity * 0.2),
+                    60
+                ]);
             }
         }
     }
@@ -163,14 +168,14 @@ async function drawSweepingLines(device, time, progress) {
     // Horizontal sweeping line
     const sweepY = Math.sin(time * 2) * 25 + 32;
     for (let x = 0; x < 64; x++) {
-        const alpha = Math.max(0, 255 - Math.abs(x - 32) * 4); // Fade from center
+        const alpha = Math.round(Math.max(0, 255 - Math.abs(x - 32) * 4)); // Fade from center
         await device.drawPixelRgba([x, Math.round(sweepY)], [255, 255, 0, alpha]);
     }
 
     // Vertical sweeping line
     const sweepX = Math.cos(time * 1.5) * 25 + 32;
     for (let y = 0; y < 64; y++) {
-        const alpha = Math.max(0, 255 - Math.abs(y - 32) * 4);
+        const alpha = Math.round(Math.max(0, 255 - Math.abs(y - 32) * 4));
         await device.drawPixelRgba([Math.round(sweepX), y], [0, 255, 255, alpha]);
     }
 
@@ -180,7 +185,7 @@ async function drawSweepingLines(device, time, progress) {
         const x = Math.round(32 + i);
         const y = Math.round(32 + i + diagProgress);
         if (x >= 0 && x < 64 && y >= 0 && y < 64) {
-            const alpha = Math.max(0, 200 - Math.abs(i) * 3);
+            const alpha = Math.round(Math.max(0, 200 - Math.abs(i) * 3));
             await device.drawPixelRgba([x, y], [255, 0, 255, alpha]);
         }
     }
@@ -221,7 +226,7 @@ async function drawParticleSystem(device, time, progress) {
         for (let trail = 0; trail < 3; trail++) {
             const trailX = Math.max(0, Math.min(64, Math.sin((particleTime - trail * 0.1) * 1.5) * 25 + 32));
             const trailY = Math.max(0, Math.min(64, Math.cos((particleTime - trail * 0.1) * 1.2) * 20 + 32));
-            const trailAlpha = (3 - trail) * 60;
+            const trailAlpha = Math.round((3 - trail) * 60);
 
             const px = Math.round(trailX);
             const py = Math.round(trailY);
