@@ -1,10 +1,11 @@
 // Fill Scene - Fill screen with specified color
 // MQTT Commands:
-// {"scene":"fill","color":[255,0,0,255]}     - Red fill
-// {"scene":"fill","color":[0,255,0,255]}     - Green fill
-// {"scene":"fill","color":[0,0,255,255]}     - Blue fill
-// {"scene":"fill","color":[255,255,0,255]}   - Yellow fill
-// {"scene":"fill","color":[128,128,128,255]} - Gray fill
+// {"scene":"fill","color":[255,0,0,255]}         - Red fill
+// {"scene":"fill","color":[0,255,0,255]}         - Green fill
+// {"scene":"fill","color":[0,0,255,255]}         - Blue fill
+// {"scene":"fill","color":[255,255,0,255]}       - Yellow fill
+// {"scene":"fill","color":[128,128,128,255]}     - Gray fill
+// {"scene":"fill","clear":true,"color":[255,0,0,255]} - Clear screen before filling
 // @author: Sonic + Cursor + Markus Barta (mba)
 
 const name = "fill";

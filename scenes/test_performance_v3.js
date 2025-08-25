@@ -12,6 +12,7 @@
 // {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode
 // {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
 // {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode
+// {"scene":"test_performance_v3","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
 
 'use strict';
 

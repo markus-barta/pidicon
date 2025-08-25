@@ -13,6 +13,7 @@
 // {"scene":"test_performance_v2","mode":"burst","interval":50}                         - Burst mode, 50ms interval
 // {"scene":"test_performance_v2","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
 // {"scene":"test_performance_v2","mode":"sweep"}                                       - Sweep mode through different intervals
+// {"scene":"test_performance_v2","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
 
 // @author: Sonic + Cursor + Markus Barta (mba)
 

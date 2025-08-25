@@ -8,10 +8,11 @@
  */
 
 // MQTT Commands:
-// {"scene":"advanced_chart","mode":"demo","dataType":"power","updateInterval":2000,"scale":5}       - Power price demo
-// {"scene":"advanced_chart","mode":"demo","dataType":"temperature","updateInterval":2000,"scale":1}  - Temperature demo
-// {"scene":"advanced_chart","mode":"demo","dataType":"random","updateInterval":2000,"scale":2}        - Random data demo
-// {"scene":"advanced_chart","dataType":"power","scale":10}                                           - High scale power demo
+// {"scene":"advanced_chart","mode":"demo","dataType":"power","updateInterval":2000,"scale":5}           - Power price demo
+// {"scene":"advanced_chart","mode":"demo","dataType":"temperature","updateInterval":2000,"scale":1}      - Temperature demo
+// {"scene":"advanced_chart","mode":"demo","dataType":"random","updateInterval":2000,"scale":2}            - Random data demo
+// {"scene":"advanced_chart","dataType":"power","scale":10}                                               - High scale power demo
+// {"scene":"advanced_chart","clear":true,"mode":"demo","dataType":"power"}                               - Clear screen before drawing
 
 'use strict';
 
