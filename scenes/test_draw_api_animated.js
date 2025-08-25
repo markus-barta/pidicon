@@ -100,8 +100,8 @@ async function drawMovingShapes(device, time, progress) {
     // Multiple moving shapes with shadows
 
     // Shape 1: Large moving rectangle with shadow
-    const rectX = Math.max(2, Math.min(47, Math.sin(time * 0.5) * 20 + 32));
-    const rectY = Math.max(2, Math.min(47, Math.cos(time * 0.3) * 15 + 32));
+    const rectX = Math.max(2, Math.min(47, Math.round(Math.sin(time * 0.5) * 20 + 32)));
+    const rectY = Math.max(2, Math.min(47, Math.round(Math.cos(time * 0.3) * 15 + 32)));
 
     // Shadow (offset and low alpha) - keep within bounds
     const shadowX = Math.max(0, Math.min(49, rectX + 2));
@@ -112,8 +112,8 @@ async function drawMovingShapes(device, time, progress) {
     await device.fillRectangleRgba([rectX, rectY], [15, 15], [255, 100, 100, 200]);
 
     // Shape 2: Smaller orbiting circle (simulated with pixels)
-    const orbitX = Math.max(8, Math.min(56, Math.sin(time * 1.2) * 25 + 32));
-    const orbitY = Math.max(8, Math.min(56, Math.cos(time * 1.2) * 25 + 32));
+    const orbitX = Math.max(8, Math.min(56, Math.round(Math.sin(time * 1.2) * 25 + 32)));
+    const orbitY = Math.max(8, Math.min(56, Math.round(Math.cos(time * 1.2) * 25 + 32)));
 
     // Circle shadow
     for (let dx = -8; dx <= 8; dx++) {
@@ -145,8 +145,8 @@ async function drawMovingShapes(device, time, progress) {
     const angle = time * 2;
     const size = 10; // Reduced size to fit better
     for (let i = 0; i < 3; i++) {
-        const triangleX = Math.max(2, Math.min(62, Math.sin(angle + i * Math.PI * 2 / 3) * size + 32));
-        const triangleY = Math.max(35, Math.min(55, Math.cos(angle + i * Math.PI * 2 / 3) * size + 45));
+        const triangleX = Math.max(2, Math.min(62, Math.round(Math.sin(angle + i * Math.PI * 2 / 3) * size + 32)));
+        const triangleY = Math.max(35, Math.min(55, Math.round(Math.cos(angle + i * Math.PI * 2 / 3) * size + 45)));
 
         // Triangle shadow
         const shadowX = Math.round(triangleX + 1);
@@ -166,17 +166,17 @@ async function drawMovingShapes(device, time, progress) {
 
 async function drawSweepingLines(device, time, progress) {
     // Horizontal sweeping line
-    const sweepY = Math.sin(time * 2) * 25 + 32;
+    const sweepY = Math.round(Math.sin(time * 2) * 25 + 32);
     for (let x = 0; x < 64; x++) {
         const alpha = Math.round(Math.max(0, 255 - Math.abs(x - 32) * 4)); // Fade from center
-        await device.drawPixelRgba([x, Math.round(sweepY)], [255, 255, 0, alpha]);
+        await device.drawPixelRgba([x, sweepY], [255, 255, 0, alpha]);
     }
 
     // Vertical sweeping line
-    const sweepX = Math.cos(time * 1.5) * 25 + 32;
+    const sweepX = Math.round(Math.cos(time * 1.5) * 25 + 32);
     for (let y = 0; y < 64; y++) {
         const alpha = Math.round(Math.max(0, 255 - Math.abs(y - 32) * 4));
-        await device.drawPixelRgba([Math.round(sweepX), y], [0, 255, 255, alpha]);
+        await device.drawPixelRgba([sweepX, y], [0, 255, 255, alpha]);
     }
 
     // Diagonal sweeping line
@@ -195,16 +195,16 @@ async function drawAnimatedText(device, time, progress) {
     // Animated text with trails
 
     // Main text that moves around
-    const textX = Math.sin(time * 0.8) * 15 + 32;
-    const textY = Math.cos(time * 0.6) * 10 + 20;
+    const textX = Math.round(Math.sin(time * 0.8) * 15 + 32);
+    const textY = Math.round(Math.cos(time * 0.6) * 10 + 20);
 
     // Text shadow
-    await device.drawTextRgbaAligned("ANIM", Math.round(textX + 1), Math.round(textY + 1), [0, 0, 0, 120], "center");
-    await device.drawTextRgbaAligned("ATED", Math.round(textX + 1), Math.round(textY + 9), [0, 0, 0, 120], "center");
+    await device.drawTextRgbaAligned("ANIM", textX + 1, textY + 1, [0, 0, 0, 120], "center");
+    await device.drawTextRgbaAligned("ATED", textX + 1, textY + 9, [0, 0, 0, 120], "center");
 
     // Main text
-    await device.drawTextRgbaAligned("ANIM", Math.round(textX), Math.round(textY), [255, 255, 255, 255], "center");
-    await device.drawTextRgbaAligned("ATED", Math.round(textX), Math.round(textY + 8), [255, 200, 100, 255], "center");
+    await device.drawTextRgbaAligned("ANIM", textX, textY, [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("ATED", textX, textY + 8, [255, 200, 100, 255], "center");
 
     // Scrolling frame counter at bottom
     const frameText = `F:${Math.round(progress * 100)}`;
@@ -219,27 +219,23 @@ async function drawParticleSystem(device, time, progress) {
 
     for (let i = 0; i < numParticles; i++) {
         const particleTime = time + i * Math.PI / 4;
-        const x = Math.max(2, Math.min(62, Math.sin(particleTime * 1.5) * 25 + 32));
-        const y = Math.max(2, Math.min(62, Math.cos(particleTime * 1.2) * 20 + 32));
+        const x = Math.max(2, Math.min(62, Math.round(Math.sin(particleTime * 1.5) * 25 + 32)));
+        const y = Math.max(2, Math.min(62, Math.round(Math.cos(particleTime * 1.2) * 20 + 32)));
 
         // Particle trail effect
         for (let trail = 0; trail < 3; trail++) {
-            const trailX = Math.max(0, Math.min(64, Math.sin((particleTime - trail * 0.1) * 1.5) * 25 + 32));
-            const trailY = Math.max(0, Math.min(64, Math.cos((particleTime - trail * 0.1) * 1.2) * 20 + 32));
+            const trailX = Math.max(0, Math.min(64, Math.round(Math.sin((particleTime - trail * 0.1) * 1.5) * 25 + 32)));
+            const trailY = Math.max(0, Math.min(64, Math.round(Math.cos((particleTime - trail * 0.1) * 1.2) * 20 + 32)));
             const trailAlpha = Math.round((3 - trail) * 60);
 
-            const px = Math.round(trailX);
-            const py = Math.round(trailY);
-            if (px >= 0 && px < 64 && py >= 0 && py < 64) {
-                await device.drawPixelRgba([px, py], [255, 150, 0, trailAlpha]);
+            if (trailX >= 0 && trailX < 64 && trailY >= 0 && trailY < 64) {
+                await device.drawPixelRgba([trailX, trailY], [255, 150, 0, trailAlpha]);
             }
         }
 
         // Main particle
-        const mainX = Math.round(x);
-        const mainY = Math.round(y);
-        if (mainX >= 0 && mainX < 64 && mainY >= 0 && mainY < 64) {
-            await device.drawPixelRgba([mainX, mainY], [255, 255, 255, 255]);
+        if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+            await device.drawPixelRgba([x, y], [255, 255, 255, 255]);
         }
     }
 }
