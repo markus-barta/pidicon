@@ -1,5 +1,7 @@
 // Empty Scene - Black screen (device "off" state)
-// MQTT Command: {"scene":"empty"}
+// MQTT Commands:
+// {"scene":"empty"}                    - Turn screen off (black)
+// {"scene":"empty","clear":true}       - Clear screen explicitly (same result)
 // @author: Sonic + Cursor + Markus Barta (mba)
 
 const name = "empty";
