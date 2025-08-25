@@ -26,6 +26,9 @@ const deviceDefaults = new Map(); // deviceIp -> default scene
 // Stores last state per device IP so we can re-render on driver switch
 const lastState = {}; // deviceIp -> { key, payload, sceneName }
 
+// Device boot state tracking
+const deviceBootState = new Map(); // deviceIp -> { booted: boolean, lastActivity: timestamp }
+
 // Scene registry: scene name -> render function
 const scenes = new Map();
 
@@ -84,6 +87,36 @@ function publishMetrics(deviceIp) {
   if (!dev) return;
   const metrics = dev.getMetrics();
   client.publish(`pixoo/${deviceIp}/metrics`, JSON.stringify(metrics));
+}
+
+// Device boot state management
+function markDeviceActive(deviceIp) {
+  const now = Date.now();
+  const bootState = deviceBootState.get(deviceIp) || { booted: false, lastActivity: 0 };
+
+  // If this is the first activity or it's been more than 5 minutes since last activity,
+  // consider it a potential fresh boot
+  if (!bootState.lastActivity || (now - bootState.lastActivity) > 300000) {
+    console.log(`🔄 [BOOT] Potential fresh boot detected for ${deviceIp}`);
+    bootState.booted = false;
+  }
+
+  bootState.lastActivity = now;
+  deviceBootState.set(deviceIp, bootState);
+}
+
+function markDeviceBooted(deviceIp) {
+  const bootState = deviceBootState.get(deviceIp) || { booted: false, lastActivity: Date.now() };
+  if (!bootState.booted) {
+    console.log(`✅ [BOOT] Device ${deviceIp} marked as booted`);
+    bootState.booted = true;
+  }
+  deviceBootState.set(deviceIp, bootState);
+}
+
+function isDeviceFreshlyBooted(deviceIp) {
+  const bootState = deviceBootState.get(deviceIp);
+  return bootState && !bootState.booted;
 }
 
 function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
@@ -211,6 +244,15 @@ client.on("message", async (topic, message) => {
         return;
       }
 
+      // Track device activity for boot state management
+      markDeviceActive(deviceIp);
+
+      // Add delay for freshly booted devices to allow initialization
+      if (isDeviceFreshlyBooted(deviceIp)) {
+        console.log(`⏳ [BOOT] Adding initialization delay for freshly booted device ${deviceIp}`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+      }
+
       // Just remember last payload for re-render after driver switch
       lastState[deviceIp] = { payload, sceneName };
 
@@ -223,6 +265,12 @@ client.on("message", async (topic, message) => {
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
       try {
         await scene.render(ctx);
+
+        // Mark device as successfully booted after first successful render
+        if (isDeviceFreshlyBooted(deviceIp)) {
+          markDeviceBooted(deviceIp);
+        }
+
         publishMetrics(deviceIp);
       } catch (err) {
         console.error(`❌ Render error for ${deviceIp}:`, err.message);

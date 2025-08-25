@@ -78,8 +78,25 @@ module.exports = {
 		const isFreshStart = !startTime || (isNewMessage && !getState("testCompleted"));
 
 		if (isFreshStart) {
-			// Clear screen first
-			await device.clear();
+			// Check if device is ready before proceeding
+			const deviceReady = await device.isReady();
+			if (!deviceReady) {
+				console.log(`⏳ [TEST V2] Device not ready, waiting...`);
+				await new Promise(resolve => setTimeout(resolve, 1000));
+				// Try again after delay
+				const stillNotReady = !(await device.isReady());
+				if (stillNotReady) {
+					console.warn(`⚠️ [TEST V2] Device still not ready, proceeding anyway`);
+				}
+			}
+
+			try {
+				// Clear screen first
+				await device.clear();
+			} catch (error) {
+				console.error(`❌ [TEST V2] Failed to clear device on fresh start:`, error.message);
+				// Continue anyway, the device might recover
+			}
 
 			// Reset all test variables for fresh start
 			setState("startTime", Date.now());

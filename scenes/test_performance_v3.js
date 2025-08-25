@@ -340,13 +340,30 @@ async function render(ctx) {
             setState("_loopIteration", state._loopIteration || 0);
         }
 
-        // Fresh start logic
+        // Fresh start logic with device readiness check
         if (stateManager.isFreshStart(state)) {
-            await device.clear();
-            stateManager.reset();
+            // Check if device is ready before proceeding
+            const deviceReady = await device.isReady();
+            if (!deviceReady) {
+                console.log(`⏳ [PERF V3] Device not ready, waiting...`);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Try again after delay
+                const stillNotReady = !(await device.isReady());
+                if (stillNotReady) {
+                    console.warn(`⚠️ [PERF V3] Device still not ready, proceeding anyway`);
+                }
+            }
 
-            console.log(`🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
-                `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`);
+            try {
+                await device.clear();
+                stateManager.reset();
+
+                console.log(`🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
+                    `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`);
+            } catch (error) {
+                console.error(`❌ [PERF V3] Failed to clear device on fresh start:`, error.message);
+                // Continue anyway, the device might recover
+            }
         }
 
         const startTime = getState("startTime");
