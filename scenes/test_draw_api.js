@@ -7,9 +7,18 @@
 // {"scene":"test_draw_api","test":"text"}       - Test text rendering
 // {"scene":"test_draw_api","test":"gradients"}  - Test gradient rendering
 // @author: Sonic + Cursor + Markus Barta (mba)
+
 const name = "test_draw_api";
 
+// Import shared utilities
+const { validateSceneContext } = require('../lib/performance-utils');
+
 async function render(ctx) {
+    // Validate scene context
+    if (!validateSceneContext(ctx, name)) {
+        return;
+    }
+
     const { device, state } = ctx;
     const testType = state.test || "all"; // "all", "pixels", "rectangles", "lines", "text", "gradients"
 

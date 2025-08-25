@@ -17,50 +17,13 @@
 
 const SCENE_NAME = 'test_performance_v3';
 
-/**
- * Professional-grade configuration with comprehensive documentation
- * @typedef {Object} ChartConfiguration
- * @property {number} START_Y - Y-coordinate where chart rendering begins
- * @property {number} RANGE_HEIGHT - Vertical height of the performance chart
- * @property {number} MIN_FRAMETIME - Minimum frametime value for scaling (ms)
- * @property {number} MAX_FRAMETIME - Maximum frametime value for scaling (ms)
- * @property {number[]} AXIS_COLOR - RGBA color for chart axes [r,g,b,a]
- * @property {number} CHART_START_X - X-coordinate where chart data begins
- * @property {number} MAX_CHART_POINTS - Maximum number of data points to retain
- * @property {number} MAX_FRAME_SAMPLES - Maximum number of frame time samples
- * @property {number} UPDATE_INTERVAL_MS - Chart update interval in milliseconds
- * @property {number} LOOP_DURATION_DEFAULT - Default loop duration in milliseconds
- * @property {number} TEST_TIMEOUT_MS - Maximum test duration before auto-termination
- */
-const CHART_CONFIG = Object.freeze({
-    // Chart Layout
-    START_Y: 50,
-    RANGE_HEIGHT: 20,
-    CHART_START_X: 1,
-
-    // Performance Scaling
-    MIN_FRAMETIME: 1,
-    MAX_FRAMETIME: 500,
-
-    // Visual Configuration
-    AXIS_COLOR: [64, 64, 64, 191],
-    TEXT_COLOR_HEADER: [255, 255, 255, 255],
-    TEXT_COLOR_STATS: [128, 128, 128, 255],
-    TEXT_COLOR_COMPLETE: [255, 255, 255, 127],
-    BG_COLOR: [0, 0, 0, 255],
-
-    // Performance Limits
-    MAX_CHART_POINTS: 64,
-    MAX_FRAME_SAMPLES: 50,
-    UPDATE_INTERVAL_MS: 100,
-
-    // Timing Configuration
-    LOOP_DURATION_DEFAULT: 300000, // 5 minutes
-    TEST_TIMEOUT_MS: 60000, // 1 minute max
-    MQTT_TIMEOUT_MS: 5000,
-    MIN_DELAY_MS: 50,
-    MAX_DELAY_MS: 2000
-});
+// Import shared performance utilities
+const {
+    CHART_CONFIG,
+    getPerformanceColor,
+    validateSceneContext,
+    formatPerformanceMetrics
+} = require('../lib/performance-utils');
 
 /**
  * Test mode enumeration for type safety
@@ -87,52 +50,19 @@ const ERROR_TYPES = Object.freeze({
 });
 
 /**
- * Performance color cache for optimal rendering
- * @type {Map<number, number[]>}
+ * Additional configuration specific to v3
+ * @readonly
+ * @enum {Object}
  */
-const COLOR_CACHE = new Map();
+const V3_CONFIG = Object.freeze({
+    LOOP_DURATION_DEFAULT: 300000, // 5 minutes
+    TEXT_COLOR_COMPLETE: [255, 255, 255, 127],
+    MQTT_TIMEOUT_MS: 5000,
+    MIN_DELAY_MS: 50,
+    MAX_DELAY_MS: 2000
+});
 
-/**
- * Calculates performance-based colors with intelligent caching
- * @param {number} frametime - Frame time in milliseconds
- * @returns {number[]} RGBA color array [r, g, b, a]
- * @throws {Error} If frametime is invalid
- */
-function getPerformanceColor(frametime) {
-    if (typeof frametime !== 'number' || frametime < 0) {
-        throw new Error(`Invalid frametime: ${frametime}`);
-    }
-
-    const cacheKey = Math.round(frametime);
-    let color = COLOR_CACHE.get(cacheKey);
-
-    if (color) {
-        return color;
-    }
-
-    const normalized = Math.min(CHART_CONFIG.MAX_FRAMETIME,
-        Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime));
-    const ratio = (normalized - CHART_CONFIG.MIN_FRAMETIME) /
-        (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
-
-    // Optimized color gradient calculation with pre-computed values
-    if (ratio < 0.25) {
-        const blend = ratio * 4;
-        color = [0, Math.round(255 * blend), Math.round(255 * (1 - blend)), 191];
-    } else if (ratio < 0.5) {
-        const blend = (ratio - 0.25) * 4;
-        color = [Math.round(255 * blend), 255, 0, 191];
-    } else if (ratio < 0.75) {
-        const blend = (ratio - 0.5) * 4;
-        color = [255, Math.round(255 * (1 - blend * 0.35)), 0, 191];
-    } else {
-        const blend = (ratio - 0.75) * 4;
-        color = [255, Math.round(165 * (1 - blend)), 0, 191];
-    }
-
-    COLOR_CACHE.set(cacheKey, color);
-    return color;
-}
+// getPerformanceColor function is now imported from performance-utils
 /**
  * Professional State Manager for performance test
  * @class
@@ -331,7 +261,7 @@ async function render(ctx) {
         const config = {
             mode: TEST_MODES[state.mode] || TEST_MODES.CONTINUOUS,
             testInterval: Math.max(50, Math.min(2000, state.interval || 150)),
-            loopDuration: state.duration || CHART_CONFIG.LOOP_DURATION_DEFAULT,
+            loopDuration: state.duration || V3_CONFIG.LOOP_DURATION_DEFAULT,
             adaptiveTiming: Boolean(state.adaptiveTiming)
         };
 

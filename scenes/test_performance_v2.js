@@ -16,41 +16,15 @@
 
 // @author: Sonic + Cursor + Markus Barta (mba)
 
-// Chart configuration constants
-const CHART_CONFIG = {
-  START_Y: 50,           // Starting Y position for chart
-  RANGE_HEIGHT: 20,      // Height of chart in pixels (zoomed for detail)
-  MIN_FRAMETIME: 1,      // Minimum frametime for scaling (1ms)
-  MAX_FRAMETIME: 500,    // Maximum frametime for scaling (500ms)
-  AXIS_COLOR: [64, 64, 64, 255], // Dark gray for axes
-  CHART_START_X: 1       // Start chart at x=1 (leave space for y-axis)
-};
+// Import shared performance utilities
+const {
+    CHART_CONFIG,
+    getSimplePerformanceColor,
+    validateSceneContext
+} = require('../lib/performance-utils');
 
-// Color gradient function for performance levels
-function getPerformanceColor(frametime) {
-  const ratio = (frametime - CHART_CONFIG.MIN_FRAMETIME) / (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
-
-  if (ratio <= 0.2) {
-    // Blue to blue-green (0-100ms)
-    return [0, Math.round(255 * (ratio / 0.2)), Math.round(255 * ratio), 255];
-  } else if (ratio <= 0.4) {
-    // Blue-green to green (100-200ms)
-    const subRatio = (ratio - 0.2) / 0.2;
-    return [0, 255, Math.round(128 + 127 * subRatio), 255];
-  } else if (ratio <= 0.6) {
-    // Green to yellow-green (200-300ms)
-    const subRatio = (ratio - 0.4) / 0.2;
-    return [Math.round(255 * subRatio), 255, Math.round(255 * (1 - subRatio)), 255];
-  } else if (ratio <= 0.8) {
-    // Yellow to orange (300-400ms)
-    const subRatio = (ratio - 0.6) / 0.2;
-    return [255, Math.round(255 * (1 - subRatio)), 0, 255];
-  } else {
-    // Orange to red (400-500ms+)
-    const subRatio = Math.min(1, (ratio - 0.8) / 0.2);
-    return [255, Math.round(128 * (1 - subRatio)), 0, 255];
-  }
-}
+// Use the simple performance color function from shared utilities
+const getPerformanceColor = getSimplePerformanceColor;
 
 module.exports = {
 	name: "test_performance_v2",
