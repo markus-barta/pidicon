@@ -266,18 +266,18 @@ async function drawAnimatedText(device, time, progress) {
     const textY = Math.round(Math.cos(time * 0.6) * 10 + 20);
 
     // Text shadow
-    await device.drawTextRgbaAligned("ANIM", textX + 1, textY + 1, [0, 0, 0, 120], "center");
-    await device.drawTextRgbaAligned("ATED", textX + 1, textY + 9, [0, 0, 0, 120], "center");
+    await device.drawTextRgbaAligned("ANIM", [textX + 1, textY + 1], [0, 0, 0, 120], "center");
+    await device.drawTextRgbaAligned("ATED", [textX + 1, textY + 9], [0, 0, 0, 120], "center");
 
     // Main text
-    await device.drawTextRgbaAligned("ANIM", textX, textY, [255, 255, 255, 255], "center");
-    await device.drawTextRgbaAligned("ATED", textX, textY + 8, [255, 200, 100, 255], "center");
+    await device.drawTextRgbaAligned("ANIM", [textX, textY], [255, 255, 255, 255], "center");
+    await device.drawTextRgbaAligned("ATED", [textX, textY + 8], [255, 200, 100, 255], "center");
 
     // Scrolling frame counter at bottom
     const frameText = `F:${Math.round(progress * 100)}`;
     const scrollX = 64 - (time * 30) % (64 + 40); // Scroll from right to left
     const safeScrollX = Math.max(-20, Math.min(64, Math.round(scrollX))); // Keep text visible
-    await device.drawTextRgbaAligned(frameText, safeScrollX, 58, [200, 200, 200, 180], "left");
+    await device.drawTextRgbaAligned(frameText, [safeScrollX, 58], [200, 200, 200, 180], "left");
 }
 
 async function drawParticleSystem(device, time, progress) {
