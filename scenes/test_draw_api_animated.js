@@ -46,8 +46,21 @@ async function render(ctx) {
     const progress = Math.min(1.0, frameCount / duration);
     const time = (frameCount * Math.PI * 2) / 60; // Smooth oscillation
 
+    // Debug logging for first few frames
+    if (frameCount < 3) {
+        console.log(`🎬 [ANIMATED DEMO] Frame ${frameCount}, progress: ${progress.toFixed(3)}, time: ${time.toFixed(3)}`);
+    }
+
+    // Test with a simple pixel first
+    if (frameCount < 3) {
+        console.log(`🧪 [TEST] Drawing simple pixel...`);
+        await device.drawPixelRgba([32, 32], [255, 0, 0, 255]);
+        console.log(`✅ [TEST] Simple pixel drawn successfully`);
+        return; // Exit early for first few frames to test
+    }
+
     // Draw animated elements
-    await drawAnimatedBackground(device, time, progress);
+    await drawAnimatedBackground(device, time, progress, frameCount);
     await drawMovingShapes(device, time, progress);
     await drawSweepingLines(device, time, progress);
     await drawAnimatedText(device, time, progress);
@@ -75,7 +88,7 @@ async function render(ctx) {
     }, 1000 / 30); // ~30fps
 }
 
-async function drawAnimatedBackground(device, time, progress) {
+async function drawAnimatedBackground(device, time, progress, frameCount) {
     // Animated gradient background
     for (let y = 0; y < 64; y++) {
         for (let x = 0; x < 64; x++) {
@@ -85,12 +98,17 @@ async function drawAnimatedBackground(device, time, progress) {
 
             // Subtle animated background
             if (intensity > 10) {
-                await device.drawPixelRgba([x, y], [
-                    Math.round(intensity * 0.1),
-                    Math.round(intensity * 0.05),
-                    Math.round(intensity * 0.2),
-                    60
-                ]);
+                const r = Math.round(intensity * 0.1);
+                const g = Math.round(intensity * 0.05);
+                const b = Math.round(intensity * 0.2);
+                const color = [r, g, b, 60];
+
+                // Debug first few pixels
+                if (x === 0 && y === 0 && frameCount < 3) {
+                    console.log(`🎨 [BACKGROUND] Pixel [${x},${y}]: intensity=${intensity.toFixed(1)}, color=[${color.join(',')}]`);
+                }
+
+                await device.drawPixelRgba([x, y], color);
             }
         }
     }
@@ -243,7 +261,7 @@ async function drawParticleSystem(device, time, progress) {
 async function drawFinalOverlay(device, time, progress) {
     // Progress bar at top
     const barWidth = Math.round(progress * 60);
-    for (let x = 2; x < 2 + barWidth; x++) {
+    for (let x = 2; x < 2 + barWidth && x < 64; x++) {
         await device.drawPixelRgba([x, 2], [100, 200, 255, 180]);
         await device.drawPixelRgba([x, 3], [150, 220, 255, 200]);
     }
