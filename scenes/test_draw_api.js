@@ -47,6 +47,9 @@ async function render(ctx) {
             await testAll(device);
             break;
     }
+
+    // Push the rendered frame to the device
+    await device.push(name);
 }
 
 async function testPixels(device) {

@@ -59,22 +59,18 @@ if (deviceDrivers.size > 0) {
 console.log("Loaded scenes:", Array.from(scenes.keys()));
 console.log("");
 
-// Display available commands from markdown file
+// Reference to available commands documentation
 try {
   const fs = require("fs");
   const path = require("path");
   const commandsPath = path.join(__dirname, "PIXOO_COMMANDS.md");
   if (fs.existsSync(commandsPath)) {
-    console.log("📋 Available Commands (copy & paste):");
-    console.log("====================================");
-    const commandsContent = fs.readFileSync(commandsPath, "utf8");
-    console.log(commandsContent);
-    console.log("====================================");
+    console.log(`📋 Available commands documented in: ${commandsPath}`);
   } else {
     console.log("⚠️  PIXOO_COMMANDS.md not found");
   }
 } catch (err) {
-  console.log("⚠️  Could not read PIXOO_COMMANDS.md:", err.message);
+  console.log("⚠️  Could not check PIXOO_COMMANDS.md:", err.message);
 }
 console.log("");
 
