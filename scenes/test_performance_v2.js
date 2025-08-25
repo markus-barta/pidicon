@@ -14,7 +14,7 @@
 // {"scene":"test_performance_v2","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
 // {"scene":"test_performance_v2","mode":"sweep"}                                       - Sweep mode through different intervals
 
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 
 // Chart configuration constants
 const CHART_CONFIG = {

@@ -6,7 +6,7 @@
 // {"scene":"test_draw_api","test":"lines"}      - Test line drawing
 // {"scene":"test_draw_api","test":"text"}       - Test text rendering
 // {"scene":"test_draw_api","test":"gradients"}  - Test gradient rendering
-// @author: Claude + Cursor + Markus Barta (mba)
+// @author: Sonic + Cursor + Markus Barta (mba)
 const name = "test_draw_api";
 
 async function render(ctx) {

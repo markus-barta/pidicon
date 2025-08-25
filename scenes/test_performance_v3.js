@@ -3,7 +3,7 @@
  * @description Advanced performance testing scene with real-time metrics, adaptive timing,
  * and professional-grade architecture for the Pixoo device ecosystem.
  * @version 3.0.0
- * @author: Claude + Cursor + Markus Barta (mba)
+ * @author: Sonic + Cursor + Markus Barta (mba)
  * @license MIT
  */
 

@@ -4,7 +4,7 @@
  * Shows sophisticated chart features like negative values, overflow handling, and gradient rendering.
  * Only available when PIXOO_ENABLE_ADVANCED_CHART=true
  * @version 1.0.0
- * @author: Claude + Cursor + Markus Barta (mba)
+ * @author: Sonic + Cursor + Markus Barta (mba)
  * @license MIT
  */
 
