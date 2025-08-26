@@ -32,7 +32,7 @@ async function render(ctx) {
     }
 
     // Fill entire screen with the specified color
-    await device.fillRgba(color);
+    await device.fillRectangleRgba([0, 0], [64, 64], color);
 
     console.log(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
 }
