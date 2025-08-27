@@ -67,7 +67,7 @@ async function render(ctx) {
 
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 32],
+    [32, 28],
     [255, 150, 0, 255], // Orange (more distinct from yellow)
     'center',
   );
@@ -75,7 +75,7 @@ async function render(ctx) {
   // Draw build time
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 42],
+    [32, 38],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -83,7 +83,7 @@ async function render(ctx) {
   // Draw daemon start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 52],
+    [32, 48],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -91,7 +91,7 @@ async function render(ctx) {
   // Draw status indicator
   await device.drawTextRgbaAligned(
     'READY',
-    [32, 58],
+    [32, 57],
     [0, 255, 0, 255], // Green
     'center',
   );
