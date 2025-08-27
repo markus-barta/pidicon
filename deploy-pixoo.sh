@@ -4,21 +4,18 @@ set -e
 echo "🔄 Pulling latest Pixoo daemon code..."
 git -C ~/Code/pixoo-daemon pull origin main
 
-echo "🔨 Building version information in container..."
-docker run --rm \
-  -v ~/Code/pixoo-daemon:/app \
-  -w /app \
-  node:20-alpine \
-  sh -c "npm run build:version || (echo '❌ Build failed!' && exit 1)"
+echo "🔨 Building version information on server (Git available)..."
+cd ~/Code/pixoo-daemon
+npm run build:version
 
 echo "🔍 Verifying version.json was created..."
-if [ ! -f ~/Code/pixoo-daemon/version.json ]; then
+if [ ! -f version.json ]; then
   echo "❌ version.json not found after build!"
   exit 1
 fi
 
 echo "📋 Version info:"
-cat ~/Code/pixoo-daemon/version.json
+cat version.json
 
 echo "📦 Installing dependencies in temporary build container..."
 docker run --rm \
