@@ -3,11 +3,16 @@
 // - Subscribes to MQTT updates per device
 // - Routes each state update to the selected scene renderer
 // @author: Sonic + Cursor + Markus Barta (mba)
+
+console.log('🚀 [DAEMON] Starting Pixoo Daemon...');
+
 const fs = require('fs');
 const mqtt = require('mqtt');
 const path = require('path');
 
+console.log('📦 [DAEMON] Loading dependencies...');
 const DeploymentTracker = require('./lib/deployment-tracker');
+console.log('✅ [DAEMON] DeploymentTracker loaded');
 const {
   getContext,
   setDriverForDevice,
@@ -15,8 +20,11 @@ const {
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
+console.log('✅ [DAEMON] device-adapter loaded');
 const { softReset } = require('./lib/pixoo-http');
+console.log('✅ [DAEMON] pixoo-http loaded');
 const SceneManager = require('./lib/scene-manager');
+console.log('✅ [DAEMON] SceneManager loaded');
 
 // MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
 const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
