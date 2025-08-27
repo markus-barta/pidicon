@@ -44,7 +44,7 @@ async function render(ctx) {
   // Draw title
   await device.drawTextRgbaAligned(
     'PIXOO DAEMON',
-    [32, 6],
+    [32, 2],
     [255, 255, 255, 255],
     'center',
   );
@@ -52,7 +52,7 @@ async function render(ctx) {
   // Draw deployment ID (larger, prominent)
   await device.drawTextRgbaAligned(
     deploymentId,
-    [32, 16],
+    [32, 12],
     [0, 255, 255, 255], // Cyan
     'center',
   );
@@ -60,14 +60,14 @@ async function render(ctx) {
   // Draw build number and git hash
   await device.drawTextRgbaAligned(
     `#${buildNumber}`,
-    [32, 26],
+    [32, 22],
     [255, 255, 0, 255], // Yellow
     'center',
   );
 
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 36],
+    [32, 32],
     [255, 150, 0, 255], // Orange (more distinct from yellow)
     'center',
   );
@@ -75,7 +75,7 @@ async function render(ctx) {
   // Draw build time
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 46],
+    [32, 42],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -83,7 +83,7 @@ async function render(ctx) {
   // Draw daemon start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 56],
+    [32, 52],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -91,7 +91,7 @@ async function render(ctx) {
   // Draw status indicator
   await device.drawTextRgbaAligned(
     'READY',
-    [32, 62],
+    [32, 58],
     [0, 255, 0, 255], // Green
     'center',
   );
