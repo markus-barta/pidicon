@@ -336,7 +336,7 @@ client.on('message', async (topic, message) => {
       // Check if this is a scene change or parameter change
       const lastScene = lastState[deviceIp]?.sceneName;
       const lastPayload = lastState[deviceIp]?.payload;
-      const isSceneChange = lastScene && lastScene !== sceneName;
+      const isSceneChange = !lastScene || lastScene !== sceneName;
       const isParameterChange =
         lastScene === sceneName &&
         JSON.stringify(lastPayload) !== JSON.stringify(payload);
