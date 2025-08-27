@@ -2,7 +2,13 @@
   "name": "pixoo-daemon",
   "main": "daemon.js",
   "scripts": {
-    "start": "node daemon.js"
+    "start": "node daemon.js",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "md:lint": "markdownlint \"**/*.md\" --ignore node_modules",
+    "test": "node --test",
+    "coverage": "c8 npm test",
+    "prepare": "husky install"
   },
   "dependencies": {
     "mqtt": "^5.9.0",
