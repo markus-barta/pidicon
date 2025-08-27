@@ -97,13 +97,17 @@ function markDeviceActive(deviceIp) {
   const bootState = deviceBootState.get(deviceIp) || {
     booted: false,
     lastActivity: 0,
+    firstSeen: now,
   };
 
-  // If this is the first activity or it's been more than 5 minutes since last activity,
-  // consider it a potential fresh boot
-  if (!bootState.lastActivity || now - bootState.lastActivity > 300000) {
-    console.log(`🔄 [BOOT] Potential fresh boot detected for ${deviceIp}`);
-    bootState.booted = false;
+  // Only consider it a fresh boot if this is the very first time we've seen this device
+  // or if it's been more than 30 minutes since last activity (much less aggressive)
+  if (!bootState.lastActivity || now - bootState.lastActivity > 1800000) {
+    if (!bootState.firstSeen || now - bootState.firstSeen < 60000) {
+      // Only in the first minute of seeing the device
+      console.log(`🔄 [BOOT] Potential fresh boot detected for ${deviceIp}`);
+      bootState.booted = false;
+    }
   }
 
   bootState.lastActivity = now;
@@ -271,9 +275,6 @@ client.on('message', async (topic, message) => {
         await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
       }
 
-      // Just remember last payload for re-render after driver switch
-      lastState[deviceIp] = { payload, sceneName };
-
       const ts = new Date().toLocaleString('de-AT');
       console.log(
         `[${ts}] 📥 State update for ${deviceIp} → scene: ${sceneName} (driver: ${getDriverForDevice(
@@ -282,10 +283,17 @@ client.on('message', async (topic, message) => {
       );
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
 
-      // Clear screen when switching to a new scene OR when explicitly requested
+      // Check if this is a scene change or parameter change
       const lastScene = lastState[deviceIp]?.sceneName;
-      const shouldClear =
-        (lastScene && lastScene !== sceneName) || payload.clear === true;
+      const lastPayload = lastState[deviceIp]?.payload;
+      const isSceneChange = lastScene && lastScene !== sceneName;
+      const isParameterChange =
+        lastScene === sceneName &&
+        JSON.stringify(lastPayload) !== JSON.stringify(payload);
+      const shouldClear = isSceneChange || payload.clear === true;
+
+      // Remember last state AFTER checking for changes
+      lastState[deviceIp] = { payload, sceneName };
 
       if (shouldClear) {
         const device = require('./lib/device-adapter').getDevice(deviceIp);
@@ -302,10 +310,21 @@ client.on('message', async (topic, message) => {
       }
 
       try {
-        // Switch to new scene using scene manager
-        const success = await sceneManager.switchScene(sceneName, ctx);
+        // Handle scene switching or parameter updates
+        let success;
+        if (isSceneChange) {
+          // New scene - do full switch
+          success = await sceneManager.switchScene(sceneName, ctx);
+        } else if (isParameterChange) {
+          // Same scene, new parameters - update parameters
+          success = await sceneManager.updateSceneParameters(sceneName, ctx);
+        } else {
+          // Same scene, same parameters - just render
+          success = true;
+        }
+
         if (!success) {
-          throw new Error(`Failed to switch to scene: ${sceneName}`);
+          throw new Error(`Failed to handle scene update: ${sceneName}`);
         }
 
         // Render the active scene
