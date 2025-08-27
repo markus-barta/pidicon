@@ -282,6 +282,8 @@ client.on('message', async (topic, message) => {
         )})`,
       );
       const ctx = getContext(deviceIp, sceneName, payload, publishOk);
+      // Add payload to context for parameter updates
+      ctx.payload = payload;
 
       // Check if this is a scene change or parameter change
       const lastScene = lastState[deviceIp]?.sceneName;
@@ -291,6 +293,15 @@ client.on('message', async (topic, message) => {
         lastScene === sceneName &&
         JSON.stringify(lastPayload) !== JSON.stringify(payload);
       const shouldClear = isSceneChange || payload.clear === true;
+
+      // Debug logging for parameter changes
+      if (isParameterChange) {
+        console.log(
+          `🔄 [PARAM] Parameter change detected for scene: ${sceneName}`,
+        );
+        console.log(`   Old: ${JSON.stringify(lastPayload)}`);
+        console.log(`   New: ${JSON.stringify(payload)}`);
+      }
 
       // Remember last state AFTER checking for changes
       lastState[deviceIp] = { payload, sceneName };
@@ -314,12 +325,15 @@ client.on('message', async (topic, message) => {
         let success;
         if (isSceneChange) {
           // New scene - do full switch
+          console.log(`🔄 [SCENE] Switching to new scene: ${sceneName}`);
           success = await sceneManager.switchScene(sceneName, ctx);
         } else if (isParameterChange) {
           // Same scene, new parameters - update parameters
+          console.log(`🔄 [PARAM] Updating parameters for scene: ${sceneName}`);
           success = await sceneManager.updateSceneParameters(sceneName, ctx);
         } else {
           // Same scene, same parameters - just render
+          console.log(`🔄 [RENDER] Re-rendering same scene: ${sceneName}`);
           success = true;
         }
 
