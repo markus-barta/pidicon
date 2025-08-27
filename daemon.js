@@ -7,6 +7,7 @@ const fs = require('fs');
 const mqtt = require('mqtt');
 const path = require('path');
 
+const DeploymentTracker = require('./lib/deployment-tracker');
 const {
   getContext,
   setDriverForDevice,
@@ -31,7 +32,8 @@ const lastState = {}; // deviceIp -> { key, payload, sceneName }
 // Device boot state tracking
 const deviceBootState = new Map(); // deviceIp -> { booted: boolean, lastActivity: timestamp }
 
-// Initialize scene manager
+// Initialize deployment tracker and scene manager
+const deploymentTracker = new DeploymentTracker();
 const sceneManager = new SceneManager();
 
 // Load all scenes from ./scenes
@@ -63,6 +65,44 @@ if (deviceDrivers.size > 0) {
 }
 console.log('Loaded scenes:', sceneManager.getRegisteredScenes());
 console.log('');
+
+// Initialize deployment tracking and load startup scene
+async function initializeDeployment() {
+  try {
+    await deploymentTracker.initialize();
+    console.log(deploymentTracker.getLogString());
+
+    // Auto-load startup scene for all configured devices
+    const deviceTargets = process.env.PIXOO_DEVICE_TARGETS?.split(',') || [];
+    if (deviceTargets.length > 0) {
+      console.log('🚀 Auto-loading startup scene for configured devices...');
+      for (const deviceIp of deviceTargets) {
+        if (deviceIp.trim()) {
+          try {
+            const ctx = getContext(
+              deviceIp.trim(),
+              'startup',
+              deploymentTracker.getSceneContext(),
+              publishOk,
+            );
+            await sceneManager.switchScene('startup', ctx);
+            await sceneManager.renderActiveScene(ctx);
+            console.log(`✅ Startup scene loaded for ${deviceIp.trim()}`);
+          } catch (error) {
+            console.warn(
+              `⚠️ Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+            );
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Deployment initialization failed:', error.message);
+  }
+}
+
+// Initialize deployment and startup scenes
+initializeDeployment();
 
 // Reference to available commands documentation
 try {
