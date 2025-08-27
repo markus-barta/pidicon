@@ -46,7 +46,7 @@ async function render(ctx) {
 
   // Draw build time
   await device.drawTextRgbaAligned(
-    `Built: ${buildTime.split('T')[0]}`,
+    `Built:${buildTime.split('T')[0]}`,
     [32, 32],
     [200, 200, 200, 255], // Light gray
     'center',
@@ -54,7 +54,7 @@ async function render(ctx) {
 
   // Draw daemon start time
   await device.drawTextRgbaAligned(
-    `Started: ${daemonStart.split(' ')[1]}`,
+    `Started: ${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
     [32, 44],
     [200, 200, 200, 255], // Light gray
     'center',
