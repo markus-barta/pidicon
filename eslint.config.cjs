@@ -4,13 +4,7 @@ const promisePlugin = require('eslint-plugin-promise');
 
 module.exports = [
   {
-    ignores: [
-      'node_modules/',
-      'dist/',
-      'coverage/',
-      'legacy-code/',
-      'pixoo_font_complete.js',
-    ],
+    ignores: ['node_modules/', 'dist/', 'coverage/', 'legacy-code/'],
   },
   js.configs.recommended,
   {
