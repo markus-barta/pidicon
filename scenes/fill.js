@@ -8,33 +8,48 @@
 // {"scene":"fill","clear":true,"color":[255,0,0,255]} - Clear screen before filling
 // @author: Sonic + Cursor + Markus Barta (mba)
 
-const name = "fill";
+const name = 'fill';
 
 // Import shared utilities
-const { isValidColor, validateSceneContext } = require('../lib/performance-utils');
+const {
+  isValidColor,
+  validateSceneContext,
+} = require('../lib/performance-utils');
 
-async function render(ctx) {
-    // Validate scene context
-    if (!validateSceneContext(ctx, name)) {
-        return;
-    }
-
-    const { device, state } = ctx;
-
-    // Default to red if no color specified
-    const defaultColor = [255, 0, 0, 255]; // Red
-    const color = state.color || defaultColor;
-
-    // Validate color format using shared utility
-    if (!isValidColor(color)) {
-        console.error(`❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`);
-        return;
-    }
-
-    // Fill entire screen with the specified color
-    await device.fillRectangleRgba([0, 0], [64, 64], color);
-
-    console.log(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
+async function init() {
+  // Initialize fill scene - nothing special needed
+  console.log(`🚀 [FILL] Scene initialized`);
 }
 
-module.exports = { name, render };
+async function render(ctx) {
+  // Validate scene context
+  if (!validateSceneContext(ctx, name)) {
+    return;
+  }
+
+  const { device, state } = ctx;
+
+  // Default to red if no color specified
+  const defaultColor = [255, 0, 0, 255]; // Red
+  const color = state.color || defaultColor;
+
+  // Validate color format using shared utility
+  if (!isValidColor(color)) {
+    console.error(
+      `❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
+    );
+    return;
+  }
+
+  // Fill entire screen with the specified color
+  await device.fillRectangleRgba([0, 0], [64, 64], color);
+
+  console.log(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
+}
+
+async function cleanup() {
+  // Cleanup fill scene - nothing special needed
+  console.log(`🧹 [FILL] Scene cleaned up`);
+}
+
+module.exports = { name, render, init, cleanup };

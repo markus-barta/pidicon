@@ -19,6 +19,16 @@ const name = 'test_draw_api_animated';
 // Import shared utilities
 const { validateSceneContext } = require('../lib/performance-utils');
 
+async function init() {
+  // Initialize animated draw API demo scene - nothing special needed
+  console.log(`🚀 [TEST_DRAW_API_ANIMATED] Scene initialized`);
+}
+
+async function cleanup() {
+  // Cleanup animated draw API demo scene - nothing special needed
+  console.log(`🧹 [TEST_DRAW_API_ANIMATED] Scene cleaned up`);
+}
+
 async function render(ctx) {
   // Validate scene context
   if (!validateSceneContext(ctx, name)) {
@@ -402,4 +412,4 @@ async function drawFinalOverlay(device, time) {
   await device.fillRectangleRgba([61, 61], [3, 3], [255, 255, 255, 100]); // Bottom-right
 }
 
-module.exports = { name, render };
+module.exports = { name, render, init, cleanup };

@@ -15,6 +15,7 @@ const {
   deviceDrivers,
 } = require('./lib/device-adapter');
 const { softReset } = require('./lib/pixoo-http');
+const SceneManager = require('./lib/scene-manager');
 
 // MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
 const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
@@ -30,16 +31,18 @@ const lastState = {}; // deviceIp -> { key, payload, sceneName }
 // Device boot state tracking
 const deviceBootState = new Map(); // deviceIp -> { booted: boolean, lastActivity: timestamp }
 
-// Scene registry: scene name -> render function
-const scenes = new Map();
+// Initialize scene manager
+const sceneManager = new SceneManager();
 
 // Load all scenes from ./scenes
 fs.readdirSync(path.join(__dirname, 'scenes')).forEach((file) => {
   if (file.endsWith('.js')) {
-    const scene = require(path.join(__dirname, 'scenes', file));
-    scenes.set(scene.name, {
-      render: scene.render,
-    });
+    try {
+      const scene = require(path.join(__dirname, 'scenes', file));
+      sceneManager.registerScene(scene.name, scene);
+    } catch (error) {
+      console.error(`❌ Failed to load scene ${file}:`, error.message);
+    }
   }
 });
 
@@ -58,7 +61,7 @@ if (deviceDrivers.size > 0) {
     'No device targets configured (use PIXOO_DEVICE_TARGETS env var or DEVICE_TARGETS_OVERRIDE in code)',
   );
 }
-console.log('Loaded scenes:', Array.from(scenes.keys()));
+console.log('Loaded scenes:', sceneManager.getRegisteredScenes());
 console.log('');
 
 // Reference to available commands documentation
@@ -207,8 +210,7 @@ client.on('message', async (topic, message) => {
       if (prev && prev.payload) {
         try {
           const sceneName = prev.sceneName || 'empty';
-          const scene = scenes.get(sceneName);
-          if (scene) {
+          if (sceneManager.hasScene(sceneName)) {
             const ctx = getContext(
               deviceIp,
               sceneName,
@@ -216,7 +218,7 @@ client.on('message', async (topic, message) => {
               publishOk,
             );
             try {
-              await scene.render(ctx);
+              await sceneManager.renderActiveScene(ctx);
               publishMetrics(deviceIp);
             } catch (err) {
               console.error(`❌ Render error for ${deviceIp}:`, err.message);
@@ -253,8 +255,7 @@ client.on('message', async (topic, message) => {
     if (section === 'state' && action === 'upd') {
       const sceneName =
         payload.scene || deviceDefaults.get(deviceIp) || 'empty';
-      const scene = scenes.get(sceneName);
-      if (!scene) {
+      if (!sceneManager.hasScene(sceneName)) {
         console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
         return;
       }
@@ -301,7 +302,14 @@ client.on('message', async (topic, message) => {
       }
 
       try {
-        await scene.render(ctx);
+        // Switch to new scene using scene manager
+        const success = await sceneManager.switchScene(sceneName, ctx);
+        if (!success) {
+          throw new Error(`Failed to switch to scene: ${sceneName}`);
+        }
+
+        // Render the active scene
+        await sceneManager.renderActiveScene(ctx);
 
         // Mark device as successfully booted after first successful render
         if (isDeviceFreshlyBooted(deviceIp)) {
