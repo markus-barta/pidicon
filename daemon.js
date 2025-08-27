@@ -68,8 +68,9 @@ console.log('');
 
 // Initialize deployment tracking and load startup scene
 async function initializeDeployment() {
+  console.log('🔄 [DAEMON] Starting deployment initialization...');
   try {
-    console.log('🔄 [DAEMON] Initializing deployment tracker...');
+    console.log('🔄 [DAEMON] About to call deploymentTracker.initialize()...');
     await deploymentTracker.initialize();
     console.log('✅ [DAEMON] Deployment tracker initialized');
     console.log(deploymentTracker.getLogString());
@@ -104,7 +105,9 @@ async function initializeDeployment() {
 }
 
 // Initialize deployment and startup scenes
+console.log('🔄 [DAEMON] About to call initializeDeployment()...');
 initializeDeployment();
+console.log('🔄 [DAEMON] initializeDeployment() called (async)');
 
 // Reference to available commands documentation
 try {
