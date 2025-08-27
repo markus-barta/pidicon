@@ -39,7 +39,7 @@ module.exports = [
     rules: {
       ...importPlugin.configs.recommended.rules,
       ...promisePlugin.configs.recommended.rules,
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off', // Temporarily disabled for development
       complexity: ['warn', 10],
       'max-params': ['warn', 5],
       'max-lines-per-function': [
