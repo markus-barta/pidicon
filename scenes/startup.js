@@ -68,7 +68,7 @@ async function render(ctx) {
   await device.drawTextRgbaAligned(
     gitCommit,
     [32, 36],
-    [255, 200, 0, 255], // Orange
+    [255, 150, 0, 255], // Orange (more distinct from yellow)
     'center',
   );
 
