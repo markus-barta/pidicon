@@ -3,6 +3,8 @@
   "main": "daemon.js",
   "scripts": {
     "start": "node daemon.js",
+    "build:version": "node scripts/build-version.js",
+    "prestart": "npm run build:version",
     "lint": "eslint .",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
