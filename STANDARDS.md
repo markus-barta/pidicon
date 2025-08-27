@@ -398,10 +398,10 @@ and lists.
 npx markdownlint *.md
 
 # Check specific file
-npx markdownlint DEVELOPMENT_GUIDE.md
+npx markdownlint STANDARDS.md
 
 # Check specific rules
-npx markdownlint DEVELOPMENT_GUIDE.md --rules MD022,MD032
+npx markdownlint STANDARDS.md --rules MD022,MD032
 
 # Auto-fix (if supported)
 npx markdownlint --fix *.md
