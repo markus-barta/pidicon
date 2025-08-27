@@ -69,7 +69,9 @@ console.log('');
 // Initialize deployment tracking and load startup scene
 async function initializeDeployment() {
   try {
+    console.log('🔄 [DAEMON] Initializing deployment tracker...');
     await deploymentTracker.initialize();
+    console.log('✅ [DAEMON] Deployment tracker initialized');
     console.log(deploymentTracker.getLogString());
 
     // Auto-load startup scene for all configured devices
