@@ -29,9 +29,18 @@ async function render(ctx) {
 
   const { device, state } = ctx;
 
-  // Default to red if no color specified
+  // Get color from context state (MQTT payload) or scene state
   const defaultColor = [255, 0, 0, 255]; // Red
-  const color = state.color || defaultColor;
+  let color = defaultColor;
+
+  // Try context state first (MQTT payload), then fall back to scene state
+  if (ctx.payload && ctx.payload.color) {
+    color = ctx.payload.color;
+  } else if (state.get && state.get('color')) {
+    color = state.get('color');
+  } else if (state.color) {
+    color = state.color;
+  }
 
   // Validate color format using shared utility
   if (!isValidColor(color)) {
