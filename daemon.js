@@ -211,6 +211,9 @@ client.on('message', async (topic, message) => {
 
       // Optional: re-render with last known state
       const prev = lastState[deviceIp];
+      console.log(
+        `🔍 [DEBUG] Driver switch for ${deviceIp}, lastState: ${JSON.stringify(prev || 'none')}`,
+      );
       if (prev && prev.payload) {
         try {
           const sceneName = prev.sceneName || 'empty';
@@ -324,6 +327,11 @@ client.on('message', async (topic, message) => {
       );
       console.log(`   New: ${JSON.stringify({ payload, sceneName })}`);
       lastState[deviceIp] = { payload, sceneName };
+
+      // Debug: Check if lastState is actually set
+      console.log(
+        `🔍 [DEBUG] After update, lastState[${deviceIp}] = ${JSON.stringify(lastState[deviceIp])}`,
+      );
 
       if (shouldClear) {
         const device = require('./lib/device-adapter').getDevice(deviceIp);
