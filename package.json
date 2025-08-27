@@ -10,8 +10,7 @@
     "md:lint": "markdownlint \"**/*.md\" --ignore node_modules",
     "test": "node --test",
     "coverage": "c8 npm test",
-    "hooks:setup": "husky init",
-    "prepare": "husky"
+    "hooks:setup": "husky init"
   },
   "dependencies": {
     "mqtt": "^5.9.0",
