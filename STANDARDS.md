@@ -21,6 +21,7 @@ Keep the guide up to date but ALWAYS Ask the user if you change things
 - [Security Considerations](#security-considerations)
 - [Markdown Formatting](#markdown-formatting-guidelines)
 - [Commit Guidelines](#commit-guidelines)
+- [Fish-Aware Shell Standards](#fish-aware-shell-standards)
 
 ---
 
@@ -678,3 +679,53 @@ self will thank you for maintaining.
 
 *Last updated: 2025-01-27*
 *Authors: Sonic + Cursor + Markus Barta (mba)*
+
+---
+
+## 🐟 Fish-Aware Shell Standards {#fish-aware-shell-standards}
+
+Our development environment uses the fish shell by default.
+When proposing or generating shell commands, scripts, or one-liners,
+follow these rules.
+
+### **Do This (fish syntax)**
+
+- ✅ Use fish syntax, not bash/zsh
+- ✅ Variable assignment: `set var value` (not `var=value`)
+- ✅ Export env vars: `set -x VAR value` (not `export VAR=value`)
+- ✅ Conditionals/loops: `if ...; end`, `for v in list; end` (no `fi`/`done`)
+- ✅ Command substitution: `(cmd)` (not `$(cmd)`)
+- ✅ Source files: `source file.fish` (not `. file.sh`)
+- ✅ When unsure, prefer fish-correct form first
+
+### **Do Not**
+
+- 🚫 Do not silently fall back to bash
+
+### **If bash is required**
+
+- 💡 Explicitly call: `bash -c "..."` and explain why bash-specific
+  features are needed
+
+### **Examples**
+
+```fish
+# Set and export
+set -x PIXOO_IP 192.168.1.159
+
+# Loop
+for color in red green blue
+  echo $color
+end
+
+# Command substitution
+set now (date +%s)
+
+# Source configuration
+source ~/.config/fish/config.fish
+```
+
+```bash
+# If you truly need bash-only features (e.g., process substitution)
+bash -c 'mapfile -t lines < <(ls); printf "%s\n" "${lines[@]}"'
+```
