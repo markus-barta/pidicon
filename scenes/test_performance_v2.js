@@ -26,8 +26,20 @@ const {
 // Use the simple performance color function from shared utilities
 const getPerformanceColor = getSimplePerformanceColor;
 
+async function init() {
+  // Initialize test performance v2 scene - nothing special needed
+  console.log(`🚀 [TEST_PERFORMANCE_V2] Scene initialized`);
+}
+
+async function cleanup() {
+  // Cleanup test performance v2 scene - nothing special needed
+  console.log(`🧹 [TEST_PERFORMANCE_V2] Scene cleaned up`);
+}
+
 module.exports = {
   name: 'test_performance_v2',
+  init,
+  cleanup,
   render: async (ctx) => {
     // Performance test runs continuously for 30 seconds after being triggered
     const { device, state, getState, setState } = ctx;

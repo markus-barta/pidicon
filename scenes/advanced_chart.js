@@ -26,6 +26,11 @@ const { validateSceneContext } = require('../lib/performance-utils');
  * @param {Object} ctx - Render context
  * @returns {Promise<void>}
  */
+async function init() {
+  // Initialize advanced chart scene - nothing special needed
+  console.log(`🚀 [ADVANCED_CHART] Scene initialized`);
+}
+
 async function render(ctx) {
   // Validate scene context
   if (!validateSceneContext(ctx, SCENE_NAME)) {
@@ -136,4 +141,9 @@ function generateDemoData(config) {
   return data;
 }
 
-module.exports = { name: SCENE_NAME, render };
+async function cleanup() {
+  // Cleanup advanced chart scene - nothing special needed
+  console.log(`🧹 [ADVANCED_CHART] Scene cleaned up`);
+}
+
+module.exports = { name: SCENE_NAME, render, init, cleanup };

@@ -35,6 +35,16 @@ const {
   BACKGROUND_COLORS,
 } = require('../lib/rendering-utils');
 
+async function init() {
+  // Initialize test performance v3 scene - nothing special needed
+  console.log(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
+}
+
+async function cleanup() {
+  // Cleanup test performance v3 scene - nothing special needed
+  console.log(`🧹 [TEST_PERFORMANCE_V3] Scene cleaned up`);
+}
+
 /**
  * Test mode enumeration for type safety
  * @readonly
@@ -898,4 +908,4 @@ function scheduleContinuation(ctx, config, delay) {
   setState('loopScheduled', true);
 }
 
-module.exports = { name: SCENE_NAME, render };
+module.exports = { name: SCENE_NAME, render, init, cleanup };
