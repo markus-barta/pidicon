@@ -24,6 +24,8 @@ async function render(ctx) {
   console.log('🔍 [DEBUG] Startup scene state:', {
     stateKeys: Array.from(state.keys()),
     deploymentId: state.get('deploymentId'),
+    buildNumber: state.get('buildNumber'),
+    gitCommit: state.get('gitCommit'),
     buildTime: state.get('buildTime'),
     daemonStart: state.get('daemonStart'),
     stateType: typeof state,
@@ -31,6 +33,8 @@ async function render(ctx) {
   });
 
   const deploymentId = state.get('deploymentId') || 'v1.0.0';
+  const buildNumber = state.get('buildNumber') || '1';
+  const gitCommit = state.get('gitCommit') || 'unknown';
   const buildTime = state.get('buildTime') || new Date().toISOString();
   const daemonStart = state.get('daemonStart') || new Date().toLocaleString();
 
@@ -40,7 +44,7 @@ async function render(ctx) {
   // Draw title
   await device.drawTextRgbaAligned(
     'PIXOO DAEMON',
-    [32, 8],
+    [32, 6],
     [255, 255, 255, 255],
     'center',
   );
@@ -48,15 +52,30 @@ async function render(ctx) {
   // Draw deployment ID (larger, prominent)
   await device.drawTextRgbaAligned(
     deploymentId,
-    [32, 20],
+    [32, 16],
     [0, 255, 255, 255], // Cyan
+    'center',
+  );
+
+  // Draw build number and git hash
+  await device.drawTextRgbaAligned(
+    `#${buildNumber}`,
+    [32, 26],
+    [255, 255, 0, 255], // Yellow
+    'center',
+  );
+
+  await device.drawTextRgbaAligned(
+    gitCommit,
+    [32, 36],
+    [255, 200, 0, 255], // Orange
     'center',
   );
 
   // Draw build time
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 32],
+    [32, 46],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -64,7 +83,7 @@ async function render(ctx) {
   // Draw daemon start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 44],
+    [32, 56],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -72,7 +91,7 @@ async function render(ctx) {
   // Draw status indicator
   await device.drawTextRgbaAligned(
     'READY',
-    [32, 56],
+    [32, 62],
     [0, 255, 0, 255], // Green
     'center',
   );
