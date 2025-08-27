@@ -4,7 +4,13 @@
 // - Routes each state update to the selected scene renderer
 // @author: Sonic + Cursor + Markus Barta (mba)
 
+console.log(
+  '****************************************************************************************************',
+);
 console.log('🚀 [DAEMON] Starting Pixoo Daemon...');
+console.log(
+  '****************************************************************************************************',
+);
 
 const fs = require('fs');
 const mqtt = require('mqtt');
