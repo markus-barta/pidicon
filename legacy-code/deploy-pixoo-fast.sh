@@ -18,10 +18,10 @@ rsync -a --delete ~/Code/pixoo-daemon/ ~/docker/mounts/pixoo-daemon/app/ \
   --exclude=node_modules
 
 echo "📦 Deployed Version Info:"
-if [ -f "~/docker/mounts/pixoo-daemon/app/.deployment" ]; then
-    DEPLOYMENT_ID=$(grep '"deploymentId"' ~/docker/mounts/pixoo-daemon/app/.deployment | cut -d'"' -f4)
-    BUILD_NUMBER=$(grep '"buildNumber"' ~/docker/mounts/pixoo-daemon/app/.deployment | cut -d':' -f2 | tr -d ' ,')
-    BUILD_TIME=$(grep '"buildTime"' ~/docker/mounts/pixoo-daemon/app/.deployment | cut -d'"' -f4 | cut -d'T' -f1)
+if [ -f "/home/mba/docker/mounts/pixoo-daemon/app/.deployment" ]; then
+    DEPLOYMENT_ID=$(grep '"deploymentId"' /home/mba/docker/mounts/pixoo-daemon/app/.deployment | cut -d'"' -f4)
+    BUILD_NUMBER=$(grep '"buildNumber"' /home/mba/docker/mounts/pixoo-daemon/app/.deployment | cut -d':' -f2 | tr -d ' ,')
+    BUILD_TIME=$(grep '"buildTime"' /home/mba/docker/mounts/pixoo-daemon/app/.deployment | cut -d'"' -f4 | cut -d'T' -f1)
     echo "   Version: $DEPLOYMENT_ID"
     echo "   Build: #$BUILD_NUMBER"
     echo "   Date: $BUILD_TIME"
