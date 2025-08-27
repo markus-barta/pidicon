@@ -408,8 +408,10 @@ client.on('message', async (topic, message) => {
           throw new Error(`Failed to handle scene update: ${sceneName}`);
         }
 
-        // Render the active scene
-        await sceneManager.renderActiveScene(ctx);
+        // Note: renderActiveScene is not needed here because:
+        // - switchScene() handles rendering internally
+        // - updateSceneParameters() handles rendering internally
+        // - For same scene re-renders, we just return success
 
         // Mark device as successfully booted after first successful render
         if (isDeviceFreshlyBooted(deviceIp)) {
