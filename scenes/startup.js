@@ -7,10 +7,6 @@ const name = 'startup';
 
 // Import shared utilities
 const { validateSceneContext } = require('../lib/performance-utils');
-const {
-  drawTextRgbaAlignedWithBg,
-  BACKGROUND_COLORS,
-} = require('../lib/rendering-utils');
 
 async function init() {
   console.log(`🚀 [STARTUP] Scene initialized`);
@@ -33,48 +29,43 @@ async function render(ctx) {
   await device.fillRectangleRgba([0, 0], [64, 64], [20, 20, 40, 255]);
 
   // Draw title
-  await drawTextRgbaAlignedWithBg(
+  await device.drawTextRgbaAligned(
     'PIXOO DAEMON',
     [32, 8],
     [255, 255, 255, 255],
     'center',
-    BACKGROUND_COLORS.DARK,
   );
 
   // Draw deployment ID (larger, prominent)
-  await drawTextRgbaAlignedWithBg(
+  await device.drawTextRgbaAligned(
     deploymentId,
     [32, 20],
     [0, 255, 255, 255], // Cyan
     'center',
-    BACKGROUND_COLORS.DARK,
   );
 
   // Draw build time
-  await drawTextRgbaAlignedWithBg(
+  await device.drawTextRgbaAligned(
     `Built: ${buildTime.split('T')[0]}`,
     [32, 32],
     [200, 200, 200, 255], // Light gray
     'center',
-    BACKGROUND_COLORS.DARK,
   );
 
   // Draw daemon start time
-  await drawTextRgbaAlignedWithBg(
+  await device.drawTextRgbaAligned(
     `Started: ${daemonStart.split(' ')[1]}`,
     [32, 44],
     [200, 200, 200, 255], // Light gray
     'center',
-    BACKGROUND_COLORS.DARK,
   );
 
   // Draw status indicator
-  await drawTextRgbaAlignedWithBg(
+  await device.drawTextRgbaAligned(
     'READY',
     [32, 56],
     [0, 255, 0, 255], // Green
     'center',
-    BACKGROUND_COLORS.DARK,
   );
 
   // Push the startup frame to the device
