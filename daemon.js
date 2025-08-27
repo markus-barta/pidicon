@@ -73,7 +73,7 @@ async function initializeDeployment() {
     console.log(deploymentTracker.getLogString());
 
     // Auto-load startup scene for all configured devices
-    const deviceTargets = process.env.PIXOO_DEVICE_TARGETS?.split(',') || [];
+    const deviceTargets = Array.from(deviceDrivers.keys());
     if (deviceTargets.length > 0) {
       console.log('🚀 Auto-loading startup scene for configured devices...');
       for (const deviceIp of deviceTargets) {
