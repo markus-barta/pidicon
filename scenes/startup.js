@@ -68,7 +68,7 @@ async function render(ctx) {
   // Draw deployment ID (larger, prominent)
   await device.drawTextRgbaAligned(
     deploymentId,
-    [32, 12],
+    [32, 14],
     [0, 255, 255, 255], // Cyan
     'center',
   );
@@ -76,7 +76,7 @@ async function render(ctx) {
   // Draw build number and git hash
   await device.drawTextRgbaAligned(
     `#${buildNumber}`,
-    [32, 22],
+    [32, 21],
     [255, 255, 0, 255], // Yellow
     'center',
   );
