@@ -257,6 +257,11 @@ client.on('message', async (topic, message) => {
 
     // 4) State update
     if (section === 'state' && action === 'upd') {
+      console.log(`🔍 [DEBUG] MQTT handler entry for ${deviceIp}:`);
+      console.log(
+        `   Current lastState: ${JSON.stringify(lastState[deviceIp] || 'none')}`,
+      );
+
       const sceneName =
         payload.scene || deviceDefaults.get(deviceIp) || 'empty';
       if (!sceneManager.hasScene(sceneName)) {
@@ -313,6 +318,11 @@ client.on('message', async (topic, message) => {
       }
 
       // Remember last state AFTER checking for changes
+      console.log(`💾 [DEBUG] Updating lastState for ${deviceIp}:`);
+      console.log(
+        `   Previous: ${JSON.stringify(lastState[deviceIp] || 'none')}`,
+      );
+      console.log(`   New: ${JSON.stringify({ payload, sceneName })}`);
       lastState[deviceIp] = { payload, sceneName };
 
       if (shouldClear) {
