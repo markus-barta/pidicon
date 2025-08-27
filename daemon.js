@@ -294,6 +294,15 @@ client.on('message', async (topic, message) => {
         JSON.stringify(lastPayload) !== JSON.stringify(payload);
       const shouldClear = isSceneChange || payload.clear === true;
 
+      // Debug logging for state tracking
+      console.log(`🔍 [DEBUG] State analysis for ${deviceIp}:`);
+      console.log(`   Last scene: ${lastScene || 'none'}`);
+      console.log(`   Current scene: ${sceneName}`);
+      console.log(`   Last payload: ${JSON.stringify(lastPayload || 'none')}`);
+      console.log(`   Current payload: ${JSON.stringify(payload)}`);
+      console.log(`   isSceneChange: ${isSceneChange}`);
+      console.log(`   isParameterChange: ${isParameterChange}`);
+
       // Debug logging for parameter changes
       if (isParameterChange) {
         console.log(
