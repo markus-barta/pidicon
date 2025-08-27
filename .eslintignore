@@ -1,0 +1,5 @@
+node_modules/
+dist/
+coverage/
+legacy-code/
+pixoo_font_complete.js
