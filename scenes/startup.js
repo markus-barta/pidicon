@@ -63,7 +63,7 @@ async function render(ctx) {
 
   // Draw daemon start time
   await device.drawTextRgbaAligned(
-    `Started:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
+    `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
     [32, 44],
     [200, 200, 200, 255], // Light gray
     'center',
