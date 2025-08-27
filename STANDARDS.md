@@ -311,7 +311,7 @@ async function renderAdvancedChart(device, data) {
 
 **ALL markdown files MUST have ZERO linting errors.** This includes:
 
-- ❌ **MD013** (line length) - Keep lines under 80 characters (CRITICAL)
+- ❌ **MD013** (line length) - Target 80, max 120 characters (CRITICAL)
 - ❌ **MD022** (headings spacing) - Surround headings with blank lines
 - ❌ **MD032** (lists spacing) - Surround lists with blank lines
 - ❌ **MD040** (code blocks) - Specify language for all code blocks
@@ -379,13 +379,17 @@ This is a line that stays within the 80 character limit and is easy \
 to read and maintain. Use backslash continuation for long content.
 ```
 
-**Rule**: Keep lines under 80 characters for readability and consistency.
+**Rule**: Target 80 characters for readability, with 120 characters as strict maximum.
+
+**Flexible Approach**: Aim for 80 characters when possible, but allow up to 120 when needed for readability or complex content.
 
 **Common Solutions:**
 
-- Use backslash continuation (`\`) for long lines
-- Break long URLs or commands
-- Shorten descriptions in tables
+- **Target 80 characters** for optimal readability
+- **Strict maximum 120 characters** - never exceed this
+- Use backslash continuation (`\`) for very long lines
+- Break long URLs, commands, or complex expressions
+- Shorten descriptions in tables when possible
 - Use shorter variable names in code examples
 
 #### **MD051: Link Fragments**
@@ -418,14 +422,14 @@ to read and maintain. Use backslash continuation for long content.
 
 #### **Most Common Issues**
 
-| Rule      | Description         | Solution                             |
-| --------- | ------------------- | ------------------------------------ |
-| **MD013** | Line length         | Break long lines under 80 characters |
-| **MD022** | Headings spacing    | Add blank lines around headings      |
-| **MD032** | Lists spacing       | Add blank lines around lists         |
-| **MD040** | Code block language | Specify language after ```           |
-| **MD031** | Code block spacing  | Add blank lines around code blocks   |
-| **MD051** | Link fragments      | Use correct anchor links             |
+| Rule      | Description         | Solution                           |
+| --------- | ------------------- | ---------------------------------- |
+| **MD013** | Line length         | Target 80, max 120 characters      |
+| **MD022** | Headings spacing    | Add blank lines around headings    |
+| **MD032** | Lists spacing       | Add blank lines around lists       |
+| **MD040** | Code block language | Specify language after ```         |
+| **MD031** | Code block spacing  | Add blank lines around code blocks |
+| **MD051** | Link fragments      | Use correct anchor links           |
 
 #### **Running Markdownlint**
 
@@ -665,7 +669,7 @@ refactor(performance-utils): extract common chart config constants
 - [ ] **Testing**: Basic functionality tested?
 - [ ] **Markdown**: Follows formatting guidelines?
 - [ ] **ZERO ERRORS**: Run `npx markdownlint *.md` - NO errors allowed?
-- [ ] **MD013**: All lines under 80 characters?
+- [ ] **MD013**: All lines under 120 characters (target 80)?
 - [ ] **MD022/MD032**: Headings and lists have proper spacing?
 - [ ] **MD051**: Link fragments are valid?
 
@@ -679,7 +683,7 @@ refactor(performance-utils): extract common chart config constants
 - [ ] **Testing**: Adequate test coverage?
 - [ ] **Documentation**: Updated documentation?
 - [ ] **Markdown**: ZERO linting errors in all .md files?
-- [ ] **Line Length**: All markdown lines under 80 characters?
+- [ ] **Line Length**: All markdown lines under 120 characters (target 80)?
 
 ### **Performance Review Checklist**
 
