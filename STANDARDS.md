@@ -674,6 +674,7 @@ refactor(performance-utils): extract common chart config constants
 - [ ] **MD013**: All lines under 120 characters (target 80)?
 - [ ] **MD022/MD032**: Headings and lists have proper spacing?
 - [ ] **MD051**: Link fragments are valid?
+- [ ] **Scene Development**: All scenes have `device.push()` calls?
 
 ### **Code Review Checklist**
 
@@ -730,6 +731,83 @@ self will thank you for maintaining.
 
 _Last updated: 2025-01-27_
 _Authors: Sonic + Cursor + Markus Barta (mba)_
+
+---
+
+## 🎬 Scene Development Standards {#scene-development-standards}
+
+### **Critical Scene Requirements**
+
+#### **🚨 ALWAYS Include `device.push()`**
+
+**❌ Common Mistake**: Drawing to device buffer but never pushing to display
+
+```javascript
+// ❌ WRONG: Scene draws but nothing shows on Pixoo
+async function render(ctx) {
+  const { device } = ctx;
+  await device.fillRectangleRgba([0, 0], [64, 64], [255, 0, 0, 255]);
+  console.log('Red screen drawn');
+  // Missing: await device.push(name, ctx.publishOk);
+}
+```
+
+**✅ CORRECT**: Always push after drawing
+
+```javascript
+// ✅ CORRECT: Scene draws AND displays on Pixoo
+async function render(ctx) {
+  const { device } = ctx;
+  await device.fillRectangleRgba([0, 0], [64, 64], [255, 0, 0, 255]);
+
+  // CRITICAL: Push frame to device
+  await device.push(name, ctx.publishOk);
+
+  console.log('Red screen drawn and displayed');
+}
+```
+
+#### **Scene Lifecycle Checklist**
+
+- [ ] **`init()` method**: Scene initialization (optional)
+- [ ] **`render()` method**: Main rendering logic
+- [ ] **`cleanup()` method**: Scene cleanup (optional)
+- [ ] **`device.push()`**: ALWAYS push after drawing
+- [ ] **Error handling**: Validate context and handle errors gracefully
+- [ ] **State management**: Use `ctx.state` for scene-specific data
+
+#### **Scene Template**
+
+```javascript
+const name = 'scene_name';
+
+async function init() {
+  console.log(`🚀 [${name.toUpperCase()}] Scene initialized`);
+}
+
+async function render(ctx) {
+  // Validate scene context
+  if (!validateSceneContext(ctx, name)) {
+    return;
+  }
+
+  const { device, state } = ctx;
+
+  // Your rendering logic here
+  await device.drawSomething();
+
+  // CRITICAL: Always push to device
+  await device.push(name, ctx.publishOk);
+
+  console.log(`✅ [${name.toUpperCase()}] Scene rendered`);
+}
+
+async function cleanup() {
+  console.log(`🧹 [${name.toUpperCase()}] Scene cleaned up`);
+}
+
+module.exports = { name, render, init, cleanup };
+```
 
 ---
 
