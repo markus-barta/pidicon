@@ -25,12 +25,9 @@
   - [ ] Update fish function to use repository scripts
   - [ ] Document deployment process in README
   - [ ] Add CI/CD pipeline for automated deployment
-
-### **Low Priority**
-
-- [ ] **Add more startup scene info** - Show device IP, driver type, etc.
-- [ ] **Startup scene animation** - Add subtle animation to startup display
-- [ ] **Deployment tracking enhancements** - Add build time, environment info
+  - [ ] **Add more startup scene info** - Show device IP, driver type, etc.
+  - [ ] **Startup scene animation** - Add subtle animation to startup display
+  - [ ] **Deployment tracking enhancements** - Add build time, environment info
 
 ---
 
