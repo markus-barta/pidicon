@@ -13,50 +13,30 @@
 
 ```bash
 # Turn device "off" (black screen)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"empty"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"empty"}'
 
 # Fill with red
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"fill","color":[255,0,0,255]}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"fill","color":[255,0,0,255]}'
 
 # Fill with blue
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"fill","color":[0,0,255,255]}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"fill","color":[0,0,255,255]}'
 
 # Performance test with adaptive timing (optimal)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_performance_v3","adaptiveTiming":true}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v3","adaptiveTiming":true}'
 
 # Performance test with fixed timing
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_performance_v3","interval":200}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v3","interval":200}'
 
 # Test all drawing API functions
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_draw_api"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_draw_api"}'
 
 # Test specific API functions
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_draw_api","test":"pixels"}'
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_draw_api","test":"rectangles"}'
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_draw_api","test":"text"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_draw_api","test":"pixels"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_draw_api","test":"rectangles"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_draw_api","test":"text"}'
 
 # Stop any running test
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
-  -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd \
-  -m '{"scene":"test_performance_v3","stop":true}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"test_performance_v3","stop":true}'
 ```
 
 ## 📋 Parameters
@@ -89,12 +69,12 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 \
 
 ## 📊 Testing Strategy
 
-| **Goal** | **Use This** | **Why** |
-|----------|-------------|---------|
-| **API Validation** | `test_draw_api` | Tests all drawing functions correctly |
-| **Performance** | `test_performance_v3` + `adaptiveTiming: true` | Optimal |
-| **Benchmarking** | `test_performance_v3` + fixed `interval` | Consistent |
-| **Device Off** | `empty` | Clean black screen state |
+| **Goal**           | **Use This**                                   | **Why**                               |
+| ------------------ | ---------------------------------------------- | ------------------------------------- |
+| **API Validation** | `test_draw_api`                                | Tests all drawing functions correctly |
+| **Performance**    | `test_performance_v3` + `adaptiveTiming: true` | Optimal                               |
+| **Benchmarking**   | `test_performance_v3` + fixed `interval`       | Consistent                            |
+| **Device Off**     | `empty`                                        | Clean black screen state              |
 
 ## 🔧 Environment Setup
 
