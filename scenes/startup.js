@@ -21,6 +21,15 @@ async function render(ctx) {
   const { device, state } = ctx;
 
   // Get deployment info from state or use defaults
+  console.log('🔍 [DEBUG] Startup scene state:', {
+    stateKeys: Array.from(state.keys()),
+    deploymentId: state.get('deploymentId'),
+    buildTime: state.get('buildTime'),
+    daemonStart: state.get('daemonStart'),
+    stateType: typeof state,
+    stateConstructor: state.constructor.name,
+  });
+
   const deploymentId = state.get('deploymentId') || 'v1.0.0';
   const buildTime = state.get('buildTime') || new Date().toISOString();
   const daemonStart = state.get('daemonStart') || new Date().toLocaleString();
