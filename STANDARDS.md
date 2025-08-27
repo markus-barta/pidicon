@@ -39,14 +39,16 @@ Keep the guide up to date but ALWAYS Ask the user if you change things
 ```javascript
 // ✅ DRY: Shared utility function
 function validateSceneContext(ctx, sceneName) {
-    const required = ['device', 'state'];
-    const missing = required.filter(prop => !ctx[prop]);
-    if (missing.length > 0) {
-        console.error(`❌ [${sceneName.toUpperCase()}] Missing required context` +
-            ` properties: ${missing.join(', ')}`);
-        return false;
-    }
-    return true;
+  const required = ['device', 'state'];
+  const missing = required.filter((prop) => !ctx[prop]);
+  if (missing.length > 0) {
+    console.error(
+      `❌ [${sceneName.toUpperCase()}] Missing required context` +
+        ` properties: ${missing.join(', ')}`,
+    );
+    return false;
+  }
+  return true;
 }
 
 // Usage across multiple scenes
@@ -58,8 +60,8 @@ if (!validateSceneContext(ctx, name)) return;
 ```javascript
 // ❌ WET: Duplicated validation in every scene
 if (!ctx || !ctx.device || !ctx.state) {
-    console.error(`❌ [SCENE_NAME] Missing required context properties`);
-    return;
+  console.error(`❌ [SCENE_NAME] Missing required context properties`);
+  return;
 }
 ```
 
@@ -119,7 +121,7 @@ Always document public functions and classes:
  * @returns {number[]} Interpolated RGBA color
  */
 function interpolateColor(startColor, endColor, factor) {
-    // Implementation
+  // Implementation
 }
 ```
 
@@ -173,12 +175,12 @@ await device.clear(); // Clears the screen
 ```javascript
 // Example performance test structure
 async function performanceTest(scene, iterations = 100) {
-    const startTime = performance.now();
-    for (let i = 0; i < iterations; i++) {
-        await scene.render(ctx);
-    }
-    const avgTime = (performance.now() - startTime) / iterations;
-    console.log(`Average render time: ${avgTime.toFixed(2)}ms`);
+  const startTime = performance.now();
+  for (let i = 0; i < iterations; i++) {
+    await scene.render(ctx);
+  }
+  const avgTime = (performance.now() - startTime) / iterations;
+  console.log(`Average render time: ${avgTime.toFixed(2)}ms`);
 }
 ```
 
@@ -198,12 +200,12 @@ async function performanceTest(scene, iterations = 100) {
 const GRADIENT_CACHE = new Map();
 
 function getCachedGradient(key, calculateFn) {
-    if (GRADIENT_CACHE.has(key)) {
-        return GRADIENT_CACHE.get(key);
-    }
-    const result = calculateFn();
-    GRADIENT_CACHE.set(key, result);
-    return result;
+  if (GRADIENT_CACHE.has(key)) {
+    return GRADIENT_CACHE.get(key);
+  }
+  const result = calculateFn();
+  GRADIENT_CACHE.set(key, result);
+  return result;
 }
 ```
 
@@ -230,13 +232,17 @@ function getCachedGradient(key, calculateFn) {
 ```javascript
 // ✅ Good: Fail fast with clear messages
 function validateColor(color) {
-    if (!Array.isArray(color) || color.length !== 4) {
-        throw new Error(`Invalid color format: expected [r,g,b,a], got ${JSON.stringify(color)}`);
-    }
-    if (color.some(c => typeof c !== 'number' || c < 0 || c > 255)) {
-        throw new Error(`Invalid color values: all components must be numbers 0-255`);
-    }
-    return color;
+  if (!Array.isArray(color) || color.length !== 4) {
+    throw new Error(
+      `Invalid color format: expected [r,g,b,a], got ${JSON.stringify(color)}`,
+    );
+  }
+  if (color.some((c) => typeof c !== 'number' || c < 0 || c > 255)) {
+    throw new Error(
+      `Invalid color values: all components must be numbers 0-255`,
+    );
+  }
+  return color;
 }
 ```
 
@@ -252,14 +258,16 @@ function validateColor(color) {
 ```javascript
 // ✅ Good: Graceful degradation
 async function renderAdvancedChart(device, data) {
-    try {
-        // Try advanced rendering first
-        return await advancedChartRenderer.render(device, data);
-    } catch (error) {
-        console.warn(`Advanced chart failed, falling back to basic: ${error.message}`);
-        // Fallback to basic rendering
-        return await basicChartRenderer.render(device, data);
-    }
+  try {
+    // Try advanced rendering first
+    return await advancedChartRenderer.render(device, data);
+  } catch (error) {
+    console.warn(
+      `Advanced chart failed, falling back to basic: ${error.message}`,
+    );
+    // Fallback to basic rendering
+    return await basicChartRenderer.render(device, data);
+  }
 }
 ```
 
@@ -303,7 +311,7 @@ async function renderAdvancedChart(device, data) {
 
 **ALL markdown files MUST have ZERO linting errors.** This includes:
 
-- ❌ **MD013** (line length) - Keep lines under 80 characters
+- ❌ **MD013** (line length) - Keep lines under 80 characters (CRITICAL)
 - ❌ **MD022** (headings spacing) - Surround headings with blank lines
 - ❌ **MD032** (lists spacing) - Surround lists with blank lines
 - ❌ **MD040** (code blocks) - Specify language for all code blocks
@@ -326,7 +334,9 @@ async function renderAdvancedChart(device, data) {
 
 ```markdown
 ## Heading
+
 Some text
+
 - List item 1
 - List item 2
 ```
@@ -354,6 +364,30 @@ Some text
 **Quick Fix**: When you see MD022/MD032 errors, add blank lines around headings
 and lists.
 
+#### **MD013: Line Length**
+
+**❌ Incorrect:**
+
+```markdown
+This is a very long line that exceeds the 80 character limit and will cause a markdownlint error because it's too long to read comfortably.
+```
+
+**✅ Correct:**
+
+```markdown
+This is a line that stays within the 80 character limit and is easy \
+to read and maintain. Use backslash continuation for long content.
+```
+
+**Rule**: Keep lines under 80 characters for readability and consistency.
+
+**Common Solutions:**
+
+- Use backslash continuation (`\`) for long lines
+- Break long URLs or commands
+- Shorten descriptions in tables
+- Use shorter variable names in code examples
+
 #### **MD051: Link Fragments**
 
 **❌ Incorrect:**
@@ -368,6 +402,7 @@ and lists.
 ```markdown
 [Link Text](#valid-fragment)
 [Heading](#heading-with-explicit-id)
+
 ## Actual Heading {#heading-with-explicit-id}
 ```
 
@@ -383,14 +418,14 @@ and lists.
 
 #### **Most Common Issues**
 
-| Rule | Description | Solution |
-|------|-------------|----------|
-| **MD022** | Headings spacing | Add blank lines around headings |
-| **MD032** | Lists spacing | Add blank lines around lists |
-| **MD040** | Code block language | Specify language after ``` |
-| **MD031** | Code block spacing | Add blank lines around code blocks |
-| **MD051** | Link fragments | Use correct anchor links |
-| **MD013** | Line length | Break long lines |
+| Rule      | Description         | Solution                             |
+| --------- | ------------------- | ------------------------------------ |
+| **MD013** | Line length         | Break long lines under 80 characters |
+| **MD022** | Headings spacing    | Add blank lines around headings      |
+| **MD032** | Lists spacing       | Add blank lines around lists         |
+| **MD040** | Code block language | Specify language after ```           |
+| **MD031** | Code block spacing  | Add blank lines around code blocks   |
+| **MD051** | Link fragments      | Use correct anchor links             |
 
 #### **Running Markdownlint**
 
@@ -424,7 +459,7 @@ function example() {
 ```javascript
 // Good: Language specified
 function example() {
-    return true;
+  return true;
 }
 ```
 
@@ -443,7 +478,7 @@ More text here.
 
 ```javascript
 function example() {
-    return true;
+  return true;
 }
 ```
 
@@ -499,8 +534,11 @@ Add to your workflow:
 
 ```markdown
 # Main Title (Level 1)
+
 ## Section (Level 2)
+
 ### Subsection (Level 3)
+
 #### Sub-subsection (Level 4)
 ```
 
@@ -508,12 +546,14 @@ Add to your workflow:
 
 ```markdown
 <!-- Bulleted lists -->
+
 - Item 1
 - Item 2
   - Nested item
   - Another nested item
 
 <!-- Numbered lists -->
+
 1. First item
 2. Second item
    1. Nested numbered item
@@ -524,7 +564,7 @@ Add to your workflow:
 ```javascript
 // For code examples
 function example() {
-    return 'Use language-specific syntax highlighting';
+  return 'Use language-specific syntax highlighting';
 }
 ```
 
@@ -532,7 +572,7 @@ function example() {
 
 ```markdown
 | Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
+| -------- | -------- | -------- |
 | Data 1   | Data 2   | Data 3   |
 | Data 4   | Data 5   | Data 6   |
 ```
@@ -541,14 +581,17 @@ function example() {
 
 ```markdown
 <!-- Links -->
+
 [Link Text](https://example.com)
 [Reference Link][ref]
 
 <!-- Images -->
+
 ![Alt Text](image.png)
 ![Reference Image][img-ref]
 
 <!-- References -->
+
 [ref]: https://example.com
 [img-ref]: image.png
 ```
@@ -556,7 +599,7 @@ function example() {
 #### **Emphasis**
 
 ```markdown
-*Italic text*
+_Italic text_
 **Bold text**
 `Inline code`
 ~~Strikethrough~~
@@ -622,6 +665,7 @@ refactor(performance-utils): extract common chart config constants
 - [ ] **Testing**: Basic functionality tested?
 - [ ] **Markdown**: Follows formatting guidelines?
 - [ ] **ZERO ERRORS**: Run `npx markdownlint *.md` - NO errors allowed?
+- [ ] **MD013**: All lines under 80 characters?
 - [ ] **MD022/MD032**: Headings and lists have proper spacing?
 - [ ] **MD051**: Link fragments are valid?
 
@@ -635,6 +679,7 @@ refactor(performance-utils): extract common chart config constants
 - [ ] **Testing**: Adequate test coverage?
 - [ ] **Documentation**: Updated documentation?
 - [ ] **Markdown**: ZERO linting errors in all .md files?
+- [ ] **Line Length**: All markdown lines under 80 characters?
 
 ### **Performance Review Checklist**
 
@@ -677,8 +722,8 @@ refactor(performance-utils): extract common chart config constants
 and adherence to professional standards. Always strive to write code that your future
 self will thank you for maintaining.
 
-*Last updated: 2025-01-27*
-*Authors: Sonic + Cursor + Markus Barta (mba)*
+_Last updated: 2025-01-27_
+_Authors: Sonic + Cursor + Markus Barta (mba)_
 
 ---
 
