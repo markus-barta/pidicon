@@ -4,6 +4,7 @@
 
 ### Core Scenes
 
+- **`startup`** - Deployment information and version display
 - **`empty`** - Black screen (device "off" state)
 - **`fill`** - Fill screen with specified color
 - **`test_performance_v3`** - Performance testing with adaptive timing
@@ -12,8 +13,11 @@
 ### Usage Examples
 
 ```bash
+# Show deployment information
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQTTTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"startup"}'
+
 # Turn device "off" (black screen)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"empty"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQTTTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"empty"}'
 
 # Fill with red
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t pixoo/192.168.1.159/state/upd -m '{"scene":"fill","color":[255,0,0,255]}'
