@@ -375,11 +375,12 @@ This is a very long line that exceeds the 80 character limit and will cause a ma
 **✅ Correct:**
 
 ```markdown
-This is a line that stays within the 80 character limit and is easy \
-to read and maintain. Use backslash continuation for long content.
+This is a line that stays within the 80 character limit and is easy to read and maintain. Use backslash continuation for long content.
 ```
 
 **Rule**: Target 80 characters for readability, with 120 characters as strict maximum.
+
+**Exceptions**: Shell commands and MQTT examples may extend to 200 characters for copy-paste convenience.
 
 **Flexible Approach**: Aim for 80 characters when possible, but allow up to 120 when needed for readability or complex content.
 
@@ -387,6 +388,7 @@ to read and maintain. Use backslash continuation for long content.
 
 - **Target 80 characters** for optimal readability
 - **Strict maximum 120 characters** - never exceed this
+- **Shell commands exception**: Up to 200 characters for copy-paste convenience
 - Use backslash continuation (`\`) for very long lines
 - Break long URLs, commands, or complex expressions
 - Shorten descriptions in tables when possible
