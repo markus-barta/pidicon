@@ -5,13 +5,30 @@
     "start": "node daemon.js",
     "lint": "eslint .",
     "format": "prettier -w .",
+    "format:check": "prettier -c .",
+    "lint:errors": "eslint . --quiet -f codeframe || true",
     "md:lint": "markdownlint \"**/*.md\" --ignore node_modules",
     "test": "node --test",
     "coverage": "c8 npm test",
-    "prepare": "husky install"
+    "hooks:setup": "husky init",
+    "prepare": "husky"
   },
   "dependencies": {
     "mqtt": "^5.9.0",
     "sharp": "^0.33.5"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx}": [
+      "eslint --fix",
+      "prettier -w"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier -w"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint-formatter-codeframe": "^7.32.1",
+    "lint-staged": "^15.5.2"
   }
 }
