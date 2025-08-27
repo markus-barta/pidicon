@@ -6,8 +6,7 @@ git -C ~/Code/pixoo-daemon pull origin main
 
 echo "🔨 Building version information on server (Git available)..."
 cd ~/Code/pixoo-daemon
-chmod +x scripts/generate-version.sh
-./scripts/generate-version.sh
+npm run build:version
 
 echo "🔍 Verifying version.json was created..."
 if [ ! -f version.json ]; then
