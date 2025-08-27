@@ -32,6 +32,22 @@ async function render(ctx) {
     stateConstructor: state.constructor.name,
   });
 
+  // Also check environment variables directly
+  console.log('🔍 [DEBUG] Environment variables:', {
+    GIT_COMMIT: process.env.GIT_COMMIT,
+    GIT_COMMIT_COUNT: process.env.GIT_COMMIT_COUNT,
+    NODE_ENV: process.env.NODE_ENV,
+  });
+
+  // Check all environment variables for debugging
+  console.log(
+    '🔍 [DEBUG] All environment variables:',
+    Object.keys(process.env).filter(
+      (key) =>
+        key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD'),
+    ),
+  );
+
   const deploymentId = state.get('deploymentId') || 'v1.0.0';
   const buildNumber = state.get('buildNumber') || '1';
   const gitCommit = state.get('gitCommit') || 'unknown';
