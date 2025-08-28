@@ -1,5 +1,6 @@
 {
   "name": "pixoo-daemon",
+  "version": "1.0.4",
   "main": "daemon.js",
   "scripts": {
     "start": "node daemon.js",

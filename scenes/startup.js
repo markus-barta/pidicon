@@ -48,11 +48,33 @@ async function render(ctx) {
     ),
   );
 
-  const deploymentId = state.get('deploymentId') || 'v1.0.0';
-  const buildNumber = state.get('buildNumber') || '1';
-  const gitCommit = state.get('gitCommit') || 'unknown';
-  const buildTime = state.get('buildTime') || new Date().toISOString();
-  const daemonStart = state.get('daemonStart') || new Date().toLocaleString();
+  const versionInfo = {
+    version: state.get('version') || '1.0.0',
+    deploymentId: state.get('deploymentId') || 'v1.0.0',
+    buildNumber: state.get('buildNumber') || '1',
+    gitCommit: state.get('gitCommit') || 'unknown',
+    buildTime: state.get('buildTime') || new Date().toISOString(),
+    daemonStart: state.get('daemonStart') || new Date().toLocaleString(),
+  };
+
+  // Clear screen and draw startup information
+  await drawStartupInfo(device, versionInfo);
+
+  // Push the startup frame to the device
+  await device.push(name, ctx.publishOk);
+
+  console.log(`🚀 [STARTUP] Deployment ${versionInfo.deploymentId} displayed`);
+}
+
+async function drawStartupInfo(device, versionInfo) {
+  const {
+    version,
+    deploymentId,
+    buildNumber,
+    gitCommit,
+    buildTime,
+    daemonStart,
+  } = versionInfo;
 
   // Clear screen with dark background
   await device.fillRectangleRgba([0, 0], [64, 64], [20, 20, 40, 255]);
@@ -65,9 +87,9 @@ async function render(ctx) {
     'center',
   );
 
-  // Draw deployment ID (larger, prominent)
+  // Draw version (larger, prominent)
   await device.drawTextRgbaAligned(
-    deploymentId,
+    `v${version}`,
     [32, 14],
     [0, 255, 255, 255], // Cyan
     'center',
@@ -81,9 +103,17 @@ async function render(ctx) {
     'center',
   );
 
+  // Draw deployment ID (smaller, below version)
+  await device.drawTextRgbaAligned(
+    deploymentId,
+    [32, 28],
+    [128, 128, 255, 255], // Light blue
+    'center',
+  );
+
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 28],
+    [32, 35],
     [255, 150, 0, 255], // Orange (more distinct from yellow)
     'center',
   );
@@ -91,7 +121,7 @@ async function render(ctx) {
   // Draw build time
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 38],
+    [32, 42],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -99,7 +129,7 @@ async function render(ctx) {
   // Draw daemon start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 45],
+    [32, 49],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -111,11 +141,6 @@ async function render(ctx) {
     [0, 255, 0, 255], // Green
     'center',
   );
-
-  // Push the startup frame to the device
-  await device.push(name, ctx.publishOk);
-
-  console.log(`🚀 [STARTUP] Deployment ${deploymentId} displayed`);
 }
 
 async function cleanup() {

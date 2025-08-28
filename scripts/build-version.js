@@ -30,9 +30,20 @@ try {
     { encoding: 'utf8' },
   ).trim();
 
+  // Read package.json for semantic version
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+  let packageVersion = '1.0.0';
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    packageVersion = packageJson.version || '1.0.0';
+  } catch {
+    console.warn('⚠️ Could not read package.json, using default version');
+  }
+
   // Build version info
   const versionInfo = {
-    deploymentId: gitTag || `v1.0.0-${gitCommit}`,
+    version: packageVersion,
+    deploymentId: gitTag || `v${packageVersion}-${gitCommit}`,
     buildNumber: parseInt(gitCommitCount),
     gitCommit,
     gitCommitFull,
