@@ -7,42 +7,44 @@
 // easy to understand and use, but you may need to experiment to get the right values.
 // - AKD, Jan 2023.
 
-import sharp from 'sharp'
-import superagent from 'superagent'
-import { Color } from './color.js'
-import { Font } from './fonts.js'
+import sharp from 'sharp';
+import superagent from 'superagent';
+import { Color } from './color.js';
+import { Font } from './fonts.js';
 
 export class PixooAPI {
   constructor(address, size = 64) {
-    this.url = `http://${address}`
-    this.size = size
-    this.pixelCount = size * size
-    this.buffer = new Array(this.pixelCount).fill([0, 0, 0])
-    this.pushCount = 0
-    this.pushAvgElapsed = 0
+    this.url = `http://${address}`;
+    this.size = size;
+    this.pixelCount = size * size;
+    this.buffer = new Array(this.pixelCount).fill([0, 0, 0]);
+    this.pushCount = 0;
+    this.pushAvgElapsed = 0;
   }
 
   async initialize() {
-    await this.resetCounter()
-    await this.push()
+    await this.resetCounter();
+    await this.push();
   }
 
   //
   // Internal methods
   //
   async post(data) {
-    const response = await superagent.post(`${this.url}/post`).send(data)
-    if (response.status !== 200) throw new Error(`Unexpected status code: ${response.status}`)
-    const body = this.parseJson(response.text)
-    if (typeof body === 'object' && body.error_code !== 0) throw new Error(body.error_code)
-    return body
+    const response = await superagent.post(`${this.url}/post`).send(data);
+    if (response.status !== 200)
+      throw new Error(`Unexpected status code: ${response.status}`);
+    const body = this.parseJson(response.text);
+    if (typeof body === 'object' && body.error_code !== 0)
+      throw new Error(body.error_code);
+    return body;
   }
 
   parseJson(data) {
     try {
-      return JSON.parse(data)
+      return JSON.parse(data);
     } catch (e) {
-      return data
+      return data;
     }
   }
 
@@ -50,41 +52,42 @@ export class PixooAPI {
   // Helper methods
   //
   clear() {
-    this.fill(Color.Black)
+    this.fill(Color.Black);
   }
 
   parseColor(color) {
-    if (typeof color === 'string') return this.hexToRgb(color)
-    if (Array.isArray(color) && color.length === 3) return color
-    throw new Error(`Invalid color: ${color}`)
+    if (typeof color === 'string') return this.hexToRgb(color);
+    if (Array.isArray(color) && color.length === 3) return color;
+    throw new Error(`Invalid color: ${color}`);
   }
 
   hexToRgb(hex) {
-    if (hex[0] === '#') hex = hex.slice(1)
-    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]
-    const r = parseInt(hex.slice(0, 2), 16)
-    const g = parseInt(hex.slice(2, 4), 16)
-    const b = parseInt(hex.slice(4, 6), 16)
-    return [r, g, b]
+    if (hex[0] === '#') hex = hex.slice(1);
+    if (hex.length === 3)
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    return [r, g, b];
   }
 
   // @color: [r, g, b]
   fill(color) {
-    this.buffer = new Array(this.pixelCount).fill(this.parseColor(color))
+    this.buffer = new Array(this.pixelCount).fill(this.parseColor(color));
   }
 
   drawPixel(x, y, color) {
-    if (x < 0 || y < 0) return
-    if (x >= this.size || y >= this.size) return
-    this.buffer[x + y * this.size] = this.parseColor(color)
+    if (x < 0 || y < 0) return;
+    if (x >= this.size || y >= this.size) return;
+    this.buffer[x + y * this.size] = this.parseColor(color);
   }
 
   getTextWidth(text, font = Font.Vari8) {
     return [...text].reduce((acc, c) => {
-      if (!font[c]) c = '?' // unknown character
-      const width = Math.floor(font[c].length / 5)
-      return acc + width + 1
-    }, 0)
+      if (!font[c]) c = '?'; // unknown character
+      const width = Math.floor(font[c].length / 5);
+      return acc + width + 1;
+    }, 0);
   }
 
   // @y: horizontal line to draw text on (from top pixel)
@@ -93,15 +96,15 @@ export class PixooAPI {
   // Caveat: due to the way the font is rendered, the text will be slightly
   // offset from the center of the screen to the left (by 1 pixel.)
   drawTextCenter(text, y, color = Color.White, font = Font.Vari8) {
-    let pixelSoFar = 0
-    const x = Math.floor((this.size - this.getTextWidth(text, font)) / 2)
-    const chars = [...text]
+    let pixelSoFar = 0;
+    const x = Math.floor((this.size - this.getTextWidth(text, font)) / 2);
+    const chars = [...text];
     chars.map((c, i) => {
-      if (!font[c]) c = '?'
-      const width = Math.floor(font[c].length / 5)
-      this.drawChar(c, [x + pixelSoFar, y], this.parseColor(color), font)
-      pixelSoFar += width + 1
-    })
+      if (!font[c]) c = '?';
+      const width = Math.floor(font[c].length / 5);
+      this.drawChar(c, [x + pixelSoFar, y], this.parseColor(color), font);
+      pixelSoFar += width + 1;
+    });
   }
 
   // @y: horizontal line to draw text on (from top pixel)
@@ -109,15 +112,15 @@ export class PixooAPI {
   // @padding: number of pixels to pad the text on the left and right sides
   // @font: font to use
   drawTextRight(text, y, color = Color.White, padding = 0, font = Font.Vari8) {
-    let pixelSoFar = 0
-    const x = this.size - this.getTextWidth(text, font) - padding
-    const chars = [...text]
+    let pixelSoFar = 0;
+    const x = this.size - this.getTextWidth(text, font) - padding;
+    const chars = [...text];
     chars.map((c, i) => {
-      if (!font[c]) c = '?'
-      const width = Math.floor(font[c].length / 5)
-      this.drawChar(c, [x + pixelSoFar, y], this.parseColor(color), font)
-      pixelSoFar += width + 1
-    })
+      if (!font[c]) c = '?';
+      const width = Math.floor(font[c].length / 5);
+      this.drawChar(c, [x + pixelSoFar, y], this.parseColor(color), font);
+      pixelSoFar += width + 1;
+    });
   }
 
   // @y: horizontal line to draw text on (from top pixel)
@@ -125,43 +128,48 @@ export class PixooAPI {
   // @padding: number of pixels to pad the text on the left and right sides
   // @font: font to use
   drawTextLeft(text, y, color = Color.White, padding = 0, font = Font.Vari8) {
-    let pixelSoFar = 0
-    const chars = [...text]
+    let pixelSoFar = 0;
+    const chars = [...text];
     chars.map((c, i) => {
-      if (!font[c]) c = '?'
-      const width = Math.floor(font[c].length / 5)
-      this.drawChar(c, [padding + pixelSoFar, y], this.parseColor(color), font)
-      pixelSoFar += width + 1
-    })
+      if (!font[c]) c = '?';
+      const width = Math.floor(font[c].length / 5);
+      this.drawChar(c, [padding + pixelSoFar, y], this.parseColor(color), font);
+      pixelSoFar += width + 1;
+    });
   }
 
   // Adapted from https://github.com/C453/Pixoo-TS (Apache 2.0)
   drawText(text, pos, color = Color.White, font = Font.Vari8) {
-    let pixelSoFar = 0
-    const chars = [...text]
+    let pixelSoFar = 0;
+    const chars = [...text];
     chars.map((c, i) => {
-      if (!font[c]) c = '?'
-      const width = Math.floor(font[c].length / 5)
-      this.drawChar(c, [pixelSoFar + pos[0], pos[1]], this.parseColor(color), font)
-      pixelSoFar += width + 1
-    })
+      if (!font[c]) c = '?';
+      const width = Math.floor(font[c].length / 5);
+      this.drawChar(
+        c,
+        [pixelSoFar + pos[0], pos[1]],
+        this.parseColor(color),
+        font,
+      );
+      pixelSoFar += width + 1;
+    });
   }
 
   // Adapted from https://github.com/C453/Pixoo-TS (Apache 2.0)
   drawChar(char, pos, color, font = Font.Vari8) {
-    const charMatrix = font[char]
+    const charMatrix = font[char];
     if (!charMatrix) {
-      console.log(`Unknown char: ${char}`)
-      charMatrix = font['?'] // default to ?
+      console.log(`Unknown char: ${char}`);
+      charMatrix = font['?']; // default to ?
     }
-    const width = Math.floor(charMatrix.length / 5)
+    const width = Math.floor(charMatrix.length / 5);
     charMatrix.forEach((bit, index) => {
       if (bit === 1) {
-        const x = index % width
-        const y = Math.floor(index / width)
-        this.drawPixel(pos[0] + x, pos[1] + y, this.parseColor(color))
+        const x = index % width;
+        const y = Math.floor(index / width);
+        this.drawPixel(pos[0] + x, pos[1] + y, this.parseColor(color));
       }
-    })
+    });
   }
 
   // Co-pilot authored method
@@ -173,14 +181,19 @@ export class PixooAPI {
     if (fill) {
       for (let x = start[0]; x < end[0]; x++) {
         for (let y = start[1]; y < end[1]; y++) {
-          this.drawPixel(x, y, this.parseColor(color))
+          this.drawPixel(x, y, this.parseColor(color));
         }
       }
     } else {
       for (let x = start[0]; x < end[0]; x++) {
         for (let y = start[1]; y < end[1]; y++) {
-          if (x === start[0] || y === start[1] || x === end[0] - 1 || y === end[1] - 1) {
-            this.drawPixel(x, y, this.parseColor(color))
+          if (
+            x === start[0] ||
+            y === start[1] ||
+            x === end[0] - 1 ||
+            y === end[1] - 1
+          ) {
+            this.drawPixel(x, y, this.parseColor(color));
           }
         }
       }
@@ -192,72 +205,74 @@ export class PixooAPI {
   // @end: [x, y]
   // @color: [r, g, b]
   drawLine(start, end, color) {
-    const dx = Math.abs(end[0] - start[0])
-    const dy = Math.abs(end[1] - start[1])
-    const sx = start[0] < end[0] ? 1 : -1
-    const sy = start[1] < end[1] ? 1 : -1
-    let err = dx - dy
+    const dx = Math.abs(end[0] - start[0]);
+    const dy = Math.abs(end[1] - start[1]);
+    const sx = start[0] < end[0] ? 1 : -1;
+    const sy = start[1] < end[1] ? 1 : -1;
+    let err = dx - dy;
     while (true) {
-      this.drawPixel(start[0], start[1], this.parseColor(color))
-      if (start[0] === end[0] && start[1] === end[1]) break
-      const e2 = 2 * err
+      this.drawPixel(start[0], start[1], this.parseColor(color));
+      if (start[0] === end[0] && start[1] === end[1]) break;
+      const e2 = 2 * err;
       if (e2 > -dy) {
-        err -= dy
-        start[0] += sx
+        err -= dy;
+        start[0] += sx;
       }
       if (e2 < dx) {
-        err += dx
-        start[1] += sy
+        err += dx;
+        start[1] += sy;
       }
     }
   }
 
   async drawImage(path, pos, size) {
-    const image = sharp(path)
+    const image = sharp(path);
 
     // Resize the image to fit the given size
-    const resizedImage = image.resize(size[0], size[1])
-    const imageData = await resizedImage.raw().toBuffer()
-    const metadata = await image.metadata()
-    const pixelSize = metadata.format === 'png' ? 4 : 3
+    const resizedImage = image.resize(size[0], size[1]);
+    const imageData = await resizedImage.raw().toBuffer();
+    const metadata = await image.metadata();
+    const pixelSize = metadata.format === 'png' ? 4 : 3;
 
     // Iterate over each pixel in the image and draw it on the display
     for (let y = 0; y < size[1]; y++) {
       for (let x = 0; x < size[0]; x++) {
-        const pixelIndex = (y * size[0] + x) * pixelSize
-        const r = imageData[pixelIndex]
-        const g = imageData[pixelIndex + 1]
-        const b = imageData[pixelIndex + 2]
-        const color = [r, g, b]
-        this.drawPixel(pos[0] + x, pos[1] + y, this.parseColor(color))
+        const pixelIndex = (y * size[0] + x) * pixelSize;
+        const r = imageData[pixelIndex];
+        const g = imageData[pixelIndex + 1];
+        const b = imageData[pixelIndex + 2];
+        const color = [r, g, b];
+        this.drawPixel(pos[0] + x, pos[1] + y, this.parseColor(color));
       }
     }
   }
 
   async push() {
-    await this.sendBuffer()
+    await this.sendBuffer();
   }
 
   async sendBuffer() {
-    if (this.counter >= 1000) await this.resetCounter()
+    if (this.counter >= 1000) await this.resetCounter();
 
-    const start = Date.now()
+    const start = Date.now();
     const response = await this.sendHttpGif(
       1, // PicNum
       this.size, // PicWidth
       0, // PicOffset
       this.counter++, // PicID
       1000, // PicSpeed
-      Buffer.from(this.buffer.flat()).toString('base64') // PicData
-    )
-    this.pushAvgElapsed = (this.pushAvgElapsed * this.pushCount + (Date.now() - start)) / (this.pushCount + 1)
-    this.pushCount++
-    return response
+      Buffer.from(this.buffer.flat()).toString('base64'), // PicData
+    );
+    this.pushAvgElapsed =
+      (this.pushAvgElapsed * this.pushCount + (Date.now() - start)) /
+      (this.pushCount + 1);
+    this.pushCount++;
+    return response;
   }
 
   async resetCounter() {
-    this.counter = 0
-    return await this.resetHttpGifId()
+    this.counter = 0;
+    return await this.resetHttpGifId();
   }
 
   //
@@ -265,54 +280,54 @@ export class PixooAPI {
   //
   async getCurrentChannel() {
     return this.post({
-      Command: 'Channel/GetIndex'
-    })
+      Command: 'Channel/GetIndex',
+    });
   }
 
   // @index: 0 (Faces), 1 (Cloud Channel), 2 (Visualizer), 3 (Custom), 4 (Black screen)
   async setChannel(index) {
     return this.post({
       Command: 'Channel/SetIndex',
-      SelectIndex: index
-    })
+      SelectIndex: index,
+    });
   }
 
   // @index: 0-2
   async setCustomPageIndex(index) {
     return this.post({
       Command: 'Channel/SetCustomPageIndex',
-      CustomPageIndex: index
-    })
+      CustomPageIndex: index,
+    });
   }
 
   // @eqPosition: index starts from 0
   async setVisualizerChannel(index) {
     return this.post({
       Command: 'Channel/SetEqPosition',
-      EqPosition: index
-    })
+      EqPosition: index,
+    });
   }
 
   // @index: 0 (Recommend gallery), 1 (Favourite), 2 (Subscribe artist), 3 (Album)
   async setCloudIndex(index) {
     return this.post({
       Command: 'Channel/CloudIndex',
-      Index: index
-    })
+      Index: index,
+    });
   }
 
   // @brightness: 0-100
   async setBrightness(brightness) {
     return this.post({
       Command: 'Channel/SetBrightness',
-      Brightness: brightness
-    })
+      Brightness: brightness,
+    });
   }
 
   async getAllSettings() {
     return this.post({
-      Command: 'Channel/GetAllConf'
-    })
+      Command: 'Channel/GetAllConf',
+    });
   }
 
   // @longitude: -180 to 180
@@ -321,16 +336,16 @@ export class PixooAPI {
     return this.post({
       Command: 'Sys/LogAndLat',
       Longitude: longitude,
-      Latitude: latitude
-    })
+      Latitude: latitude,
+    });
   }
 
   // @timeZoneValue: time zone value (string, e.g. GMT-5)
   async setTimeZone(timeZoneValue) {
     return this.post({
       Command: 'Sys/TimeZone',
-      TimeZoneValue: timeZoneValue
-    })
+      TimeZoneValue: timeZoneValue,
+    });
   }
 
   // "it will set the system time when the device powers on"
@@ -338,62 +353,62 @@ export class PixooAPI {
   async setSystemTime(utc) {
     return this.post({
       Command: 'Device/SetUTC',
-      Utc: utc
-    })
+      Utc: utc,
+    });
   }
 
   // @onOff: 0 (off), 1 (on)
   async setOnOffScreen(onOff) {
     return this.post({
       Command: 'Channel/OnOffScreen',
-      OnOff: onOff
-    })
+      OnOff: onOff,
+    });
   }
 
   async getDeviceTime() {
     return this.post({
-      Command: 'Device/GetDeviceTime'
-    })
+      Command: 'Device/GetDeviceTime',
+    });
   }
 
   // @mode: 0 (Celsius), 1 (Fahrenheit)
   async setDisTempMode(mode) {
     return this.post({
       Command: 'Device/SetDisTempMode',
-      Mode: mode
-    })
+      Mode: mode,
+    });
   }
 
   // @mode: 0 (normal), 1 (90), 2 (180), 3 (270)
   async setScreenRotationAngle(mode) {
     return this.post({
       Command: 'Device/SetScreenRotationAngle',
-      Mode: mode
-    })
+      Mode: mode,
+    });
   }
 
   // @mode: 0 (off), 1 (on)
   async setMirrorMode(mode) {
     return this.post({
       Command: 'Device/SetMirrorMode',
-      Mode: mode
-    })
+      Mode: mode,
+    });
   }
 
   // @mode: 0 (12-hour), 1 (24-hour)
   async setTime24Flag(mode) {
     return this.post({
       Command: 'Device/SetTime24Flag',
-      Mode: mode
-    })
+      Mode: mode,
+    });
   }
 
   // @mode: 0 (off), 1 (on)
   async setHighLightMode(mode) {
     return this.post({
       Command: 'Device/SetHighLightMode',
-      Mode: mode
-    })
+      Mode: mode,
+    });
   }
 
   // @rValue: 0-100
@@ -404,14 +419,14 @@ export class PixooAPI {
       Command: 'Device/SetWhiteBalance',
       RValue: rValue,
       GValue: gValue,
-      BValue: bValue
-    })
+      BValue: bValue,
+    });
   }
 
   async getWeatherInfo() {
     return this.post({
-      Command: 'Device/GetWeatherInfo'
-    })
+      Command: 'Device/GetWeatherInfo',
+    });
   }
 
   // @minute: 0-59
@@ -422,16 +437,16 @@ export class PixooAPI {
       Command: 'Tools/SetTimer',
       Minute: minute,
       Second: second,
-      Status: status
-    })
+      Status: status,
+    });
   }
 
   // @status: 0 (stop), 1 (start), 2 (reset)
   async setStopWatch(status) {
     return this.post({
       Command: 'Tools/SetStopWatch',
-      Status: status
-    })
+      Status: status,
+    });
   }
 
   // @blueScore: 0-999
@@ -440,16 +455,16 @@ export class PixooAPI {
     return this.post({
       Command: 'Tools/SetScoreBoard',
       BlueScore: blueScore,
-      RedScore: redScore
-    })
+      RedScore: redScore,
+    });
   }
 
   // @status: 0 (off), 1 (on)
   async setNoiseStatus(status) {
     return this.post({
       Command: 'Tools/SetNoiseStatus',
-      NoiseStatus: status
-    })
+      NoiseStatus: status,
+    });
   }
 
   // "play gif file, the command can select the gif file,
@@ -462,22 +477,22 @@ export class PixooAPI {
     return this.post({
       Command: 'Device/PlayTFGif',
       FileType: fileType,
-      FileName: fileName
-    })
+      FileName: fileName,
+    });
   }
 
   // "get the PicId which the command Draw/SendHttpGif.
   // It will return the PicId, it’s value is the previous gif id plus 1"
   async GetHttpGifId() {
     return this.post({
-      Command: 'Device/GetHttpGifId'
-    })
+      Command: 'Device/GetHttpGifId',
+    });
   }
 
   async resetHttpGifId() {
     return this.post({
-      Command: 'Draw/ResetHttpGifId'
-    })
+      Command: 'Draw/ResetHttpGifId',
+    });
   }
 
   // See http://doc.divoom-gz.com/web/#/12?page_id=93
@@ -497,15 +512,15 @@ export class PixooAPI {
       PicOffset: picOffset,
       PicID: picId,
       PicSpeed: picSpeed,
-      PicData: picData
-    })
+      PicData: picData,
+    });
   }
 
   // See http://doc.divoom-gz.com/web/#/12?page_id=219
   async clearHttpText() {
     return this.post({
-      Command: 'Draw/ClearHttpText'
-    })
+      Command: 'Draw/ClearHttpText',
+    });
   }
 
   // See http://doc.divoom-gz.com/web/#/12?page_id=234
@@ -528,8 +543,8 @@ export class PixooAPI {
   async sendHttpItemList(itemList) {
     return this.post({
       Command: 'Draw/SendHttpItemList',
-      ItemList: itemList
-    })
+      ItemList: itemList,
+    });
   }
 
   // See http://doc.divoom-gz.com/web/#/12?page_id=347
@@ -543,8 +558,8 @@ export class PixooAPI {
       Command: 'Device/PlayBuzzer',
       ActiveTimeInCycle: activeTimeInCycle,
       OffTimeInCycle: offTimeInCycle,
-      PlayTotalTime: playTotalTime
-    })
+      PlayTotalTime: playTotalTime,
+    });
   }
 
   // play divoom gif file, it will get from “Get Img Upload List” and “Get My Like Img List”.
@@ -552,8 +567,8 @@ export class PixooAPI {
   async playRemote(fileId) {
     return this.post({
       Command: 'Draw/SendRemote',
-      FileId: fileId
-    })
+      FileId: fileId,
+    });
   }
 
   // CommandList will run all commmand of the the command array.
@@ -564,8 +579,8 @@ export class PixooAPI {
   async commandList(commandList) {
     return this.post({
       Command: 'Draw/CommandList',
-      CommandList: commandList
-    })
+      CommandList: commandList,
+    });
   }
 
   // UseHTTPCommandSource will run all commmands in url file.
@@ -576,7 +591,7 @@ export class PixooAPI {
   async useHTTPCommandSource(commandUrl) {
     return this.post({
       Command: 'Draw/UseHTTPCommandSource',
-      CommandUrl: commandUrl
-    })
+      CommandUrl: commandUrl,
+    });
   }
 }

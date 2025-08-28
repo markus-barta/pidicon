@@ -17,7 +17,7 @@
  * - Initial Version
  *
  * DESCRIPTION
- * 
+ *
  * This class encapsulates the configuration, control, and rendering capabilities of a Pixoo device.
  * It allows for multiple instances to be managed independently and provides high-level drawing primitives.
  *
@@ -90,10 +90,11 @@
 const debug = false;
 
 function debugLog(text) {
-  if (!debug) { return }
+  if (!debug) {
+    return;
+  }
   node.warn(text);
 }
-
 
 class PixooDevice {
   /**
@@ -102,14 +103,14 @@ class PixooDevice {
    * @enum {string}
    */
   static MODES = Object.freeze({
-    OFF: "OFF",
-    IDLE: "IDLE",
-    IMAGE_GALLERY: "IMAGE_GALLERY",
-    ENERGY_LEVELS: "ENERGY_LEVELS",
-    CAM0_STREAM: "CAM0_STREAM",
-    ROOM_PLAN: "ROOM_PLAN",
-    POWER_PRICE: "POWER_PRICE",
-    POWER_FLOW: "POWER_FLOW",
+    OFF: 'OFF',
+    IDLE: 'IDLE',
+    IMAGE_GALLERY: 'IMAGE_GALLERY',
+    ENERGY_LEVELS: 'ENERGY_LEVELS',
+    CAM0_STREAM: 'CAM0_STREAM',
+    ROOM_PLAN: 'ROOM_PLAN',
+    POWER_PRICE: 'POWER_PRICE',
+    POWER_FLOW: 'POWER_FLOW',
   });
 
   /**
@@ -119,11 +120,11 @@ class PixooDevice {
    */
   static ACTIONS = Object.freeze({
     NONE: null,
-    PLAY: "play",
-    PAUSE: "pause",
-    STOP: "stop",
-    NEXT: "next",
-    PRIOR: "prior",
+    PLAY: 'play',
+    PAUSE: 'pause',
+    STOP: 'stop',
+    NEXT: 'next',
+    PRIOR: 'prior',
   });
 
   /**
@@ -249,7 +250,7 @@ class PixooDevice {
     '[': [1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0],
     ']': [0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1],
     '^': [0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    '_': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+    _: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
     ':': [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
     '.': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     '/': [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],
@@ -257,7 +258,7 @@ class PixooDevice {
     '|': [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
     '}': [1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0],
     '~': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-    '$': [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0],
+    $: [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0],
     '@': [0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1],
     '%': [1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1],
     '°': [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -272,7 +273,7 @@ class PixooDevice {
     '✓': [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0], // Checkmark
     '✗': [0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0], // Cross Mark / Ballot X
     '♥': [0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0], // Heart
-    '█': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  // Full Block
+    '█': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], // Full Block
   };
 
   /**
@@ -297,7 +298,7 @@ class PixooDevice {
     COMMA_SPACING_LEFT: 1,
     COMMA_SPACING_RIGHT: 1,
     COMMA_HEIGHT_OFFSET: 4,
-    SPECIAL_KERNING_DIGITS: [4,7,9],
+    SPECIAL_KERNING_DIGITS: [4, 7, 9],
     SPECIAL_KERNING_OFFSET: 1,
     MINUS_SIGN_WIDTH: 4,
   };
@@ -321,13 +322,13 @@ class PixooDevice {
   /**
    * Performs cleanup operations for a PixooDevice
    * Releases resources and closes active connections
-   * 
+   *
    * @returns {Promise<boolean>} Success status of cleanup operation
-   * 
+   *
    * Cleanup operations:
    * - Closes the API connection if available
    * - Clears API instance reference
-   * 
+   *
    * @throws {Warning} Logs warning if cleanup fails
    */
   async cleanup() {
@@ -341,7 +342,7 @@ class PixooDevice {
       }
       return true;
     } catch (error) {
-      this._logError("cleanup", error);
+      this._logError('cleanup', error);
       return false;
     }
   }
@@ -501,7 +502,7 @@ class PixooDevice {
    * // For device '01-pixoo' requesting 'state'
    * // Returns: 'home/01/display/01-pixoo/state'
    */
-  getMqttTopic(subtopic = "state") {
+  getMqttTopic(subtopic = 'state') {
     const room = this.hostAddress.slice(0, 2);
     return `home/${room}/display/${this.hostAddress}/${subtopic}`;
   }
@@ -580,14 +581,14 @@ class PixooDevice {
   async emitStateChange() {
     const payload = this.getMqttPayload();
     const message = {
-      topic: this.getMqttTopic("state"),
+      topic: this.getMqttTopic('state'),
       payload: payload,
     };
 
     node.send(message);
     node.status({
-      fill: "green",
-      shape: "dot",
+      fill: 'green',
+      shape: 'dot',
       text: `Mode: ${payload.mode}, Action: ${payload.action}`,
     });
   }
@@ -624,7 +625,9 @@ class PixooDevice {
   incrementState(key, amount = 1) {
     const currentValue = this.getState(key, 0); // Default to 0
     if (typeof currentValue !== 'number') {
-      node?.warn(`[PixooDevice] incrementState called on non-numeric key '${key}'`);
+      node?.warn(
+        `[PixooDevice] incrementState called on non-numeric key '${key}'`,
+      );
       this.setState(key, amount); // Initialize or overwrite non-numeric with amount
       return amount;
     }
@@ -642,7 +645,9 @@ class PixooDevice {
   toggleState(key, defaultValue = false) {
     const currentValue = this.getState(key, defaultValue);
     if (typeof currentValue !== 'boolean') {
-      node?.warn(`[PixooDevice] toggleState called on non-boolean key '${key}'`);
+      node?.warn(
+        `[PixooDevice] toggleState called on non-boolean key '${key}'`,
+      );
       this.setState(key, !defaultValue); // Initialize or overwrite non-boolean
       return !defaultValue;
     }
@@ -651,7 +656,6 @@ class PixooDevice {
     return newValue;
   }
   // -------------------------------------------------
-
 
   // =====================================
   // Rendering Methods
@@ -707,7 +711,7 @@ class PixooDevice {
       }
       return true;
     } catch (error) {
-      this._logError("drawPixelRgba", error);
+      this._logError('drawPixelRgba', error);
       return false;
     }
   }
@@ -746,7 +750,7 @@ class PixooDevice {
       }
       return true;
     } catch (error) {
-      this._logError("drawRectangleRgba", error);
+      this._logError('drawRectangleRgba', error);
       return false;
     }
   }
@@ -804,7 +808,7 @@ class PixooDevice {
       }
       return true;
     } catch (error) {
-      this._logError("drawLineRgba", error);
+      this._logError('drawLineRgba', error);
       return false;
     }
   }
@@ -853,16 +857,18 @@ class PixooDevice {
    * @throws {Warning} Logs warning if text rendering fails
    * @see PixooDevice.TEXT_FONT for supported characters
    */
-  async drawTextRgbaAligned(text, position, rgbaColor, alignment = "left") {
+  async drawTextRgbaAligned(text, position, rgbaColor, alignment = 'left') {
     try {
-      debugLog(`[drawTextRgbaAligned] Rendering text: "${text}", alignment: ${alignment}`);
+      debugLog(
+        `[drawTextRgbaAligned] Rendering text: "${text}", alignment: ${alignment}`,
+      );
       const DEGREE_SYMBOL_ALPHA_FACTOR = 0.75;
       let [x, y] = position;
       let renderText = text;
       let hasDegreeSymbol = false;
 
       // Check for degree symbol and adjust text if needed
-      if (text.endsWith("°")) {
+      if (text.endsWith('°')) {
         renderText = text.slice(0, -1);
         hasDegreeSymbol = true;
       }
@@ -870,26 +876,36 @@ class PixooDevice {
       // For digits, ensure we keep leading zeros by treating them as strings
       if (/^\d+$/.test(renderText)) {
         renderText = String(renderText);
-        debugLog(`[drawTextRgbaAligned] Formatted numeric text: "${renderText}"`);
+        debugLog(
+          `[drawTextRgbaAligned] Formatted numeric text: "${renderText}"`,
+        );
       }
 
       // Calculate width and adjust for alignment
-      if (alignment !== "left") {
+      if (alignment !== 'left') {
         const width = this._calculateTextWidth(renderText);
-        x = alignment === "right"
-          ? Math.max(0, x - width)
-          : Math.max(0, x - Math.floor(width / 2));
+        x =
+          alignment === 'right'
+            ? Math.max(0, x - width)
+            : Math.max(0, x - Math.floor(width / 2));
       }
 
       // Track the final x position for degree symbol
       let finalX = x;
 
       // Render main text character by character
-      debugLog(`[drawTextRgbaAligned] Rendering characters: ${[...renderText].map(c => `"${c}"`).join(', ')}`);
+      debugLog(
+        `[drawTextRgbaAligned] Rendering characters: ${[...renderText].map((c) => `"${c}"`).join(', ')}`,
+      );
       for (const char of renderText) {
-        debugLog(`[drawTextRgbaAligned] Processing character: "${char}", charCode: ${char.charCodeAt(0)}`);
-        const charMatrix = PixooDevice.TEXT_FONT[char] || PixooDevice.TEXT_FONT["?"];
-        const width = Math.floor(charMatrix.length / PixooDevice.FONT_METRICS.DIGIT_HEIGHT);
+        debugLog(
+          `[drawTextRgbaAligned] Processing character: "${char}", charCode: ${char.charCodeAt(0)}`,
+        );
+        const charMatrix =
+          PixooDevice.TEXT_FONT[char] || PixooDevice.TEXT_FONT['?'];
+        const width = Math.floor(
+          charMatrix.length / PixooDevice.FONT_METRICS.DIGIT_HEIGHT,
+        );
 
         for (let i = 0; i < charMatrix.length; i++) {
           if (charMatrix[i] === 1) {
@@ -911,18 +927,19 @@ class PixooDevice {
         if (!this._isOutOfBounds(degreeX, degreeY)) {
           const degreeColor = [...rgbaColor];
           const originalAlpha = rgbaColor.length === 4 ? rgbaColor[3] : 255;
-          degreeColor[3] = Math.round(originalAlpha * DEGREE_SYMBOL_ALPHA_FACTOR);
+          degreeColor[3] = Math.round(
+            originalAlpha * DEGREE_SYMBOL_ALPHA_FACTOR,
+          );
           await this.drawPixelRgba([degreeX, degreeY], degreeColor);
         }
       }
 
       return true;
     } catch (error) {
-      this._logError("drawTextRgbaAligned", error);
+      this._logError('drawTextRgbaAligned', error);
       return false;
     }
   }
-
 
   /**
    * Calculates total width for float text rendering
@@ -966,7 +983,7 @@ class PixooDevice {
       integerDigits === 1
         ? PixooDevice.FONT_METRICS.DIGIT_WIDTH
         : PixooDevice.FONT_METRICS.DIGIT_WIDTH * integerDigits +
-        (integerDigits - 1);
+          (integerDigits - 1);
 
     // Calculate total width including optional components
     return (
@@ -974,10 +991,10 @@ class PixooDevice {
       integerWidth +
       (!hasMaxDigits && maxTotalDigits > 1
         ? PixooDevice.FONT_METRICS.COMMA_SPACING_LEFT +
-        1 + // Width of decimal point
-        PixooDevice.FONT_METRICS.COMMA_SPACING_RIGHT +
-        PixooDevice.FONT_METRICS.DIGIT_WIDTH -
-        kerningOffset
+          1 + // Width of decimal point
+          PixooDevice.FONT_METRICS.COMMA_SPACING_RIGHT +
+          PixooDevice.FONT_METRICS.DIGIT_WIDTH -
+          kerningOffset
         : 0)
     );
   }
@@ -1029,9 +1046,9 @@ class PixooDevice {
     kerningOffset,
   ) {
     let baseX = position[0];
-    if (alignment === "right") {
+    if (alignment === 'right') {
       baseX = position[0] - totalWidth;
-    } else if (alignment === "center") {
+    } else if (alignment === 'center') {
       baseX = position[0] - Math.floor(totalWidth / 2);
     }
 
@@ -1043,7 +1060,7 @@ class PixooDevice {
 
     // Draw minus sign if negative
     if (isNegative) {
-      await this.drawTextRgbaAligned("-", [baseX, position[1]], rgbaColor);
+      await this.drawTextRgbaAligned('-', [baseX, position[1]], rgbaColor);
     }
 
     // Calculate integer width for proper decimal point positioning
@@ -1052,7 +1069,7 @@ class PixooDevice {
       integerDigits === 1
         ? PixooDevice.FONT_METRICS.DIGIT_WIDTH
         : PixooDevice.FONT_METRICS.DIGIT_WIDTH * integerDigits +
-        (integerDigits - 1);
+          (integerDigits - 1);
 
     // Draw integer part
     const integerBaseX =
@@ -1089,8 +1106,13 @@ class PixooDevice {
         kerningOffset;
 
       // Ensure fractionalPart is treated as a string and maintain leading zeros
-      const formattedFraction = String(fractionalPart).padStart(maxTotalDigits - integerDigits, '0');
-      debugLog(`[_renderFloat] Rendering fraction: "${formattedFraction}" at x:${fractionX}, y:${position[1]}`);
+      const formattedFraction = String(fractionalPart).padStart(
+        maxTotalDigits - integerDigits,
+        '0',
+      );
+      debugLog(
+        `[_renderFloat] Rendering fraction: "${formattedFraction}" at x:${fractionX}, y:${position[1]}`,
+      );
 
       await this.drawTextRgbaAligned(
         formattedFraction,
@@ -1136,9 +1158,17 @@ class PixooDevice {
    *
    * @throws {Warning} Logs warning if text rendering fails
    */
-  async drawCustomFloatText(value, position, rgbaColor, alignment = "left", maxTotalDigits = 2) {
+  async drawCustomFloatText(
+    value,
+    position,
+    rgbaColor,
+    alignment = 'left',
+    maxTotalDigits = 2,
+  ) {
     try {
-      debugLog(`[drawCustomFloatText] Raw input value: ${value}, type: ${typeof value}`);
+      debugLog(
+        `[drawCustomFloatText] Raw input value: ${value}, type: ${typeof value}`,
+      );
 
       let roundedValue, integerPart, fractionalPart;
       const isNegative = value < 0;
@@ -1148,7 +1178,7 @@ class PixooDevice {
       if (maxTotalDigits === 1 || integerDigits >= maxTotalDigits) {
         roundedValue = Math.round(value);
         integerPart = roundedValue;
-        fractionalPart = "0";
+        fractionalPart = '0';
       } else {
         const availableDecimals = maxTotalDigits - integerDigits;
         const multiplier = Math.pow(10, availableDecimals);
@@ -1170,21 +1200,28 @@ class PixooDevice {
         //           fractionalPart: ${fractionalPart}`);
       }
 
-      const hasMaxDigits = Math.abs(integerPart).toString().length >= maxTotalDigits;
-      const needsSpecialKerning = !hasMaxDigits &&
-        PixooDevice.FONT_METRICS.SPECIAL_KERNING_DIGITS.includes(parseInt(fractionalPart));
-      const kerningOffset = needsSpecialKerning ?
-        PixooDevice.FONT_METRICS.SPECIAL_KERNING_OFFSET : 0;
+      const hasMaxDigits =
+        Math.abs(integerPart).toString().length >= maxTotalDigits;
+      const needsSpecialKerning =
+        !hasMaxDigits &&
+        PixooDevice.FONT_METRICS.SPECIAL_KERNING_DIGITS.includes(
+          parseInt(fractionalPart),
+        );
+      const kerningOffset = needsSpecialKerning
+        ? PixooDevice.FONT_METRICS.SPECIAL_KERNING_OFFSET
+        : 0;
 
       const totalWidth = this._calculateFloatWidth(
         isNegative,
         integerPart,
         hasMaxDigits,
         maxTotalDigits,
-        kerningOffset
+        kerningOffset,
       );
 
-      debugLog(`[drawCustomFloatText] Final: hasMaxDigits=${hasMaxDigits}, kerningOffset=${kerningOffset}, totalWidth=${totalWidth}`);
+      debugLog(
+        `[drawCustomFloatText] Final: hasMaxDigits=${hasMaxDigits}, kerningOffset=${kerningOffset}, totalWidth=${totalWidth}`,
+      );
 
       await this._renderFloat(
         value,
@@ -1197,12 +1234,12 @@ class PixooDevice {
         fractionalPart,
         hasMaxDigits,
         maxTotalDigits,
-        kerningOffset
+        kerningOffset,
       );
 
       return totalWidth;
     } catch (error) {
-      this._logError("drawCustomFloatText", error);
+      this._logError('drawCustomFloatText', error);
       return 0;
     }
   }
@@ -1246,7 +1283,6 @@ class PixooDevice {
    */
   //  async x_legacy_drawImageWithAlpha(imagePath, position, size, alpha = null) {
 
-
   /**
    * Renders image with pixel-by-pixel alpha blending
    * Internal method for processing image data and applying transparency
@@ -1285,7 +1321,6 @@ class PixooDevice {
    */
   //  async x_legacy_renderImage(imageBuffer, position, size, isJPG, alpha = null) {
 
-
   /**
    * Process image metadata and configure processing options
    * @private
@@ -1293,7 +1328,7 @@ class PixooDevice {
    */
   async _processImageMetadata(metadata) {
     const config = {
-      colorspace: metadata.space || "srgb",
+      colorspace: metadata.space || 'srgb',
       hasAlpha: metadata.channels === 4,
       format: metadata.format,
       isWebOptimized: metadata.isProgressive || false,
@@ -1301,8 +1336,8 @@ class PixooDevice {
 
     // Handle web-optimized PNGs (like those from Pixelmator Pro)
     if (
-      metadata.format === "png" &&
-      (metadata.profile === "sRGB IEC61966-2.1" || metadata.space === "srgb")
+      metadata.format === 'png' &&
+      (metadata.profile === 'sRGB IEC61966-2.1' || metadata.space === 'srgb')
     ) {
       config.isWebOptimized = true;
       config.needsColorspaceConversion = false;
@@ -1326,14 +1361,14 @@ class PixooDevice {
 
     // Ensure consistent color space handling
     if (config.needsColorspaceConversion) {
-      pipeline = pipeline.toColorspace("srgb");
+      pipeline = pipeline.toColorspace('srgb');
     }
 
     // Handle web-optimized images
     if (config.isWebOptimized) {
       pipeline = pipeline.resize(size[0], size[1], {
-        kernel: "lanczos3",
-        fit: "fill",
+        kernel: 'lanczos3',
+        fit: 'fill',
       });
     } else {
       pipeline = pipeline.resize(size[0], size[1]);
@@ -1392,7 +1427,7 @@ class PixooDevice {
       }
       return true;
     } catch (error) {
-      this._logError("_renderImage", error);
+      this._logError('_renderImage', error);
       return false;
     }
   }
@@ -1413,7 +1448,7 @@ class PixooDevice {
         throw new Error(`Invalid alpha value ${alpha}`);
       }
 
-      const sharp = await global.get("sharp");
+      const sharp = await global.get('sharp');
       const image = sharp(imagePath);
       const metadata = await image.metadata();
 
@@ -1435,7 +1470,7 @@ class PixooDevice {
         alpha,
       );
     } catch (error) {
-      this._logError("drawImageWithAlpha", error);
+      this._logError('drawImageWithAlpha', error);
       return false;
     }
   }
@@ -1450,7 +1485,7 @@ class PixooDevice {
    */
   _calculateTextWidth(text) {
     return [...text].reduce((acc, c) => {
-      if (!PixooDevice.TEXT_FONT[c]) c = "?";
+      if (!PixooDevice.TEXT_FONT[c]) c = '?';
       const width = Math.floor(
         PixooDevice.TEXT_FONT[c].length / PixooDevice.FONT_METRICS.DIGIT_HEIGHT,
       );
@@ -1498,23 +1533,23 @@ class PixooManager {
   /**
    * Cleans up and removes all managed device instances
    * Performs graceful shutdown of all devices in the manager
-   * 
+   *
    * @returns {Promise<Array>} Array of cleanup results for each device
    * @property {string} host - Device hostname or IP address
    * @property {boolean} success - Whether cleanup was successful
    * @property {string} [error] - Error message if cleanup failed
-   * 
+   *
    * Process:
    * - Attempts to clean up each device in the collection
    * - Records success/failure status per device
    * - Clears device map after cleanup attempts
    * - Returns detailed results of cleanup operations
-   * 
+   *
    * Usage:
    * - Typically called before reinitialization
    * - Helps prevent resource leaks during redeployment
    * - Ensures clean state before device re-creation
-   * 
+   *
    * @example
    * // Clean up all devices before reinitializing
    * const results = await pixooManager.cleanupAllDevices();
@@ -1527,7 +1562,11 @@ class PixooManager {
         await device.cleanup();
         results.push({ host: hostAddress, success: true });
       } catch (error) {
-        results.push({ host: hostAddress, success: false, error: error.message });
+        results.push({
+          host: hostAddress,
+          success: false,
+          error: error.message,
+        });
       }
     }
     // Clear the devices map
@@ -1594,8 +1633,8 @@ class PixooManager {
  */
 async function pixooSetup(hostAddress, silent = false) {
   // Input validation
-  if (typeof silent !== "boolean") {
-    throw new Error("Invalid input: silent must be a boolean value");
+  if (typeof silent !== 'boolean') {
+    throw new Error('Invalid input: silent must be a boolean value');
   }
 
   // Validate hostAddress
@@ -1606,20 +1645,20 @@ async function pixooSetup(hostAddress, silent = false) {
 
   if (!ipRegex.test(hostAddress) && !hostnameRegex.test(hostAddress)) {
     throw new Error(
-      "Invalid host address: must be a valid IP address or hostname",
+      'Invalid host address: must be a valid IP address or hostname',
     );
   }
 
   try {
     // Update status and initialize
-    node.status({ fill: "green", shape: "circle", text: "Initializing..." });
-    const PixooAPI = await global.get("PixooAPI")();
+    node.status({ fill: 'green', shape: 'circle', text: 'Initializing...' });
+    const PixooAPI = await global.get('PixooAPI')();
     const device = await pixooManager.initializeDevice(hostAddress, PixooAPI);
 
     // Get and report device details
     const details = await device.getAllSettings();
     const initMsg = `${details.timestamp} • Pixoo initialized at ${device.hostAddress}`;
-    node.status({ fill: "green", shape: "dot", text: initMsg });
+    node.status({ fill: 'green', shape: 'dot', text: initMsg });
 
     if (!silent) {
       node.warn(initMsg);
@@ -1627,7 +1666,7 @@ async function pixooSetup(hostAddress, silent = false) {
 
     return device;
   } catch (error) {
-    node.status({ fill: "red", shape: "ring", text: error.message });
+    node.status({ fill: 'red', shape: 'ring', text: error.message });
     node.warn(`Pixoo initialization error: ${error.message}`);
     return null;
   }
@@ -1645,20 +1684,20 @@ context.global.PixooManager = pixooManager;
  * @private
  */
 (async function initializeAllPixooDevices() {
-  node.warn(node.name + ": Multi-device setup starting...");
+  node.warn(node.name + ': Multi-device setup starting...');
 
   // Clean up existing devices first
   if (context.global.PixooManager) {
-    node.warn(node.name + ": Cleaning up previous device instances...");
+    node.warn(node.name + ': Cleaning up previous device instances...');
     await context.global.PixooManager.cleanupAllDevices();
   }
 
   // --- Pixoo devices ---
   const devicesToSetup = [
-//     { host: "wz-pixoo-64-00", defaultMode: PixooDevice.MODES.ENERGY_LEVELS }, //oben im wz medienschrank, IP: 192.168.1.159
-//     { host: "wz-pixoo-64-01", defaultMode: PixooDevice.MODES.POWER_PRICE }, //unten im wz medienschrank, IP: 192.168.1.189
-    { host: "192.168.1.159", defaultMode: PixooDevice.MODES.ENERGY_LEVELS }, //oben im wz medienschrank, IP: 192.168.1.159
-    { host: "192.168.1.189", defaultMode: PixooDevice.MODES.POWER_PRICE }, //unten im wz medienschrank, IP: 192.168.1.189
+    //     { host: "wz-pixoo-64-00", defaultMode: PixooDevice.MODES.ENERGY_LEVELS }, //oben im wz medienschrank, IP: 192.168.1.159
+    //     { host: "wz-pixoo-64-01", defaultMode: PixooDevice.MODES.POWER_PRICE }, //unten im wz medienschrank, IP: 192.168.1.189
+    { host: '192.168.1.159', defaultMode: PixooDevice.MODES.ENERGY_LEVELS }, //oben im wz medienschrank, IP: 192.168.1.159
+    { host: '192.168.1.189', defaultMode: PixooDevice.MODES.POWER_PRICE }, //unten im wz medienschrank, IP: 192.168.1.189
   ];
   // ----------------------------------------
 
@@ -1667,7 +1706,7 @@ context.global.PixooManager = pixooManager;
 
   // Use Promise.allSettled to attempt initializing all devices even if some fail
   const results = await Promise.allSettled(
-    devicesToSetup.map(config => pixooSetup(config.host)) // Call pixooSetup for each host
+    devicesToSetup.map((config) => pixooSetup(config.host)), // Call pixooSetup for each host
   );
 
   // Process results and set default modes
@@ -1683,16 +1722,24 @@ context.global.PixooManager = pixooManager;
 
       // Set the specified default mode (and action, if provided)
       try {
-        await device.setDeviceMode(config.defaultMode, config.defaultAction || null);
+        await device.setDeviceMode(
+          config.defaultMode,
+          config.defaultAction || null,
+        );
         node.log(`Default mode set for ${device.hostAddress}`);
       } catch (modeError) {
-        node.warn(`Failed to set default mode for ${device.hostAddress}: ${modeError.message}`);
+        node.warn(
+          `Failed to set default mode for ${device.hostAddress}: ${modeError.message}`,
+        );
       }
-
     } else {
       // Initialization failed for this device
-      const errorMessage = result.reason ? result.reason.message : 'Unknown setup error';
-      node.warn(`${node.name}: Failed to initialize ${config.host}. Error: ${errorMessage}`);
+      const errorMessage = result.reason
+        ? result.reason.message
+        : 'Unknown setup error';
+      node.warn(
+        `${node.name}: Failed to initialize ${config.host}. Error: ${errorMessage}`,
+      );
       // The pixooSetup function already logs the error and sets node status on failure
     }
   }
@@ -1701,13 +1748,24 @@ context.global.PixooManager = pixooManager;
   const finalMsg = `${node.name}: Setup completed. ${initializedCount}/${totalDevices} devices initialized successfully.`;
   node.warn(finalMsg);
   if (initializedCount === totalDevices) {
-      node.status({ fill: "green", shape: "dot", text: `Initialized: ${initializedCount}/${totalDevices}` });
+    node.status({
+      fill: 'green',
+      shape: 'dot',
+      text: `Initialized: ${initializedCount}/${totalDevices}`,
+    });
   } else if (initializedCount > 0) {
-      node.status({ fill: "yellow", shape: "dot", text: `Initialized: ${initializedCount}/${totalDevices}` });
+    node.status({
+      fill: 'yellow',
+      shape: 'dot',
+      text: `Initialized: ${initializedCount}/${totalDevices}`,
+    });
   } else {
-      node.status({ fill: "red", shape: "ring", text: `Initialization failed for all ${totalDevices} devices` });
+    node.status({
+      fill: 'red',
+      shape: 'ring',
+      text: `Initialization failed for all ${totalDevices} devices`,
+    });
   }
-
 })(); // End of the IIFE
 
 // No return value needed
