@@ -427,10 +427,23 @@ client.on('message', async (topic, message) => {
           throw new Error(`Failed to handle scene update: ${sceneName}`);
         }
 
-        // Note: renderActiveScene is not needed here because:
+        // Note: renderActiveScene is needed for parameter updates and re-renders
         // - switchScene() handles rendering internally
-        // - updateSceneParameters() handles rendering internally
-        // - For same scene re-renders, we just return success
+        // - updateSceneParameters() only updates state, needs explicit render
+        // - For same scene re-renders, we need explicit render
+
+        // Render the scene after parameter updates or re-renders
+        if (isParameterChange || (!isSceneChange && !isParameterChange)) {
+          console.log(
+            `🎨 [RENDER] Rendering scene with updated parameters: ${sceneName}`,
+          );
+          // Ensure payload is preserved for parameter-based rendering
+          const renderContext = {
+            ...ctx,
+            payload: payload, // Preserve MQTT payload for parameter access
+          };
+          await sceneManager.renderActiveScene(renderContext);
+        }
 
         // Mark device as successfully booted after first successful render
         if (isDeviceFreshlyBooted(deviceIp)) {
