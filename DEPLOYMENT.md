@@ -6,7 +6,7 @@ This project now uses **GitHub Actions** for automated deployment instead of man
 
 ## 🔄 New Deployment Flow
 
-```
+```mermaid
 Git Push → GitHub Actions → Test → Deploy → Restart Container
 ```
 
@@ -48,7 +48,7 @@ You need to add these secrets in your GitHub repository:
 
 ## 📁 File Structure
 
-```
+```text
 .github/
 ├── workflows/
 │   └── deploy.yml          # GitHub Actions workflow
