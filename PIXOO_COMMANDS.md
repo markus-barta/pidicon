@@ -1,4 +1,4 @@
-# Pixoo Daemon Commands!
+# Pixoo Daemon 2025
 
 ## 🎯 Available Scenes
 
