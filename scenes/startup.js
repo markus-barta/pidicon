@@ -49,10 +49,17 @@ async function render(ctx) {
   );
 
   const versionInfo = {
-    version: state.get('version') || '1.0.0',
+    version:
+      process.env.IMAGE_TAG ||
+      process.env.GITHUB_SHA?.substring(0, 7) ||
+      state.get('version') ||
+      '1.0.0',
     deploymentId: state.get('deploymentId') || 'v1.0.0',
     buildNumber: state.get('buildNumber') || '1',
-    gitCommit: state.get('gitCommit') || 'unknown',
+    gitCommit:
+      process.env.GITHUB_SHA?.substring(0, 7) ||
+      state.get('gitCommit') ||
+      'unknown',
     buildTime: state.get('buildTime') || new Date().toISOString(),
     daemonStart: state.get('daemonStart') || new Date().toLocaleString(),
   };
