@@ -11,16 +11,17 @@ on:
   workflow_dispatch:
 
 env:
-  DEPLOYMENT_HOST: miniserver24.lan
-  DEPLOYMENT_USER: mba
   DEPLOYMENT_PATH: ~/Code/pixoo-daemon
   MOUNT_PATH: ~/docker/mounts/pixoo-daemon/app
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  deploy:
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,15 +41,6 @@ jobs:
       - name: Run tests (if available)
         run: npm test || echo "No tests configured"
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Generate version info
         id: version
         run: |
@@ -58,31 +50,26 @@ jobs:
           echo "git_commit=$(jq -r .gitCommit version.json)" >> $GITHUB_OUTPUT
 
       - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOYMENT_HOST }}
-          username: ${{ secrets.DEPLOYMENT_USER }}
-          key: ${{ secrets.DEPLOYMENT_SSH_KEY }}
-          script: |
-            set -e
-            echo "🚀 Starting deployment of Pixoo Daemon..."
-            echo "📋 Version: ${{ steps.version.outputs.version }}"
-            echo "🔢 Build: #${{ steps.version.outputs.build_number }}"
-            echo "📝 Commit: ${{ steps.version.outputs.git_commit }}"
+        run: |
+          set -e
+          echo "🚀 Starting deployment of Pixoo Daemon..."
+          echo "📋 Version: ${{ steps.version.outputs.version }}"
+          echo "🔢 Build: #${{ steps.version.outputs.build_number }}"
+          echo "📝 Commit: ${{ steps.version.outputs.git_commit }}"
 
-            # Navigate to pixoo-daemon directory
-            cd ${{ env.DEPLOYMENT_PATH }}
+          # Navigate to pixoo-daemon directory
+          cd ${{ env.DEPLOYMENT_PATH }}
 
-            # Pull latest changes
-            echo "🔄 Pulling latest code..."
-            git pull origin main
+          # Pull latest changes
+          echo "🔄 Pulling latest code..."
+          git pull origin main
 
-            # Make deployment script executable and run it
-            echo "🔧 Running deployment script..."
-            chmod +x scripts/deploy-server.sh
-            ./scripts/deploy-server.sh
+          # Make deployment script executable and run it
+          echo "🔧 Running deployment script..."
+          chmod +x scripts/deploy-server.sh
+          ./scripts/deploy-server.sh
 
-            echo "🎉 Deployment completed successfully!"
+          echo "🎉 Deployment completed successfully!"
 
       - name: Send deployment notification
         if: always()

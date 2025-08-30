@@ -817,6 +817,35 @@ Our development environment uses the fish shell by default.
 When proposing or generating shell commands, scripts, or one-liners,
 follow these rules.
 
+### **Server-Side Scripts and Git Hooks**
+
+When creating server-side scripts or git hooks on NixOS:
+
+- ✅ **Use `#!/usr/bin/env bash`** - Portable across different systems
+- ✅ **Avoid fish-specific syntax** - Scripts should work in bash
+- ✅ **Use `echo 'content' > file`** instead of `cat > file << 'EOF'` in fish
+- ✅ **Test scripts in bash** - Ensure they work in the target environment
+
+**Example - Good:**
+
+```bash
+echo '#!/usr/bin/env bash
+set -e
+echo "Script starting..."
+cd /path/to/dir
+npm install' > script.sh
+chmod +x script.sh
+```
+
+**Example - Bad (fish-specific):**
+
+```fish
+cat > script.sh << 'EOF'
+#!/usr/bin/env bash
+# This won't work in fish due to redirection syntax
+EOF
+```
+
 ### **Do This (fish syntax)**
 
 - ✅ Use fish syntax, not bash/zsh
