@@ -174,6 +174,7 @@
     pulseaudio # To enable audio forwarding to a homepod
   ];
 
+
   # +X11 and VLC kiosk mode configuration
   # Note: For start script go to: /home/kiosk/.config/openbox/autostart
   services.xserver = {
