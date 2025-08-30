@@ -90,7 +90,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Draw version (larger, prominent)
   await device.drawTextRgbaAligned(
     `v${version}`,
-    [32, 14],
+    [32, 10],
     [0, 255, 255, 255], // Cyan
     'center',
   );

@@ -1,6 +1,6 @@
 # Pixoo Daemon 2025
 
-## 🎯 Available Scenes
+## 🎯 Scenes
 
 ### Core Scenes
 
