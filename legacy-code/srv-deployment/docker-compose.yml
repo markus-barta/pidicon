@@ -21,7 +21,7 @@ services:
     #entrypoint: ["sh", "-c", "env && tail -f /dev/null"]
 
   pixoo-daemon:
-    image: node:alpine
+    image: ghcr.io/markus-barta/pixoo-daemon:latest
     container_name: pixoo-daemon
     network_mode: host
     restart: unless-stopped
@@ -29,13 +29,10 @@ services:
       - TZ=Europe/Vienna
       - PIXOO_DEVICE_TARGETS=192.168.1.189=mock;192.168.1.159=mock
     volumes:
-      - ./mounts/pixoo-daemon/app:/app
       - ./mounts/nodered/pixoo-media:/pixoo-media
       - ./mounts/shared/tmp:/shared-tmp
     env_file:
       - /home/mba/secrets/smarthome.env
-    working_dir: /app
-    command: sh -c "npm install && npm start"
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=pixoo"
