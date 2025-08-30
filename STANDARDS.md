@@ -22,6 +22,7 @@ Keep the guide up to date but ALWAYS Ask the user if you change things
 - [Markdown Formatting](#markdown-formatting-guidelines)
 - [Commit Guidelines](#commit-guidelines)
 - [Fish-Aware Shell Standards](#fish-aware-shell-standards)
+- [Linting Standards](#linting-standards)
 
 ---
 
@@ -886,4 +887,97 @@ source ~/.config/fish/config.fish
 ```bash
 # If you truly need bash-only features (e.g., process substitution)
 bash -c 'mapfile -t lines < <(ls); printf "%s\n" "${lines[@]}"'
+```
+
+---
+
+## 🔧 Linting Standards {#linting-standards}
+
+### **ESLint Configuration**
+
+Our ESLint configuration uses reasonable limits that balance code quality with practical development:
+
+- **Complexity**: `warn` at 20, `error` at 15 (was 10)
+- **Max Parameters**: `warn` at 7, `error` at 6 (was 5)
+- **Max Lines per Function**: `warn` at 150, `error` at 120 (was 80)
+
+**Why These Limits?**
+
+- **Complexity 20**: Allows for realistic business logic while preventing overly complex functions
+- **Max Params 7**: Accommodates common patterns like event handlers and configuration objects
+- **Max Lines 150**: Permits complex functions when necessary, but encourages refactoring
+
+### **Markdown Linting**
+
+We use markdownlint with relaxed rules for better developer experience:
+
+- **Line Length**: 120 characters (was 72)
+- **Code Blocks**: No language requirement (MD040 disabled)
+- **Headers**: No strict ordering requirements
+- **Lists**: Consistent indentation (2 spaces)
+
+### **Auto-Fix Commands**
+
+```bash
+# Fix ESLint issues automatically
+npm run lint -- --fix
+
+# Fix markdown issues
+npx markdownlint --fix "**/*.md"
+
+# Fix all linting issues at once
+npm run lint:fix
+```
+
+### **When to Refactor vs. Disable**
+
+**✅ Refactor When:**
+
+- Function has multiple responsibilities
+- Logic can be extracted into helper functions
+- Similar patterns exist elsewhere in codebase
+
+**⚠️ Disable Rule When:**
+
+- Function complexity is justified by business requirements
+- Performance-critical code requires optimization
+- Third-party library integration requires specific patterns
+
+**Example - Good Refactoring:**
+
+```javascript
+// Before: High complexity (15+)
+async function render(ctx) {
+  if (!validateContext(ctx)) return;
+  const { device, state } = ctx;
+  const versionInfo = buildVersionInfo(state);
+  await drawStartupInfo(device, versionInfo);
+  await device.push(name, ctx.publishOk);
+}
+
+// After: Low complexity (5)
+function buildVersionInfo(state) {
+  const gitSha = process.env.GITHUB_SHA?.substring(0, 7);
+  return {
+    version:
+      process.env.IMAGE_TAG ||
+      gitSha ||
+      getStateValue(state, 'version', '1.0.0'),
+    // ... other properties
+  };
+}
+```
+
+### **Pre-commit Hooks**
+
+Consider adding pre-commit hooks to automatically fix common issues:
+
+```json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint:fix && npm run lint:md:fix"
+    }
+  }
+}
 ```
