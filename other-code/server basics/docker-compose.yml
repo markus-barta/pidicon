@@ -10,14 +10,14 @@ services:
     restart: unless-stopped
     #restart: "no"
     ports:
-      - "8888:8888"
+      - '8888:8888'
     environment:
       - TZ=Europe/Vienna
     env_file:
       - /home/mba/secrets/zigbee2mqtt.env
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
     #entrypoint: ["sh", "-c", "env && tail -f /dev/null"]
 
   pixoo-daemon:
@@ -34,8 +34,8 @@ services:
     env_file:
       - /home/mba/secrets/smarthome.env
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=pixoo"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=pixoo'
 
   pihole:
     image: pihole/pihole:latest
@@ -53,10 +53,10 @@ services:
       # tell dnsmasq to ignore DHCP requests on eth0 while still allowing DNS queries and inter-container communication
       - ./mounts/pihole/etc/dnsmasq.d/:/etc/dnsmasq.d/
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp" # Required for using Pi-hole as DHCP server
-      - "80:80/tcp" # Simple, works, sufficient for local access
+      - '53:53/tcp'
+      - '53:53/udp'
+      - '67:67/udp' # Required for using Pi-hole as DHCP server
+      - '80:80/tcp' # Simple, works, sufficient for local access
       # - "443:443/tcp" # Would add certificate complexity (for very minimal security gain)
     networks:
       # dnscrypt:
@@ -64,12 +64,12 @@ services:
       local:
         ipv4_address: 192.168.1.99
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   homeassistant:
     container_name: homeassistant
-    image: "ghcr.io/home-assistant/home-assistant:stable"
+    image: 'ghcr.io/home-assistant/home-assistant:stable'
     volumes:
       - ./mounts/homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
@@ -80,8 +80,8 @@ services:
     env_file:
       - /home/mba/secrets/smarthome.env
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   # https://github.com/koush/scrypted
   scrypted:
@@ -100,8 +100,8 @@ services:
     volumes:
       - ./mounts/scrypted/volume:/server/volume
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
     env_file:
       - /etc/secrets/tapoC210-00.env # note: not in default user's secrets as it is used by other users (eg. kiosk user)
 
@@ -124,8 +124,8 @@ services:
       - ./smtp/variables.env
     labels:
       - traefik.enable=false
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   #   matterbridge disabled b/c currently we do not want to expose z2m devices to matter network (i.e. one additional layer is not more stability)
   #   matterbridge:
@@ -156,8 +156,8 @@ services:
     # Set Bluetooth adapter
     # command: --storage-path /data --paa-root-cert-dir /data/credentials --bluetooth-adapter 0
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   #   homebridge disabled b/c we do not need it any more (final usage was ewelink for vr/TXU01, accessed now via HA)
   #   homebridge:
@@ -185,8 +185,8 @@ services:
     container_name: mosquitto
     restart: unless-stopped
     ports:
-      - "1883:1883"
-      - "9001:9001"
+      - '1883:1883'
+      - '9001:9001'
     volumes:
       - ./mounts/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mounts/mosquitto/config/mosquitto_passwd:/mosquitto/config/mosquitto_passwd
@@ -194,22 +194,22 @@ services:
       - ./mounts/mosquitto/data:/mosquitto/data
       - ./mounts/mosquitto/log:/mosquitto/log
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   apprise:
     image: caronc/apprise:latest
     container_name: apprise
     restart: unless-stopped
     ports:
-      - "8001:8000"
+      - '8001:8000'
     volumes:
       - ./mounts/apprise/config:/config
       - ./mounts/apprise/etc/nginx/sites-available/default:/etc/nginx/sites-available/default
       - /tmp:/tmp
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   restic-cron-hetzner:
     build: ./restic-cron
@@ -228,9 +228,9 @@ services:
       - ./restic-cron/hetzner/run_cleanup.sh:/usr/local/bin/run_cleanup.sh:ro
       - ./restic-cron/hetzner/start_cron.sh:/usr/local/bin/start_cron.sh:ro
     environment:
-      RESTIC_BACKUP_OPTIONS: "-r sftp:u387549-sub2@u387549.your-storagebox.de:/"
-      MAIL_SUBJECT: "💾 Restic Backup netcup miniserver24 (jhw22)"
-      CRON_BACKUP_EXPRESSION: "30 1 * * *" # 1:30am
+      RESTIC_BACKUP_OPTIONS: '-r sftp:u387549-sub2@u387549.your-storagebox.de:/'
+      MAIL_SUBJECT: '💾 Restic Backup netcup miniserver24 (jhw22)'
+      CRON_BACKUP_EXPRESSION: '30 1 * * *' # 1:30am
     env_file:
       - ./restic-cron/variables.hetzner.env
     labels:
@@ -249,8 +249,8 @@ services:
     working_dir: /app
     command: sh -c "npm install && npm ci && npm update && npm start" # note: such a small container that built on the fly real fast, no need to make an explicit pre-built container build in github
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
   # Weekly Watchtower - checks all containers with scope=weekly every Saturday at 05:00 (because at 04:30 opus-gw restarts)
   watchtower-weekly:
@@ -261,10 +261,10 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
-      - "WATCHTOWER_CLEANUP=true"
-      - "WATCHTOWER_DEBUG=true"
+      - 'WATCHTOWER_CLEANUP=true'
+      - 'WATCHTOWER_DEBUG=true'
       #      - "WATCHTOWER_POLL_INTERVAL=7200" # https://github.com/containrrr/watchtower/issues/669
-      - "WATCHTOWER_NOTIFICATIONS=shoutrrr"
+      - 'WATCHTOWER_NOTIFICATIONS=shoutrrr'
       - 'WATCHTOWER_NOTIFICATION_TEMPLATE={{range .}}{{.Time.Format "2006-01-02 15:04:05"}} ({{.Level}}): {{.Message}}{{println}}{{end}}'
     env_file:
       - /home/mba/secrets/watchtower.env
@@ -278,8 +278,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:
-      - "WATCHTOWER_CLEANUP=true"
-      - "WATCHTOWER_DEBUG=true"
+      - 'WATCHTOWER_CLEANUP=true'
+      - 'WATCHTOWER_DEBUG=true'
       # No notifications for pixoo - too frequent!
       # - "WATCHTOWER_NOTIFICATIONS=shoutrrr"
       # - 'WATCHTOWER_NOTIFICATION_TEMPLATE={{range .}}{{.Time.Format "2006-01-02 15:04:05"}} ({{.Level}}): {{.Message}}{{println}}{{end}}'
@@ -310,18 +310,18 @@ services:
     cap_add:
       - SYS_RAWIO # Necessary for direct device interaction with FLIRC IR-USB-Stick
     group_add: # group IDs for node-RED to access FLIRC
-      - "174" # input group
-      - "992" # flirc group
-    entrypoint: ["/bin/bash", "/scripts/startup.sh"]
-    command: ["npm", "start", "--", "--userDir", "/data"]
+      - '174' # input group
+      - '992' # flirc group
+    entrypoint: ['/bin/bash', '/scripts/startup.sh']
+    command: ['npm', 'start', '--', '--userDir', '/data']
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=weekly"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'com.centurylinklabs.watchtower.scope=weekly'
 
 # volumes:
 #   portainer_data:
