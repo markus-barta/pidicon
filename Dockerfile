@@ -14,7 +14,7 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy source code
+# Copy source code into the /app directory inside the Docker image.
 COPY . .
 
 # Set environment variables for version info

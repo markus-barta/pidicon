@@ -3,5 +3,6 @@ module.exports = {
   rules: {
     'body-max-line-length': [0, 'always'], // Disable 100-character limit
     'footer-max-line-length': [0, 'always'], // Also disable footer limit
+    'header-max-length': [0, 'always'], // Disable header length limit
   },
 };
