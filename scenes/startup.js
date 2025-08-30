@@ -90,8 +90,7 @@ function buildVersionInfo(state) {
 }
 
 async function drawStartupInfo(device, versionInfo) {
-  const { version, buildNumber, gitCommit, buildTime, daemonStart } =
-    versionInfo;
+  const { buildNumber, gitCommit, buildTime, daemonStart } = versionInfo;
 
   // Clear screen with dark background
   await device.fillRectangleRgba([0, 0], [64, 64], [20, 20, 40, 255]);
@@ -122,13 +121,13 @@ async function drawStartupInfo(device, versionInfo) {
     'center',
   );
 
-  // Latest tag/version (smaller)
-  await device.drawTextRgbaAligned(
-    `v${version}`,
-    [32, 34],
-    [0, 255, 255, 255], // Cyan
-    'center',
-  );
+  // // Latest tag/version (smaller)
+  // await device.drawTextRgbaAligned(
+  //   `v${version}`,
+  //   [32, 34],
+  //   [0, 255, 255, 255], // Cyan
+  //   'center',
+  // );
 
   // Footer section (48px - 64px)
   // Build date
@@ -150,7 +149,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Status indicator (bottom right corner)
   await device.drawTextRgbaAligned(
     'READY',
-    [56, 58],
+    [32, 29],
     [0, 255, 0, 255], // Green
     'center',
   );
