@@ -108,8 +108,8 @@ async function drawStartupInfo(device, versionInfo) {
   // Main info section (16px - 48px)
   // Build number (prominent, larger)
   await device.drawTextRgbaAligned(
-    `#${buildNumber}`,
-    [32, 18],
+    `#(${buildNumber})`,
+    [32, 10],
     [255, 255, 0, 255], // Yellow
     'center',
   );
@@ -117,7 +117,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Git hash (medium size)
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 28],
+    [32, 16],
     [255, 150, 0, 255], // Orange
     'center',
   );
@@ -125,7 +125,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Latest tag/version (smaller)
   await device.drawTextRgbaAligned(
     `v${version}`,
-    [32, 38],
+    [32, 34],
     [0, 255, 255, 255], // Cyan
     'center',
   );
@@ -134,7 +134,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Build date
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 48],
+    [32, 42],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -142,7 +142,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 56],
+    [32, 50],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -150,9 +150,9 @@ async function drawStartupInfo(device, versionInfo) {
   // Status indicator (bottom right corner)
   await device.drawTextRgbaAligned(
     'READY',
-    [56, 62],
+    [56, 58],
     [0, 255, 0, 255], // Green
-    'right',
+    'center',
   );
 }
 
