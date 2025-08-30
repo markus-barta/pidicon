@@ -1,2 +1,5 @@
 node_modules/
 .env
+
+# Legacy code and configuration files
+legacy-code/
