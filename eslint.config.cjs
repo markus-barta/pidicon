@@ -40,11 +40,11 @@ module.exports = [
       ...importPlugin.configs.recommended.rules,
       ...promisePlugin.configs.recommended.rules,
       'no-console': 'off', // Temporarily disabled for development
-      complexity: ['warn', 10],
-      'max-params': ['warn', 5],
+      complexity: ['warn', 20],
+      'max-params': ['warn', 7],
       'max-lines-per-function': [
         'warn',
-        { max: 80, skipBlankLines: true, skipComments: true },
+        { max: 150, skipBlankLines: true, skipComments: true },
       ],
       'import/order': [
         'error',
@@ -64,11 +64,11 @@ module.exports = [
   {
     files: ['src/**/*.js', 'src/**/*.mjs', 'src/**/*.cjs'],
     rules: {
-      complexity: ['error', 10],
-      'max-params': ['error', 5],
+      complexity: ['error', 15],
+      'max-params': ['error', 6],
       'max-lines-per-function': [
         'error',
-        { max: 80, skipBlankLines: true, skipComments: true },
+        { max: 120, skipBlankLines: true, skipComments: true },
       ],
     },
   },

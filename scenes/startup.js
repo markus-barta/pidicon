@@ -20,6 +20,22 @@ async function render(ctx) {
 
   const { device, state } = ctx;
 
+  // Log debug information
+  logDebugInfo(state);
+
+  // Build version information
+  const versionInfo = buildVersionInfo(state);
+
+  // Clear screen and draw startup information
+  await drawStartupInfo(device, versionInfo);
+
+  // Push the startup frame to the device
+  await device.push(name, ctx.publishOk);
+
+  console.log(`🚀 [STARTUP] Deployment ${versionInfo.deploymentId} displayed`);
+}
+
+function logDebugInfo(state) {
   // Get deployment info from state or use defaults
   console.log('🔍 [DEBUG] Startup scene state:', {
     stateKeys: Array.from(state.keys()),
@@ -47,30 +63,30 @@ async function render(ctx) {
         key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD'),
     ),
   );
+}
 
-  const versionInfo = {
+function getStateValue(state, key, defaultValue) {
+  return state.get(key) || defaultValue;
+}
+
+function buildVersionInfo(state) {
+  const gitSha = process.env.GITHUB_SHA?.substring(0, 7);
+
+  return {
     version:
       process.env.IMAGE_TAG ||
-      process.env.GITHUB_SHA?.substring(0, 7) ||
-      state.get('version') ||
-      '1.0.0',
-    deploymentId: state.get('deploymentId') || 'v1.0.0',
-    buildNumber: state.get('buildNumber') || '1',
-    gitCommit:
-      process.env.GITHUB_SHA?.substring(0, 7) ||
-      state.get('gitCommit') ||
-      'unknown',
-    buildTime: state.get('buildTime') || new Date().toISOString(),
-    daemonStart: state.get('daemonStart') || new Date().toLocaleString(),
+      gitSha ||
+      getStateValue(state, 'version', '1.0.0'),
+    deploymentId: getStateValue(state, 'deploymentId', 'v1.0.0'),
+    buildNumber: getStateValue(state, 'buildNumber', '1'),
+    gitCommit: gitSha || getStateValue(state, 'gitCommit', 'unknown'),
+    buildTime: getStateValue(state, 'buildTime', new Date().toISOString()),
+    daemonStart: getStateValue(
+      state,
+      'daemonStart',
+      new Date().toLocaleString(),
+    ),
   };
-
-  // Clear screen and draw startup information
-  await drawStartupInfo(device, versionInfo);
-
-  // Push the startup frame to the device
-  await device.push(name, ctx.publishOk);
-
-  console.log(`🚀 [STARTUP] Deployment ${versionInfo.deploymentId} displayed`);
 }
 
 async function drawStartupInfo(device, versionInfo) {
