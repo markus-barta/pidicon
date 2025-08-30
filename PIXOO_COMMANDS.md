@@ -1,4 +1,4 @@
-# Pixoo Daemon Commands
+# Pixoo Daemon Commands!
 
 ## 🎯 Available Scenes
 
