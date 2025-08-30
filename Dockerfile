@@ -12,9 +12,6 @@ RUN npm ci --only=production
 # Copy source code
 COPY . .
 
-# Generate version info
-RUN npm run build:version
-
 # Expose any ports if needed (your daemon uses host networking)
 # EXPOSE 3000
 
