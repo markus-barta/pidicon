@@ -12,23 +12,54 @@ const path = require('path');
 console.log('🔨 Building version information...');
 
 try {
-  // Get Git information
-  const gitCommit = execSync('git rev-parse --short HEAD', {
-    encoding: 'utf8',
-  }).trim();
-  const gitCommitFull = execSync('git rev-parse HEAD', {
-    encoding: 'utf8',
-  }).trim();
-  const gitCommitCount = execSync('git rev-list --count HEAD', {
-    encoding: 'utf8',
-  }).trim();
-  const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
-    encoding: 'utf8',
-  }).trim();
-  const gitTag = execSync(
-    'git describe --tags --abbrev=0 2>/dev/null || echo ""',
-    { encoding: 'utf8' },
-  ).trim();
+  // Prefer CI-provided metadata when available
+  const envShortSha = (process.env.GITHUB_SHA || '').substring(0, 7) || null;
+  const envFullSha = process.env.GITHUB_SHA || null;
+  const envRunNumber =
+    process.env.GIT_COMMIT_COUNT ||
+    process.env.GITHUB_RUN_NUMBER ||
+    process.env.BUILD_NUMBER ||
+    null;
+  const envBuildDate = process.env.BUILD_DATE || null; // ISO if provided
+  // GitHub provides GITHUB_REF and GITHUB_REF_NAME
+  const envRef = process.env.GITHUB_REF || '';
+  const envRefName = process.env.GITHUB_REF_NAME || '';
+  const envTag = envRef.startsWith('refs/tags/')
+    ? envRef.split('/').slice(2).join('/')
+    : '';
+
+  // Get Git information as fallback
+  let gitCommit = envShortSha;
+  let gitCommitFull = envFullSha;
+  if (!gitCommit) {
+    gitCommit = execSync('git rev-parse --short HEAD', {
+      encoding: 'utf8',
+    }).trim();
+  }
+  if (!gitCommitFull) {
+    gitCommitFull = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+  }
+
+  let gitCommitCount = envRunNumber;
+  if (!gitCommitCount) {
+    gitCommitCount = execSync('git rev-list --count HEAD', {
+      encoding: 'utf8',
+    }).trim();
+  }
+
+  let gitBranch = envRefName;
+  if (!gitBranch) {
+    gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+      encoding: 'utf8',
+    }).trim();
+  }
+
+  let gitTag = envTag;
+  if (!gitTag) {
+    gitTag = execSync('git describe --tags --abbrev=0 2>/dev/null || echo ""', {
+      encoding: 'utf8',
+    }).trim();
+  }
 
   // Read package.json for semantic version
   const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -50,7 +81,7 @@ try {
     gitCommitCount: parseInt(gitCommitCount),
     gitBranch,
     gitTag: gitTag || null,
-    buildTime: new Date().toISOString(),
+    buildTime: envBuildDate || new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
   };
 
