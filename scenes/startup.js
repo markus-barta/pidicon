@@ -95,29 +95,53 @@ async function drawStartupInfo(device, versionInfo) {
   // Clear screen with dark background
   await device.fillRectangleRgba([0, 0], [64, 64], [20, 20, 40, 255]);
 
-  // Header section (top 16px)
+  // Header section
   // Draw title
   await device.drawTextRgbaAligned(
     'PIXOO DAEMON',
-    [32, 2],
+    [32, 4],
     [255, 255, 255, 255],
     'center',
   );
 
-  // Main info section (16px - 48px)
-  // Build number (prominent, larger)
+  // Main info section
+  // Build number
   await device.drawTextRgbaAligned(
-    `#(${buildNumber})`,
-    [32, 10],
+    `Build #${buildNumber}`,
+    [32, 12],
     [255, 255, 0, 255], // Yellow
     'center',
   );
 
-  // Git hash (medium size)
+  // Git hash
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 16],
+    [32, 20],
     [255, 150, 0, 255], // Orange
+    'center',
+  );
+
+  // Status indicator (centered, with white background box)
+  // Font is 3x5, so height is 5px
+  const statusText = 'READY';
+  const statusFontHeight = 5; // px for 3x5 font
+  const statusPadding = 2; // px, top and bottom
+  const statusBoxHeight = statusFontHeight + statusPadding * 2; // 9px
+  const statusBoxY =
+    29 - Math.floor(statusBoxHeight / 2) + Math.floor(statusFontHeight / 2);
+
+  // Draw white background box (full width)
+  await device.fillRectangleRgba(
+    [0, statusBoxY],
+    [64, statusBoxHeight],
+    [255, 255, 255, 55],
+  );
+
+  // Draw status text in green, centered
+  await device.drawTextRgbaAligned(
+    statusText,
+    [32, 29],
+    [0, 255, 0, 255], // Green
     'center',
   );
 
@@ -133,7 +157,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Build date
   await device.drawTextRgbaAligned(
     `Built:${buildTime.split('T')[0]}`,
-    [32, 42],
+    [32, 50],
     [200, 200, 200, 255], // Light gray
     'center',
   );
@@ -141,16 +165,8 @@ async function drawStartupInfo(device, versionInfo) {
   // Start time
   await device.drawTextRgbaAligned(
     `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 50],
+    [32, 58],
     [200, 200, 200, 255], // Light gray
-    'center',
-  );
-
-  // Status indicator (bottom right corner)
-  await device.drawTextRgbaAligned(
-    'READY',
-    [32, 29],
-    [0, 255, 0, 255], // Green
     'center',
   );
 }
