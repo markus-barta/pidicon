@@ -107,7 +107,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Main info section
   // Build number
   await device.drawTextRgbaAligned(
-    `Build #${buildNumber}`,
+    `Build ${buildNumber}`,
     [32, 13],
     [255, 255, 0, 255], // Yellow
     'center',
