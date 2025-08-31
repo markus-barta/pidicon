@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+set -e
+REMOTE="mba@miniserver24"
+REMOTE_SCRIPT="/home/mba/scripts/watchtower-pixoo-run.sh"
+REMOTE_COMPOSE="/home/mba/docker/docker-compose.yml"
+
+# Ensure remote script exists and is executable
+if ! ssh "$REMOTE" sh -c "test -x $REMOTE_SCRIPT"; then
+  echo "Remote script missing: $REMOTE_SCRIPT"
+  echo "Deploy first:";
+  echo "  scp other-code/watchtower-pixoo-run.sh $REMOTE:$REMOTE_SCRIPT";
+  echo "  ssh $REMOTE sh -c 'chmod +x $REMOTE_SCRIPT'";
+  exit 0
+fi
+
+# Run the trigger, print its logs inline
+ssh "$REMOTE" sh -c "$REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5"
