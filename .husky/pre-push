@@ -1,17 +1,34 @@
 #!/usr/bin/env sh
-set -e
+set -eu
+
+# Verbose output for transparency
+set -x
+
 REMOTE="mba@miniserver24"
 REMOTE_SCRIPT="/home/mba/scripts/watchtower-pixoo-run.sh"
 REMOTE_COMPOSE="/home/mba/docker/docker-compose.yml"
+SSH="ssh -o BatchMode=yes -o ConnectTimeout=5"
+
+# Basic connectivity check
+$SSH "$REMOTE" 'echo OK_SSH' >/dev/null 2>&1 || {
+  echo "pre-push: SSH connectivity failed to $REMOTE" >&2
+  exit 1
+}
 
 # Ensure remote script exists and is executable
-if ! ssh "$REMOTE" sh -c "test -x $REMOTE_SCRIPT"; then
-  echo "Remote script missing: $REMOTE_SCRIPT"
-  echo "Deploy first:";
-  echo "  scp other-code/watchtower-pixoo-run.sh $REMOTE:$REMOTE_SCRIPT";
-  echo "  ssh $REMOTE sh -c 'chmod +x $REMOTE_SCRIPT'";
-  exit 0
+if ! $SSH "$REMOTE" "test -x $REMOTE_SCRIPT"; then
+  echo "pre-push: Remote script missing or not executable: $REMOTE_SCRIPT" >&2
+  echo "Run to install:" >&2
+  echo "  scp other-code/watchtower-pixoo-run.sh $REMOTE:$REMOTE_SCRIPT" >&2
+  echo "  ssh $REMOTE 'chmod +x $REMOTE_SCRIPT'" >&2
+  exit 1
 fi
 
-# Run the trigger, print its logs inline
-ssh "$REMOTE" sh -c "$REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5"
+# Ensure compose file exists remotely
+$SSH "$REMOTE" "test -f $REMOTE_COMPOSE" || {
+  echo "pre-push: Remote compose file missing: $REMOTE_COMPOSE" >&2
+  exit 1
+}
+
+# Run the trigger with explicit args and show output inline
+$SSH "$REMOTE" "sh -c '$REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5'"
