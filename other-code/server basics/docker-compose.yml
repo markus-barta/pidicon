@@ -24,7 +24,7 @@ services:
     image: ghcr.io/markus-barta/pixoo-daemon:latest
     container_name: pixoo-daemon
     network_mode: host
-    restart: unless-stopped
+    restart: no
     environment:
       - TZ=Europe/Vienna
       - PIXOO_DEVICE_TARGETS=192.168.1.189=mock;192.168.1.159=mock
@@ -274,7 +274,7 @@ services:
     image: containrrr/watchtower:latest
     container_name: watchtower-pixoo
     restart: unless-stopped
-    command: --interval 3 --label-enable --scope pixoo
+    command: --interval 5 --label-enable --scope pixoo
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw
     environment:

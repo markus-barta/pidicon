@@ -122,8 +122,12 @@ async function drawStartupInfo(device, versionInfo) {
   );
 
   // Status indicator (centered, with white background box)
+  // Color constants for easy changing
+  const STATUS_TEXT = 'READY';
+  const STATUS_TEXT_COLOR = [0, 255, 0, 255]; // Green
+  const STATUS_BOX_COLOR = [0, 0, 0, 255]; // Black
+
   // Font is 3x5, so height is 5px
-  const statusText = 'READY';
   const statusFontHeight = 5; // px for 3x5 font
   const statusPadding = 2; // px, top and bottom
   const statusBoxHeight = statusFontHeight + statusPadding * 2; // 9px
@@ -134,14 +138,14 @@ async function drawStartupInfo(device, versionInfo) {
   await device.fillRectangleRgba(
     [0, statusBoxY],
     [64, statusBoxHeight],
-    [255, 255, 255, 55],
+    STATUS_BOX_COLOR,
   );
 
   // Draw status text in green, centered
   await device.drawTextRgbaAligned(
-    statusText,
+    STATUS_TEXT,
     [32, 29],
-    [0, 255, 0, 255], // Green
+    STATUS_TEXT_COLOR,
     'center',
   );
 
