@@ -127,7 +127,7 @@ async function drawStartupInfo(device, versionInfo) {
 
   // Color constants for easy changing
   const STATUS_TEXT = 'READY';
-  const STATUS_TEXT_COLOR = [0, 255, 0, 255]; // Green
+  const STATUS_TEXT_COLOR = [0, 255, 255, 255]; // Cyan
   const STATUS_BOX_COLOR = [0, 0, 0, 255]; // Black
 
   // Font is 3x5, so height is 5px
