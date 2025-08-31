@@ -105,9 +105,9 @@ async function drawStartupInfo(device, versionInfo) {
   );
 
   // Main info section
-  // Build number
+  // Build number (with leading '#')
   await device.drawTextRgbaAligned(
-    `Build ${buildNumber}`,
+    `#${buildNumber}`,
     [32, 13],
     [255, 255, 0, 255], // Yellow
     'center',
@@ -166,9 +166,17 @@ async function drawStartupInfo(device, versionInfo) {
   // );
 
   // Footer section (48px - 64px)
-  // Build date
+  // Build date (robust parsing)
   await device.drawTextRgbaAligned(
-    `${buildTime.split('T')[0]}`,
+    `${(function () {
+      try {
+        const s = String(buildTime || '');
+        const m = s.match(/\d{4}-\d{2}-\d{2}/);
+        return m ? m[0] : new Date(s).toISOString().split('T')[0];
+      } catch {
+        return new Date().toISOString().split('T')[0];
+      }
+    })()}`,
     [32, 50],
     [200, 200, 200, 255], // Light gray
     'center',
