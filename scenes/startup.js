@@ -168,7 +168,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Footer section (48px - 64px)
   // Build date
   await device.drawTextRgbaAligned(
-    `Built:${buildTime.split('T')[0]}`,
+    `${buildTime.split('T')[0]}`,
     [32, 50],
     [200, 200, 200, 255], // Light gray
     'center',
@@ -176,8 +176,8 @@ async function drawStartupInfo(device, versionInfo) {
 
   // Start time
   await device.drawTextRgbaAligned(
-    `Start:${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
-    [32, 58],
+    `${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
+    [32, 57],
     [200, 200, 200, 255], // Light gray
     'center',
   );
