@@ -123,12 +123,12 @@ async function drawStartupInfo(device, versionInfo) {
 
   // Status indicator (centered, with white background box)
   // Easily set the vertical position of the status indicator
-  const STATUS_Y = 36; // Change this value to move the whole status indicator up/down
+  const STATUS_Y = 34; // Change this value to move the whole status indicator up/down
 
   // Color constants for easy changing
   const STATUS_TEXT = 'READY';
-  const STATUS_TEXT_COLOR = [0, 255, 255, 255]; // Cyan
-  const STATUS_BOX_COLOR = [0, 0, 0, 255]; // Black
+  const STATUS_TEXT_COLOR = [0, 55, 55, 255]; // Dark green
+  const STATUS_BOX_COLOR = [255, 255, 255, 255]; // White
 
   // Font is 3x5, so height is 5px
   const statusFontHeight = 5; // px for 3x5 font
