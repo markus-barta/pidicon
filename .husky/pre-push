@@ -9,26 +9,25 @@ REMOTE_SCRIPT="/home/mba/scripts/watchtower-pixoo-run.sh"
 REMOTE_COMPOSE="/home/mba/docker/docker-compose.yml"
 SSH="ssh -o BatchMode=yes -o ConnectTimeout=5"
 
-# Basic connectivity check
-$SSH "$REMOTE" 'echo OK_SSH' >/dev/null 2>&1 || {
-  echo "pre-push: SSH connectivity failed to $REMOTE" >&2
-  exit 1
-}
-
-# Ensure remote script exists and is executable
-if ! $SSH "$REMOTE" "test -x $REMOTE_SCRIPT"; then
-  echo "pre-push: Remote script missing or not executable: $REMOTE_SCRIPT" >&2
-  echo "Run to install:" >&2
-  echo "  scp other-code/watchtower-pixoo-run.sh $REMOTE:$REMOTE_SCRIPT" >&2
-  echo "  ssh $REMOTE 'chmod +x $REMOTE_SCRIPT'" >&2
-  exit 1
+# Non-blocking: warn-only checks
+if ! $SSH "$REMOTE" 'echo OK_SSH >/dev/null'; then
+  echo "pre-push: WARNING: SSH connectivity failed to $REMOTE (ignoring, push continues)" >&2
+  exit 0
 fi
 
-# Ensure compose file exists remotely
-$SSH "$REMOTE" "test -f $REMOTE_COMPOSE" || {
-  echo "pre-push: Remote compose file missing: $REMOTE_COMPOSE" >&2
-  exit 1
-}
+if ! $SSH "$REMOTE" "test -x $REMOTE_SCRIPT"; then
+  echo "pre-push: WARNING: Remote script missing or not executable: $REMOTE_SCRIPT (push continues)" >&2
+  echo "Install: scp other-code/watchtower-pixoo-run.sh $REMOTE:$REMOTE_SCRIPT && ssh $REMOTE 'chmod +x $REMOTE_SCRIPT'" >&2
+  exit 0
+fi
 
-# Run the trigger with explicit args and show output inline
-$SSH "$REMOTE" "sh -c '$REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5'"
+if ! $SSH "$REMOTE" "test -f $REMOTE_COMPOSE"; then
+  echo "pre-push: WARNING: Remote compose missing: $REMOTE_COMPOSE (push continues)" >&2
+  exit 0
+fi
+
+# Async trigger: fire-and-forget; logs on server
+$SSH "$REMOTE" "sh -c 'nohup $REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5 >> /home/mba/scripts/watchtower-pixoo-run.log 2>&1 & printf "DISPATCHED PID=%s\n" "$!"'" || true
+
+# Never block or fail the push
+exit 0
