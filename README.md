@@ -1,5 +1,9 @@
 # Pixoo Daemon 🧩💡
 
+<p align="center">
+  <img src="pixxo_opener.png" alt="Pixoo Daemon" width="600">
+</p>
+
 A friendly, MQTT‑driven scene renderer for Divoom Pixoo 64 devices, written in
 Node.js. It listens to MQTT messages, manages scenes, and renders pixels like a
 tiny digital stage manager (with good manners and logs).
