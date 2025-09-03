@@ -92,7 +92,8 @@ class PerformanceTestState {
    */
   isFreshStart(state) {
     const startTime = this.getState('startTime');
-    const isNewMessage = !state._isLoopContinuation && !state._isContinuation;
+    const isNewMessage =
+      !state.get('_isLoopContinuation') && !state.get('_isContinuation');
     return !startTime || isNewMessage;
   }
 
@@ -274,21 +275,21 @@ async function render(ctx) {
 
     // Extract configuration with validation
     const config = {
-      mode: TEST_MODES[state.mode] || TEST_MODES.CONTINUOUS,
-      testInterval: Math.max(50, Math.min(2000, state.interval || 150)),
-      loopDuration: state.duration || V3_CONFIG.LOOP_DURATION_DEFAULT,
-      adaptiveTiming: Boolean(state.adaptiveTiming),
+      mode: TEST_MODES[state.get('mode')] || TEST_MODES.CONTINUOUS,
+      testInterval: Math.max(50, Math.min(2000, state.get('interval') || 150)),
+      loopDuration: state.get('duration') || V3_CONFIG.LOOP_DURATION_DEFAULT,
+      adaptiveTiming: Boolean(state.get('adaptiveTiming')),
     };
 
     // Handle continuation messages
-    if (state._isLoopContinuation) {
+    if (state.get('_isLoopContinuation')) {
       const existingTimer = getState('loopTimer');
       if (existingTimer) {
         clearTimeout(existingTimer);
         setState('loopTimer', null);
       }
       setState('loopScheduled', false);
-      setState('_loopIteration', state._loopIteration || 0);
+      setState('_loopIteration', state.get('_loopIteration') || 0);
     }
 
     // Fresh start logic with device readiness check
@@ -411,15 +412,21 @@ async function render(ctx) {
         return;
       }
 
-      // Handle adaptive timing continuation
-      if (config.adaptiveTiming && !getState('loopScheduled')) {
-        const delay = Math.max(
-          CHART_CONFIG.MIN_DELAY_MS,
-          Math.min(
-            CHART_CONFIG.MAX_DELAY_MS,
-            (frametime || config.testInterval) + 10,
-          ),
-        );
+      // Handle continuation for continuous and loop modes
+      if (
+        (config.mode === TEST_MODES.CONTINUOUS ||
+          config.mode === TEST_MODES.LOOP) &&
+        !getState('loopScheduled')
+      ) {
+        const delay = config.adaptiveTiming
+          ? Math.max(
+              CHART_CONFIG.MIN_DELAY_MS,
+              Math.min(
+                CHART_CONFIG.MAX_DELAY_MS,
+                (frametime || config.testInterval) + 10,
+              ),
+            )
+          : config.testInterval;
 
         scheduleContinuation(ctx, config, delay);
       }
