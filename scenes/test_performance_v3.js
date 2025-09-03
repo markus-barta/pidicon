@@ -449,10 +449,9 @@ async function render(ctx) {
         setState('loopTimer', null);
       }
       setState('loopScheduled', false);
-      setState('testCompleted', false); // allow immediate restart
+      setState('testCompleted', true);
       setState('framesRendered', 0);
       setState('maxFrames', null);
-      setState('stop', false); // clear stop flag for next call
 
       // Overlay STOPPED without full clear
       const {
@@ -549,6 +548,32 @@ async function render(ctx) {
 
       // Push rendered frame and measure actual frame time
       await device.push(SCENE_NAME, publishOk);
+      // Check for stop requested after push
+      if (getState && getState('stop')) {
+        const existingTimer = getState('loopTimer');
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          setState('loopTimer', null);
+        }
+        setState('loopScheduled', false);
+        setState('testCompleted', true);
+        const {
+          drawTextRgbaAlignedWithBg,
+          BACKGROUND_COLORS,
+        } = require('../lib/rendering-utils');
+        await drawTextRgbaAlignedWithBg(
+          device,
+          'STOPPED',
+          [32, 32],
+          [255, 100, 100, 255],
+          'center',
+          true,
+          BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+        );
+        await device.push(SCENE_NAME, publishOk);
+        return;
+      }
+
       const frameEnd = Date.now();
       const frameDuration = Math.max(1, frameEnd - renderStart);
       performanceTracker.recordFrame(frameDuration);
