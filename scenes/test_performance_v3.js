@@ -321,12 +321,13 @@ async function handleFreshStart(device, stateManager, config) {
  * @returns {boolean} True if test should continue
  */
 function handleFrameCounting(config, maxFrames, getState, setState) {
-  if (config.mode !== TEST_MODES.CONTINUOUS) {
-    return true; // Other modes use their own logic
-  }
-
   const currentFrames = getState('framesRendered') || 0;
   setState('framesRendered', currentFrames + 1);
+
+  // Infinite looping when maxFrames === -1
+  if (maxFrames === -1) {
+    return true;
+  }
 
   // Check if we've reached the frame limit
   if (currentFrames + 1 >= maxFrames) {
@@ -361,52 +362,7 @@ function handleFrameCounting(config, maxFrames, getState, setState) {
  * @param {number} frametime - Current frame time
  * @param {number} now - Current timestamp
  */
-async function handleTestCompletion(
-  chartRenderer,
-  textRenderer,
-  performanceTracker,
-  displayContent,
-  device,
-  publishOk,
-  getState,
-  setState,
-  frametime,
-  now,
-) {
-  // Update display content to show completion time
-  const finalMetrics = performanceTracker.getMetrics();
-  const lastFrametime = frametime || finalMetrics.avgFrametime;
-  const completionContent = {
-    modeText: displayContent.modeText,
-    timingText: `${Math.round(lastFrametime)}ms`,
-    fpsText: `${finalMetrics.fps} FPS`,
-    frametime: lastFrametime,
-    metrics: finalMetrics,
-  };
-
-  await textRenderer.render(completionContent, now);
-  await textRenderer.renderCompletion();
-  await device.push(SCENE_NAME, publishOk);
-
-  const metrics = performanceTracker.getMetrics();
-  console.log(
-    `🏁 [PERF V3] Test completed | ` +
-      `Samples: ${metrics.sampleCount} | ` +
-      `Avg FT: ${metrics.avgFrametime.toFixed(1)}ms | ` +
-      `FPS: ${metrics.fps}`,
-  );
-
-  setState('testCompleted', true);
-  setState('completionTime', now);
-
-  // Clean up timers
-  const existingTimer = getState('loopTimer');
-  if (existingTimer) {
-    clearTimeout(existingTimer);
-    setState('loopTimer', null);
-  }
-  setState('loopScheduled', false);
-}
+// Note: handleTestCompletion removed; completion handled inline by frame counter
 
 /**
  * Main render function with professional architecture
@@ -542,35 +498,19 @@ async function render(ctx) {
 
     // Render frame if within time limits
     if (shouldRender) {
-      await chartRenderer.render(
-        now,
-        config.adaptiveTiming ? frametime : config.testInterval,
-      );
+      await chartRenderer.render(now, frametime || config.testInterval);
       await textRenderer.render(displayContent, now);
 
-      // Check for test completion (only for non-continuous modes)
-      if (config.mode !== TEST_MODES.CONTINUOUS && chartRenderer.isComplete()) {
-        await handleTestCompletion(
-          chartRenderer,
-          textRenderer,
-          performanceTracker,
-          displayContent,
-          device,
-          publishOk,
-          getState,
-          setState,
-          frametime,
-          now,
-        );
-        return;
+      // Push rendered frame
+      await device.push(SCENE_NAME, publishOk);
+
+      // Update frame count and check for completion
+      if (!handleFrameCounting(config, maxFrames, getState, setState)) {
+        return; // Test completed
       }
 
-      // Handle continuation for continuous and loop modes
-      if (
-        (config.mode === TEST_MODES.CONTINUOUS ||
-          config.mode === TEST_MODES.LOOP) &&
-        !getState('loopScheduled')
-      ) {
+      // Schedule continuation ONLY if test not completed
+      if (!getState('loopScheduled')) {
         const delay = config.adaptiveTiming
           ? Math.max(
               CHART_CONFIG.MIN_DELAY_MS,
@@ -582,14 +522,6 @@ async function render(ctx) {
           : config.testInterval;
 
         scheduleContinuation(ctx, config, delay);
-      }
-
-      // Push rendered frame
-      await device.push(SCENE_NAME, publishOk);
-
-      // Update frame count and check for completion
-      if (!handleFrameCounting(config, maxFrames, getState, setState)) {
-        return; // Test completed
       }
     }
 
