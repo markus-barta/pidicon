@@ -503,17 +503,7 @@ async function render(ctx) {
     const shouldRender =
       config.mode === TEST_MODES.CONTINUOUS ? framesRendered < maxFrames : true; // Other modes use their own logic
 
-    const now = Date.now();
-    const lastRenderTs = getState('lastRenderTs') || 0;
-    const measuredFrametime =
-      lastRenderTs > 0
-        ? Math.max(1, now - lastRenderTs)
-        : frametime || config.testInterval || 0;
-
-    // Record performance data using measured frametime
-    if (measuredFrametime > 0) {
-      performanceTracker.recordFrame(measuredFrametime);
-    }
+    const renderStart = Date.now();
 
     // Log performance periodically
     performanceTracker.logPerformance(config.mode, shouldRender);
@@ -552,16 +542,17 @@ async function render(ctx) {
 
     // Render frame if within time limits
     if (shouldRender) {
-      await chartRenderer.render(
-        now,
-        measuredFrametime > 0
-          ? measuredFrametime
-          : frametime || config.testInterval,
-      );
-      await textRenderer.render(displayContent, now);
+      const lastFrameDuration =
+        getState('lastFrameDuration') || frametime || config.testInterval || 0;
+      await chartRenderer.render(renderStart, lastFrameDuration);
+      await textRenderer.render(displayContent, renderStart);
 
-      // Push rendered frame
+      // Push rendered frame and measure actual frame time
       await device.push(SCENE_NAME, publishOk);
+      const frameEnd = Date.now();
+      const frameDuration = Math.max(1, frameEnd - renderStart);
+      performanceTracker.recordFrame(frameDuration);
+      setState('lastFrameDuration', frameDuration);
 
       // Update frame count and check for completion
       if (!handleFrameCounting(config, maxFrames, getState, setState)) {
@@ -585,21 +576,18 @@ async function render(ctx) {
 
       // Schedule continuation ONLY if test not completed
       if (!getState('loopScheduled')) {
-        const hasFixed = Number.isFinite(config.testInterval);
-        const delay = hasFixed
-          ? Math.max(
+        const delay = config.adaptiveTiming
+          ? Math.max(0, V3_CONFIG.ADAPTIVE_OFFSET_MS)
+          : Math.max(
               V3_CONFIG.MIN_DELAY_MS,
-              Math.min(V3_CONFIG.MAX_DELAY_MS, config.testInterval),
-            )
-          : Math.max(0, V3_CONFIG.ADAPTIVE_OFFSET_MS); // adaptive: fire almost immediately after frame
-
+              Math.min(V3_CONFIG.MAX_DELAY_MS, config.testInterval || 150),
+            );
         scheduleContinuation(ctx, config, delay);
       }
     }
 
     // Update render timestamp
-    setState('lastRender', now);
-    setState('lastRenderTs', now);
+    setState('lastRender', renderStart);
   } catch (error) {
     console.error(`❌ [PERF V3] Critical render error:`, error);
     // Attempt graceful recovery
