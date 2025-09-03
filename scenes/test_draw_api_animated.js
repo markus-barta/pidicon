@@ -66,6 +66,11 @@ async function render(ctx) {
     setState('frameCount', frameCount);
   }
 
+  // Debug logging for frameCount
+  console.log(
+    `🔍 [DEBUG] Frame count: ${frameCount}, state frameCount: ${state.get('frameCount')}, getState frameCount: ${getState('frameCount')}`,
+  );
+
   // Initialize on first run
   if (frameCount === 0) {
     setState('startTime', startTime);
@@ -90,21 +95,13 @@ async function render(ctx) {
     );
   }
 
-  // Test with a simple pixel first
-  if (frameCount < 3) {
-    console.log(`🧪 [TEST] Drawing simple pixel...`);
-    await device.drawPixelRgba([32, 32], [255, 0, 0, 255]);
-    console.log(`✅ [TEST] Simple pixel drawn successfully`);
-    // Don't return early - let device.push() send the frame
-  } else {
-    // Draw animated elements
-    await drawAnimatedBackground(device, time, progress, frameCount);
-    await drawMovingShapes(device, time, progress);
-    await drawSweepingLines(device, time, progress);
-    await drawAnimatedText(device, time, progress);
-    await drawParticleSystem(device, time, progress);
-    await drawFinalOverlay(device, time, progress);
-  }
+  // Draw animated elements
+  await drawAnimatedBackground(device, time, progress, frameCount);
+  await drawMovingShapes(device, time, progress);
+  await drawSweepingLines(device, time, progress);
+  await drawAnimatedText(device, time, progress);
+  await drawParticleSystem(device, time, progress);
+  await drawFinalOverlay(device, time, progress);
 
   // Measure frame rendering time for adaptive timing
   const frameStartTime = Date.now();
