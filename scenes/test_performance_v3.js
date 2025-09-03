@@ -136,6 +136,7 @@ class PerformanceTestState {
       perfStats: { sum: 0, count: 0, min: Infinity, max: 0 },
       framesRendered: 0,
       maxFrames: null,
+      stop: false,
       testCompleted: false,
       completionTime: null,
       testActive: false,
@@ -450,6 +451,7 @@ async function render(ctx) {
       setState('testCompleted', false); // allow immediate restart
       setState('framesRendered', 0);
       setState('maxFrames', null);
+      setState('stop', false); // clear stop flag for next call
 
       // Overlay STOPPED without full clear
       const {
