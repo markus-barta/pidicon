@@ -5,7 +5,7 @@
 // - Sweeping lines and particles
 // - Layered animations at different speeds
 // - Alpha blending and transparency effects
-// - Runs for ~80 frames with smooth 15fps timing
+// - Runs for ~80 frames with adaptive timing (max 5fps, measures actual frame time)
 
 // MQTT Commands:
 // {"scene":"test_draw_api_animated"}                           - Run the animated demo
@@ -22,8 +22,9 @@ const { validateSceneContext } = require('../lib/performance-utils');
 // Animation constants
 const ANIMATION_CONFIG = {
   DEFAULT_DURATION: 80, // frames
-  TARGET_FPS: 15, // frames per second
-  FRAME_INTERVAL: 1000 / 15, // 66.67ms
+  MAX_FPS: 5, // maximum frames per second (realistic for Pixoo)
+  MIN_FRAME_INTERVAL: 1000 / 5, // 200ms minimum interval
+  ADAPTIVE_OFFSET_MS: 10, // small offset after frame completion
   SCREEN_SIZE: 64,
   CENTER_X: 32,
   CENTER_Y: 32,
@@ -34,9 +35,17 @@ async function init() {
   console.log(`🚀 [TEST_DRAW_API_ANIMATED] Scene initialized`);
 }
 
-async function cleanup() {
-  // Cleanup animated draw API demo scene - nothing special needed
-  console.log(`🧹 [TEST_DRAW_API_ANIMATED] Scene cleaned up`);
+async function cleanup(ctx) {
+  // Cleanup animated draw API demo scene - clear animation state
+  const { setState } = ctx;
+
+  // Clear animation scheduling flag to stop any pending frames
+  setState('animationScheduled', false);
+  setState('frameCount', 0);
+
+  console.log(
+    `🧹 [TEST_DRAW_API_ANIMATED] Scene cleaned up - animation state reset`,
+  );
 }
 
 async function render(ctx) {
@@ -97,8 +106,14 @@ async function render(ctx) {
     await drawFinalOverlay(device, time, progress);
   }
 
+  // Measure frame rendering time for adaptive timing
+  const frameStartTime = Date.now();
+
   // Push frame to device
   await device.push(name, publishOk);
+
+  // Calculate actual frame rendering time
+  const frameDuration = Date.now() - frameStartTime;
 
   // Animation control
   const nextFrame = frameCount + 1;
@@ -113,9 +128,19 @@ async function render(ctx) {
     return; // End this animation cycle
   }
 
-  // Schedule next frame via MQTT (similar to performance tests)
+  // Schedule next frame with adaptive timing
   if (!getState('animationScheduled')) {
     setState('animationScheduled', true); // Set flag immediately to prevent race conditions
+
+    // Calculate adaptive delay: frame duration + small offset, but respect max FPS
+    const adaptiveDelay = Math.max(
+      frameDuration + ANIMATION_CONFIG.ADAPTIVE_OFFSET_MS,
+      ANIMATION_CONFIG.MIN_FRAME_INTERVAL,
+    );
+
+    console.log(
+      `🎬 [ANIMATION] Frame ${frameCount} took ${frameDuration}ms, scheduling next in ${adaptiveDelay}ms`,
+    );
 
     setTimeout(async () => {
       try {
@@ -158,7 +183,7 @@ async function render(ctx) {
       } catch (error) {
         console.error(`❌ [ANIMATION] Setup error:`, error);
       }
-    }, ANIMATION_CONFIG.FRAME_INTERVAL); // 15fps (66.67ms interval) for demo
+    }, adaptiveDelay); // Dynamic timing based on actual frame performance
   }
 }
 
