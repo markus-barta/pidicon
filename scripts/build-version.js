@@ -11,55 +11,46 @@ const path = require('path');
 
 console.log('🔨 Building version information...');
 
+// Helper function to get Git info with environment fallback
+function getGitInfo(envVar, gitCommand, defaultValue = null) {
+  if (envVar) return envVar;
+  try {
+    return execSync(gitCommand, { encoding: 'utf8' }).trim();
+  } catch {
+    return defaultValue;
+  }
+}
+
 try {
-  // Prefer CI-provided metadata when available
-  const envShortSha = (process.env.GITHUB_SHA || '').substring(0, 7) || null;
-  const envFullSha = process.env.GITHUB_SHA || null;
-  const envRunNumber =
+  // Environment variables (CI/CD provided)
+  const envSha = process.env.GITHUB_SHA;
+  const envCommitCount =
     process.env.GIT_COMMIT_COUNT ||
     process.env.GITHUB_RUN_NUMBER ||
-    process.env.BUILD_NUMBER ||
-    null;
-  const envBuildDate = process.env.BUILD_DATE || null; // ISO if provided
-  // GitHub provides GITHUB_REF and GITHUB_REF_NAME
+    process.env.BUILD_NUMBER;
+  const envBuildDate = process.env.BUILD_DATE;
+  const envRefName = process.env.GITHUB_REF_NAME;
   const envRef = process.env.GITHUB_REF || '';
-  const envRefName = process.env.GITHUB_REF_NAME || '';
   const envTag = envRef.startsWith('refs/tags/')
     ? envRef.split('/').slice(2).join('/')
     : '';
 
-  // Get Git information as fallback
-  let gitCommit = envShortSha;
-  let gitCommitFull = envFullSha;
-  if (!gitCommit) {
-    gitCommit = execSync('git rev-parse --short HEAD', {
-      encoding: 'utf8',
-    }).trim();
-  }
-  if (!gitCommitFull) {
-    gitCommitFull = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-  }
-
-  let gitCommitCount = envRunNumber;
-  if (!gitCommitCount) {
-    gitCommitCount = execSync('git rev-list --count HEAD', {
-      encoding: 'utf8',
-    }).trim();
-  }
-
-  let gitBranch = envRefName;
-  if (!gitBranch) {
-    gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
-      encoding: 'utf8',
-    }).trim();
-  }
-
-  let gitTag = envTag;
-  if (!gitTag) {
-    gitTag = execSync('git describe --tags --abbrev=0 2>/dev/null || echo ""', {
-      encoding: 'utf8',
-    }).trim();
-  }
+  // Get Git information
+  const gitCommit = getGitInfo(
+    envSha?.substring(0, 7),
+    'git rev-parse --short HEAD',
+  );
+  const gitCommitFull = getGitInfo(envSha, 'git rev-parse HEAD');
+  const gitCommitCount = getGitInfo(
+    envCommitCount,
+    'git rev-list --count HEAD',
+  );
+  const gitBranch = getGitInfo(envRefName, 'git rev-parse --abbrev-ref HEAD');
+  const gitTag = getGitInfo(
+    envTag,
+    'git describe --tags --abbrev=0 2>/dev/null || echo ""',
+    '',
+  );
 
   // Read package.json for semantic version
   const packageJsonPath = path.join(__dirname, '..', 'package.json');
@@ -72,13 +63,14 @@ try {
   }
 
   // Build version info
+  const buildNumber = parseInt(gitCommitCount);
   const versionInfo = {
     version: packageVersion,
     deploymentId: gitTag || `v${packageVersion}-${gitCommit}`,
-    buildNumber: parseInt(gitCommitCount),
+    buildNumber,
     gitCommit,
     gitCommitFull,
-    gitCommitCount: parseInt(gitCommitCount),
+    gitCommitCount: buildNumber, // Remove redundancy
     gitBranch,
     gitTag: gitTag || null,
     buildTime: envBuildDate || new Date().toISOString(),

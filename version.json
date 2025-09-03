@@ -1,12 +1,12 @@
 {
   "version": "1.0.4",
-  "deploymentId": "foundation_v0",
-  "buildNumber": 182,
-  "gitCommit": "b250c7e",
-  "gitCommitFull": "b250c7ee1779ba150413833d9ca7c5efc7d7f82c",
-  "gitCommitCount": 182,
+  "deploymentId": "v1.0.5",
+  "buildNumber": 222,
+  "gitCommit": "c497b7f",
+  "gitCommitFull": "c497b7f7f13446c4f3301a8744189ce67c774a3e",
+  "gitCommitCount": 222,
   "gitBranch": "main",
-  "gitTag": "foundation_v0",
-  "buildTime": "2025-08-28T18:38:04.482Z",
+  "gitTag": "v1.0.5",
+  "buildTime": "2025-09-03T15:55:31.536Z",
   "environment": "development"
 }
