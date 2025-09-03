@@ -110,6 +110,8 @@ class PerformanceTestState {
       lastChartUpdate: Date.now(),
       frameTimes: [],
       perfStats: { sum: 0, count: 0, min: Infinity, max: 0 },
+      framesRendered: 0,
+      maxFrames: null,
       testCompleted: false,
       completionTime: null,
       testActive: false,
@@ -468,7 +470,12 @@ async function render(ctx) {
       await handleFreshStart(device, stateManager, config);
     }
 
-    const maxFrames = state.get('frames') || 63; // Default: run once across screen (63 pixels, x=1 to x=63)
+    const configuredFrames = Number(state.get('frames'));
+    const maxFrames =
+      Number.isFinite(configuredFrames) && configuredFrames > 0
+        ? configuredFrames
+        : 63; // Default: run once across screen (63 pixels, x=1 to x=63)
+    setState('maxFrames', maxFrames);
     const framesRendered = getState('framesRendered') || 0;
 
     // For continuous mode, check if we've reached the frame limit
@@ -848,9 +855,10 @@ class TextRenderer {
         'left',
         false,
       );
+      const totalFrames = (this.getState('framesRendered') || 0).toString();
       await drawTextRgbaAlignedWithBg(
         this.device,
-        metrics.sampleCount.toString(),
+        totalFrames,
         [25, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
@@ -998,6 +1006,7 @@ function scheduleContinuation(ctx, config, delay) {
             mode: config.mode,
             adaptiveTiming: config.adaptiveTiming,
             interval: config.testInterval,
+            frames: getState('maxFrames') || undefined,
             _loopIteration: (getState('_loopIteration') || 0) + 1,
             _isLoopContinuation: true,
           });
