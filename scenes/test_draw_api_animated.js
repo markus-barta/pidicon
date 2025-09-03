@@ -80,7 +80,7 @@ async function render(ctx) {
     // Don't return early - let device.push() send the frame
   } else {
     // Draw animated elements
-    await drawAnimatedBackground(device, time);
+    await drawAnimatedBackground(device, time, progress, frameCount);
     await drawMovingShapes(device, time, progress);
     await drawSweepingLines(device, time, progress);
     await drawAnimatedText(device, time, progress);
@@ -153,35 +153,30 @@ async function render(ctx) {
   }
 }
 
-async function drawAnimatedBackground(device, time) {
-  // Simplified animated background using rectangles instead of individual pixels
-  // This is much more efficient than 4096 individual pixel calls
+async function drawAnimatedBackground(device, time, progress, frameCount) {
+  // Animated gradient background
+  for (let y = 0; y < 64; y++) {
+    for (let x = 0; x < 64; x++) {
+      const wave1 = Math.sin((x * 0.1 + time) * 0.5) * 30 + 30;
+      const wave2 = Math.sin((y * 0.1 + time * 0.7) * 0.3) * 20 + 20;
+      const intensity = Math.max(0, Math.min(255, wave1 + wave2));
 
-  // Create animated gradient using larger rectangles
-  const waveIntensity = Math.sin(time * 0.5) * 30 + 30;
-  const baseColor = [
-    Math.round(waveIntensity * 0.1),
-    Math.round(waveIntensity * 0.05),
-    Math.round(waveIntensity * 0.2),
-    60,
-  ];
+      // Subtle animated background
+      if (intensity > 10) {
+        const r = Math.round(intensity * 0.1);
+        const g = Math.round(intensity * 0.05);
+        const b = Math.round(intensity * 0.2);
+        const color = [r, g, b, 60];
 
-  // Draw background in 8x8 blocks for efficiency
-  for (let blockY = 0; blockY < 8; blockY++) {
-    for (let blockX = 0; blockX < 8; blockX++) {
-      const x = blockX * 8;
-      const y = blockY * 8;
+        // Debug first few pixels
+        if (x === 0 && y === 0 && frameCount < 3) {
+          console.log(
+            `🎨 [BACKGROUND] Pixel [${x},${y}]: intensity=${intensity.toFixed(1)}, color=[${color.join(',')}]`,
+          );
+        }
 
-      // Vary intensity slightly per block
-      const blockIntensity = Math.sin((blockX * 0.5 + time) * 0.3) * 10 + 20;
-      const color = [
-        Math.round(baseColor[0] * (blockIntensity / 30)),
-        Math.round(baseColor[1] * (blockIntensity / 30)),
-        Math.round(baseColor[2] * (blockIntensity / 30)),
-        60,
-      ];
-
-      await device.fillRectangleRgba([x, y], [8, 8], color);
+        await device.drawPixelRgba([x, y], color);
+      }
     }
   }
 }
@@ -284,33 +279,29 @@ async function drawMovingShapes(device, time) {
 }
 
 async function drawSweepingLines(device, time) {
-  // Simplified sweeping lines using drawLine instead of individual pixels
-
   // Horizontal sweeping line
   const sweepY = Math.round(Math.sin(time * 2) * 25 + 32);
-  if (sweepY >= 0 && sweepY < 64) {
-    await device.drawLineRgba([0, sweepY], [63, sweepY], [255, 255, 0, 200]);
+  for (let x = 0; x < 64; x++) {
+    const alpha = Math.round(Math.max(0, 255 - Math.abs(x - 32) * 4)); // Fade from center
+    await device.drawPixelRgba([x, sweepY], [255, 255, 0, alpha]);
   }
 
   // Vertical sweeping line
   const sweepX = Math.round(Math.cos(time * 1.5) * 25 + 32);
-  if (sweepX >= 0 && sweepX < 64) {
-    await device.drawLineRgba([sweepX, 0], [sweepX, 63], [0, 255, 255, 200]);
+  for (let y = 0; y < 64; y++) {
+    const alpha = Math.round(Math.max(0, 255 - Math.abs(y - 32) * 4));
+    await device.drawPixelRgba([sweepX, y], [0, 255, 255, alpha]);
   }
 
-  // Diagonal sweeping line (simplified)
+  // Diagonal sweeping line
   const diagProgress = ((time * 20) % 128) - 64; // -64 to +64
-  const startX = Math.max(0, Math.min(63, 32 + diagProgress));
-  const startY = Math.max(0, Math.min(63, 32 - diagProgress));
-  const endX = Math.max(0, Math.min(63, 32 - diagProgress));
-  const endY = Math.max(0, Math.min(63, 32 + diagProgress));
-
-  if (startX !== endX || startY !== endY) {
-    await device.drawLineRgba(
-      [startX, startY],
-      [endX, endY],
-      [255, 0, 255, 180],
-    );
+  for (let i = -32; i < 32; i++) {
+    const x = Math.round(32 + i);
+    const y = Math.round(32 + i + diagProgress);
+    if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+      const alpha = Math.round(Math.max(0, 200 - Math.abs(i) * 3));
+      await device.drawPixelRgba([x, y], [255, 0, 255, alpha]);
+    }
   }
 }
 
@@ -362,46 +353,56 @@ async function drawAnimatedText(device, time) {
 }
 
 async function drawParticleSystem(device, time) {
-  // Simplified particle system using small rectangles instead of individual pixels
-  const numParticles = 6; // Reduced for performance
+  // Simple particle system - moving dots
+  const numParticles = 8;
 
   for (let i = 0; i < numParticles; i++) {
-    const particleTime = time + (i * Math.PI) / 3;
+    const particleTime = time + (i * Math.PI) / 4;
     const x = Math.max(
       2,
-      Math.min(60, Math.round(Math.sin(particleTime * 1.5) * 25 + 32)),
+      Math.min(62, Math.round(Math.sin(particleTime * 1.5) * 25 + 32)),
     );
     const y = Math.max(
       2,
-      Math.min(60, Math.round(Math.cos(particleTime * 1.2) * 20 + 32)),
+      Math.min(62, Math.round(Math.cos(particleTime * 1.2) * 20 + 32)),
     );
 
-    // Main particle as small rectangle
-    if (x >= 0 && x < 63 && y >= 0 && y < 63) {
-      await device.fillRectangleRgba([x, y], [2, 2], [255, 255, 255, 200]);
+    // Particle trail effect
+    for (let trail = 0; trail < 3; trail++) {
+      const trailX = Math.max(
+        0,
+        Math.min(
+          64,
+          Math.round(Math.sin((particleTime - trail * 0.1) * 1.5) * 25 + 32),
+        ),
+      );
+      const trailY = Math.max(
+        0,
+        Math.min(
+          64,
+          Math.round(Math.cos((particleTime - trail * 0.1) * 1.2) * 20 + 32),
+        ),
+      );
+      const trailAlpha = Math.round((3 - trail) * 60);
+
+      if (trailX >= 0 && trailX < 64 && trailY >= 0 && trailY < 64) {
+        await device.drawPixelRgba([trailX, trailY], [255, 150, 0, trailAlpha]);
+      }
     }
 
-    // Trail as single pixel (reduced complexity)
-    const trailX = Math.max(
-      0,
-      Math.min(63, Math.round(Math.sin((particleTime - 0.2) * 1.5) * 25 + 32)),
-    );
-    const trailY = Math.max(
-      0,
-      Math.min(63, Math.round(Math.cos((particleTime - 0.2) * 1.2) * 20 + 32)),
-    );
-
-    if (trailX >= 0 && trailX < 64 && trailY >= 0 && trailY < 64) {
-      await device.drawPixelRgba([trailX, trailY], [255, 150, 0, 120]);
+    // Main particle
+    if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+      await device.drawPixelRgba([x, y], [255, 255, 255, 255]);
     }
   }
 }
 
 async function drawFinalOverlay(device, time) {
-  // Progress bar at top using rectangles
+  // Progress bar at top
   const barWidth = Math.round(((time % 10) / 10) * 60);
-  if (barWidth > 0) {
-    await device.fillRectangleRgba([2, 2], [barWidth, 2], [100, 200, 255, 180]);
+  for (let x = 2; x < 2 + barWidth && x < 64; x++) {
+    await device.drawPixelRgba([x, 2], [100, 200, 255, 180]);
+    await device.drawPixelRgba([x, 3], [150, 220, 255, 200]);
   }
 
   // Corner decorations
