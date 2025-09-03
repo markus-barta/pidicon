@@ -165,17 +165,23 @@ class PerformanceTestState {
       max: 0,
     };
 
-    frameTimes.push(frametime);
+    // Clamp frametime to chart bounds to avoid outliers
+    const clampedFrametime = Math.min(
+      CHART_CONFIG.MAX_FRAMETIME,
+      Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime),
+    );
+
+    frameTimes.push(clampedFrametime);
     if (frameTimes.length > CHART_CONFIG.MAX_FRAME_SAMPLES) {
       const removed = frameTimes.shift();
       perfStats.sum -= removed;
       perfStats.count--;
     }
 
-    perfStats.sum += frametime;
+    perfStats.sum += clampedFrametime;
     perfStats.count++;
-    perfStats.min = Math.min(perfStats.min, frametime);
-    perfStats.max = Math.max(perfStats.max, frametime);
+    perfStats.min = Math.min(perfStats.min, clampedFrametime);
+    perfStats.max = Math.max(perfStats.max, clampedFrametime);
 
     this.setState('frameTimes', frameTimes);
     this.setState('perfStats', perfStats);
@@ -194,15 +200,28 @@ class PerformanceTestState {
     };
     const frameTimes = this.getState('frameTimes') || [];
 
+    const avg = perfStats.count > 0 ? perfStats.sum / perfStats.count : 0;
+    const avgInt = Math.round(
+      Math.min(
+        CHART_CONFIG.MAX_FRAMETIME,
+        Math.max(CHART_CONFIG.MIN_FRAMETIME, avg),
+      ),
+    );
+    const minInt = Math.round(
+      perfStats.min === Infinity
+        ? 0
+        : Math.max(CHART_CONFIG.MIN_FRAMETIME, perfStats.min),
+    );
+    const maxInt = Math.round(
+      Math.min(CHART_CONFIG.MAX_FRAMETIME, perfStats.max),
+    );
+
     return {
-      avgFrametime: perfStats.count > 0 ? perfStats.sum / perfStats.count : 0,
-      minFrametime: perfStats.min === Infinity ? 0 : perfStats.min,
-      maxFrametime: perfStats.max,
+      avgFrametime: avgInt,
+      minFrametime: minInt,
+      maxFrametime: maxInt,
       sampleCount: frameTimes.length,
-      fps:
-        perfStats.count > 0
-          ? Math.round(1000 / (perfStats.sum / perfStats.count))
-          : 0,
+      fps: avgInt > 0 ? Math.round(1000 / avgInt) : 0,
     };
   }
 }
@@ -849,7 +868,7 @@ class TextRenderer {
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
-        Math.round(metrics.avgFrametime).toString(),
+        String(Math.round(metrics.avgFrametime)),
         [48, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
