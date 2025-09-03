@@ -8,11 +8,13 @@
  */
 
 // MQTT Commands:
-// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 150ms interval
-// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode
+// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 64 frames (default)
+// {"scene":"test_performance_v3","mode":"continuous","interval":100,"frames":200}       - Continuous mode, 200 frames
+// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode, 64 frames
 // {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
-// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode
+// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode, 64 frames
 // {"scene":"test_performance_v3","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
+// {"scene":"test_performance_v3","stop":true}                                          - Stop any running test
 
 'use strict';
 
@@ -294,6 +296,42 @@ async function handleFreshStart(device, stateManager, config) {
 }
 
 /**
+ * Handles frame counting and completion for continuous mode
+ * @param {Object} config - Test configuration
+ * @param {number} maxFrames - Maximum frames to render
+ * @param {Function} getState - State getter
+ * @param {Function} setState - State setter
+ * @returns {boolean} True if test should continue
+ */
+function handleFrameCounting(config, maxFrames, getState, setState) {
+  if (config.mode !== TEST_MODES.CONTINUOUS) {
+    return true; // Other modes use their own logic
+  }
+
+  const currentFrames = getState('framesRendered') || 0;
+  setState('framesRendered', currentFrames + 1);
+
+  // Check if we've reached the frame limit
+  if (currentFrames + 1 >= maxFrames) {
+    console.log(
+      `🏁 [PERF V3] Reached frame limit (${maxFrames}) - test complete`,
+    );
+    setState('testCompleted', true);
+
+    // Clean up timers
+    const existingTimer = getState('loopTimer');
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      setState('loopTimer', null);
+    }
+    setState('loopScheduled', false);
+    return false; // Stop rendering
+  }
+
+  return true; // Continue rendering
+}
+
+/**
  * Handles test completion
  * @param {Object} chartRenderer - Chart renderer instance
  * @param {Object} textRenderer - Text renderer instance
@@ -392,7 +430,35 @@ async function render(ctx) {
       testInterval: Math.max(50, Math.min(2000, state.get('interval') || 150)),
       loopDuration: state.get('duration') || V3_CONFIG.LOOP_DURATION_DEFAULT,
       adaptiveTiming: Boolean(state.get('adaptiveTiming')),
+      stop: Boolean(state.get('stop')),
     };
+
+    // Handle stop command
+    if (config.stop) {
+      console.log(`🛑 [PERF V3] Stop command received - cleaning up...`);
+
+      // Clean up timers
+      const existingTimer = getState('loopTimer');
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        setState('loopTimer', null);
+      }
+      setState('loopScheduled', false);
+      setState('testCompleted', true);
+
+      // Clear screen and show stop message
+      await device.clear();
+      await device.drawTextRgbaAligned(
+        'STOPPED',
+        [32, 32],
+        [255, 100, 100, 255], // Red color
+        'center',
+      );
+      await device.push(SCENE_NAME, publishOk);
+
+      console.log(`✅ [PERF V3] Test stopped successfully`);
+      return;
+    }
 
     // Handle continuation messages
     handleContinuationMessages(state, getState, setState);
@@ -402,11 +468,12 @@ async function render(ctx) {
       await handleFreshStart(device, stateManager, config);
     }
 
-    const startTime = getState('startTime');
-    const loopEndTime =
-      config.mode === TEST_MODES.LOOP
-        ? startTime + config.loopDuration
-        : startTime + CHART_CONFIG.TEST_TIMEOUT_MS;
+    const maxFrames = state.get('frames') || 64; // Default: run once across screen (64 pixels)
+    const framesRendered = getState('framesRendered') || 0;
+
+    // For continuous mode, check if we've reached the frame limit
+    const shouldRender =
+      config.mode === TEST_MODES.CONTINUOUS ? framesRendered < maxFrames : true; // Other modes use their own logic
 
     // Record performance data
     if (frametime !== undefined && frametime > 0) {
@@ -414,7 +481,6 @@ async function render(ctx) {
     }
 
     const now = Date.now();
-    const shouldRender = now <= loopEndTime;
 
     // Log performance periodically
     performanceTracker.logPerformance(config.mode, shouldRender);
@@ -489,6 +555,11 @@ async function render(ctx) {
 
       // Push rendered frame
       await device.push(SCENE_NAME, publishOk);
+
+      // Update frame count and check for completion
+      if (!handleFrameCounting(config, maxFrames, getState, setState)) {
+        return; // Test completed
+      }
     }
 
     // Update render timestamp
@@ -609,6 +680,13 @@ class ChartRenderer {
 
     // For continuous mode, wrap around when chart reaches the end
     if (chartX >= 64) {
+      // Clear the vertical line at the current position before wrapping
+      await this.device.drawRectangleRgba(
+        [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT - 1],
+        [1, CHART_CONFIG.RANGE_HEIGHT + 2],
+        CHART_CONFIG.BG_COLOR, // Black background
+      );
+
       // Reset chart position for continuous mode
       this.setState('chartX', CHART_CONFIG.CHART_START_X);
       this.setState('chartData', []); // Clear old data
@@ -634,6 +712,13 @@ class ChartRenderer {
 
     const chartColor = getPerformanceColor(chartFrametime);
     chartData.push({ x: chartX, y: yPos, color: chartColor });
+
+    // Clear the current line position before drawing new value
+    await this.device.drawRectangleRgba(
+      [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT - 1],
+      [1, CHART_CONFIG.RANGE_HEIGHT + 2],
+      CHART_CONFIG.BG_COLOR, // Black background
+    );
 
     // Draw line if we have at least 2 points
     if (chartData.length > 1) {
