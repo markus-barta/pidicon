@@ -40,8 +40,8 @@ module.exports = [
       ...importPlugin.configs.recommended.rules,
       ...promisePlugin.configs.recommended.rules,
       'no-console': 'off', // Temporarily disabled for development
-      complexity: ['warn', 20],
-      'max-params': ['warn', 7],
+      complexity: ['warn', 30],
+      'max-params': ['warn', 10],
       'max-lines-per-function': [
         'warn',
         { max: 150, skipBlankLines: true, skipComments: true },

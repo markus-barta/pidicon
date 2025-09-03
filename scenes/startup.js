@@ -99,7 +99,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Draw title
   await device.drawTextRgbaAligned(
     'PIXOO DAEMON',
-    [32, 4],
+    [32, 3],
     [255, 255, 255, 255],
     'center',
   );
@@ -108,7 +108,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Build number (with leading '#')
   await device.drawTextRgbaAligned(
     `#${buildNumber}`,
-    [32, 13],
+    [32, 12],
     [255, 255, 0, 255], // Yellow
     'center',
   );
@@ -116,14 +116,13 @@ async function drawStartupInfo(device, versionInfo) {
   // Git hash
   await device.drawTextRgbaAligned(
     gitCommit,
-    [32, 20],
+    [32, 19],
     [255, 150, 0, 255], // Orange
     'center',
   );
 
   // Status indicator (centered, with white background box)
-  // Easily set the vertical position of the status indicator
-  const STATUS_Y = 34; // Change this value to move the whole status indicator up/down
+  const STATUS_Y = 32; // Change this value to move the whole status indicator up/down
 
   // Color constants for easy changing
   const STATUS_TEXT = 'READY';
