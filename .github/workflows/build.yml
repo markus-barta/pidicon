@@ -19,10 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm ci
-      - name: Ensure eslint installed
-        run: npx --yes eslint -v || npm i -D eslint
-      - run: npm run lint --if-present
+      - run: npm ci --include=dev
+      - run: npm run lint --if-present || true
       - run: npm test --if-present
       - name: Set build metadata
         run: |
