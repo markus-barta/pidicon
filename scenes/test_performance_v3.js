@@ -679,11 +679,11 @@ class ChartRenderer {
     }
 
     // For continuous mode, wrap around when chart reaches the end
-    if (chartX >= 64) {
+    if (chartX >= 63) {
       // Clear the vertical line at the current position before wrapping
       await this.device.drawRectangleRgba(
-        [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT - 1],
-        [1, CHART_CONFIG.RANGE_HEIGHT + 2],
+        [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT],
+        [1, CHART_CONFIG.RANGE_HEIGHT],
         CHART_CONFIG.BG_COLOR, // Black background
       );
 
@@ -715,8 +715,8 @@ class ChartRenderer {
 
     // Clear the current line position before drawing new value
     await this.device.drawRectangleRgba(
-      [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT - 1],
-      [1, CHART_CONFIG.RANGE_HEIGHT + 2],
+      [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT],
+      [1, CHART_CONFIG.RANGE_HEIGHT],
       CHART_CONFIG.BG_COLOR, // Black background
     );
 
@@ -741,7 +741,7 @@ class ChartRenderer {
    */
   isComplete() {
     const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
-    return chartX >= 64;
+    return chartX >= 63;
   }
 }
 
@@ -859,7 +859,7 @@ class TextRenderer {
 
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'AV:',
+        'AVG:',
         [36, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
