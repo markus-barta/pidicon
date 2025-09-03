@@ -72,15 +72,49 @@ function getStateValue(state, key, defaultValue) {
 function buildVersionInfo(state) {
   const gitSha = process.env.GITHUB_SHA?.substring(0, 7);
 
+  // Always read the latest version.json to ensure current build number
+  let currentVersionInfo = {};
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const versionFile = path.join(__dirname, '..', 'version.json');
+
+    if (fs.existsSync(versionFile)) {
+      const versionData = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
+      currentVersionInfo = {
+        version: versionData.version,
+        deploymentId: versionData.deploymentId,
+        buildNumber: versionData.buildNumber,
+        gitCommit: versionData.gitCommit,
+        buildTime: versionData.buildTime,
+      };
+      console.log(
+        `🔄 [STARTUP] Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
+      );
+    }
+  } catch (error) {
+    console.warn(`⚠️ [STARTUP] Failed to read version.json: ${error.message}`);
+  }
+
   return {
     version:
       process.env.IMAGE_TAG ||
       gitSha ||
+      currentVersionInfo.version ||
       getStateValue(state, 'version', '1.0.0'),
-    deploymentId: getStateValue(state, 'deploymentId', 'v1.0.0'),
-    buildNumber: getStateValue(state, 'buildNumber', '1'),
-    gitCommit: gitSha || getStateValue(state, 'gitCommit', 'unknown'),
-    buildTime: getStateValue(state, 'buildTime', new Date().toISOString()),
+    deploymentId:
+      currentVersionInfo.deploymentId ||
+      getStateValue(state, 'deploymentId', 'v1.0.0'),
+    buildNumber:
+      currentVersionInfo.buildNumber ||
+      getStateValue(state, 'buildNumber', '1'),
+    gitCommit:
+      gitSha ||
+      currentVersionInfo.gitCommit ||
+      getStateValue(state, 'gitCommit', 'unknown'),
+    buildTime:
+      currentVersionInfo.buildTime ||
+      getStateValue(state, 'buildTime', new Date().toISOString()),
     daemonStart: getStateValue(
       state,
       'daemonStart',
