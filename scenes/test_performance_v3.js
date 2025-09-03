@@ -81,6 +81,7 @@ const V3_CONFIG = Object.freeze({
   MQTT_TIMEOUT_MS: 5000,
   MIN_DELAY_MS: 50,
   MAX_DELAY_MS: 2000,
+  ADAPTIVE_OFFSET_MS: 5,
 });
 
 // getPerformanceColor function is now imported from performance-utils
@@ -590,7 +591,7 @@ async function render(ctx) {
               V3_CONFIG.MIN_DELAY_MS,
               Math.min(V3_CONFIG.MAX_DELAY_MS, config.testInterval),
             )
-          : 0; // maximize performance when no fixed interval provided
+          : Math.max(0, V3_CONFIG.ADAPTIVE_OFFSET_MS); // adaptive: fire almost immediately after frame
 
         scheduleContinuation(ctx, config, delay);
       }
@@ -708,9 +709,11 @@ class ChartRenderer {
   async updateChartData(currentTime, chartFrametime) {
     const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
     const lastChartUpdate = this.getState('lastChartUpdate') || currentTime;
-    const updateIntervalMs =
-      this.getState('updateIntervalMs') ?? CHART_CONFIG.UPDATE_INTERVAL_MS;
-    if (currentTime - lastChartUpdate < updateIntervalMs) {
+    const updateIntervalMs = this.getState('updateIntervalMs');
+    if (
+      Number.isFinite(updateIntervalMs) &&
+      currentTime - lastChartUpdate < updateIntervalMs
+    ) {
       return;
     }
 
