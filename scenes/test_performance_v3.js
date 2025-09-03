@@ -579,19 +579,9 @@ class ChartRenderer {
       const prev = chartData[chartData.length - 2];
       const curr = chartData[chartData.length - 1];
 
-      // Use advanced gradient rendering if available
-      if (this.gradientRenderer && this.advancedFeatures.GRADIENT_RENDERING) {
-        // Create gradient between consecutive points
-        await this.gradientRenderer.drawVerticalPreset(
-          [prev.x, Math.min(prev.y, curr.y)],
-          [curr.x, Math.max(prev.y, curr.y)],
-          'power',
-          255,
-        );
-      } else {
-        // Fallback to simple line drawing
-        drawLine(this.device, prev.x, prev.y, curr.x, curr.y, curr.color);
-      }
+      // Use performance-based color for line drawing
+      // Always use the current frame's performance color for the line
+      drawLine(this.device, prev.x, prev.y, curr.x, curr.y, curr.color);
     }
 
     this.setState('chartData', chartData);
