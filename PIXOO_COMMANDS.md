@@ -66,7 +66,6 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - **`frames`** (optional): Number of frames to test (default: 63 for one screen width)
 - **`duration`** (optional): Loop duration in ms (for loop mode, default: 60000)
 - **`clear`** (optional): `true` to clear screen before starting test
-- **`stop`** (optional): `true` to stop any running test
 
 ### Draw API Test
 

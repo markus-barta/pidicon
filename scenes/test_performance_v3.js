@@ -14,7 +14,6 @@
 // {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
 // {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode, 63 frames
 // {"scene":"test_performance_v3","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
-// {"scene":"test_performance_v3","stop":true}                                          - Stop any running test
 
 'use strict';
 
@@ -435,43 +434,10 @@ async function render(ctx) {
       testInterval: Math.max(50, Math.min(2000, state.get('interval') || 150)),
       loopDuration: state.get('duration') || V3_CONFIG.LOOP_DURATION_DEFAULT,
       adaptiveTiming: Boolean(state.get('adaptiveTiming')),
-      stop: Boolean(state.get('stop')),
+      // stop removed; test is controlled by frames or duration
     };
 
-    // Handle stop command (no full clear; overlay STOPPED)
-    if (config.stop) {
-      console.log(`🛑 [PERF V3] Stop command received - cleaning up...`);
-
-      // Clean up timers
-      const existingTimer = getState('loopTimer');
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        setState('loopTimer', null);
-      }
-      setState('loopScheduled', false);
-      setState('testCompleted', true);
-      setState('framesRendered', 0);
-      setState('maxFrames', null);
-
-      // Overlay STOPPED without full clear
-      const {
-        drawTextRgbaAlignedWithBg,
-        BACKGROUND_COLORS,
-      } = require('../lib/rendering-utils');
-      await drawTextRgbaAlignedWithBg(
-        device,
-        'STOPPED',
-        [32, 32],
-        [255, 100, 100, 255],
-        'center',
-        true,
-        BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-      );
-      await device.push(SCENE_NAME, publishOk);
-
-      console.log(`✅ [PERF V3] Test stopped successfully`);
-      return;
-    }
+    // stop command removed
 
     // Handle continuation messages
     handleContinuationMessages(state, getState, setState);
@@ -548,31 +514,7 @@ async function render(ctx) {
 
       // Push rendered frame and measure actual frame time
       await device.push(SCENE_NAME, publishOk);
-      // Check for stop requested after push
-      if (getState && getState('stop')) {
-        const existingTimer = getState('loopTimer');
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-          setState('loopTimer', null);
-        }
-        setState('loopScheduled', false);
-        setState('testCompleted', true);
-        const {
-          drawTextRgbaAlignedWithBg,
-          BACKGROUND_COLORS,
-        } = require('../lib/rendering-utils');
-        await drawTextRgbaAlignedWithBg(
-          device,
-          'STOPPED',
-          [32, 32],
-          [255, 100, 100, 255],
-          'center',
-          true,
-          BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-        );
-        await device.push(SCENE_NAME, publishOk);
-        return;
-      }
+      // stop removed
 
       const frameEnd = Date.now();
       const frameDuration = Math.max(1, frameEnd - renderStart);
