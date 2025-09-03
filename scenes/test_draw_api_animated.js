@@ -5,7 +5,7 @@
 // - Sweeping lines and particles
 // - Layered animations at different speeds
 // - Alpha blending and transparency effects
-// - Runs for ~80 frames with smooth 60fps timing
+// - Runs for ~80 frames with smooth 15fps timing
 
 // MQTT Commands:
 // {"scene":"test_draw_api_animated"}                           - Run the animated demo
@@ -18,6 +18,16 @@ const name = 'test_draw_api_animated';
 
 // Import shared utilities
 const { validateSceneContext } = require('../lib/performance-utils');
+
+// Animation constants
+const ANIMATION_CONFIG = {
+  DEFAULT_DURATION: 80, // frames
+  TARGET_FPS: 15, // frames per second
+  FRAME_INTERVAL: 1000 / 15, // 66.67ms
+  SCREEN_SIZE: 64,
+  CENTER_X: 32,
+  CENTER_Y: 32,
+};
 
 async function init() {
   // Initialize animated draw API demo scene - nothing special needed
@@ -38,12 +48,12 @@ async function render(ctx) {
   const { device, state, getState, setState, publishOk } = ctx;
 
   // Configuration
-  const duration = state.duration || 80; // ~80 frames
+  const duration = state.get('duration') || ANIMATION_CONFIG.DEFAULT_DURATION;
   const startTime = getState('startTime') || Date.now();
   // Use frameCount from state if provided (for animation continuation)
   let frameCount = getState('frameCount') || 0;
-  if (state.frameCount !== undefined) {
-    frameCount = state.frameCount;
+  if (state.get('frameCount') !== undefined) {
+    frameCount = state.get('frameCount');
     setState('frameCount', frameCount);
   }
 
@@ -55,8 +65,7 @@ async function render(ctx) {
     console.log(`🎬 [ANIMATED DEMO] Starting ${duration}-frame animation`);
   }
 
-  // Reset animation scheduling flag for this frame
-  setState('animationScheduled', false);
+  // Don't reset animation scheduling flag here - let it be managed by the scheduling logic
 
   // Clear screen for fresh frame
   await device.clear();
@@ -106,6 +115,8 @@ async function render(ctx) {
 
   // Schedule next frame via MQTT (similar to performance tests)
   if (!getState('animationScheduled')) {
+    setState('animationScheduled', true); // Set flag immediately to prevent race conditions
+
     setTimeout(async () => {
       try {
         const mqtt = require('mqtt');
@@ -147,16 +158,16 @@ async function render(ctx) {
       } catch (error) {
         console.error(`❌ [ANIMATION] Setup error:`, error);
       }
-    }, 1000 / 15); // ~15fps for demo
-
-    setState('animationScheduled', true);
+    }, ANIMATION_CONFIG.FRAME_INTERVAL); // 15fps (66.67ms interval) for demo
   }
 }
 
 async function drawAnimatedBackground(device, time, progress, frameCount) {
   // Animated gradient background
-  for (let y = 0; y < 64; y++) {
-    for (let x = 0; x < 64; x++) {
+  // NOTE: This uses 4096 individual drawPixelRgba calls (64x64) which is inefficient
+  // Consider using fillRectangleRgba with larger blocks for better performance
+  for (let y = 0; y < ANIMATION_CONFIG.SCREEN_SIZE; y++) {
+    for (let x = 0; x < ANIMATION_CONFIG.SCREEN_SIZE; x++) {
       const wave1 = Math.sin((x * 0.1 + time) * 0.5) * 30 + 30;
       const wave2 = Math.sin((y * 0.1 + time * 0.7) * 0.3) * 20 + 20;
       const intensity = Math.max(0, Math.min(255, wave1 + wave2));
@@ -223,7 +234,12 @@ async function drawMovingShapes(device, time) {
         // Circle equation
         const px = Math.round(orbitX + dx + 1);
         const py = Math.round(orbitY + dy + 1);
-        if (px >= 0 && px < 64 && py >= 0 && py < 64) {
+        if (
+          px >= 0 &&
+          px < ANIMATION_CONFIG.SCREEN_SIZE &&
+          py >= 0 &&
+          py < ANIMATION_CONFIG.SCREEN_SIZE
+        ) {
           await device.drawPixelRgba([px, py], [0, 0, 0, 40]);
         }
       }
@@ -236,7 +252,12 @@ async function drawMovingShapes(device, time) {
       if (dx * dx + dy * dy <= 64) {
         const px = Math.round(orbitX + dx);
         const py = Math.round(orbitY + dy);
-        if (px >= 0 && px < 64 && py >= 0 && py < 64) {
+        if (
+          px >= 0 &&
+          px < ANIMATION_CONFIG.SCREEN_SIZE &&
+          py >= 0 &&
+          py < ANIMATION_CONFIG.SCREEN_SIZE
+        ) {
           await device.drawPixelRgba([px, py], [100, 255, 100, 180]);
         }
       }
