@@ -94,9 +94,22 @@ class PerformanceTestState {
    */
   isFreshStart(state) {
     const startTime = this.getState('startTime');
-    const isNewMessage =
-      !state.get('_isLoopContinuation') && !state.get('_isContinuation');
-    return !startTime || isNewMessage;
+    const isContinuation = Boolean(
+      state.get('_isLoopContinuation') || state.get('_isContinuation'),
+    );
+    const completed = Boolean(this.getState('testCompleted'));
+    const rendered = this.getState('framesRendered') || 0;
+    const configuredFrames = Number(state.get('frames'));
+    const maxFrames =
+      Number.isFinite(configuredFrames) && configuredFrames > 0
+        ? configuredFrames
+        : this.getState('maxFrames') || 63;
+
+    // Fresh start when:
+    // - No prior startTime (first run)
+    // - Not a continuation message (external trigger)
+    // - Previous run completed or reached frame limit
+    return !startTime || !isContinuation || completed || rendered >= maxFrames;
   }
 
   /**
@@ -122,6 +135,8 @@ class PerformanceTestState {
       prevFps: null,
       loopTimer: null,
       loopScheduled: false,
+      _isLoopContinuation: false,
+      _isContinuation: false,
     };
 
     Object.entries(resetValues).forEach(([key, value]) => {
@@ -468,6 +483,15 @@ async function render(ctx) {
     // Fresh start logic with device readiness check
     if (stateManager.isFreshStart(state)) {
       await handleFreshStart(device, stateManager, config);
+    } else {
+      // Ensure no stale timers or flags prevent a clean rerun
+      const existingTimer = getState('loopTimer');
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        setState('loopTimer', null);
+      }
+      setState('loopScheduled', false);
+      setState('testCompleted', false);
     }
 
     const configuredFrames = Number(state.get('frames'));
