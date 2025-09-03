@@ -42,8 +42,19 @@ async function init() {
   console.log(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
 }
 
-async function cleanup() {
-  // Cleanup test performance v3 scene - nothing special needed
+async function cleanup(ctx) {
+  try {
+    const state = ctx?.state;
+    const loopTimer = state?.get('loopTimer');
+    if (loopTimer) {
+      clearTimeout(loopTimer);
+      state.set('loopTimer', null);
+    }
+    state?.set && state.set('loopScheduled', false);
+    state?.set && state.set('testCompleted', true);
+  } catch (e) {
+    console.warn(`⚠️ [TEST_PERF_V3] Cleanup encountered an issue:`, e?.message);
+  }
   console.log(`🧹 [TEST_PERFORMANCE_V3] Scene cleaned up`);
 }
 
@@ -425,7 +436,7 @@ async function render(ctx) {
       stop: Boolean(state.get('stop')),
     };
 
-    // Handle stop command
+    // Handle stop command (no full clear; overlay STOPPED)
     if (config.stop) {
       console.log(`🛑 [PERF V3] Stop command received - cleaning up...`);
 
@@ -437,14 +448,22 @@ async function render(ctx) {
       }
       setState('loopScheduled', false);
       setState('testCompleted', true);
+      setState('framesRendered', 0);
+      setState('maxFrames', null);
 
-      // Clear screen and show stop message
-      await device.clear();
-      await device.drawTextRgbaAligned(
+      // Overlay STOPPED without full clear
+      const {
+        drawTextRgbaAlignedWithBg,
+        BACKGROUND_COLORS,
+      } = require('../lib/rendering-utils');
+      await drawTextRgbaAlignedWithBg(
+        device,
         'STOPPED',
         [32, 32],
-        [255, 100, 100, 255], // Red color
+        [255, 100, 100, 255],
         'center',
+        true,
+        BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
       );
       await device.push(SCENE_NAME, publishOk);
 
@@ -543,6 +562,21 @@ async function render(ctx) {
 
       // Update frame count and check for completion
       if (!handleFrameCounting(config, maxFrames, getState, setState)) {
+        // Overlay COMPLETE without full clear
+        const {
+          drawTextRgbaAlignedWithBg,
+          BACKGROUND_COLORS,
+        } = require('../lib/rendering-utils');
+        await drawTextRgbaAlignedWithBg(
+          device,
+          'COMPLETE',
+          [32, 32],
+          [255, 255, 255, 127],
+          'center',
+          true,
+          BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+        );
+        await device.push(SCENE_NAME, publishOk);
         return; // Test completed
       }
 
