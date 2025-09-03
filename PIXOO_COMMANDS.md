@@ -28,7 +28,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 # Fill with blue
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill","color":[0,0,255,255]}'
 
-# Performance test with adaptive timing (optimal) - 64 frames (default)
+# Performance test with adaptive timing (optimal) - 63 frames (default)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"test_performance_v3","adaptiveTiming":true}'
 
 # Performance test with fixed timing - 200 frames
@@ -68,7 +68,7 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 - **`adaptiveTiming`** (optional): `true` for frametime-based delays,
   `false` for fixed interval
 - **`interval`** (optional): Fixed interval in ms (50-2000, default: 150)
-- **`frames`** (optional): Number of frames to test (default: 64 for one screen width)
+- **`frames`** (optional): Number of frames to test (default: 63 for one screen width)
 - **`duration`** (optional): Loop duration in ms (for loop mode, default: 60000)
 - **`clear`** (optional): `true` to clear screen before starting test
 - **`stop`** (optional): `true` to stop any running test

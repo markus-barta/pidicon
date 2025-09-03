@@ -8,11 +8,11 @@
  */
 
 // MQTT Commands:
-// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 64 frames (default)
+// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 63 frames (default)
 // {"scene":"test_performance_v3","mode":"continuous","interval":100,"frames":200}       - Continuous mode, 200 frames
-// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode, 64 frames
+// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode, 63 frames
 // {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
-// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode, 64 frames
+// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode, 63 frames
 // {"scene":"test_performance_v3","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
 // {"scene":"test_performance_v3","stop":true}                                          - Stop any running test
 
@@ -468,7 +468,7 @@ async function render(ctx) {
       await handleFreshStart(device, stateManager, config);
     }
 
-    const maxFrames = state.get('frames') || 64; // Default: run once across screen (64 pixels)
+    const maxFrames = state.get('frames') || 63; // Default: run once across screen (63 pixels, x=1 to x=63)
     const framesRendered = getState('framesRendered') || 0;
 
     // For continuous mode, check if we've reached the frame limit
@@ -842,7 +842,7 @@ class TextRenderer {
       // Draw labels in gray, values in white with exact positioning from v2
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'Frames ',
+        'Frame:',
         [0, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
