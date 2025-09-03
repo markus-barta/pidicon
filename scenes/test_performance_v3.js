@@ -462,15 +462,28 @@ async function render(ctx) {
     const shouldRender =
       config.mode === TEST_MODES.CONTINUOUS ? framesRendered < maxFrames : true; // Other modes use their own logic
 
-    // Record performance data
-    if (frametime !== undefined && frametime > 0) {
-      performanceTracker.recordFrame(frametime);
-    }
-
     const now = Date.now();
+    const lastRenderTs = getState('lastRenderTs') || 0;
+    const measuredFrametime =
+      lastRenderTs > 0
+        ? Math.max(1, now - lastRenderTs)
+        : frametime || config.testInterval || 0;
+
+    // Record performance data using measured frametime
+    if (measuredFrametime > 0) {
+      performanceTracker.recordFrame(measuredFrametime);
+    }
 
     // Log performance periodically
     performanceTracker.logPerformance(config.mode, shouldRender);
+
+    // Set dynamic update interval on the chart renderer via state
+    setState(
+      'updateIntervalMs',
+      Number.isFinite(config.testInterval)
+        ? Math.max(0, Math.min(2000, config.testInterval))
+        : 0,
+    );
 
     // Create professional chart and text renderers
     const chartRenderer = new ChartRenderer(
@@ -498,7 +511,12 @@ async function render(ctx) {
 
     // Render frame if within time limits
     if (shouldRender) {
-      await chartRenderer.render(now, frametime || config.testInterval);
+      await chartRenderer.render(
+        now,
+        measuredFrametime > 0
+          ? measuredFrametime
+          : frametime || config.testInterval,
+      );
       await textRenderer.render(displayContent, now);
 
       // Push rendered frame
@@ -511,15 +529,13 @@ async function render(ctx) {
 
       // Schedule continuation ONLY if test not completed
       if (!getState('loopScheduled')) {
-        const delay = config.adaptiveTiming
+        const hasFixed = Number.isFinite(config.testInterval);
+        const delay = hasFixed
           ? Math.max(
-              CHART_CONFIG.MIN_DELAY_MS,
-              Math.min(
-                CHART_CONFIG.MAX_DELAY_MS,
-                (frametime || config.testInterval) + 10,
-              ),
+              V3_CONFIG.MIN_DELAY_MS,
+              Math.min(V3_CONFIG.MAX_DELAY_MS, config.testInterval),
             )
-          : config.testInterval;
+          : 0; // maximize performance when no fixed interval provided
 
         scheduleContinuation(ctx, config, delay);
       }
@@ -527,6 +543,7 @@ async function render(ctx) {
 
     // Update render timestamp
     setState('lastRender', now);
+    setState('lastRenderTs', now);
   } catch (error) {
     console.error(`❌ [PERF V3] Critical render error:`, error);
     // Attempt graceful recovery
@@ -636,8 +653,9 @@ class ChartRenderer {
   async updateChartData(currentTime, chartFrametime) {
     const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
     const lastChartUpdate = this.getState('lastChartUpdate') || currentTime;
-
-    if (currentTime - lastChartUpdate < CHART_CONFIG.UPDATE_INTERVAL_MS) {
+    const updateIntervalMs =
+      this.getState('updateIntervalMs') ?? CHART_CONFIG.UPDATE_INTERVAL_MS;
+    if (currentTime - lastChartUpdate < updateIntervalMs) {
       return;
     }
 
