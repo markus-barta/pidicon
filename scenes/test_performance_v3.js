@@ -842,7 +842,7 @@ class TextRenderer {
       // Draw labels in gray, values in white with exact positioning from v2
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'FRAMES ',
+        'Frames ',
         [0, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
@@ -859,7 +859,7 @@ class TextRenderer {
 
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'AVG:',
+        'Av:',
         [36, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
@@ -876,7 +876,7 @@ class TextRenderer {
 
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'LO:',
+        'Lo:',
         [0, 58],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
@@ -893,7 +893,7 @@ class TextRenderer {
 
       await drawTextRgbaAlignedWithBg(
         this.device,
-        'HI:',
+        'Hi:',
         [36, 58],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
