@@ -451,8 +451,8 @@ async function render(ctx) {
       );
       await textRenderer.render(displayContent, now);
 
-      // Check for test completion
-      if (chartRenderer.isComplete()) {
+      // Check for test completion (only for non-continuous modes)
+      if (config.mode !== TEST_MODES.CONTINUOUS && chartRenderer.isComplete()) {
         await handleTestCompletion(
           chartRenderer,
           textRenderer,
@@ -603,10 +603,15 @@ class ChartRenderer {
     const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
     const lastChartUpdate = this.getState('lastChartUpdate') || currentTime;
 
-    if (
-      currentTime - lastChartUpdate < CHART_CONFIG.UPDATE_INTERVAL_MS ||
-      chartX >= 64
-    ) {
+    if (currentTime - lastChartUpdate < CHART_CONFIG.UPDATE_INTERVAL_MS) {
+      return;
+    }
+
+    // For continuous mode, wrap around when chart reaches the end
+    if (chartX >= 64) {
+      // Reset chart position for continuous mode
+      this.setState('chartX', CHART_CONFIG.CHART_START_X);
+      this.setState('chartData', []); // Clear old data
       return;
     }
 
@@ -828,7 +833,7 @@ class TextRenderer {
       this.device,
       'COMPLETE',
       [32, 32],
-      CHART_CONFIG.TEXT_COLOR_COMPLETE,
+      [255, 255, 255, 127], // White with 50% transparency
       'center',
       true,
       BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
