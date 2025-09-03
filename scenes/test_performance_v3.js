@@ -447,7 +447,7 @@ async function render(ctx) {
         setState('loopTimer', null);
       }
       setState('loopScheduled', false);
-      setState('testCompleted', true);
+      setState('testCompleted', false); // allow immediate restart
       setState('framesRendered', 0);
       setState('maxFrames', null);
 
