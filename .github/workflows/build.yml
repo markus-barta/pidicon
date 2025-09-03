@@ -26,11 +26,13 @@ jobs:
         run: |
           echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
           echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          # Provide GIT_COMMIT_COUNT to the build script to avoid using run number
+          echo "GIT_COMMIT_COUNT=$(git rev-list --count HEAD)" >> $GITHUB_ENV
       - name: Generate version.json
         run: node scripts/build-version.js
         env:
           GITHUB_SHA: ${{ github.sha }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GIT_COMMIT_COUNT: ${{ env.GIT_COMMIT_COUNT }}
           BUILD_DATE: ${{ env.BUILD_DATE }}
       - name: Log version.json
         run: cat version.json

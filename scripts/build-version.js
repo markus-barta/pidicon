@@ -24,10 +24,10 @@ function getGitInfo(envVar, gitCommand, defaultValue = null) {
 try {
   // Environment variables (CI/CD provided)
   const envSha = process.env.GITHUB_SHA;
+  // IMPORTANT: buildNumber must reflect git commit count, not CI run number.
+  // Only honor GIT_COMMIT_COUNT if explicitly provided; otherwise read from git.
   const envCommitCount =
-    process.env.GIT_COMMIT_COUNT ||
-    process.env.GITHUB_RUN_NUMBER ||
-    process.env.BUILD_NUMBER;
+    process.env.GIT_COMMIT_COUNT || process.env.BUILD_NUMBER;
   const envBuildDate = process.env.BUILD_DATE;
   const envRefName = process.env.GITHUB_REF_NAME;
   const envRef = process.env.GITHUB_REF || '';
