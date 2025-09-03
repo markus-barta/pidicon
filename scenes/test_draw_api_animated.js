@@ -37,7 +37,14 @@ async function init() {
 
 async function cleanup(ctx) {
   // Cleanup animated draw API demo scene - clear animation state
-  const { setState } = ctx;
+  const { getState, setState } = ctx;
+
+  // Clear any existing timer
+  const existingTimer = getState('animationTimer');
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    setState('animationTimer', null);
+  }
 
   // Clear animation scheduling flag to stop any pending frames
   setState('animationScheduled', false);
@@ -59,20 +66,23 @@ async function render(ctx) {
   // Configuration
   const duration = state.get('duration') || ANIMATION_CONFIG.DEFAULT_DURATION;
   const startTime = getState('startTime') || Date.now();
-  // Use frameCount from state if provided (for animation continuation)
+  // Handle animation continuation messages
+  const isContinuation = Boolean(state.get('_isAnimationFrame'));
   let frameCount = getState('frameCount') || 0;
-  if (state.get('frameCount') !== undefined) {
+
+  // For continuation messages, use the frameCount from the payload
+  if (isContinuation && state.get('frameCount') !== undefined) {
     frameCount = state.get('frameCount');
     setState('frameCount', frameCount);
   }
 
   // Debug logging for frameCount
   console.log(
-    `🔍 [DEBUG] Frame count: ${frameCount}, state frameCount: ${state.get('frameCount')}, getState frameCount: ${getState('frameCount')}`,
+    `🔍 [DEBUG] Frame count: ${frameCount}, isContinuation: ${isContinuation}, state frameCount: ${state.get('frameCount')}`,
   );
 
-  // Initialize on first run
-  if (frameCount === 0) {
+  // Initialize on first run (not a continuation)
+  if (!isContinuation && frameCount === 0) {
     setState('startTime', startTime);
     setState('frameCount', 0);
     setState('animationScheduled', false);
@@ -139,7 +149,7 @@ async function render(ctx) {
       `🎬 [ANIMATION] Frame ${frameCount} took ${frameDuration}ms, scheduling next in ${adaptiveDelay}ms`,
     );
 
-    setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const mqtt = require('mqtt');
         const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
@@ -175,12 +185,21 @@ async function render(ctx) {
 
         client.on('error', (error) => {
           console.error(`❌ [ANIMATION] MQTT connection error:`, error.message);
+          setState('animationScheduled', false); // Reset flag on error
           client.end();
+        });
+
+        client.on('close', () => {
+          setState('animationScheduled', false); // Reset flag when connection closes
         });
       } catch (error) {
         console.error(`❌ [ANIMATION] Setup error:`, error);
+        setState('animationScheduled', false); // Reset flag on error
       }
     }, adaptiveDelay); // Dynamic timing based on actual frame performance
+
+    // Store timer for cleanup
+    setState('animationTimer', timer);
   }
 }
 
