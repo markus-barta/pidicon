@@ -240,6 +240,120 @@ class PerformanceTracker {
 }
 
 /**
+ * Handles continuation message processing
+ * @param {Object} state - Current state
+ * @param {Function} getState - State getter
+ * @param {Function} setState - State setter
+ */
+function handleContinuationMessages(state, getState, setState) {
+  if (state.get('_isLoopContinuation')) {
+    const existingTimer = getState('loopTimer');
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      setState('loopTimer', null);
+    }
+    setState('loopScheduled', false);
+    setState('_loopIteration', state.get('_loopIteration') || 0);
+  }
+}
+
+/**
+ * Handles fresh start initialization
+ * @param {Object} device - Device interface
+ * @param {Object} stateManager - State manager instance
+ * @param {Object} config - Test configuration
+ */
+async function handleFreshStart(device, stateManager, config) {
+  // Check if device is ready before proceeding
+  const deviceReady = await device.isReady();
+  if (!deviceReady) {
+    console.log(`⏳ [PERF V3] Device not ready, waiting...`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Try again after delay
+    const stillNotReady = !(await device.isReady());
+    if (stillNotReady) {
+      console.warn(`⚠️ [PERF V3] Device still not ready, proceeding anyway`);
+    }
+  }
+
+  try {
+    await device.clear();
+    stateManager.reset();
+
+    console.log(
+      `🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
+        `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`,
+    );
+  } catch (error) {
+    console.error(
+      `❌ [PERF V3] Failed to clear device on fresh start:`,
+      error.message,
+    );
+    // Continue anyway, the device might recover
+  }
+}
+
+/**
+ * Handles test completion
+ * @param {Object} chartRenderer - Chart renderer instance
+ * @param {Object} textRenderer - Text renderer instance
+ * @param {Object} performanceTracker - Performance tracker instance
+ * @param {Object} displayContent - Display content
+ * @param {Object} device - Device interface
+ * @param {Function} publishOk - Success callback
+ * @param {Function} getState - State getter
+ * @param {Function} setState - State setter
+ * @param {number} frametime - Current frame time
+ * @param {number} now - Current timestamp
+ */
+async function handleTestCompletion(
+  chartRenderer,
+  textRenderer,
+  performanceTracker,
+  displayContent,
+  device,
+  publishOk,
+  getState,
+  setState,
+  frametime,
+  now,
+) {
+  // Update display content to show completion time
+  const finalMetrics = performanceTracker.getMetrics();
+  const lastFrametime = frametime || finalMetrics.avgFrametime;
+  const completionContent = {
+    modeText: displayContent.modeText,
+    timingText: `${Math.round(lastFrametime)}ms`,
+    fpsText: `${finalMetrics.fps} FPS`,
+    frametime: lastFrametime,
+    metrics: finalMetrics,
+  };
+
+  await textRenderer.render(completionContent, now);
+  await textRenderer.renderCompletion();
+  await device.push(SCENE_NAME, publishOk);
+
+  const metrics = performanceTracker.getMetrics();
+  console.log(
+    `🏁 [PERF V3] Test completed | ` +
+      `Samples: ${metrics.sampleCount} | ` +
+      `Avg FT: ${metrics.avgFrametime.toFixed(1)}ms | ` +
+      `FPS: ${metrics.fps}`,
+  );
+
+  setState('testCompleted', true);
+  setState('completionTime', now);
+
+  // Clean up timers
+  const existingTimer = getState('loopTimer');
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+    setState('loopTimer', null);
+  }
+  setState('loopScheduled', false);
+}
+
+/**
  * Main render function with professional architecture
  * @param {Object} ctx - Render context
  * @param {Object} ctx.device - Device interface
@@ -268,7 +382,6 @@ async function render(ctx) {
 
     // Initialize advanced renderers if features are enabled
     let gradientRenderer = null;
-
     if (ADVANCED_FEATURES.GRADIENT_RENDERING) {
       gradientRenderer = createGradientRenderer(device);
     }
@@ -282,47 +395,11 @@ async function render(ctx) {
     };
 
     // Handle continuation messages
-    if (state.get('_isLoopContinuation')) {
-      const existingTimer = getState('loopTimer');
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        setState('loopTimer', null);
-      }
-      setState('loopScheduled', false);
-      setState('_loopIteration', state.get('_loopIteration') || 0);
-    }
+    handleContinuationMessages(state, getState, setState);
 
     // Fresh start logic with device readiness check
     if (stateManager.isFreshStart(state)) {
-      // Check if device is ready before proceeding
-      const deviceReady = await device.isReady();
-      if (!deviceReady) {
-        console.log(`⏳ [PERF V3] Device not ready, waiting...`);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        // Try again after delay
-        const stillNotReady = !(await device.isReady());
-        if (stillNotReady) {
-          console.warn(
-            `⚠️ [PERF V3] Device still not ready, proceeding anyway`,
-          );
-        }
-      }
-
-      try {
-        await device.clear();
-        stateManager.reset();
-
-        console.log(
-          `🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
-            `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`,
-        );
-      } catch (error) {
-        console.error(
-          `❌ [PERF V3] Failed to clear device on fresh start:`,
-          error.message,
-        );
-        // Continue anyway, the device might recover
-      }
+      await handleFreshStart(device, stateManager, config);
     }
 
     const startTime = getState('startTime');
@@ -376,39 +453,18 @@ async function render(ctx) {
 
       // Check for test completion
       if (chartRenderer.isComplete()) {
-        // Update display content to show completion time
-        const finalMetrics = performanceTracker.getMetrics();
-        const lastFrametime = frametime || finalMetrics.avgFrametime;
-        const completionContent = {
-          modeText: displayContent.modeText,
-          timingText: `${Math.round(lastFrametime)}ms`,
-          fpsText: `${finalMetrics.fps} FPS`,
-          frametime: lastFrametime,
-          metrics: finalMetrics,
-        };
-
-        await textRenderer.render(completionContent, now);
-        await textRenderer.renderCompletion();
-        await device.push(SCENE_NAME, publishOk);
-
-        const metrics = performanceTracker.getMetrics();
-        console.log(
-          `🏁 [PERF V3] Test completed | ` +
-            `Samples: ${metrics.sampleCount} | ` +
-            `Avg FT: ${metrics.avgFrametime.toFixed(1)}ms | ` +
-            `FPS: ${metrics.fps}`,
+        await handleTestCompletion(
+          chartRenderer,
+          textRenderer,
+          performanceTracker,
+          displayContent,
+          device,
+          publishOk,
+          getState,
+          setState,
+          frametime,
+          now,
         );
-
-        setState('testCompleted', true);
-        setState('completionTime', now);
-
-        // Clean up timers
-        const existingTimer = getState('loopTimer');
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-          setState('loopTimer', null);
-        }
-        setState('loopScheduled', false);
         return;
       }
 
