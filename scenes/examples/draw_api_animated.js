@@ -11,7 +11,7 @@
 const name = 'draw_api_animated';
 
 // Import shared utilities
-const { validateSceneContext } = require('../lib/performance-utils');
+const { validateSceneContext } = require('../../lib/performance-utils');
 
 // Animation constants
 const ANIMATION_CONFIG = {
