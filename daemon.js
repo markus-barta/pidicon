@@ -28,6 +28,7 @@ const {
 const logger = require('./lib/logger');
 const { softReset } = require('./lib/pixoo-http');
 const SceneManager = require('./lib/scene-manager');
+const versionInfo = require('./version.json');
 
 // Create a logger instance
 
@@ -81,7 +82,10 @@ if (fs.existsSync(exampleScenesDir)) {
 
 const startTs = new Date().toLocaleString('de-AT');
 logger.info(`**************************************************`);
-logger.info(`Starting Pixoo Daemon at [${startTs}] ...`);
+logger.info(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
+logger.info(
+  `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`,
+);
 logger.info(`**************************************************`);
 
 // Reference to available commands documentation
