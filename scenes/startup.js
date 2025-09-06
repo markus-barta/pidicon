@@ -1,7 +1,12 @@
-// Startup Scene - Shows deployment information on daemon start
-// MQTT Commands:
-// {"scene":"startup"} - Show startup info
-// @author: Sonic + Cursor + Markus Barta (mba)
+/**
+ * @fileoverview Startup Scene
+ * @description Displays deployment and version information.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
 
 const name = 'startup';
 const logger = require('../lib/logger');

@@ -1,8 +1,12 @@
-// Empty Scene - Black screen (device "off" state)
-// MQTT Commands:
-// {"scene":"empty"}                    - Turn screen off (black)
-// {"scene":"empty","clear":true}       - Clear screen explicitly (same result)
-// @author: Sonic + Cursor + Markus Barta (mba)
+/**
+ * @fileoverview Empty Scene
+ * @description Clears the screen.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
 
 const name = 'empty';
 

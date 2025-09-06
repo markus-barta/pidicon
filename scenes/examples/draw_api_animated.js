@@ -1,20 +1,14 @@
-// Animated Draw API Demo Scene - Moving graphics with alpha blending
-// Features:
-// - Moving geometric shapes with shadows
-// - Animated text with alpha trails
-// - Sweeping lines and particles
-// - Layered animations at different speeds
-// - Alpha blending and transparency effects
-// - Runs for ~80 frames with adaptive timing (max 5fps, measures actual frame time)
+/**
+ * @fileoverview Draw API Animated Example
+ * @description Demonstrates various animation techniques using the drawing API.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
 
-// MQTT Commands:
-// {"scene":"test_draw_api_animated"}                           - Run the animated demo
-// {"scene":"test_draw_api_animated","clear":true}              - Clear screen before starting
-// {"scene":"test_draw_api_animated","duration":120}            - Custom duration in frames
-
-// @author: Sonic + Cursor + Markus Barta (mba)
-
-const name = 'test_draw_api_animated';
+const name = 'draw_api_animated';
 
 // Import shared utilities
 const { validateSceneContext } = require('../lib/performance-utils');

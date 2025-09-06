@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Performance Test V2
+ * @description A scene for performance benchmarking.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
+
 // scenes/test_performance_v2.js
 // Performance testing scene 2.0 with incremental rendering
 // Features:
