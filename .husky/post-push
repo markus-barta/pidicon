@@ -1,7 +1,17 @@
 #!/usr/bin/env sh
-# no-op placeholder to avoid VS Code Git 'file not found' warnings for .husky/post-push
-# this hook is intentionally empty and not installed; pre-push is used for deployment triggers
-exit 0
+set -eu
 
-#!/usr/bin/env sh
-#ssh mba@miniserver24 bash -lc 'prev=$(docker inspect -f "{{.Image}}" pixoo-daemon 2>/dev/null || echo unknown); docker compose -f /home/mba/docker/docker-compose.yml up -d watchtower-pixoo; end=$((SECONDS+300)); while [ $SECONDS -lt $end ]; do cur=$(docker inspect -f "{{.Image}}" pixoo-daemon 2>/dev/null || echo unknown); if [ "$cur" != "$prev" ] && [ "$cur" != "unknown" ]; then docker compose -f /home/mba/docker/docker-compose.yml stop watchtower-pixoo; exit 0; fi; sleep 5; done; docker compose -f /home/mba/docker/docker-compose.yml stop watchtower-pixoo'
+REMOTE="mba@miniserver24"
+REMOTE_SCRIPT="/home/mba/scripts/watchtower-pixoo-run.sh"
+REMOTE_COMPOSE="/home/mba/docker/docker-compose.yml"
+SSH="ssh -o BatchMode=yes -o ConnectTimeout=5"
+
+# Non-blocking: warn-only checks
+$SSH "$REMOTE" 'echo OK_SSH >/dev/null' >/dev/null 2>&1 || exit 0
+$SSH "$REMOTE" "test -x $REMOTE_SCRIPT" >/dev/null 2>&1 || exit 0
+$SSH "$REMOTE" "test -f $REMOTE_COMPOSE" >/dev/null 2>&1 || exit 0
+
+# Fire-and-forget on server; log to file
+$SSH "$REMOTE" "nohup $REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5 >> /home/mba/scripts/watchtower-pixoo-run.log 2>&1 </dev/null &" >/dev/null 2>&1 || true
+
+exit 0

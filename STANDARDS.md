@@ -108,7 +108,7 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 - **Scene Interface**: Scenes must export `name` and `render`. `init` and
   `cleanup` are optional. **Always** call `await device.push()` to display
-  changes.
+  changes, but minimize its use as it is a time-intensive operation.
 - **Shell Scripts**: Server-side scripts **must** use `#!/usr/bin/env bash` for
   portability. Use `fish` syntax for local development.
 - **Testing Locally**: Local testing is encouraged, but be mindful that the device
