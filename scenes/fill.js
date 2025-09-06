@@ -19,11 +19,12 @@ function init() {
   logger.debug(`🚀 [FILL] Scene initialized`);
 }
 
-async function render(device, context) {
-  // Get color from context state (MQTT payload) or scene state
+async function render(context) {
+  const { device, publishOk, payload, getState } = context;
+
+  // Get color from MQTT payload or scene state
   const defaultColor = [0, 0, 0, 255]; // Black
-  let color =
-    context.payload?.color || context.getState('color') || defaultColor;
+  let color = payload?.color || getState?.('color') || defaultColor;
 
   // Validate color format using shared utility
   if (!isValidColor(color)) {
@@ -36,14 +37,14 @@ async function render(device, context) {
 
   // Fill entire screen with the specified color
   try {
-    await device.fill(color);
+    await device.fillRectangleRgba([0, 0], [64, 64], color);
   } catch (err) {
     logger.error(`Error in fill scene: ${err}`);
     return;
   }
 
   // Push the filled frame to the device
-  await device.push(name, context.publishOk);
+  await device.push(name, publishOk);
 
   logger.debug(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
 }
