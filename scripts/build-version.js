@@ -25,9 +25,9 @@ function buildVersionInfo() {
   try {
     // Get Git information with fallbacks for CI environment
     const gitCommit =
-      process.env.GITHUB_SHA?.substring(0, 7) ||
-      getGitInfo('git rev-parse --short HEAD') ||
-      'unknown';
+      (
+        process.env.GITHUB_SHA || getGitInfo('git rev-parse --short HEAD')
+      ).substring(0, 7) || 'unknown';
     const gitCommitFull =
       process.env.GITHUB_SHA || getGitInfo('git rev-parse HEAD') || 'unknown';
     const gitCommitCount =
