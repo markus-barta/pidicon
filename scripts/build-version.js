@@ -11,26 +11,37 @@ const path = require('path');
 
 const logger = require('../lib/logger');
 
+function getGitInfo(command) {
+  try {
+    return execSync(command, { encoding: 'utf8', stdio: 'pipe' }).trim();
+  } catch {
+    logger.warn(`Git command failed: ${command}`);
+    return '';
+  }
+}
+
 function buildVersionInfo() {
   logger.info('Building version information...');
   try {
-    // Get Git information
-    const gitCommit = execSync('git rev-parse --short HEAD', {
-      encoding: 'utf8',
-    }).trim();
-    const gitCommitFull = execSync('git rev-parse HEAD', {
-      encoding: 'utf8',
-    }).trim();
-    const gitCommitCount = execSync('git rev-list --count HEAD', {
-      encoding: 'utf8',
-    }).trim();
-    const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
-      encoding: 'utf8',
-    }).trim();
-    const gitTag = execSync(
-      'git describe --tags --abbrev=0 2>/dev/null || echo ""',
-      { encoding: 'utf8' },
-    ).trim();
+    // Get Git information with fallbacks for CI environment
+    const gitCommit =
+      process.env.GITHUB_SHA?.substring(0, 7) ||
+      getGitInfo('git rev-parse --short HEAD') ||
+      'unknown';
+    const gitCommitFull =
+      process.env.GITHUB_SHA || getGitInfo('git rev-parse HEAD') || 'unknown';
+    const gitCommitCount =
+      process.env.GIT_COMMIT_COUNT ||
+      getGitInfo('git rev-list --count HEAD') ||
+      '0';
+    const gitBranch =
+      process.env.GITHUB_REF_NAME ||
+      getGitInfo('git rev-parse --abbrev-ref HEAD') ||
+      'unknown';
+    const gitTag =
+      (process.env.GITHUB_REF?.startsWith('refs/tags/')
+        ? process.env.GITHUB_REF.split('/').slice(2).join('/')
+        : getGitInfo('git describe --tags --abbrev=0 2>/dev/null')) || '';
 
     // Read package.json for semantic version
     const packageJsonPath = path.join(__dirname, '..', 'package.json');
