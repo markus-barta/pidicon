@@ -2,6 +2,11 @@ const { exec } = require('child_process');
 const assert = require('node:assert');
 const test = require('node:test');
 
+test.after(() => {
+  // Force exit after all tests are done to prevent hanging
+  process.exit(0);
+});
+
 test('Daemon startup and build number test', (t, done) => {
   const daemonProcess = exec('node daemon.js');
   let output = '';
@@ -12,6 +17,7 @@ test('Daemon startup and build number test', (t, done) => {
     isDone = true;
     daemonProcess.kill();
     done(err);
+    t.end(); // Signal test completion
   };
 
   const onData = (data) => {
