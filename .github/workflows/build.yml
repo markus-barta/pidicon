@@ -73,6 +73,7 @@ jobs:
           build-args: |
             GITHUB_SHA=${{ github.sha }}
             GITHUB_REF=${{ github.ref }}
+            GIT_COMMIT_COUNT=${{ env.GIT_COMMIT_COUNT }}
             BUILD_DATE=${{ env.BUILD_DATE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
