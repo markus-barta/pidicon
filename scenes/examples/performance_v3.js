@@ -1,10 +1,13 @@
 /**
  * @fileoverview Performance Test V3
- * @description A scene for performance benchmarking.
+ * @description A scene that renders a performance chart on a Pixoo device.
+ * It is designed to be highly configurable and performant, leveraging
+ * advanced rendering techniques to minimize the number of pixels sent to the
+ * device.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 

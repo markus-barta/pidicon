@@ -1,10 +1,12 @@
 /**
  * @fileoverview Draw API Animated Example
- * @description Demonstrates various animation techniques using the drawing API.
+ * @description An example scene that demonstrates the animation capabilities
+ * of the Pixoo API. It cycles through various drawing commands to create a
+ * dynamic visual effect.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 

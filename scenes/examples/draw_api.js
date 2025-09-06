@@ -1,10 +1,10 @@
 /**
  * @fileoverview Draw API Example
- * @description Demonstrates all available drawing primitives.
- * @mqtt
- * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api"}'
+ * @description A simple example scene to test the draw API. This scene provides a
+ * playground for testing the various drawing commands available in the Pixoo API.
+ * It is intended for development and debugging purposes.
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 

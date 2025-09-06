@@ -1,10 +1,12 @@
 /**
  * @fileoverview Fill Scene
- * @description Fills the screen with a solid color.
+ * @description A simple scene that fills the entire screen with a solid color.
+ * The color can be specified via an MQTT message. If no color is provided, it
+ * defaults to black.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill", "color":[255,0,0,255]}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 
