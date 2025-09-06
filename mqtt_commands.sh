@@ -1,7 +1,8 @@
-#!/bin/bash
-# Pixoo Commands Display Script
-# Shows the available commands from PIXOO_COMMANDS.md
-# @author: Sonic + Cursor + Markus Barta (mba)
+#!/usr/bin/env bash
+# Common MQTT commands for Pixoo Daemon
+# @version 1.0.0
+# @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
+# @license MIT
 
 echo "🚀 Pixoo Performance Test Commands"
 echo "=================================="

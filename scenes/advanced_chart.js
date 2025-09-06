@@ -1,10 +1,12 @@
 /**
  * @fileoverview Advanced Charting Module
- * @description Renders an advanced, dynamic line chart.
+ * @description Renders a highly customizable chart with advanced features like
+ * dynamic scaling, multiple series, and configurable visual elements. This scene
+ * is designed for performance and flexibility.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"advanced_chart"}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 

@@ -1,10 +1,12 @@
 /**
  * @fileoverview Performance Test V2
- * @description A scene for performance benchmarking.
+ * @description A scene for performance benchmarking, demonstrating various
+ * rendering techniques and their impact on performance. This scene is intended
+ * for development and testing purposes.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 
@@ -25,7 +27,7 @@
 // {"scene":"test_performance_v2","mode":"sweep"}                                       - Sweep mode through different intervals
 // {"scene":"test_performance_v2","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
 
-// @author: Sonic + Cursor + Markus Barta (mba)
+// @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
 
 // Import shared performance utilities
 const {

@@ -38,7 +38,10 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 ### **Documentation**
 
 - **JSDoc**: Document all public functions and classes. Explain the _purpose_
-  and _intent_ of the code.
+  and _intent_ of the code. The `@author` tag should credit both the human
+  developer and any AI assistance. The recommended format is:
+  `[Developer Name] ([developer initials]) with assistance from [AI Tool Name] ([Selected AI Model])`
+  (e.g., `mba (Markus Barta) with assistance from Cursor AI`).
 - **READMEs**: Every major directory (`/lib`, `/scenes`) must have a `README.md`
   explaining its purpose and architecture.
 

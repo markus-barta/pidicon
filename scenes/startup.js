@@ -1,10 +1,12 @@
 /**
  * @fileoverview Startup Scene
- * @description Displays deployment and version information.
+ * @description This scene is displayed on startup and shows the current build
+ * number and a QR code with the device's IP address. It is designed to provide
+ * immediate feedback on the device's status and network configuration.
  * @mqtt
  * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
  * @version 1.0.0
- * @author Sonic + Cursor + Markus Barta (mba)
+ * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 
