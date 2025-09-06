@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including dev for build script)
+RUN npm ci
 
 # Copy source code into the /app directory inside the Docker image.
 COPY . .
@@ -22,6 +22,12 @@ ENV GITHUB_SHA=${GITHUB_SHA}
 ENV GITHUB_REF=${GITHUB_REF}
 ENV BUILD_DATE=${BUILD_DATE}
 ENV IMAGE_TAG=${GITHUB_REF#refs/heads/}
+
+# Run the build script to generate version.json
+RUN npm run build:version
+
+# Prune dev dependencies
+RUN npm prune --production
 
 # Expose any ports if needed (your daemon uses host networking)
 # EXPOSE 3000

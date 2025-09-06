@@ -18,27 +18,23 @@
 
 'use strict';
 
-const SCENE_NAME = 'test_performance_v3';
-
-// Import external dependencies
+const name = 'performance_v3';
 const mqtt = require('mqtt');
 
-// Import internal modules
-const deviceAdapter = require('../lib/device-adapter');
-const { createGradientRenderer } = require('../lib/gradient-renderer');
+const deviceAdapter = require('../../lib/device-adapter');
 const {
-  CHART_CONFIG,
+  CHART_CONFIG_PERFORMANCE,
   getPerformanceColor,
-} = require('../lib/performance-utils');
+} = require('../../lib/performance-utils');
 const {
   drawTextRgbaAlignedWithBg,
   drawLine,
   clearRectangle,
   BACKGROUND_COLORS,
-} = require('../lib/rendering-utils');
+} = require('../../lib/rendering-utils');
 
 async function init() {
-  // Initialize test performance v3 scene - nothing special needed
+  // Initialization logic
   console.log(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
 }
 
@@ -84,7 +80,6 @@ const V3_CONFIG = Object.freeze({
   ADAPTIVE_OFFSET_MS: 5,
 });
 
-// getPerformanceColor function is now imported from performance-utils
 /**
  * Professional State Manager for performance test
  * @class
@@ -131,7 +126,7 @@ class PerformanceTestState {
     const resetValues = {
       startTime: Date.now(),
       chartData: [],
-      chartX: CHART_CONFIG.CHART_START_X,
+      chartX: CHART_CONFIG_PERFORMANCE.CHART_START_X,
       lastChartUpdate: Date.now(),
       frameTimes: [],
       perfStats: { sum: 0, count: 0, min: Infinity, max: 0 },
@@ -180,12 +175,12 @@ class PerformanceTestState {
 
     // Clamp frametime to chart bounds to avoid outliers
     const clampedFrametime = Math.min(
-      CHART_CONFIG.MAX_FRAMETIME,
-      Math.max(CHART_CONFIG.MIN_FRAMETIME, frametime),
+      CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
+      Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, frametime),
     );
 
     frameTimes.push(clampedFrametime);
-    if (frameTimes.length > CHART_CONFIG.MAX_FRAME_SAMPLES) {
+    if (frameTimes.length > CHART_CONFIG_PERFORMANCE.MAX_FRAME_SAMPLES) {
       const removed = frameTimes.shift();
       perfStats.sum -= removed;
       perfStats.count--;
@@ -216,17 +211,17 @@ class PerformanceTestState {
     const avg = perfStats.count > 0 ? perfStats.sum / perfStats.count : 0;
     const avgInt = Math.round(
       Math.min(
-        CHART_CONFIG.MAX_FRAMETIME,
-        Math.max(CHART_CONFIG.MIN_FRAMETIME, avg),
+        CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
+        Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, avg),
       ),
     );
     const minInt = Math.round(
       perfStats.min === Infinity
         ? 0
-        : Math.max(CHART_CONFIG.MIN_FRAMETIME, perfStats.min),
+        : Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, perfStats.min),
     );
     const maxInt = Math.round(
-      Math.min(CHART_CONFIG.MAX_FRAMETIME, perfStats.max),
+      Math.min(CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME, perfStats.max),
     );
 
     return {
@@ -426,7 +421,7 @@ async function render(ctx) {
     // Initialize advanced renderers if features are enabled
     let gradientRenderer = null;
     if (ADVANCED_FEATURES.GRADIENT_RENDERING) {
-      gradientRenderer = createGradientRenderer(device);
+      // This line was removed as per the edit hint
     }
 
     // Extract configuration with validation
@@ -514,7 +509,7 @@ async function render(ctx) {
       await textRenderer.render(displayContent, renderStart);
 
       // Push rendered frame and measure actual frame time
-      await device.push(SCENE_NAME, publishOk);
+      await device.push(name, publishOk);
       // stop removed
 
       const frameEnd = Date.now();
@@ -538,7 +533,7 @@ async function render(ctx) {
           true,
           BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
         );
-        await device.push(SCENE_NAME, publishOk);
+        await device.push(name, publishOk);
         return; // Test completed
       }
 
@@ -564,7 +559,7 @@ async function render(ctx) {
         setState('testCompleted', true);
       }
       if (typeof publishOk === 'function') {
-        publishOk(device?.host || 'unknown', SCENE_NAME, 0, 0, {
+        publishOk(device?.host || 'unknown', name, 0, 0, {
           pushes: 0,
           skipped: 0,
           errors: 1,
@@ -625,32 +620,34 @@ class ChartRenderer {
     await clearRectangle(
       this.device,
       0,
-      CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT,
+      CHART_CONFIG_PERFORMANCE.START_Y - CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
       1,
-      CHART_CONFIG.RANGE_HEIGHT,
+      CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
     );
     await clearRectangle(
       this.device,
-      CHART_CONFIG.CHART_START_X,
-      CHART_CONFIG.START_Y,
-      64 - CHART_CONFIG.CHART_START_X,
+      CHART_CONFIG_PERFORMANCE.CHART_START_X,
+      CHART_CONFIG_PERFORMANCE.START_Y,
+      64 - CHART_CONFIG_PERFORMANCE.CHART_START_X,
       1,
     );
 
     // Batch draw Y-axis
     for (
-      let y = CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT;
-      y < CHART_CONFIG.START_Y;
+      let y =
+        CHART_CONFIG_PERFORMANCE.START_Y -
+        CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT;
+      y < CHART_CONFIG_PERFORMANCE.START_Y;
       y++
     ) {
-      this.device.drawPixelRgba([0, y], CHART_CONFIG.AXIS_COLOR);
+      this.device.drawPixelRgba([0, y], CHART_CONFIG_PERFORMANCE.AXIS_COLOR);
     }
 
     // Batch draw X-axis
-    for (let x = CHART_CONFIG.CHART_START_X; x < 64; x++) {
+    for (let x = CHART_CONFIG_PERFORMANCE.CHART_START_X; x < 64; x++) {
       this.device.drawPixelRgba(
-        [x, CHART_CONFIG.START_Y],
-        CHART_CONFIG.AXIS_COLOR,
+        [x, CHART_CONFIG_PERFORMANCE.START_Y],
+        CHART_CONFIG_PERFORMANCE.AXIS_COLOR,
       );
     }
 
@@ -663,7 +660,8 @@ class ChartRenderer {
    * @param {number} chartFrametime - Frame time value
    */
   async updateChartData(currentTime, chartFrametime) {
-    const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
+    const chartX =
+      this.getState('chartX') || CHART_CONFIG_PERFORMANCE.CHART_START_X;
     const lastChartUpdate = this.getState('lastChartUpdate') || currentTime;
     const updateIntervalMs = this.getState('updateIntervalMs');
     if (
@@ -677,31 +675,36 @@ class ChartRenderer {
     if (chartX >= 63) {
       // Clear the vertical line at the current position before wrapping
       await this.device.drawRectangleRgba(
-        [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT],
-        [1, CHART_CONFIG.RANGE_HEIGHT],
-        CHART_CONFIG.BG_COLOR, // Black background
+        [
+          chartX,
+          CHART_CONFIG_PERFORMANCE.START_Y -
+            CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
+        ],
+        [1, CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT],
+        CHART_CONFIG_PERFORMANCE.BG_COLOR, // Black background
       );
 
       // Reset chart position for continuous mode
-      this.setState('chartX', CHART_CONFIG.CHART_START_X);
+      this.setState('chartX', CHART_CONFIG_PERFORMANCE.CHART_START_X);
       this.setState('chartData', []); // Clear old data
       return;
     }
 
     // Calculate chart position
     const normalizedFrametime = Math.min(
-      CHART_CONFIG.MAX_FRAMETIME,
-      Math.max(CHART_CONFIG.MIN_FRAMETIME, chartFrametime),
+      CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
+      Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, chartFrametime),
     );
     const ratio =
-      (normalizedFrametime - CHART_CONFIG.MIN_FRAMETIME) /
-      (CHART_CONFIG.MAX_FRAMETIME - CHART_CONFIG.MIN_FRAMETIME);
-    const yOffset = Math.round(ratio * CHART_CONFIG.RANGE_HEIGHT);
-    const yPos = CHART_CONFIG.START_Y - 1 - yOffset;
+      (normalizedFrametime - CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME) /
+      (CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME -
+        CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME);
+    const yOffset = Math.round(ratio * CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT);
+    const yPos = CHART_CONFIG_PERFORMANCE.START_Y - 1 - yOffset;
 
     // Add data point with memory management
     let chartData = this.getState('chartData') || [];
-    if (chartData.length >= CHART_CONFIG.MAX_CHART_POINTS) {
+    if (chartData.length >= CHART_CONFIG_PERFORMANCE.MAX_CHART_POINTS) {
       chartData.shift(); // Remove oldest point
     }
 
@@ -710,9 +713,13 @@ class ChartRenderer {
 
     // Clear the current line position before drawing new value
     await this.device.drawRectangleRgba(
-      [chartX, CHART_CONFIG.START_Y - CHART_CONFIG.RANGE_HEIGHT],
-      [1, CHART_CONFIG.RANGE_HEIGHT],
-      CHART_CONFIG.BG_COLOR, // Black background
+      [
+        chartX,
+        CHART_CONFIG_PERFORMANCE.START_Y -
+          CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
+      ],
+      [1, CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT],
+      CHART_CONFIG_PERFORMANCE.BG_COLOR, // Black background
     );
 
     // Draw line if we have at least 2 points
@@ -735,7 +742,8 @@ class ChartRenderer {
    * @returns {boolean} True if chart has all data points
    */
   isComplete() {
-    const chartX = this.getState('chartX') || CHART_CONFIG.CHART_START_X;
+    const chartX =
+      this.getState('chartX') || CHART_CONFIG_PERFORMANCE.CHART_START_X;
     return chartX >= 63;
   }
 }
@@ -784,7 +792,7 @@ class TextRenderer {
         this.device,
         modeText,
         [2, 2],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         true,
       );
@@ -796,7 +804,7 @@ class TextRenderer {
         this.device,
         combinedText,
         [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         true,
       );
@@ -805,7 +813,7 @@ class TextRenderer {
         this.device,
         timingText,
         [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         true,
       );
@@ -814,7 +822,7 @@ class TextRenderer {
         this.device,
         fpsText,
         [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         true,
       );
@@ -831,7 +839,7 @@ class TextRenderer {
       await this.device.drawRectangleRgba(
         [0, 51],
         [64, 13],
-        CHART_CONFIG.BG_COLOR,
+        CHART_CONFIG_PERFORMANCE.BG_COLOR,
       );
 
       // Draw labels in gray, values in white with exact positioning from v2
@@ -839,7 +847,7 @@ class TextRenderer {
         this.device,
         'Frame:',
         [0, 52],
-        CHART_CONFIG.TEXT_COLOR_STATS,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
         'left',
         false,
       );
@@ -848,7 +856,7 @@ class TextRenderer {
         this.device,
         totalFrames,
         [25, 52],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         false,
       );
@@ -857,7 +865,7 @@ class TextRenderer {
         this.device,
         'Av:',
         [36, 52],
-        CHART_CONFIG.TEXT_COLOR_STATS,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
         'left',
         false,
       );
@@ -865,7 +873,7 @@ class TextRenderer {
         this.device,
         String(Math.round(metrics.avgFrametime)),
         [48, 52],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         false,
       );
@@ -874,7 +882,7 @@ class TextRenderer {
         this.device,
         'Lo:',
         [0, 58],
-        CHART_CONFIG.TEXT_COLOR_STATS,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
         'left',
         false,
       );
@@ -882,7 +890,7 @@ class TextRenderer {
         this.device,
         Math.round(metrics.minFrametime).toString(),
         [12, 58],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         false,
       );
@@ -891,7 +899,7 @@ class TextRenderer {
         this.device,
         'Hi:',
         [36, 58],
-        CHART_CONFIG.TEXT_COLOR_STATS,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
         'left',
         false,
       );
@@ -899,7 +907,7 @@ class TextRenderer {
         this.device,
         Math.round(metrics.maxFrametime).toString(),
         [48, 58],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
         'left',
         false,
       );
@@ -983,14 +991,14 @@ function scheduleContinuation(ctx, config, delay) {
       const client = mqtt.connect(brokerUrl, {
         username: process.env.MOSQITTO_USER_MS24,
         password: process.env.MOSQITTO_PASS_MS24,
-        connectTimeout: CHART_CONFIG.MQTT_TIMEOUT_MS,
+        connectTimeout: CHART_CONFIG_PERFORMANCE.MQTT_TIMEOUT_MS,
         reconnectPeriod: 0,
       });
 
       client.on('connect', () => {
         try {
           const payload = JSON.stringify({
-            scene: SCENE_NAME,
+            scene: name,
             mode: config.mode,
             adaptiveTiming: config.adaptiveTiming,
             interval: config.testInterval,
@@ -1048,4 +1056,4 @@ function scheduleContinuation(ctx, config, delay) {
   setState('loopScheduled', true);
 }
 
-module.exports = { name: SCENE_NAME, render, init, cleanup };
+module.exports = { name, render, init, cleanup };

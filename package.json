@@ -3,7 +3,6 @@
   "version": "1.0.4",
   "main": "daemon.js",
   "scripts": {
-    "prestart": "node scripts/build-version.js || true",
     "start": "node daemon.js",
     "build:version": "node scripts/build-version.js",
     "lint": "eslint .",

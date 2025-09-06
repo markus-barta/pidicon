@@ -11,7 +11,7 @@
 const name = 'draw_api';
 
 // Import shared utilities
-const { validateSceneContext } = require('../lib/performance-utils');
+const { validateSceneContext } = require('../../lib/performance-utils');
 
 async function init() {
   // Initialize test draw API scene - nothing special needed
