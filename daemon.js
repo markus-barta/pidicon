@@ -4,6 +4,10 @@
 // - Routes each state update to the selected scene renderer
 // @author: Sonic + Cursor + Markus Barta (mba)
 
+const fs = require('fs');
+const mqtt = require('mqtt');
+const path = require('path');
+
 console.log(
   '****************************************************************************************************',
 );
@@ -12,11 +16,6 @@ console.log(
   '****************************************************************************************************',
 );
 
-const fs = require('fs');
-const mqtt = require('mqtt');
-const path = require('path');
-
-console.log('📦 [DAEMON] Loading dependencies...');
 const DeploymentTracker = require('./lib/deployment-tracker');
 console.log('✅ [DAEMON] DeploymentTracker loaded');
 const {
@@ -26,11 +25,11 @@ const {
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
-console.log('✅ [DAEMON] device-adapter loaded');
+const logger = require('./lib/logger');
 const { softReset } = require('./lib/pixoo-http');
-console.log('✅ [DAEMON] pixoo-http loaded');
 const SceneManager = require('./lib/scene-manager');
-console.log('✅ [DAEMON] SceneManager loaded');
+
+// Create a logger instance
 
 // MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
 const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
@@ -57,42 +56,74 @@ fs.readdirSync(path.join(__dirname, 'scenes')).forEach((file) => {
       const scene = require(path.join(__dirname, 'scenes', file));
       sceneManager.registerScene(scene.name, scene);
     } catch (error) {
-      console.error(`❌ Failed to load scene ${file}:`, error.message);
+      logger.error(`Failed to load scene ${file}:`, { error: error.message });
     }
   }
 });
 
+// Also load scenes from ./scenes/examples
+const exampleScenesDir = path.join(__dirname, 'scenes', 'examples');
+if (fs.existsSync(exampleScenesDir)) {
+  fs.readdirSync(exampleScenesDir).forEach((file) => {
+    if (file.endsWith('.js')) {
+      try {
+        const scene = require(path.join(exampleScenesDir, file));
+        sceneManager.registerScene(scene.name, scene);
+        logger.info(`Loaded example scene: ${scene.name}`);
+      } catch (error) {
+        logger.error(`Failed to load example scene ${file}:`, {
+          error: error.message,
+        });
+      }
+    }
+  });
+}
+
 const startTs = new Date().toLocaleString('de-AT');
-console.log(`**************************************************`);
-console.log(`Starting Pixoo Daemon at [${startTs}] ...`);
-console.log(`**************************************************`);
-console.log('MQTT Broker:', brokerUrl);
+logger.info(`**************************************************`);
+logger.info(`Starting Pixoo Daemon at [${startTs}] ...`);
+logger.info(`**************************************************`);
+
+// Reference to available commands documentation
+try {
+  const fs = require('fs');
+  const path = require('path');
+  const commandsPath = path.join(__dirname, 'PIXOO_COMMANDS.md');
+  if (fs.existsSync(commandsPath)) {
+    logger.info(`Available commands documented in: ${commandsPath}`);
+  } else {
+    logger.warn('PIXOO_COMMANDS.md not found');
+  }
+} catch (err) {
+  logger.warn('Could not check PIXOO_COMMANDS.md:', { error: err.message });
+}
+
+logger.info('MQTT Broker:', { url: brokerUrl });
 if (deviceDrivers.size > 0) {
-  console.log('Configured Devices and Drivers:');
+  logger.info('Configured Devices and Drivers:');
   Array.from(deviceDrivers.entries()).forEach(([ip, driver]) => {
-    console.log(`  ${ip} → ${driver}`);
+    logger.info(`  ${ip} → ${driver}`);
   });
 } else {
-  console.log(
-    'No device targets configured (use PIXOO_DEVICE_TARGETS env var or DEVICE_TARGETS_OVERRIDE in code)',
+  logger.warn(
+    'No device targets configured. Use PIXOO_DEVICE_TARGETS env var or override in code.',
   );
 }
-console.log('Loaded scenes:', sceneManager.getRegisteredScenes());
-console.log('');
+logger.info('Loaded scenes:', { scenes: sceneManager.getRegisteredScenes() });
 
 // Initialize deployment tracking and load startup scene
 async function initializeDeployment() {
-  console.log('🔄 [DAEMON] Starting deployment initialization...');
+  logger.info('Starting deployment initialization...');
   try {
-    console.log('🔄 [DAEMON] About to call deploymentTracker.initialize()...');
+    logger.info('Initializing deployment tracker...');
     await deploymentTracker.initialize();
-    console.log('✅ [DAEMON] Deployment tracker initialized');
-    console.log(deploymentTracker.getLogString());
+    logger.info('Deployment tracker initialized.');
+    logger.info(deploymentTracker.getLogString());
 
     // Auto-load startup scene for all configured devices
     const deviceTargets = Array.from(deviceDrivers.keys());
     if (deviceTargets.length > 0) {
-      console.log('🚀 Auto-loading startup scene for configured devices...');
+      logger.info('Auto-loading startup scene for configured devices...');
       for (const deviceIp of deviceTargets) {
         if (deviceIp.trim()) {
           try {
@@ -104,39 +135,23 @@ async function initializeDeployment() {
             );
             await sceneManager.switchScene('startup', ctx);
             await sceneManager.renderActiveScene(ctx);
-            console.log(`✅ Startup scene loaded for ${deviceIp.trim()}`);
+            logger.info(`Startup scene loaded for ${deviceIp.trim()}`);
           } catch (error) {
-            console.warn(
-              `⚠️ Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+            logger.warn(
+              `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
             );
           }
         }
       }
     }
   } catch (error) {
-    console.error('❌ Deployment initialization failed:', error.message);
+    logger.error('Deployment initialization failed:', { error: error.message });
   }
 }
 
 // Initialize deployment and startup scenes
-console.log('🔄 [DAEMON] About to call initializeDeployment()...');
+logger.info('Initializing deployment...');
 initializeDeployment();
-console.log('🔄 [DAEMON] initializeDeployment() called (async)');
-
-// Reference to available commands documentation
-try {
-  const fs = require('fs');
-  const path = require('path');
-  const commandsPath = path.join(__dirname, 'PIXOO_COMMANDS.md');
-  if (fs.existsSync(commandsPath)) {
-    console.log(`📋 Available commands documented in: ${commandsPath}`);
-  } else {
-    console.log('⚠️  PIXOO_COMMANDS.md not found');
-  }
-} catch (err) {
-  console.log('⚠️  Could not check PIXOO_COMMANDS.md:', err.message);
-}
-console.log('');
 
 const client = mqtt.connect(brokerUrl, {
   username: mqttUser,
@@ -179,7 +194,7 @@ function markDeviceBooted(deviceIp) {
     lastActivity: Date.now(),
   };
   if (!bootState.booted) {
-    console.log(`✅ [BOOT] Device ${deviceIp} marked as booted`);
+    logger.info(`[BOOT] Device ${deviceIp} marked as booted`);
     bootState.booted = true;
   }
   deviceBootState.set(deviceIp, bootState);
@@ -202,9 +217,14 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   };
 
   // Log locally
-  console.log(
-    `✅ OK [${deviceIp}] scene=${sceneName} frametime=${frametime}ms diffPixels=${diffPixels} pushes=${metrics.pushes} skipped=${metrics.skipped} errors=${metrics.errors}`,
-  );
+  logger.info(`OK [${deviceIp}]`, {
+    scene: sceneName,
+    frametime,
+    diffPixels,
+    pushes: metrics.pushes,
+    skipped: metrics.skipped,
+    errors: metrics.errors,
+  });
 
   // Publish to MQTT
   client.publish(`pixoo/${deviceIp}/ok`, JSON.stringify(msg));
@@ -212,7 +232,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
 
 // On connect, subscribe to per-device state updates
 client.on('connect', () => {
-  console.log('✅ Connected to MQTT broker as', mqttUser);
+  logger.info('Connected to MQTT broker', { user: mqttUser });
   client.subscribe(
     [
       'pixoo/+/state/upd',
@@ -221,14 +241,23 @@ client.on('connect', () => {
       'pixoo/+/reset/set',
     ],
     (err) => {
-      if (err) console.error('❌ MQTT subscribe error:', err);
-      else
-        console.log(
-          '📡 Subscribed to pixoo/+/state/upd, scene/set, driver/set, reset/set',
+      if (err) {
+        logger.error('MQTT subscribe error:', { error: err });
+      } else {
+        logger.info(
+          'Subscribed to pixoo/+/state/upd, scene/set, driver/set, reset/set',
         );
+      }
     },
   );
 });
+
+const messageHandlers = {
+  scene: handleSceneCommand,
+  driver: handleDriverCommand,
+  reset: handleResetCommand,
+  state: handleStateUpdate,
+};
 
 client.on('message', async (topic, message) => {
   try {
@@ -236,241 +265,197 @@ client.on('message', async (topic, message) => {
     const parts = topic.split('/'); // pixoo/<device>/<section>/<action?>
     const deviceIp = parts[1];
     const section = parts[2];
-    const action = parts[3];
 
-    // 1) Default scene set
-    if (section === 'scene' && action === 'set') {
-      const name = payload?.name;
-      if (!name) {
-        console.warn(`⚠️ scene/set for ${deviceIp} missing 'name'`);
-        return;
-      }
-      deviceDefaults.set(deviceIp, name);
-      console.log(`🎛️ Default scene for ${deviceIp} → '${name}'`);
-      client.publish(
-        `pixoo/${deviceIp}/scene`,
-        JSON.stringify({ default: name, ts: Date.now() }),
-      );
-      return;
-    }
-
-    // 2) Driver switch set
-    if (section === 'driver' && action === 'set') {
-      const drv = payload?.driver;
-      if (!drv) {
-        console.warn(`⚠️ driver/set for ${deviceIp} missing 'driver'`);
-        return;
-      }
-      const applied = setDriverForDevice(deviceIp, drv);
-      console.log(`🧩 Driver for ${deviceIp} set → ${applied}`);
-      client.publish(
-        `pixoo/${deviceIp}/driver`,
-        JSON.stringify({ driver: applied, ts: Date.now() }),
-      );
-
-      // Optional: re-render with last known state
-      const prev = lastState[deviceIp];
-      console.log(
-        `🔍 [DEBUG] Driver switch for ${deviceIp}, lastState: ${JSON.stringify(prev || 'none')}`,
-      );
-      if (prev && prev.payload) {
-        try {
-          const sceneName = prev.sceneName || 'empty';
-          if (sceneManager.hasScene(sceneName)) {
-            const ctx = getContext(
-              deviceIp,
-              sceneName,
-              prev.payload,
-              publishOk,
-            );
-            try {
-              await sceneManager.renderActiveScene(ctx);
-              publishMetrics(deviceIp);
-            } catch (err) {
-              console.error(`❌ Render error for ${deviceIp}:`, err.message);
-              client.publish(
-                `pixoo/${deviceIp}/error`,
-                JSON.stringify({
-                  error: err.message,
-                  scene: sceneName,
-                  ts: Date.now(),
-                }),
-              );
-              publishMetrics(deviceIp);
-            }
-          }
-        } catch (e) {
-          console.warn(`⚠️ Re-render after driver switch failed: ${e.message}`);
-        }
-      }
-      return;
-    }
-
-    // 3) Reset command
-    if (section === 'reset' && action === 'set') {
-      console.log(`🔄 Reset requested for ${deviceIp}`);
-      const ok = await softReset(deviceIp);
-      client.publish(
-        `pixoo/${deviceIp}/reset`,
-        JSON.stringify({ ok, ts: Date.now() }),
-      );
-      return;
-    }
-
-    // 4) State update
-    if (section === 'state' && action === 'upd') {
-      console.log(`🔍 [DEBUG] MQTT handler entry for ${deviceIp}:`);
-      console.log(
-        `   Current lastState: ${JSON.stringify(lastState[deviceIp] || 'none')}`,
-      );
-
-      const sceneName =
-        payload.scene || deviceDefaults.get(deviceIp) || 'empty';
-      if (!sceneManager.hasScene(sceneName)) {
-        console.warn(`⚠️ No renderer found for scene: ${sceneName}`);
-        return;
-      }
-
-      // Track device activity for boot state management
-      markDeviceActive(deviceIp);
-
-      // Add delay for freshly booted devices to allow initialization
-      if (isDeviceFreshlyBooted(deviceIp)) {
-        console.log(
-          `⏳ [BOOT] Adding initialization delay for freshly booted device ${deviceIp}`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
-      }
-
-      const ts = new Date().toLocaleString('de-AT');
-      console.log(
-        `[${ts}] 📥 State update for ${deviceIp} → scene: ${sceneName} (driver: ${getDriverForDevice(
-          deviceIp,
-        )})`,
-      );
-      const ctx = getContext(deviceIp, sceneName, payload, publishOk);
-      // Add payload to context for parameter updates
-      ctx.payload = payload;
-
-      // Check if this is a scene change or parameter change
-      const lastScene = lastState[deviceIp]?.sceneName;
-      const lastPayload = lastState[deviceIp]?.payload;
-      const isSceneChange = !lastScene || lastScene !== sceneName;
-      const isParameterChange =
-        lastScene === sceneName &&
-        JSON.stringify(lastPayload) !== JSON.stringify(payload);
-      const shouldClear = isSceneChange || payload.clear === true;
-
-      // Debug logging for state tracking
-      console.log(`🔍 [DEBUG] State analysis for ${deviceIp}:`);
-      console.log(`   Last scene: ${lastScene || 'none'}`);
-      console.log(`   Current scene: ${sceneName}`);
-      console.log(`   Last payload: ${JSON.stringify(lastPayload || 'none')}`);
-      console.log(`   Current payload: ${JSON.stringify(payload)}`);
-      console.log(`   isSceneChange: ${isSceneChange}`);
-      console.log(`   isParameterChange: ${isParameterChange}`);
-
-      // Debug logging for parameter changes
-      if (isParameterChange) {
-        console.log(
-          `🔄 [PARAM] Parameter change detected for scene: ${sceneName}`,
-        );
-        console.log(`   Old: ${JSON.stringify(lastPayload)}`);
-        console.log(`   New: ${JSON.stringify(payload)}`);
-      }
-
-      // Remember last state AFTER checking for changes
-      console.log(`💾 [DEBUG] Updating lastState for ${deviceIp}:`);
-      console.log(
-        `   Previous: ${JSON.stringify(lastState[deviceIp] || 'none')}`,
-      );
-      console.log(`   New: ${JSON.stringify({ payload, sceneName })}`);
-      lastState[deviceIp] = { payload, sceneName };
-
-      // Debug: Check if lastState is actually set
-      console.log(
-        `🔍 [DEBUG] After update, lastState[${deviceIp}] = ${JSON.stringify(lastState[deviceIp])}`,
-      );
-
-      if (shouldClear) {
-        const device = require('./lib/device-adapter').getDevice(deviceIp);
-        await device.clear();
-        if (lastScene && lastScene !== sceneName) {
-          console.log(
-            `🧹 [SCENE] Cleared screen when switching from '${lastScene}' to '${sceneName}'`,
-          );
-        } else if (payload.clear === true) {
-          console.log(
-            `🧹 [SCENE] Cleared screen as requested by 'clear' parameter`,
-          );
-        }
-      }
-
-      try {
-        // Handle scene switching or parameter updates
-        let success;
-        if (isSceneChange) {
-          // New scene - do full switch
-          console.log(`🔄 [SCENE] Switching to new scene: ${sceneName}`);
-          success = await sceneManager.switchScene(sceneName, ctx);
-        } else if (isParameterChange) {
-          // Same scene, new parameters - update parameters
-          console.log(`🔄 [PARAM] Updating parameters for scene: ${sceneName}`);
-          success = await sceneManager.updateSceneParameters(sceneName, ctx);
-        } else {
-          // Same scene, same parameters - just render
-          console.log(`🔄 [RENDER] Re-rendering same scene: ${sceneName}`);
-          success = true;
-        }
-
-        if (!success) {
-          throw new Error(`Failed to handle scene update: ${sceneName}`);
-        }
-
-        // Note: renderActiveScene is needed for parameter updates and re-renders
-        // - switchScene() handles rendering internally
-        // - updateSceneParameters() only updates state, needs explicit render
-        // - For same scene re-renders, we need explicit render
-
-        // Render the scene after parameter updates or re-renders
-        if (isParameterChange || (!isSceneChange && !isParameterChange)) {
-          console.log(
-            `🎨 [RENDER] Rendering scene with updated parameters: ${sceneName}`,
-          );
-          // Ensure payload is preserved for parameter-based rendering
-          const renderContext = {
-            ...ctx,
-            payload: payload, // Preserve MQTT payload for parameter access
-          };
-          await sceneManager.renderActiveScene(renderContext);
-        }
-
-        // Mark device as successfully booted after first successful render
-        if (isDeviceFreshlyBooted(deviceIp)) {
-          markDeviceBooted(deviceIp);
-        }
-
-        publishMetrics(deviceIp);
-      } catch (err) {
-        console.error(`❌ Render error for ${deviceIp}:`, err.message);
-        client.publish(
-          `pixoo/${deviceIp}/error`,
-          JSON.stringify({
-            error: err.message,
-            scene: sceneName,
-            ts: Date.now(),
-          }),
-        );
-        publishMetrics(deviceIp);
-      }
-      return;
+    const handler = messageHandlers[section];
+    if (handler) {
+      await handler(deviceIp, parts[3], payload);
+    } else {
+      logger.warn(`No handler for topic section: ${section}`);
     }
   } catch (err) {
-    console.error('❌ Error parsing/handling MQTT message:', err);
+    logger.error('Error parsing/handling MQTT message:', { error: err });
   }
 });
 
+async function handleSceneCommand(deviceIp, action, payload) {
+  if (action === 'set') {
+    const name = payload?.name;
+    if (!name) {
+      logger.warn(`scene/set for ${deviceIp} missing 'name'`);
+      return;
+    }
+    deviceDefaults.set(deviceIp, name);
+    logger.info(`Default scene for ${deviceIp} → '${name}'`);
+    client.publish(
+      `pixoo/${deviceIp}/scene`,
+      JSON.stringify({ default: name, ts: Date.now() }),
+    );
+  }
+}
+
+async function handleDriverCommand(deviceIp, action, payload) {
+  if (action === 'set') {
+    const drv = payload?.driver;
+    if (!drv) {
+      logger.warn(`driver/set for ${deviceIp} missing 'driver'`);
+      return;
+    }
+    const applied = setDriverForDevice(deviceIp, drv);
+    logger.info(`Driver for ${deviceIp} set → ${applied}`);
+    client.publish(
+      `pixoo/${deviceIp}/driver`,
+      JSON.stringify({ driver: applied, ts: Date.now() }),
+    );
+
+    // Optional: re-render with last known state
+    const prev = lastState[deviceIp];
+    if (prev && prev.payload) {
+      try {
+        const sceneName = prev.sceneName || 'empty';
+        if (sceneManager.hasScene(sceneName)) {
+          const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
+          try {
+            await sceneManager.renderActiveScene(ctx);
+            publishMetrics(deviceIp);
+          } catch (err) {
+            logger.error(`Render error for ${deviceIp}:`, {
+              error: err.message,
+            });
+            client.publish(
+              `pixoo/${deviceIp}/error`,
+              JSON.stringify({
+                error: err.message,
+                scene: sceneName,
+                ts: Date.now(),
+              }),
+            );
+            publishMetrics(deviceIp);
+          }
+        }
+      } catch (e) {
+        logger.warn(`Re-render after driver switch failed: ${e.message}`);
+      }
+    }
+  }
+}
+
+async function handleResetCommand(deviceIp, action) {
+  if (action === 'set') {
+    logger.info(`Reset requested for ${deviceIp}`);
+    const ok = await softReset(deviceIp);
+    client.publish(
+      `pixoo/${deviceIp}/reset`,
+      JSON.stringify({ ok, ts: Date.now() }),
+    );
+  }
+}
+
+async function handleStateUpdate(deviceIp, action, payload) {
+  if (action === 'upd') {
+    const sceneName = payload.scene || deviceDefaults.get(deviceIp) || 'empty';
+    if (!sceneManager.hasScene(sceneName)) {
+      logger.warn(`No renderer found for scene: ${sceneName}`);
+      return;
+    }
+
+    markDeviceActive(deviceIp);
+
+    if (isDeviceFreshlyBooted(deviceIp)) {
+      logger.info(
+        `[BOOT] Adding initialization delay for freshly booted device ${deviceIp}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
+    const ts = new Date().toLocaleString('de-AT');
+    logger.info(`State update for ${deviceIp}`, {
+      scene: sceneName,
+      driver: getDriverForDevice(deviceIp),
+      timestamp: ts,
+    });
+    const ctx = getContext(deviceIp, sceneName, payload, publishOk);
+    ctx.payload = payload;
+
+    const lastScene = lastState[deviceIp]?.sceneName;
+    const lastPayload = lastState[deviceIp]?.payload;
+    const isSceneChange = !lastScene || lastScene !== sceneName;
+    const isParameterChange =
+      lastScene === sceneName &&
+      JSON.stringify(lastPayload) !== JSON.stringify(payload);
+    const shouldClear = isSceneChange || payload.clear === true;
+
+    if (isParameterChange) {
+      logger.info('Parameter change detected', {
+        scene: sceneName,
+        old: lastPayload,
+        new: payload,
+      });
+    }
+
+    lastState[deviceIp] = { payload, sceneName };
+
+    if (shouldClear) {
+      const device = require('./lib/device-adapter').getDevice(deviceIp);
+      await device.clear();
+      if (lastScene && lastScene !== sceneName) {
+        logger.info(
+          `Cleared screen on scene switch from '${lastScene}' to '${sceneName}'`,
+        );
+      } else if (payload.clear === true) {
+        logger.info("Cleared screen as requested by 'clear' parameter");
+      }
+    }
+
+    try {
+      let success;
+      if (isSceneChange) {
+        logger.info(`Switching to new scene: ${sceneName}`);
+        success = await sceneManager.switchScene(sceneName, ctx);
+      } else if (isParameterChange) {
+        logger.info(`Updating parameters for scene: ${sceneName}`);
+        success = await sceneManager.updateSceneParameters(sceneName, ctx);
+      } else {
+        logger.info(`Re-rendering same scene: ${sceneName}`);
+        success = true;
+      }
+
+      if (!success) {
+        throw new Error(`Failed to handle scene update: ${sceneName}`);
+      }
+
+      if (isParameterChange || (!isSceneChange && !isParameterChange)) {
+        logger.info(`Rendering scene with updated parameters: ${sceneName}`);
+        const renderContext = {
+          ...ctx,
+          payload: payload,
+        };
+        await sceneManager.renderActiveScene(renderContext);
+      }
+
+      if (isDeviceFreshlyBooted(deviceIp)) {
+        markDeviceBooted(deviceIp);
+      }
+
+      publishMetrics(deviceIp);
+    } catch (err) {
+      logger.error(`Render error for ${deviceIp}:`, {
+        error: err.message,
+        scene: sceneName,
+      });
+      client.publish(
+        `pixoo/${deviceIp}/error`,
+        JSON.stringify({
+          error: err.message,
+          scene: sceneName,
+          ts: Date.now(),
+        }),
+      );
+      publishMetrics(deviceIp);
+    }
+  }
+}
+
 // Global MQTT error logging
 client.on('error', (err) => {
-  console.error('❌ MQTT error:', err);
+  logger.error('MQTT error:', { error: err });
 });

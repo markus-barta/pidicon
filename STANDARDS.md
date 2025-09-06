@@ -1,701 +1,243 @@
-# Development Guide - Senior Developer Best Practices
+# Development Guide: Professional Engineering Standards
 
 ## 🎯 Mission Statement
 
-This guide establishes professional development standards for the Pixoo daemon project.
-It serves as a reference for maintaining high-quality, maintainable, and performant
-code while following senior-level engineering practices.
+This guide establishes the professional engineering standards for the Pixoo Daemon
+project. Its purpose is to foster a high-quality, maintainable, and performant
+codebase through senior-level practices.
 
-## MOST IMPORTANT RULE
+## ⭐ Guiding Principle: Pragmatism over Dogma
 
-Keep the guide up to date but ALWAYS Ask the user if you change things
-(CHANGE/ADD/DELETE) with a summarized question asking for a "yes/no" answer.
+A senior engineer understands that standards are guidelines, not immutable laws.
+The ultimate goal is to create a robust and maintainable system. Always favor
+clarity, simplicity, and pragmatism. If a rule stands in the way of a better
+solution, be prepared to challenge it, but do so with a clear justification.
+
+---
 
 ## 📋 Table of Contents
 
-- [Code Quality Principles](#code-quality-principles)
-- [Documentation Standards](#documentation-standards)
-- [Testing Strategy](#testing-strategy)
-- [Performance Optimization](#performance-optimization)
-- [Error Handling](#error-handling)
-- [Security Considerations](#security-considerations)
-- [Markdown Formatting](#markdown-formatting-guidelines)
-- [Commit Guidelines](#commit-guidelines)
-- [Fish-Aware Shell Standards](#fish-aware-shell-standards)
-- [Linting Standards](#linting-standards)
+- [🧹 Code Quality](#-code-quality)
+- [📚 Documentation](#-documentation)
+- [🧪 Testing Strategy](#-testing-strategy)
+- [⚡ Performance](#-performance)
+- [🚨 Error Handling & Logging](#-error-handling--logging)
+- [🔒 Security](#-security)
+- [📝 Markdown Formatting](#-markdown-formatting)
+- [📊 Commit Guidelines](#-commit-guidelines)
+- [🎬 Scene Development](#-scene-development)
+- [🐟 Fish Shell Standards](#-fish-shell-standards)
+- [🔧 Linting Standards](#-linting-standards)
+- [✅ Developer Checklists](#-developer-checklists)
 
 ---
 
-## 🧹 Code Quality Principles {#code-quality-principles}
+## 🧹 Code Quality {#-code-quality}
 
 ### **DRY (Don't Repeat Yourself)**
 
-- **Extract common functionality** into shared utilities (`lib/performance-utils.js`)
-- **Eliminate code duplication** across scenes and modules
-- **Use configuration objects** instead of hardcoded values
-- **Create reusable functions** for repeated patterns
-
-**Example - Good:**
-
-```javascript
-// ✅ DRY: Shared utility function
-function validateSceneContext(ctx, sceneName) {
-  const required = ['device', 'state'];
-  const missing = required.filter((prop) => !ctx[prop]);
-  if (missing.length > 0) {
-    console.error(
-      `❌ [${sceneName.toUpperCase()}] Missing required context` +
-        ` properties: ${missing.join(', ')}`,
-    );
-    return false;
-  }
-  return true;
-}
-
-// Usage across multiple scenes
-if (!validateSceneContext(ctx, name)) return;
-```
-
-**Example - Bad:**
-
-```javascript
-// ❌ WET: Duplicated validation in every scene
-if (!ctx || !ctx.device || !ctx.state) {
-  console.error(`❌ [SCENE_NAME] Missing required context properties`);
-  return;
-}
-```
+- **Goal**: Maximize reusability and reduce the cost of change.
+- **Action**: Abstract repeated logic into shared utilities (`/lib`). Avoid
+  duplication across scenes and modules. Use configuration objects over
+  hardcoded values.
 
 ### **SOLID Principles**
 
-- **Single Responsibility**: Each function/module has one clear purpose
-- **Open/Closed**: Code is open for extension, closed for modification
-- **Liskov Substitution**: Derived classes can replace base classes
-- **Interface Segregation**: Keep interfaces small and focused
-- **Dependency Inversion**: Depend on abstractions, not concretions
+- **Single Responsibility**: A function or module should do one thing well.
+- **Open/Closed**: Extend behavior with new code, don't modify existing, stable
+  code.
+- **Liskov Substitution**: Subtypes must be substitutable for their base types.
+- **Interface Segregation**: Keep interfaces small and focused on a specific role.
+- **Dependency Inversion**: Depend on abstractions (like a `logger` interface),
+  not on concrete implementations.
 
-### **Clean Code Basics**
+### **General Best Practices**
 
-- **Meaningful names**: `calculatePerformanceMetrics()` not `calc()`
-- **Small functions**: Max 30-50 lines, single responsibility
-- **Consistent formatting**: Use Prettier/ESLint
-- **Comments for complexity**: Self-documenting code preferred
-- **Error handling**: Fail fast with clear error messages
-
-### **Magic Numbers & Constants**
-
-```javascript
-// ✅ Good: Named constants
-const CHART_CONFIG = Object.freeze({
-    MAX_CHART_POINTS: Math.floor((64 - 4) / 2), // Calculated, not magic
-    MAX_FRAME_SAMPLES: 50,
-    UPDATE_INTERVAL_MS: 100
-});
-
-// ❌ Bad: Magic numbers
-for (let i = 0; i < 30; i++) { // What does 30 represent?
-    if (timeout > 60000) { // What does 60000 represent?
-```
+- **Naming**: Names should be descriptive and reveal intent (e.g.,
+  `calculatePerformanceMetrics` is better than `calc`).
+- **Function Size**: Aim for small, focused functions (under 50 lines is a good
+  guideline). If a function is long, it's often a sign it's doing too much.
+- **Comments**: Write comments to explain _why_ something is done, not _what_ it
+  does. The code itself should explain the "what".
 
 ---
 
-## 📚 Documentation Standards {#documentation-standards}
+## 📚 Documentation {#-documentation}
 
-### **JSDoc Comments**
+### **JSDoc**
 
-Always document public functions and classes:
+Document all public functions, classes, and complex logic. The goal is to provide
+enough context for another developer to use the code without having to read its
+implementation.
 
 ```javascript
 /**
- * @fileoverview Professional Gradient Renderer - Advanced line drawing
- * @description High-performance gradient line rendering with sophisticated color
- * @version 1.0.0
- * @author: Sonic + Cursor + Markus Barta (mba)
- * @license MIT
+ * Calculates the optimal interpolation factor for a color gradient.
+ * This function uses a non-linear easing curve to ensure a smoother
+ * visual transition at the color endpoints.
+ *
+ * @param {number} factor - The linear interpolation factor (0.0 to 1.0).
+ * @returns {number} The eased interpolation factor.
  */
-
-/**
- * Performance-optimized RGBA color interpolation
- * @param {number[]} startColor - Starting RGBA color [r, g, b, a]
- * @param {number[]} endColor - Ending RGBA color [r, g, b, a]
- * @param {number} factor - Interpolation factor (0.0 to 1.0)
- * @returns {number[]} Interpolated RGBA color
- */
-function interpolateColor(startColor, endColor, factor) {
-  // Implementation
+function getEasedFactor(factor) {
+  // ... implementation ...
 }
 ```
 
 ### **README Files**
 
-Every major component should have:
-
-- **Purpose**: What it does
-- **Usage**: How to use it
-- **Examples**: Code examples
-- **Dependencies**: What it requires
-
-### **Inline Comments**
-
-```javascript
-// ✅ Good: Explain why, not what
-await device.clear(); // Clear screen before drawing to prevent content overlap
-
-// ❌ Bad: Redundant comment
-await device.clear(); // Clears the screen
-```
+Every major directory (`/lib`, `/scenes`) must have a `README.md` that explains
+its purpose, architecture, and how to use its contents.
 
 ---
 
-## 🧪 Testing Strategy {#testing-strategy}
+## 🧪 Testing Strategy {#-testing-strategy}
 
-### **Unit Testing Requirements**
+### **Philosophy**
 
-- Test all public functions
-- Test error conditions
-- Test edge cases
-- Mock external dependencies
+Our goal with testing is to build confidence that our system works as expected
+and to prevent regressions. We prioritize tests that cover critical paths and
+complex business logic.
 
-### **Integration Testing**
+### **Testing Pyramid**
 
-- Test scene loading and rendering
-- Test device communication
-- Test MQTT message handling
-- Test performance benchmarks
-
-### **Manual Testing Checklist**
-
-- [ ] Fresh device boot scenarios
-- [ ] Scene transitions
-- [ ] Error recovery
-- [ ] Performance benchmarks
-- [ ] Memory usage validation
-
-### **Performance Testing**
-
-```javascript
-// Example performance test structure
-async function performanceTest(scene, iterations = 100) {
-  const startTime = performance.now();
-  for (let i = 0; i < iterations; i++) {
-    await scene.render(ctx);
-  }
-  const avgTime = (performance.now() - startTime) / iterations;
-  console.log(`Average render time: ${avgTime.toFixed(2)}ms`);
-}
-```
+- **Unit Tests**: The foundation. Test individual functions and modules in
+  isolation. They should be fast and focused. We use the built-in `node:test`
+  runner.
+- **Integration Tests**: Test how different modules interact. For example, verify
+  that the `SceneManager` can correctly load and transition between scenes.
+- **Manual/E2E Tests**: Use for verifying visual output and device-specific
+  behavior that is difficult to automate.
 
 ---
 
-## ⚡ Performance Optimization {#performance-optimization}
+## ⚡ Performance {#-performance}
 
-### **Memory Management**
-
-- **Use Maps/Sets** for frequent lookups instead of arrays
-- **Implement caching** for expensive operations
-- **Clean up resources** properly
-- **Monitor memory usage** in long-running processes
-
-```javascript
-// ✅ Good: Efficient caching
-const GRADIENT_CACHE = new Map();
-
-function getCachedGradient(key, calculateFn) {
-  if (GRADIENT_CACHE.has(key)) {
-    return GRADIENT_CACHE.get(key);
-  }
-  const result = calculateFn();
-  GRADIENT_CACHE.set(key, result);
-  return result;
-}
-```
-
-### **Algorithm Optimization**
-
-- **Prefer O(1) or O(log n)** over O(n) when possible
-- **Batch operations** to reduce overhead
-- **Use appropriate data structures** (Map vs Object vs Array)
-- **Profile before optimizing** (don't guess bottlenecks)
-
-### **Device-Specific Optimizations**
-
-- **Minimize pixel operations**: Batch drawing commands
-- **Use device.isReady()** before operations
-- **Handle device boot states** properly
-- **Implement retry logic** for network operations
+- **Data Structures**: Use the right tool for the job. `Map` for key-value pairs,
+  `Set` for unique collections, `Array` for ordered lists.
+- **Batching**: Minimize overhead by batching operations, especially when
+  communicating with the device.
+- **Profiling**: Don't guess. Use profiling tools to identify bottlenecks before
+  attempting to optimize.
 
 ---
 
-## 🚨 Error Handling {#error-handling}
+## 🚨 Error Handling & Logging {#-error-handling--logging}
 
-### **Fail Fast Principle**
+### **Error Handling**
 
-```javascript
-// ✅ Good: Fail fast with clear messages
-function validateColor(color) {
-  if (!Array.isArray(color) || color.length !== 4) {
-    throw new Error(
-      `Invalid color format: expected [r,g,b,a], got ${JSON.stringify(color)}`,
-    );
-  }
-  if (color.some((c) => typeof c !== 'number' || c < 0 || c > 255)) {
-    throw new Error(
-      `Invalid color values: all components must be numbers 0-255`,
-    );
-  }
-  return color;
-}
-```
+- **Fail Fast**: Validate inputs and state early to catch errors at their source.
+- **Custom Error Types**: Use specific error types (`ValidationError`,
+  `DeviceError`) to provide more context than generic `Error` objects.
+- **Graceful Degradation**: When an operation can fail, have a fallback. For
+  example, if an advanced chart fails to render, fall back to a simpler one.
 
-### **Error Types**
+### **Logging**
 
-- **ValidationError**: Invalid input parameters
-- **DeviceError**: Hardware communication issues
-- **NetworkError**: MQTT/connection problems
-- **TimeoutError**: Operations taking too long
+We use a structured logger (`lib/logger.js`).
 
-### **Graceful Degradation**
-
-```javascript
-// ✅ Good: Graceful degradation
-async function renderAdvancedChart(device, data) {
-  try {
-    // Try advanced rendering first
-    return await advancedChartRenderer.render(device, data);
-  } catch (error) {
-    console.warn(
-      `Advanced chart failed, falling back to basic: ${error.message}`,
-    );
-    // Fallback to basic rendering
-    return await basicChartRenderer.render(device, data);
-  }
-}
-```
-
-### **Logging Levels**
-
-- **ERROR**: Something is broken, needs immediate attention
-- **WARN**: Something unexpected but not critical
-- **INFO**: Normal operation information
-- **DEBUG**: Detailed information for troubleshooting
+- **Levels**: Use the appropriate log level:
+  - `error`: For failures that require immediate attention.
+  - `warn`: For unexpected but recoverable issues.
+  - `info`: For normal operational messages.
+  - `debug`: For detailed diagnostic information.
+- **Context**: Always include a metadata object with relevant context (e.g.,
+  `deviceIp`, `sceneName`, `error`). This makes logs searchable and useful.
 
 ---
 
-## 🔒 Security Considerations {#security-considerations}
+## 🔒 Security {#-security}
 
-### **Input Validation**
-
-- **Validate all inputs** from MQTT messages
-- **Sanitize data** before processing
-- **Use type checking** for critical parameters
-- **Implement bounds checking** for coordinates and colors
-
-### **Network Security**
-
-- **Use secure MQTT connections** when possible
-- **Validate device IPs** against whitelist
-- **Implement rate limiting** for MQTT messages
-- **Log security events** appropriately
-
-### **Code Security**
-
-- **Avoid eval()** and other dangerous functions
-- **Use constants** for sensitive values
-- **Implement proper error handling** (don't leak internal details)
-- **Keep dependencies updated** and scan for vulnerabilities
+- **Input Validation**: Never trust external inputs. Validate all data received
+  from MQTT messages, including type, bounds, and format.
+- **Dependencies**: Keep dependencies up-to-date and periodically scan for
+  vulnerabilities.
+- **Error Messages**: Be careful not to leak sensitive information (like internal
+  stack traces) in error messages that are exposed externally.
 
 ---
 
-## 📝 Markdown Formatting Guidelines {#markdown-formatting-guidelines}
-
-### **🚨 ZERO ERRORS POLICY**
-
-**ALL markdown files MUST have ZERO linting errors.** This includes:
-
-- ❌ **MD013** (line length) - Target 80, max 120 characters (CRITICAL)
-- ❌ **MD022** (headings spacing) - Surround headings with blank lines
-- ❌ **MD032** (lists spacing) - Surround lists with blank lines
-- ❌ **MD040** (code blocks) - Specify language for all code blocks
-- ❌ **MD031** (code block spacing) - Surround code blocks with blank lines
-- ❌ **MD051** (link fragments) - Use valid anchor links
-
-**Breaking this policy will result in:**
-
-- ⚠️ **Build failures** (if CI is configured)
-- ❌ **Code review rejection**
-- 🚫 **Commit rejection** (if pre-commit hooks are active)
-
-**Always run `npx markdownlint *.md` before committing!**
-
-### **Common Issues & Solutions**
-
-#### **MD022/MD032: Headings and Lists Spacing**
-
-**❌ Incorrect:**
-
-```markdown
-## Heading
-
-Some text
-
-- List item 1
-- List item 2
-```
-
-**✅ Correct:**
-
-```markdown
-## Heading
-
-Some text
-
-- List item 1
-- List item 2
-```
-
-**Rule**: Always surround headings and lists with blank lines.
-
-**Common Mistakes to Avoid:**
-
-- ❌ No blank line before headings
-- ❌ No blank line after headings
-- ❌ Lists not surrounded by blank lines
-- ❌ Multiple headings without proper spacing
-
-**Quick Fix**: When you see MD022/MD032 errors, add blank lines around headings
-and lists.
-
-#### **MD013: Line Length**
-
-**❌ Incorrect:**
-
-```markdown
-This is a very long line that exceeds the 80 character limit and will cause a markdownlint error because it's too long to read comfortably.
-```
-
-**✅ Correct:**
-
-```markdown
-This is a line that stays within the 80 character limit and is easy to read and maintain. Use backslash continuation for long content.
-```
-
-**Rule**: Target 80 characters for readability, with 120 characters as strict maximum.
-
-**Exceptions**: Shell commands and MQTT examples may extend to 200 characters for copy-paste convenience.
-
-**Flexible Approach**: Aim for 80 characters when possible, but allow up to 120 when needed for readability or complex content.
-
-**Common Solutions:**
-
-- **Target 80 characters** for optimal readability
-- **Strict maximum 120 characters** - never exceed this
-- **Shell commands exception**: Up to 200 characters for copy-paste convenience
-- Use backslash continuation (`\`) for very long lines
-- Break long URLs, commands, or complex expressions
-- Shorten descriptions in tables when possible
-- Use shorter variable names in code examples
-
-#### **MD051: Link Fragments**
-
-**❌ Incorrect:**
-
-```markdown
-[Link Text](#-invalid-fragment)
-[Heading](#heading-with-emoji)
-```
-
-**✅ Correct:**
-
-```markdown
-[Link Text](#valid-fragment)
-[Heading](#heading-with-explicit-id)
-
-## Actual Heading {#heading-with-explicit-id}
-```
-
-**Rule**: Link fragments must match actual heading IDs or use explicit ID syntax.
-
-**Common Solutions:**
-
-- Use explicit IDs: `## Heading {#custom-id}`
-- Avoid leading dashes in fragments
-- Match the actual generated ID (lowercase, hyphens for spaces)
-
-### **Markdownlint Rules Reference**
-
-#### **Most Common Issues**
-
-| Rule      | Description         | Solution                           |
-| --------- | ------------------- | ---------------------------------- |
-| **MD013** | Line length         | Target 80, max 120 characters      |
-| **MD022** | Headings spacing    | Add blank lines around headings    |
-| **MD032** | Lists spacing       | Add blank lines around lists       |
-| **MD040** | Code block language | Specify language after ```         |
-| **MD031** | Code block spacing  | Add blank lines around code blocks |
-| **MD051** | Link fragments      | Use correct anchor links           |
-
-#### **Running Markdownlint**
-
-```bash
-# Check all markdown files
-npx markdownlint *.md
-
-# Check specific file
-npx markdownlint STANDARDS.md
-
-# Check specific rules
-npx markdownlint STANDARDS.md --rules MD022,MD032
-
-# Auto-fix (if supported)
-npx markdownlint --fix *.md
-```
-
-#### **MD040: Fenced Code Blocks**
-
-**❌ Incorrect:**
-
-```text
-// Bad: No language specified
-function example() {
-    return true;
-}
-```
-
-**✅ Correct:**
-
-```javascript
-// Good: Language specified
-function example() {
-  return true;
-}
-```
-
-#### **MD031: Fenced Code Blocks Spacing**
-
-**❌ Incorrect:**
-
-```javascript
-function example() {
-    return true;
-}
-More text here.
-```
-
-**✅ Correct:**
-
-```javascript
-function example() {
-  return true;
-}
-```
-
-More text here.
-
-### **Integrating Markdownlint into Development Workflow**
-
-#### **Pre-commit Hook Setup**
-
-Add markdownlint to your pre-commit hooks to catch issues before committing:
-
-```bash
-# .pre-commit-config.yaml (if using pre-commit)
-repos:
-  - repo: https://github.com/markdownlint/markdownlint
-    rev: v0.12.0
-    hooks:
-      - id: markdownlint
-        args: [--config, .markdownlint.json]
-```
-
-#### **VS Code Integration**
-
-Add to your `.vscode/settings.json`:
-
-```json
-{
-  "markdownlint.config": {
-    "default": true,
-    "MD022": true,
-    "MD032": true,
-    "MD040": true
-  },
-  "markdownlint.run": "onType"
-}
-```
-
-#### **GitHub Actions Integration**
-
-Add to your workflow:
-
-```yaml
-- name: Lint Markdown
-  uses: github/super-linter/slim@v4
-  env:
-    VALIDATE_MARKDOWN: true
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
-
-### **Markdown Best Practices**
-
-#### **Headers Hierarchy**
-
-```markdown
-# Main Title (Level 1)
-
-## Section (Level 2)
-
-### Subsection (Level 3)
-
-#### Sub-subsection (Level 4)
-```
-
-#### **Lists**
-
-```markdown
-<!-- Bulleted lists -->
-
-- Item 1
-- Item 2
-  - Nested item
-  - Another nested item
-
-<!-- Numbered lists -->
-
-1. First item
-2. Second item
-   1. Nested numbered item
-```
-
-#### **Code Blocks**
-
-```javascript
-// For code examples
-function example() {
-  return 'Use language-specific syntax highlighting';
-}
-```
-
-#### **Tables**
-
-```markdown
-| Column 1 | Column 2 | Column 3 |
-| -------- | -------- | -------- |
-| Data 1   | Data 2   | Data 3   |
-| Data 4   | Data 5   | Data 6   |
-```
-
-#### **Links and Images**
-
-```markdown
-<!-- Links -->
-
-[Link Text](https://example.com)
-[Reference Link][ref]
-
-<!-- Images -->
-
-![Alt Text](image.png)
-![Reference Image][img-ref]
-
-<!-- References -->
-
-[ref]: https://example.com
-[img-ref]: image.png
-```
-
-#### **Emphasis**
-
-```markdown
-_Italic text_
-**Bold text**
-`Inline code`
-~~Strikethrough~~
-```
+## 📝 Markdown Formatting {#-markdown-formatting}
+
+All `.md` files must have **zero linting errors**. Run `npx markdownlint --fix .`
+before committing. The most critical rules are:
+
+- **MD013 (Line Length)**: Target 80 characters for readability, with a hard max
+  of 120.
+- **MD022/MD032 (Spacing)**: Surround headings and lists with blank lines.
+- **MD040 (Code Blocks)**: Always specify the language for syntax highlighting.
 
 ---
 
-## 📊 Commit Guidelines {#commit-guidelines}
+## 📊 Commit Guidelines {#-commit-guidelines}
 
-### **Commit Message Format**
+We follow the [Conventional Commits](https://www.conventionalcommits.org/)
+specification.
 
-```text
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-### **Types**
-
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, etc.)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
-
-### **Examples**
-
-```bash
-# ✅ Good commit messages
-feat(advanced-chart): add negative value handling for charts
-fix(fill-scene): correct device.fillRgba to device.fillRectangleRgba
-docs(readme): update installation instructions
-refactor(performance-utils): extract common chart config constants
-
-# ❌ Bad commit messages
-"fixed bug"
-"updated code"
-"changes"
-```
-
-### **Branch Naming**
-
-- **feature/feature-name**: New features
-- **bugfix/bug-description**: Bug fixes
-- **hotfix/critical-issue**: Urgent fixes
-- **refactor/component-name**: Code refactoring
+- **Format**: `type(scope): description` (e.g., `feat(scenes): add new clock scene`)
+- **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ---
 
-## 🎯 Senior Developer Checklist
+## 🎬 Scene Development {#-scene-development}
 
-### **Before Committing Code**
+- **Interface**: A scene must export `name` (string) and `render` (async
+  function). `init` and `cleanup` are optional.
+- **`device.push()`**: You **must** call `await device.push()` after drawing to
+  make your changes visible on the device.
+- **State**: Use the `ctx.state` Map for managing scene-specific data.
 
-- [ ] **DRY Principle**: No code duplication?
-- [ ] **Documentation**: All public functions documented?
-- [ ] **Error Handling**: Proper try/catch and validation?
-- [ ] **Performance**: No obvious inefficiencies?
-- [ ] **Security**: Input validation and safe practices?
-- [ ] **Testing**: Basic functionality tested?
-- [ ] **Markdown**: Follows formatting guidelines?
-- [ ] **ZERO ERRORS**: Run `npx markdownlint *.md` - NO errors allowed?
-- [ ] **MD013**: All lines under 120 characters (target 80)?
-- [ ] **MD022/MD032**: Headings and lists have proper spacing?
-- [ ] **MD051**: Link fragments are valid?
-- [ ] **Scene Development**: All scenes have `device.push()` calls?
+---
 
-### **Code Review Checklist**
+## 🐟 Fish Shell Standards {#-fish-shell-standards}
 
-- [ ] **Architecture**: Follows SOLID principles?
-- [ ] **Readability**: Code is self-documenting?
-- [ ] **Maintainability**: Easy to modify and extend?
-- [ ] **Performance**: Efficient algorithms and data structures?
-- [ ] **Security**: No security vulnerabilities?
-- [ ] **Testing**: Adequate test coverage?
-- [ ] **Documentation**: Updated documentation?
-- [ ] **Markdown**: ZERO linting errors in all .md files?
-- [ ] **Line Length**: All markdown lines under 120 characters (target 80)?
+- **Local Development**: Use `fish` syntax (`set -x VAR value`).
+- **Scripts/Hooks**: All scripts intended for the server or Git hooks **must**
+  use `#!/usr/bin/env bash` and be written in POSIX-compliant shell script to
+  ensure portability.
 
-### **Performance Review Checklist**
+---
 
-- [ ] **Memory**: No memory leaks?
-- [ ] **CPU**: Efficient algorithms?
-- [ ] **Network**: Minimal overhead?
-- [ ] **Device**: Optimized for Pixoo hardware?
-- [ ] **Scalability**: Handles edge cases well?
+## 🔧 Linting Standards {#-linting-standards}
+
+Linting rules are in place to catch common errors and enforce consistency.
+
+### **ESLint**
+
+Our configuration is tuned to be pragmatic:
+
+- **Complexity**: Warns at 20, errors at 30.
+- **Max Parameters**: Warns at 6.
+- **Max Lines/Function**: Warns at 150.
+
+**Refactor vs. Disable**: Always try to refactor code to comply with a rule.
+Only disable a rule with an inline comment if the code is justifiably complex or
+performance-critical.
+
+### **Auto-Fixing**
+
+Run `npm run lint:fix` and `npx markdownlint --fix .` to automatically fix most
+common issues.
+
+---
+
+## ✅ Developer Checklists {#-developer-checklists}
+
+### **Before Committing**
+
+- [ ] Does the code work and is it tested?
+- [ ] Is it well-documented with JSDoc and comments?
+- [ ] Does it follow our error handling and logging standards?
+- [ ] Are there any magic numbers or duplicated code?
+- [ ] Have you run the linters and fixed all issues? (`npm run lint:fix`)
+
+### **Code Review**
+
+- [ ] Does the code solve the problem effectively and efficiently?
+- [ ] Is the architecture sound and does it align with SOLID principles?
+- [ ] Is the code readable, maintainable, and easy to understand?
+- [ ] Is the test coverage adequate?
+- [ ] Does the documentation reflect the changes?
 
 ---
 
@@ -732,252 +274,3 @@ self will thank you for maintaining.
 
 _Last updated: 2025-01-27_
 _Authors: Sonic + Cursor + Markus Barta (mba)_
-
----
-
-## 🎬 Scene Development Standards {#scene-development-standards}
-
-### **Critical Scene Requirements**
-
-#### **🚨 ALWAYS Include `device.push()`**
-
-**❌ Common Mistake**: Drawing to device buffer but never pushing to display
-
-```javascript
-// ❌ WRONG: Scene draws but nothing shows on Pixoo
-async function render(ctx) {
-  const { device } = ctx;
-  await device.fillRectangleRgba([0, 0], [64, 64], [255, 0, 0, 255]);
-  console.log('Red screen drawn');
-  // Missing: await device.push(name, ctx.publishOk);
-}
-```
-
-**✅ CORRECT**: Always push after drawing
-
-```javascript
-// ✅ CORRECT: Scene draws AND displays on Pixoo
-async function render(ctx) {
-  const { device } = ctx;
-  await device.fillRectangleRgba([0, 0], [64, 64], [255, 0, 0, 255]);
-
-  // CRITICAL: Push frame to device
-  await device.push(name, ctx.publishOk);
-
-  console.log('Red screen drawn and displayed');
-}
-```
-
-#### **Scene Lifecycle Checklist**
-
-- [ ] **`init()` method**: Scene initialization (optional)
-- [ ] **`render()` method**: Main rendering logic
-- [ ] **`cleanup()` method**: Scene cleanup (optional)
-- [ ] **`device.push()`**: ALWAYS push after drawing
-- [ ] **Error handling**: Validate context and handle errors gracefully
-- [ ] **State management**: Use `ctx.state` for scene-specific data
-
-#### **Scene Template**
-
-```javascript
-const name = 'scene_name';
-
-async function init() {
-  console.log(`🚀 [${name.toUpperCase()}] Scene initialized`);
-}
-
-async function render(ctx) {
-  // Validate scene context
-  if (!validateSceneContext(ctx, name)) {
-    return;
-  }
-
-  const { device, state } = ctx;
-
-  // Your rendering logic here
-  await device.drawSomething();
-
-  // CRITICAL: Always push to device
-  await device.push(name, ctx.publishOk);
-
-  console.log(`✅ [${name.toUpperCase()}] Scene rendered`);
-}
-
-async function cleanup() {
-  console.log(`🧹 [${name.toUpperCase()}] Scene cleaned up`);
-}
-
-module.exports = { name, render, init, cleanup };
-```
-
----
-
-## 🐟 Fish-Aware Shell Standards {#fish-aware-shell-standards}
-
-Our development environment uses the fish shell by default.
-When proposing or generating shell commands, scripts, or one-liners,
-follow these rules.
-
-### **Server-Side Scripts and Git Hooks**
-
-When creating server-side scripts or git hooks on NixOS:
-
-- ✅ **Use `#!/usr/bin/env bash`** - Portable across different systems
-- ✅ **Avoid fish-specific syntax** - Scripts should work in bash
-- ✅ **Use `echo 'content' > file`** instead of `cat > file << 'EOF'` in fish
-- ✅ **Test scripts in bash** - Ensure they work in the target environment
-
-**Example - Good:**
-
-```bash
-echo '#!/usr/bin/env bash
-set -e
-echo "Script starting..."
-cd /path/to/dir
-npm install' > script.sh
-chmod +x script.sh
-```
-
-**Example - Bad (fish-specific):**
-
-```fish
-cat > script.sh << 'EOF'
-#!/usr/bin/env bash
-# This won't work in fish due to redirection syntax
-EOF
-```
-
-### **Do This (fish syntax)**
-
-- ✅ Use fish syntax, not bash/zsh
-- ✅ Variable assignment: `set var value` (not `var=value`)
-- ✅ Export env vars: `set -x VAR value` (not `export VAR=value`)
-- ✅ Conditionals/loops: `if ...; end`, `for v in list; end` (no `fi`/`done`)
-- ✅ Command substitution: `(cmd)` (not `$(cmd)`)
-- ✅ Source files: `source file.fish` (not `. file.sh`)
-- ✅ When unsure, prefer fish-correct form first
-
-### **Do Not**
-
-- 🚫 Do not silently fall back to bash
-
-### **If bash is required**
-
-- 💡 Explicitly call: `bash -c "..."` and explain why bash-specific
-  features are needed
-
-### **Examples**
-
-```fish
-# Set and export
-set -x PIXOO_IP 192.168.1.159
-
-# Loop
-for color in red green blue
-  echo $color
-end
-
-# Command substitution
-set now (date +%s)
-
-# Source configuration
-source ~/.config/fish/config.fish
-```
-
-```bash
-# If you truly need bash-only features (e.g., process substitution)
-bash -c 'mapfile -t lines < <(ls); printf "%s\n" "${lines[@]}"'
-```
-
----
-
-## 🔧 Linting Standards {#linting-standards}
-
-### **ESLint Configuration**
-
-Our ESLint configuration uses reasonable limits that balance code quality with practical development:
-
-- **Complexity**: `warn` at 20, `error` at 15 (was 10)
-- **Max Parameters**: `warn` at 7, `error` at 6 (was 5)
-- **Max Lines per Function**: `warn` at 150, `error` at 120 (was 80)
-
-**Why These Limits?**
-
-- **Complexity 20**: Allows for realistic business logic while preventing overly complex functions
-- **Max Params 7**: Accommodates common patterns like event handlers and configuration objects
-- **Max Lines 150**: Permits complex functions when necessary, but encourages refactoring
-
-### **Markdown Linting**
-
-We use markdownlint with relaxed rules for better developer experience:
-
-- **Line Length**: 120 characters (was 72)
-- **Code Blocks**: No language requirement (MD040 disabled)
-- **Headers**: No strict ordering requirements
-- **Lists**: Consistent indentation (2 spaces)
-
-### **Auto-Fix Commands**
-
-```bash
-# Fix ESLint issues automatically
-npm run lint -- --fix
-
-# Fix markdown issues
-npx markdownlint --fix "**/*.md"
-
-# Fix all linting issues at once
-npm run lint:fix
-```
-
-### **When to Refactor vs. Disable**
-
-**✅ Refactor When:**
-
-- Function has multiple responsibilities
-- Logic can be extracted into helper functions
-- Similar patterns exist elsewhere in codebase
-
-**⚠️ Disable Rule When:**
-
-- Function complexity is justified by business requirements
-- Performance-critical code requires optimization
-- Third-party library integration requires specific patterns
-
-**Example - Good Refactoring:**
-
-```javascript
-// Before: High complexity (15+)
-async function render(ctx) {
-  if (!validateContext(ctx)) return;
-  const { device, state } = ctx;
-  const versionInfo = buildVersionInfo(state);
-  await drawStartupInfo(device, versionInfo);
-  await device.push(name, ctx.publishOk);
-}
-
-// After: Low complexity (5)
-function buildVersionInfo(state) {
-  const gitSha = process.env.GITHUB_SHA?.substring(0, 7);
-  return {
-    version:
-      process.env.IMAGE_TAG ||
-      gitSha ||
-      getStateValue(state, 'version', '1.0.0'),
-    // ... other properties
-  };
-}
-```
-
-### **Pre-commit Hooks**
-
-Consider adding pre-commit hooks to automatically fix common issues:
-
-```json
-{
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint:fix && npm run lint:md:fix"
-    }
-  }
-}
-```
