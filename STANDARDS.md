@@ -111,6 +111,11 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
   changes.
 - **Shell Scripts**: Server-side scripts **must** use `#!/usr/bin/env bash` for
   portability. Use `fish` syntax for local development.
+- **Testing Locally**: Local testing is encouraged, but be mindful that the device
+  may also be accessed by the server or other users on the local network. Whenever
+  possible, use the "mock" driver to avoid conflicts with the physical device. If
+  testing on the real device is necessary, always obtain permission from the user
+  before proceeding.
 
 ---
 
