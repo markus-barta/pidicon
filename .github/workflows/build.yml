@@ -1,4 +1,4 @@
-name: ci
+name: CI/CD Pipeline
 
 on:
   push:
@@ -21,23 +21,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm ci --include=dev
+      - run: npm ci
       - run: npm run lint --if-present
       - run: npm test --if-present
-      - name: Set build metadata
-        id: build_metadata
-        run: |
-          echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
-          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "GIT_COMMIT_COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
-      - name: Generate version.json
-        run: node scripts/build-version.js
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          GIT_COMMIT_COUNT: ${{ steps.build_metadata.outputs.GIT_COMMIT_COUNT }}
-          BUILD_DATE: ${{ env.BUILD_DATE }}
-      - name: Log version.json
-        run: cat version.json
 
   docker:
     needs: build-test
@@ -66,7 +52,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ github.run_number }}
+            type=raw,value=${{ steps.build_metadata.outputs.GIT_COMMIT_COUNT }}
             type=sha,format=short
             type=ref,event=branch
             type=ref,event=tag
