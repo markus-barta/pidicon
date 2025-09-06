@@ -9,86 +9,65 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔨 Building version information...');
+const logger = require('../lib/logger');
 
-// Helper function to get Git info with environment fallback
-function getGitInfo(envVar, gitCommand, defaultValue = null) {
-  if (envVar) return envVar;
+function buildVersionInfo() {
+  logger.info('Building version information...');
   try {
-    return execSync(gitCommand, { encoding: 'utf8' }).trim();
-  } catch {
-    return defaultValue;
+    // Get Git information
+    const gitCommit = execSync('git rev-parse --short HEAD', {
+      encoding: 'utf8',
+    }).trim();
+    const gitCommitFull = execSync('git rev-parse HEAD', {
+      encoding: 'utf8',
+    }).trim();
+    const gitCommitCount = execSync('git rev-list --count HEAD', {
+      encoding: 'utf8',
+    }).trim();
+    const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+      encoding: 'utf8',
+    }).trim();
+    const gitTag = execSync(
+      'git describe --tags --abbrev=0 2>/dev/null || echo ""',
+      { encoding: 'utf8' },
+    ).trim();
+
+    // Read package.json for semantic version
+    const packageJsonPath = path.join(__dirname, '..', 'package.json');
+    let packageVersion = '1.0.0';
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      packageVersion = packageJson.version || '1.0.0';
+    } catch {
+      logger.warn('Could not read package.json, using default version');
+    }
+
+    // Build version info
+    const buildNumber = parseInt(gitCommitCount);
+    const versionData = {
+      version: packageVersion,
+      deploymentId: gitTag || `v${packageVersion}-${gitCommit}`,
+      buildNumber,
+      gitCommit,
+      gitCommitFull,
+      gitCommitCount: buildNumber, // Remove redundancy
+      gitBranch,
+      gitTag: gitTag || null,
+      buildTime: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+    };
+
+    // Write to version.json
+    const versionFile = path.join(__dirname, '..', 'version.json');
+    fs.writeFileSync(versionFile, JSON.stringify(versionData, null, 2));
+    logger.info('Version file generated:', { file: versionFile });
+    logger.info('Version info:', versionData);
+  } catch (error) {
+    logger.error('Failed to build version info:', {
+      error: error.message.split('\n')[0].trim(),
+    });
+    process.exit(1);
   }
 }
 
-try {
-  // Environment variables (CI/CD provided)
-  const envSha = process.env.GITHUB_SHA;
-  // IMPORTANT: buildNumber must reflect git commit count, not CI run number.
-  // Only honor GIT_COMMIT_COUNT if explicitly provided; otherwise read from git.
-  const envCommitCount =
-    process.env.GIT_COMMIT_COUNT || process.env.BUILD_NUMBER;
-  const envBuildDate = process.env.BUILD_DATE;
-  const envRefName = process.env.GITHUB_REF_NAME;
-  const envRef = process.env.GITHUB_REF || '';
-  const envTag = envRef.startsWith('refs/tags/')
-    ? envRef.split('/').slice(2).join('/')
-    : '';
-
-  // Get Git information
-  const gitCommit = getGitInfo(
-    envSha?.substring(0, 7),
-    'git rev-parse --short HEAD',
-  );
-  const gitCommitFull = getGitInfo(envSha, 'git rev-parse HEAD');
-  const gitCommitCount = getGitInfo(
-    envCommitCount,
-    'git rev-list --count HEAD',
-  );
-  const gitBranch = getGitInfo(envRefName, 'git rev-parse --abbrev-ref HEAD');
-  const gitTag = getGitInfo(
-    envTag,
-    'git describe --tags --abbrev=0 2>/dev/null || echo ""',
-    '',
-  );
-
-  // Read package.json for semantic version
-  const packageJsonPath = path.join(__dirname, '..', 'package.json');
-  let packageVersion = '1.0.0';
-  try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-    packageVersion = packageJson.version || '1.0.0';
-  } catch {
-    console.warn('⚠️ Could not read package.json, using default version');
-  }
-
-  // Build version info
-  const buildNumber = parseInt(gitCommitCount);
-  const versionInfo = {
-    version: packageVersion,
-    deploymentId: gitTag || `v${packageVersion}-${gitCommit}`,
-    buildNumber,
-    gitCommit,
-    gitCommitFull,
-    gitCommitCount: buildNumber, // Remove redundancy
-    gitBranch,
-    gitTag: gitTag || null,
-    buildTime: envBuildDate || new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-  };
-
-  // Write to version.json
-  const versionFile = path.join(__dirname, '..', 'version.json');
-  fs.writeFileSync(versionFile, JSON.stringify(versionInfo, null, 2));
-
-  console.log('✅ Version file generated:', versionFile);
-  console.log('📋 Version info:', {
-    deploymentId: versionInfo.deploymentId,
-    buildNumber: versionInfo.buildNumber,
-    gitCommit: versionInfo.gitCommit,
-    gitBranch: versionInfo.gitBranch,
-  });
-} catch (error) {
-  console.error('❌ Failed to build version:', error.message);
-  process.exit(1);
-}
+buildVersionInfo();
