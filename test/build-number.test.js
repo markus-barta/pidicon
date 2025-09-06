@@ -3,7 +3,14 @@ const assert = require('node:assert');
 const test = require('node:test');
 
 test('Daemon startup and build number test', async () => {
-  const daemonProcess = exec('node daemon.js');
+  // Set environment to use mock driver for testing
+  const env = {
+    ...process.env,
+    PIXOO_DEVICE_TARGETS: '127.0.0.1:mock',
+    LOG_LEVEL: 'info',
+  };
+
+  const daemonProcess = exec('node daemon.js', { env });
   let output = '';
 
   return new Promise((resolve, reject) => {
