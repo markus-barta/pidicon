@@ -30,8 +30,11 @@ main() {
     
     cd "$DOCKER_COMPOSE_PATH"
     
-    log "Building and restarting pixoo-daemon container..."
-    docker compose up -d --build pixoo-daemon
+    log "Pulling latest Docker image..."
+    docker compose pull pixoo-daemon
+
+    log "Restarting pixoo-daemon container..."
+    docker compose up -d pixoo-daemon
     
     log "Waiting for container to settle..."
     sleep 10
