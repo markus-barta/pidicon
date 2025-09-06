@@ -174,7 +174,7 @@ class PerformanceChartRenderer {
         'left',
         false,
       );
-      const totalFrames = (this.getState('framesRendered') || 0).toString();
+      const totalFrames = metrics.framesRendered.toString();
       await drawTextRgbaAlignedWithBg(
         this.device,
         totalFrames,
