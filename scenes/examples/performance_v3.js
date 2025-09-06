@@ -21,10 +21,10 @@
 
 'use strict';
 
-const name = 'performance_v3';
 const mqtt = require('mqtt');
 
 const deviceAdapter = require('../../lib/device-adapter');
+const logger = require('../../lib/logger');
 const {
   CHART_CONFIG_PERFORMANCE,
   getPerformanceColor,
@@ -36,9 +36,11 @@ const {
   BACKGROUND_COLORS,
 } = require('../../lib/rendering-utils');
 
+const name = 'performance_v3';
+
 async function init() {
   // Initialization logic
-  console.log(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
+  logger.debug(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
 }
 
 async function cleanup(ctx) {
@@ -52,9 +54,10 @@ async function cleanup(ctx) {
     state?.set && state.set('loopScheduled', false);
     state?.set && state.set('testCompleted', true);
   } catch (e) {
-    console.warn(`⚠️ [TEST_PERF_V3] Cleanup encountered an issue:`, e?.message);
+    // Gracefully handle cleanup errors
+    logger.warn(`⚠️ [TEST_PERF_V3] Cleanup encountered an issue:`, e?.message);
   }
-  console.log(`🧹 [TEST_PERFORMANCE_V3] Scene cleaned up`);
+  logger.debug(`🧹 [TEST_PERFORMANCE_V3] Scene cleaned up`);
 }
 
 /**
@@ -276,7 +279,7 @@ class PerformanceTracker {
     if (now - this.lastLogTime < 1000) return; // Log max once per second
 
     const metrics = this.getMetrics();
-    console.log(
+    logger.debug(
       `🎮 [PERF V3] ${mode} mode | ` +
         `FT:${metrics.avgFrametime.toFixed(1)}ms | ` +
         `FPS:${metrics.fps} | ` +
@@ -316,12 +319,12 @@ async function handleFreshStart(device, stateManager, config) {
   // Check if device is ready before proceeding
   const deviceReady = await device.isReady();
   if (!deviceReady) {
-    console.log(`⏳ [PERF V3] Device not ready, waiting...`);
+    logger.debug(`⏳ [PERF V3] Device not ready, waiting...`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     // Try again after delay
     const stillNotReady = !(await device.isReady());
     if (stillNotReady) {
-      console.warn(`⚠️ [PERF V3] Device still not ready, proceeding anyway`);
+      logger.warn(`⚠️ [PERF V3] Device still not ready, proceeding anyway`);
     }
   }
 
@@ -329,12 +332,12 @@ async function handleFreshStart(device, stateManager, config) {
     await device.clear();
     stateManager.reset();
 
-    console.log(
+    logger.debug(
       `🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
         `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`,
     );
   } catch (error) {
-    console.error(
+    logger.error(
       `❌ [PERF V3] Failed to clear device on fresh start:`,
       error.message,
     );
@@ -361,7 +364,7 @@ function handleFrameCounting(config, maxFrames, getState, setState) {
 
   // Check if we've reached the frame limit
   if (currentFrames + 1 >= maxFrames) {
-    console.log(
+    logger.debug(
       `🏁 [PERF V3] Reached frame limit (${maxFrames}) - test complete`,
     );
     setState('testCompleted', true);
@@ -555,7 +558,7 @@ async function render(ctx) {
     // Update render timestamp
     setState('lastRender', renderStart);
   } catch (error) {
-    console.error(`❌ [PERF V3] Critical render error:`, error);
+    logger.error(`❌ [PERF V3] Critical render error:`, error);
     // Attempt graceful recovery
     try {
       if (typeof setState === 'function') {
@@ -570,7 +573,7 @@ async function render(ctx) {
         });
       }
     } catch (recoveryError) {
-      console.error(`❌ [PERF V3] Recovery failed:`, recoveryError);
+      logger.error(`❌ [PERF V3] Recovery failed:`, recoveryError);
     }
   }
 }
@@ -1020,18 +1023,18 @@ function scheduleContinuation(ctx, config, delay) {
           client.publish(`pixoo/${targetHost}/state/upd`, payload, { qos: 1 });
           client.end();
         } catch (publishError) {
-          console.error(`❌ [PERF V3] MQTT publish error:`, publishError);
+          logger.error(`❌ [PERF V3] MQTT publish error:`, publishError);
           client.end();
         }
       });
 
       client.on('error', (error) => {
-        console.error(`❌ [PERF V3] MQTT connection error:`, error.message);
+        logger.error(`❌ [PERF V3] MQTT connection error:`, error.message);
         try {
           setState('loopScheduled', false);
           setState('loopTimer', null);
         } catch (stateError) {
-          console.error(`❌ [PERF V3] State cleanup error:`, stateError);
+          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
         }
         client.end();
       });
@@ -1041,16 +1044,16 @@ function scheduleContinuation(ctx, config, delay) {
           setState('loopScheduled', false);
           setState('loopTimer', null);
         } catch (stateError) {
-          console.error(`❌ [PERF V3] State cleanup error:`, stateError);
+          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
         }
       });
     } catch (error) {
-      console.error(`❌ [PERF V3] Continuation setup error:`, error);
+      logger.error(`❌ [PERF V3] Continuation setup error:`, error);
       try {
         setState('loopScheduled', false);
         setState('loopTimer', null);
       } catch (stateError) {
-        console.error(`❌ [PERF V3] State cleanup error:`, stateError);
+        logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
       }
     }
   }, delay);

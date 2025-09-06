@@ -8,16 +8,7 @@ const fs = require('fs');
 const mqtt = require('mqtt');
 const path = require('path');
 
-console.log(
-  '****************************************************************************************************',
-);
-console.log('🚀 [DAEMON] Starting Pixoo Daemon...');
-console.log(
-  '****************************************************************************************************',
-);
-
 const DeploymentTracker = require('./lib/deployment-tracker');
-console.log('✅ [DAEMON] DeploymentTracker loaded');
 const {
   getContext,
   setDriverForDevice,
@@ -183,7 +174,7 @@ function markDeviceActive(deviceIp) {
   if (!bootState.lastActivity || now - bootState.lastActivity > 1800000) {
     if (!bootState.firstSeen || now - bootState.firstSeen < 60000) {
       // Only in the first minute of seeing the device
-      console.log(`🔄 [BOOT] Potential fresh boot detected for ${deviceIp}`);
+      logger.debug(`🔄 [BOOT] Potential fresh boot detected for ${deviceIp}`);
       bootState.booted = false;
     }
   }

@@ -29,7 +29,7 @@
 
 // @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
 
-// Import shared performance utilities
+const logger = require('../../lib/logger');
 const {
   CHART_CONFIG,
   getSimplePerformanceColor,
@@ -37,14 +37,16 @@ const {
 
 const name = 'performance_v2';
 
-async function init() {
-  // Initialize test performance v2 scene - nothing special needed
-  console.log(`🚀 [TEST_PERFORMANCE_V2] Scene initialized`);
+function init(context) {
+  logger.debug(`🚀 [TEST_PERFORMANCE_V2] Scene initialized`);
+  context.setState('isInitialized', true);
 }
 
-async function cleanup() {
-  // Cleanup test performance v2 scene - nothing special needed
-  console.log(`🧹 [TEST_PERFORMANCE_V2] Scene cleaned up`);
+function cleanup(context) {
+  logger.debug(`🧹 [TEST_PERFORMANCE_V2] Scene cleaned up`);
+  if (context.getState('loopTimer')) {
+    clearTimeout(context.getState('loopTimer'));
+  }
 }
 
 /* eslint-disable max-lines-per-function, complexity */
@@ -85,12 +87,12 @@ async function render(context) {
     // Check if device is ready before proceeding
     const deviceReady = await device.isReady();
     if (!deviceReady) {
-      console.log(`⏳ [TEST V2] Device not ready, waiting...`);
+      logger.debug(`⏳ [TEST V2] Device not ready, waiting...`);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       // Try again after delay
       const stillNotReady = !(await device.isReady());
       if (stillNotReady) {
-        console.warn(`⚠️ [TEST V2] Device still not ready, proceeding anyway`);
+        logger.warn(`⚠️ [TEST V2] Device still not ready, proceeding anyway`);
       }
     }
 
@@ -98,7 +100,7 @@ async function render(context) {
       // Clear screen first
       await device.clear();
     } catch (error) {
-      console.error(
+      logger.error(
         `❌ [TEST V2] Failed to clear device on fresh start:`,
         error.message,
       );
@@ -126,7 +128,7 @@ async function render(context) {
       setState('loopTimer', null);
     }
 
-    console.log(
+    logger.debug(
       `🎯 [TEST V2] Starting fresh test run - isNewMessage: ${isNewMessage}, testCompleted: ${getState('testCompleted')}`,
     );
     startTime = getState('startTime');
@@ -163,7 +165,7 @@ async function render(context) {
   let displayText = 'READY';
 
   // Debug: Log which mode is being processed
-  console.log(
+  logger.debug(
     `🎮 [MODE] Processing mode: ${mode}, shouldRender: ${shouldRender}, testCompleted: ${getState('testCompleted')}`,
   );
 
@@ -245,7 +247,7 @@ async function render(context) {
     const chartX = getState('chartX') || CHART_CONFIG.CHART_START_X;
 
     // Debug: Log sweep mode entry
-    console.log(
+    logger.debug(
       `🎯 [SWEEP] Mode entered: sweepIndex=${sweepIndex}, interval=${currentSweepInterval}ms, chartX=${chartX}, testCompleted=${getState('testCompleted')}`,
     );
 
@@ -263,20 +265,20 @@ async function render(context) {
 
     // Debug: Log sweep progress less frequently
     if (pointsCollected % 10 === 0 || pointsCollected >= 64) {
-      console.log(
+      logger.debug(
         `🔍 [SWEEP] Progress: ${pointsCollected}/64 points (${Math.round((now - sweepStartTime) / 1000)}s elapsed)`,
       );
     }
 
     if (pointsCollected >= 64 || now - sweepStartTime >= 30000) {
-      console.log(
+      logger.debug(
         `🎯 [SWEEP] Interval ${sweepIndex + 1} completed: ${pointsCollected} points in ${Math.round((now - sweepStartTime) / 1000)}s`,
       );
       // Move to next interval or finish
       const nextIndex = sweepIndex + 1;
       if (nextIndex >= intervals.length) {
         // All intervals completed
-        console.log(
+        logger.debug(
           `🏁 [SWEEP] All intervals completed: ${intervals.length} intervals tested`,
         );
         setState('testCompleted', true);
@@ -288,7 +290,7 @@ async function render(context) {
         setState('sweepIndex', nextIndex);
         setState('sweepStartTime', now);
         setState('sweepChartStart', chartX);
-        console.log(
+        logger.debug(
           `🎯 [SWEEP] Moving to interval ${intervals[nextIndex]}ms (${nextIndex + 1}/${intervals.length})`,
         );
       }
@@ -326,7 +328,7 @@ async function render(context) {
       setState('testCompleted', true);
       setState('completionTime', now);
       const chartX = getState('chartX') || CHART_CONFIG.CHART_START_X;
-      console.log(
+      logger.debug(
         `🏁 [TEST V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, ${frameTimes.length} samples`,
       );
     }
@@ -643,13 +645,13 @@ async function render(context) {
 
   // Log performance data every 10 frames
   if (context.frametime !== undefined && frameTimes.length % 10 === 0) {
-    console.log(
+    logger.debug(
       `🎯 [PERF TEST V2] ${mode} mode, interval:${currentInterval}ms, frametime:${context.frametime}ms, avg:${Math.round(avgFrametime)}ms, samples:${frameTimes.length}, shouldRender:${shouldRender}, elapsed:${Math.round(elapsed / 1000)}s`,
     );
   }
 
   // Final debug log to see what happens at the end of render
-  console.log(
+  logger.debug(
     `🏁 [RENDER END] mode=${mode}, displayText="${displayText.replace(/\n/g, ' | ')}", shouldRender=${shouldRender}, testCompleted=${getState('testCompleted')}`,
   );
 
@@ -666,7 +668,7 @@ async function render(context) {
     (mode === 'sweep' && shouldRender && !state.testCompleted);
 
   // Debug: Log continuation logic
-  console.log(
+  logger.debug(
     `🔄 [CONTINUATION] mode=${mode}, useAdaptiveTiming=${useAdaptiveTiming}, shouldRender=${shouldRender}, stop=${state.stop}, testCompleted=${state.testCompleted}, shouldContinue=${shouldContinue}`,
   );
 
@@ -676,14 +678,14 @@ async function render(context) {
     const loopAlreadyScheduled = getState('loopScheduled');
 
     if (loopAlreadyScheduled && !isContinuation) {
-      console.log(
+      logger.debug(
         `⏭️  Loop already scheduled and not a continuation, skipping duplicate`,
       );
       return;
     }
 
     if (loopAlreadyScheduled && isContinuation) {
-      console.log(
+      logger.debug(
         `🔄  Loop already scheduled but processing continuation, continuing...`,
       );
     }
@@ -704,7 +706,7 @@ async function render(context) {
         const nextIndex = sweepIndex + 1;
         if (nextIndex >= intervals.length) {
           // All intervals completed
-          console.log(
+          logger.debug(
             `🏁 [SWEEP] All intervals completed: ${intervals.length} intervals tested`,
           );
           setState('testCompleted', true);
@@ -713,7 +715,7 @@ async function render(context) {
           return;
         } else {
           // Move to next interval - reset chart for new interval
-          console.log(
+          logger.debug(
             `🎯 [SWEEP] Moving to interval ${intervals[nextIndex]}ms (${nextIndex + 1}/${intervals.length})`,
           );
           setState('sweepIndex', nextIndex);
@@ -732,7 +734,7 @@ async function render(context) {
     } else {
       // Original loop mode logic
       if (chartX >= 64 || now >= loopEndTime) {
-        console.log(
+        logger.debug(
           `🏁 [LOOP V2] Test completed: ${chartX - CHART_CONFIG.CHART_START_X}/63 chart points, time: ${Math.round((now - startTime) / 1000)}s`,
         );
         setState('loopScheduled', false);
@@ -751,7 +753,7 @@ async function render(context) {
       Math.floor(estimatedRemainingMs / 1000),
     );
     const delayType = useAdaptiveTiming ? 'adaptive' : 'fixed';
-    console.log(
+    logger.debug(
       `🔄 [LOOP V2] Chart point ${chartPoints}/63, frametime: ${context.frametime}ms, delay: ${nextMessageDelay}ms (${delayType}), remaining: ${remainingPoints} points, ~${estimatedSeconds}s`,
     );
 
@@ -761,7 +763,7 @@ async function render(context) {
     // Use setTimeout to send MQTT message for next iteration
     const loopTimer = setTimeout(() => {
       try {
-        console.log(`🚀 [LOOP V2] Executing scheduled continuation...`);
+        logger.debug(`🚀 [LOOP V2] Executing scheduled continuation...`);
 
         // Create a new MQTT client for this message
         const mqtt = require('mqtt');
@@ -775,13 +777,13 @@ async function render(context) {
         });
 
         let connectionTimeout = setTimeout(() => {
-          console.log(`⚠️  MQTT connection timeout`);
+          logger.warn(`⚠️  MQTT connection timeout`);
           client.end();
         }, 5000);
 
         client.on('connect', () => {
           clearTimeout(connectionTimeout);
-          console.log(
+          logger.debug(
             `📡 [${mode.toUpperCase()} V2] Connected to MQTT, sending continuation message`,
           );
 
@@ -798,7 +800,7 @@ async function render(context) {
           const maxChartX = mode === 'sweep' ? 1000 : 64; // Much higher for sweep mode
 
           if (loopIteration > maxIterations || chartX >= maxChartX) {
-            console.log(
+            logger.warn(
               `🛑 [${mode.toUpperCase()} V2] Maximum limit reached (iter: ${loopIteration}, chartX: ${chartX}), stopping`,
             );
             setState('loopScheduled', false);
@@ -828,7 +830,7 @@ async function render(context) {
 
           const payload = JSON.stringify(continuationPayload);
 
-          console.log(
+          logger.debug(
             `📤 [${mode.toUpperCase()} V2] Publishing to pixoo/${deviceIp}/state/upd: ${payload}`,
           );
           client.publish(
@@ -837,11 +839,11 @@ async function render(context) {
             { qos: 1 },
             (err) => {
               if (err) {
-                console.log(
+                logger.error(
                   `❌ [${mode.toUpperCase()} V2] Failed to publish: ${err.message}`,
                 );
               } else {
-                console.log(
+                logger.debug(
                   `✅ [${mode.toUpperCase()} V2] Successfully published continuation message`,
                 );
               }
@@ -852,21 +854,21 @@ async function render(context) {
 
         client.on('error', (err) => {
           clearTimeout(connectionTimeout);
-          console.log(
+          logger.error(
             `⚠️  [${mode.toUpperCase()} V2] MQTT connection failed: ${err.message}`,
           );
           setState('loopScheduled', false); // Reset flag on error
         });
 
         client.on('close', () => {
-          console.log(`🔌 [${mode.toUpperCase()} V2] MQTT connection closed`);
+          logger.debug(`🔌 [${mode.toUpperCase()} V2] MQTT connection closed`);
           setState('loopScheduled', false); // Reset flag when done
         });
       } catch (err) {
-        console.log(
+        logger.error(
           `⚠️  [${mode.toUpperCase()} V2] Exception in continuation: ${err.message}`,
         );
-        console.log(`📊 [${mode.toUpperCase()} V2] Stack trace: ${err.stack}`);
+        logger.error(`📊 [${mode.toUpperCase()} V2] Stack trace: ${err.stack}`);
         setState('loopScheduled', false); // Reset flag on error
       }
     }, nextMessageDelay);

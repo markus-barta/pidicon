@@ -10,10 +10,10 @@
  * @license MIT
  */
 
-const name = 'draw_api_animated';
-
-// Import shared utilities
+const logger = require('../../lib/logger');
 const { validateSceneContext } = require('../../lib/performance-utils');
+
+const name = 'draw_api_animated';
 
 // Animation constants
 const ANIMATION_CONFIG = {
@@ -28,7 +28,7 @@ const ANIMATION_CONFIG = {
 
 async function init() {
   // Initialize animated draw API demo scene - nothing special needed
-  console.log(`🚀 [TEST_DRAW_API_ANIMATED] Scene initialized`);
+  logger.debug(`🚀 [TEST_DRAW_API_ANIMATED] Scene initialized`);
 }
 
 async function cleanup(ctx) {
@@ -46,7 +46,7 @@ async function cleanup(ctx) {
   setState('animationScheduled', false);
   setState('frameCount', 0);
 
-  console.log(
+  logger.debug(
     `🧹 [TEST_DRAW_API_ANIMATED] Scene cleaned up - animation state reset`,
   );
 }
@@ -73,7 +73,7 @@ async function render(ctx) {
   }
 
   // Debug logging for frameCount
-  console.log(
+  logger.debug(
     `🔍 [DEBUG] Frame count: ${frameCount}, isContinuation: ${isContinuation}, state frameCount: ${state.get('frameCount')}`,
   );
 
@@ -82,7 +82,7 @@ async function render(ctx) {
     setState('startTime', startTime);
     setState('frameCount', 0);
     setState('animationScheduled', false);
-    console.log(`🎬 [ANIMATED DEMO] Starting ${duration}-frame animation`);
+    logger.debug(`🎬 [ANIMATED DEMO] Starting ${duration}-frame animation`);
   }
 
   // Don't reset animation scheduling flag here - let it be managed by the scheduling logic
@@ -96,7 +96,7 @@ async function render(ctx) {
 
   // Debug logging for first few frames
   if (frameCount < 3) {
-    console.log(
+    logger.debug(
       `🎬 [ANIMATED DEMO] Frame ${frameCount}, progress: ${progress.toFixed(3)}, time: ${time.toFixed(3)}`,
     );
   }
@@ -124,7 +124,7 @@ async function render(ctx) {
 
   if (nextFrame >= duration) {
     // Animation complete - reset for next run
-    console.log(
+    logger.debug(
       `🏁 [ANIMATED DEMO] Animation complete after ${duration} frames`,
     );
     setState('frameCount', 0); // Reset for next run
@@ -141,7 +141,7 @@ async function render(ctx) {
       ANIMATION_CONFIG.MIN_FRAME_INTERVAL,
     );
 
-    console.log(
+    logger.debug(
       `🎬 [ANIMATION] Frame ${frameCount} took ${frameDuration}ms, scheduling next in ${adaptiveDelay}ms`,
     );
 
@@ -174,13 +174,13 @@ async function render(ctx) {
             });
             client.end();
           } catch (publishError) {
-            console.error(`❌ [ANIMATION] MQTT publish error:`, publishError);
+            logger.error(`❌ [ANIMATION] MQTT publish error:`, publishError);
             client.end();
           }
         });
 
         client.on('error', (error) => {
-          console.error(`❌ [ANIMATION] MQTT connection error:`, error.message);
+          logger.error(`❌ [ANIMATION] MQTT connection error:`, error.message);
           setState('animationScheduled', false); // Reset flag on error
           client.end();
         });
@@ -189,7 +189,7 @@ async function render(ctx) {
           setState('animationScheduled', false); // Reset flag when connection closes
         });
       } catch (error) {
-        console.error(`❌ [ANIMATION] Setup error:`, error);
+        logger.error(`❌ [ANIMATION] Setup error:`, error);
         setState('animationScheduled', false); // Reset flag on error
       }
     }, adaptiveDelay); // Dynamic timing based on actual frame performance
@@ -218,7 +218,7 @@ async function drawAnimatedBackground(device, time, progress, frameCount) {
 
         // Debug first few pixels
         if (x === 0 && y === 0 && frameCount < 3) {
-          console.log(
+          logger.debug(
             `🎨 [BACKGROUND] Pixel [${x},${y}]: intensity=${intensity.toFixed(1)}, color=[${color.join(',')}]`,
           );
         }

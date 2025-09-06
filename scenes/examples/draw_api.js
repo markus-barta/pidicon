@@ -8,14 +8,14 @@
  * @license MIT
  */
 
-const name = 'draw_api';
-
-// Import shared utilities
+const logger = require('../../lib/logger');
 const { validateSceneContext } = require('../../lib/performance-utils');
 
-async function init() {
+const name = 'draw_api';
+
+function init() {
   // Initialize test draw API scene - nothing special needed
-  console.log(`🚀 [TEST_DRAW_API] Scene initialized`);
+  logger.debug(`🚀 [TEST_DRAW_API] Scene initialized`);
 }
 
 async function render(ctx) {
@@ -29,7 +29,7 @@ async function render(ctx) {
 
   await device.clear();
 
-  console.log(`🧪 [API TEST] Running test: ${testType}`);
+  logger.debug(`🧪 [API TEST] Running test: ${testType}`);
 
   switch (testType) {
     case 'pixels':
@@ -58,7 +58,7 @@ async function render(ctx) {
 
 async function testPixels(device) {
   // Test individual pixel drawing
-  console.log(`📍 [PIXEL TEST] Drawing individual pixels`);
+  logger.debug(`📍 [PIXEL TEST] Drawing individual pixels`);
 
   // Color gradient test
   for (let x = 0; x < 64; x++) {
@@ -80,7 +80,7 @@ async function testPixels(device) {
 
 async function testRectangles(device) {
   // Test rectangle drawing functions
-  console.log(`⬜ [RECTANGLE TEST] Drawing rectangles`);
+  logger.debug(`⬜ [RECTANGLE TEST] Drawing rectangles`);
 
   // Filled rectangles in different colors
   await device.fillRectangleRgba([5, 5], [20, 20], [255, 0, 0, 255]); // Red
@@ -103,7 +103,7 @@ async function testRectangles(device) {
 
 async function testLines(device) {
   // Test line drawing
-  console.log(`📏 [LINE TEST] Drawing lines`);
+  logger.debug(`📏 [LINE TEST] Drawing lines`);
 
   // Horizontal lines
   for (let y = 10; y <= 50; y += 10) {
@@ -131,7 +131,7 @@ async function testLines(device) {
 
 async function testText(device) {
   // Test text rendering
-  console.log(`📝 [TEXT TEST] Drawing text`);
+  logger.debug(`📝 [TEXT TEST] Drawing text`);
 
   // Test different alignments
   await device.drawTextRgbaAligned(
@@ -182,7 +182,7 @@ async function testText(device) {
 
 async function testGradients(device) {
   // Test gradient-like effects using pixels
-  console.log(`🌈 [GRADIENT TEST] Creating gradients`);
+  logger.debug(`🌈 [GRADIENT TEST] Creating gradients`);
 
   // Horizontal gradient (left to right)
   for (let x = 0; x < 64; x++) {
@@ -226,7 +226,7 @@ async function testGradients(device) {
 
 async function testAll(device) {
   // Comprehensive test of all API functions
-  console.log(`🎯 [FULL API TEST] Testing all drawing functions`);
+  logger.debug(`🎯 [FULL API TEST] Testing all drawing functions`);
 
   // Section 1: Basic shapes (top-left)
   await device.fillRectangleRgba([2, 2], [15, 15], [255, 0, 0, 255]); // Red square
@@ -280,7 +280,7 @@ async function testAll(device) {
 
 async function cleanup() {
   // Cleanup test draw API scene - nothing special needed
-  console.log(`🧹 [TEST_DRAW_API] Scene cleaned up`);
+  logger.debug(`🧹 [TEST_DRAW_API] Scene cleaned up`);
 }
 
 module.exports = { name, render, init, cleanup };
