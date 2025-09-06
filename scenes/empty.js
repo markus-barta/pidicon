@@ -18,8 +18,15 @@ function init() {
   logger.debug(`🚀 [EMPTY] Scene initialized`);
 }
 
-async function render(device) {
+async function render(context) {
+  const { device, publishOk } = context;
+
+  // Clear screen to black
   await device.clear();
+
+  // Push the cleared frame to actually update the device
+  await device.push(name, publishOk);
+
   logger.debug(`🖤 [EMPTY] Screen cleared to black`);
 }
 
