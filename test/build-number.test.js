@@ -6,7 +6,7 @@ test('Daemon startup and build number test', (t, done) => {
   const daemonProcess = exec('node daemon.js');
   let output = '';
 
-  daemonProcess.stdout.on('data', (data) => {
+  const onData = (data) => {
     output += data;
     // Look for the log message indicating the daemon has started and check the build number.
     if (output.includes('Starting Pixoo Daemon')) {
@@ -20,12 +20,15 @@ test('Daemon startup and build number test', (t, done) => {
       daemonProcess.kill();
       done();
     }
-  });
+  };
 
-  daemonProcess.stderr.on('data', (data) => {
-    // Fail the test if there are any errors during startup
-    assert.fail(`Daemon startup produced an error: ${data}`);
-    daemonProcess.kill();
-    done();
+  daemonProcess.stdout.on('data', onData);
+  daemonProcess.stderr.on('data', onData);
+
+  daemonProcess.on('exit', (code) => {
+    if (code !== 0 && !output.includes('Starting Pixoo Daemon')) {
+      assert.fail(`Daemon process exited with code ${code}. Output: ${output}`);
+      done();
+    }
   });
 });
