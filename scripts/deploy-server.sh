@@ -105,6 +105,13 @@ restart_container() {
     
     cd "$DOCKER_COMPOSE_PATH"
     
+    # Install dependencies inside the container
+    log "Installing/updating dependencies inside the container..."
+    if ! docker compose exec pixoo-daemon npm install; then
+        log_error "Failed to install dependencies in the container"
+        exit 1
+    fi
+    
     # Check if container is currently running
     if docker compose ps pixoo-daemon | grep -q "Up"; then
         log "Container is running, restarting..."
