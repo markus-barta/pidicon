@@ -10,60 +10,51 @@
  * @license MIT
  */
 
+const logger = require('../lib/logger');
+const { isValidColor } = require('../lib/performance-utils');
+
 const name = 'fill';
 
-// Import shared utilities
-const {
-  isValidColor,
-  validateSceneContext,
-} = require('../lib/performance-utils');
-
-async function init() {
-  // Initialize fill scene - nothing special needed
-  console.log(`🚀 [FILL] Scene initialized`);
+function init() {
+  logger.debug(`🚀 [FILL] Scene initialized`);
 }
 
-async function render(ctx) {
-  // Validate scene context
-  if (!validateSceneContext(ctx, name)) {
-    return;
-  }
-
-  const { device, state } = ctx;
-
+async function render(device, context) {
   // Get color from context state (MQTT payload) or scene state
-  const defaultColor = [255, 0, 0, 255]; // Red
-  let color = defaultColor;
-
-  // Try context state first (MQTT payload), then fall back to scene state
-  if (ctx.payload && ctx.payload.color) {
-    color = ctx.payload.color;
-  } else if (state.get && state.get('color')) {
-    color = state.get('color');
-  } else if (state.color) {
-    color = state.color;
-  }
+  const defaultColor = [0, 0, 0, 255]; // Black
+  let color =
+    context.payload?.color || context.getState('color') || defaultColor;
 
   // Validate color format using shared utility
   if (!isValidColor(color)) {
-    console.error(
+    logger.error(
       `❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
     );
-    return;
+    // Fallback to default color
+    color = defaultColor;
   }
 
   // Fill entire screen with the specified color
-  await device.fillRectangleRgba([0, 0], [64, 64], color);
+  try {
+    await device.fill(color);
+  } catch (err) {
+    logger.error(`Error in fill scene: ${err}`);
+    return;
+  }
 
   // Push the filled frame to the device
-  await device.push(name, ctx.publishOk);
+  await device.push(name, context.publishOk);
 
-  console.log(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
+  logger.debug(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
 }
 
-async function cleanup() {
-  // Cleanup fill scene - nothing special needed
-  console.log(`🧹 [FILL] Scene cleaned up`);
+function cleanup() {
+  logger.debug(`🧹 [FILL] Scene cleaned up`);
 }
 
-module.exports = { name, render, init, cleanup };
+module.exports = {
+  name,
+  init,
+  render,
+  cleanup,
+};

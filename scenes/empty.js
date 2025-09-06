@@ -8,36 +8,21 @@
  * @license MIT
  */
 
+const logger = require('../lib/logger');
+
 const name = 'empty';
 
-// Import shared utilities
-const { validateSceneContext } = require('../lib/performance-utils');
-
-async function init() {
-  // Initialize empty scene - nothing special needed
-  console.log(`🚀 [EMPTY] Scene initialized`);
+function init() {
+  logger.debug(`🚀 [EMPTY] Scene initialized`);
 }
 
-async function render(ctx) {
-  // Validate scene context
-  if (!validateSceneContext(ctx, name)) {
-    return;
-  }
-
-  const { device, publishOk } = ctx;
-
-  // Clear screen to black (device appears "off")
+async function render(device) {
   await device.clear();
-
-  // Push the cleared frame to actually update the device
-  await device.push(name, publishOk);
-
-  console.log(`🖤 [EMPTY] Screen cleared to black`);
+  logger.debug(`🖤 [EMPTY] Screen cleared to black`);
 }
 
-async function cleanup() {
-  // Cleanup empty scene - nothing special needed
-  console.log(`🧹 [EMPTY] Scene cleaned up`);
+function cleanup() {
+  logger.debug(`🧹 [EMPTY] Scene cleaned up`);
 }
 
 module.exports = { name, render, init, cleanup };
