@@ -5,20 +5,30 @@ const test = require('node:test');
 test('Daemon startup and build number test', (t, done) => {
   const daemonProcess = exec('node daemon.js');
   let output = '';
+  let isDone = false;
+
+  const finish = (err) => {
+    if (isDone) return;
+    isDone = true;
+    daemonProcess.kill();
+    done(err);
+  };
 
   const onData = (data) => {
     output += data;
-    // Look for the log message indicating the daemon has started and check the build number.
-    if (output.includes('Starting Pixoo Daemon')) {
-      const buildNumberMatch = output.match(/Build: #(\d+)/);
-      assert(buildNumberMatch, 'Build number should be logged on startup');
-      assert(
-        buildNumberMatch[1] !== 'unknown' &&
-          !isNaN(parseInt(buildNumberMatch[1], 10)),
-        `Build number should be a number, not "${buildNumberMatch[1]}"`,
-      );
-      daemonProcess.kill();
-      done();
+    const buildNumberMatch = output.match(/Build: #(\d+)/);
+
+    if (buildNumberMatch) {
+      try {
+        assert(
+          buildNumberMatch[1] !== 'unknown' &&
+            !isNaN(parseInt(buildNumberMatch[1], 10)),
+          `Build number should be a number, not "${buildNumberMatch[1]}"`,
+        );
+        finish(); // Success
+      } catch (e) {
+        finish(e); // Assertion failure
+      }
     }
   };
 
@@ -26,9 +36,12 @@ test('Daemon startup and build number test', (t, done) => {
   daemonProcess.stderr.on('data', onData);
 
   daemonProcess.on('exit', (code) => {
-    if (code !== 0 && !output.includes('Starting Pixoo Daemon')) {
-      assert.fail(`Daemon process exited with code ${code}. Output: ${output}`);
-      done();
-    }
+    if (isDone) return;
+    // The process exited before the build number was found.
+    finish(
+      new Error(
+        `Daemon process exited (code ${code}) without logging a valid build number. Output:\n${output}`,
+      ),
+    );
   });
 });
