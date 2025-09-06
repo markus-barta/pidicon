@@ -1,1065 +1,307 @@
 /**
- * @fileoverview Performance Test V3
- * @description A scene that renders a performance chart on a Pixoo device.
- * It is designed to be highly configurable and performant, leveraging
- * advanced rendering techniques to minimize the number of pixels sent to the
- * device.
- * @mqtt
- * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
- * @version 1.0.0
- * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
+ * @fileoverview Performance Test V3 - Professional Edition
+ * @description Clean performance testing with two modes:
+ * - Adaptive: Next frame starts immediately after current frame completes
+ * - Fixed: Frames run at specified interval (e.g., every 150ms)
+ * @mqtt Examples:
+ * Adaptive mode: mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
+ * Fixed 150ms: mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","interval":150,"frames":100}'
+ * @version 3.0.0
+ * @author Markus Barta (mba) with assistance from Cursor AI (Claude 3.5 Sonnet)
  * @license MIT
  */
-
-// MQTT Commands:
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":150}'
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":100,"frames":200}'
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true}'
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"loop","interval":200,"duration":60000}'
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","interval":50,"adaptiveTiming":true}'
-// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","clear":true,"mode":"continuous","interval":150}'
 
 'use strict';
 
 const mqtt = require('mqtt');
 
-const deviceAdapter = require('../../lib/device-adapter');
 const logger = require('../../lib/logger');
 const {
-  CHART_CONFIG_PERFORMANCE,
+  CHART_CONFIG,
   getPerformanceColor,
 } = require('../../lib/performance-utils');
 const {
   drawTextRgbaAlignedWithBg,
-  drawLine,
-  clearRectangle,
   BACKGROUND_COLORS,
 } = require('../../lib/rendering-utils');
 
 const name = 'performance_v3';
 
-async function init() {
-  // Initialization logic
-  logger.debug(`🚀 [TEST_PERFORMANCE_V3] Scene initialized`);
+// Configuration constants
+const DEFAULT_FRAMES = 100; // number of frames to run
+const MAX_SAMPLES = 64; // matches chart width
+
+/**
+ * Initialize the performance test scene
+ */
+function init() {
+  logger.debug(`🚀 [PERF V3] Scene initialized`);
 }
 
-async function cleanup(ctx) {
+/**
+ * Cleanup the performance test scene
+ */
+function cleanup(context) {
+  logger.debug(`🧹 [PERF V3] Scene cleaned up`);
+
+  // Cancel any pending timers
+  const timer = context.getState?.('timer');
+  if (timer) {
+    clearTimeout(timer);
+    context.setState?.('timer', null);
+  }
+}
+
+/**
+ * Main render function
+ */
+async function render(context) {
+  const { device, publishOk, payload, getState, setState } = context;
+
   try {
-    const state = ctx?.state;
-    const loopTimer = state?.get('loopTimer');
-    if (loopTimer) {
-      clearTimeout(loopTimer);
-      state.set('loopTimer', null);
-    }
-    state?.set && state.set('loopScheduled', false);
-    state?.set && state.set('testCompleted', true);
-  } catch (e) {
-    // Gracefully handle cleanup errors
-    logger.warn(`⚠️ [TEST_PERF_V3] Cleanup encountered an issue:`, e?.message);
-  }
-  logger.debug(`🧹 [TEST_PERFORMANCE_V3] Scene cleaned up`);
-}
+    // Get configuration from payload
+    const interval = payload?.interval || null; // null = adaptive mode
+    const frames = payload?.frames || DEFAULT_FRAMES;
+    const isContinuation = payload?._continuation === true;
 
-/**
- * Test mode enumeration for type safety
- * @readonly
- * @enum {string}
- */
-const TEST_MODES = Object.freeze({
-  CONTINUOUS: 'continuous',
-  BURST: 'burst',
-  LOOP: 'loop',
-  SWEEP: 'sweep',
-});
-
-/**
- * Additional configuration specific to v3
- * @readonly
- * @enum {Object}
- */
-const V3_CONFIG = Object.freeze({
-  LOOP_DURATION_DEFAULT: 300000, // 5 minutes
-  TEXT_COLOR_COMPLETE: [255, 255, 255, 127],
-  MQTT_TIMEOUT_MS: 5000,
-  MIN_DELAY_MS: 50,
-  MAX_DELAY_MS: 2000,
-  ADAPTIVE_OFFSET_MS: 5,
-});
-
-/**
- * Professional State Manager for performance test
- * @class
- */
-class PerformanceTestState {
-  /**
-   * @param {Function} getState - State getter function
-   * @param {Function} setState - State setter function
-   */
-  constructor(getState, setState) {
-    this.getState = getState;
-    this.setState = setState;
-  }
-
-  /**
-   * Checks if this is a fresh test start
-   * @param {Object} state - Current state object
-   * @returns {boolean} True if fresh start
-   */
-  isFreshStart(state) {
-    const startTime = this.getState('startTime');
-    const isContinuation = Boolean(
-      state.get('_isLoopContinuation') || state.get('_isContinuation'),
-    );
-    const completed = Boolean(this.getState('testCompleted'));
-    const rendered = this.getState('framesRendered') || 0;
-    const configuredFrames = Number(state.get('frames'));
-    const maxFrames =
-      Number.isFinite(configuredFrames) && configuredFrames > 0
-        ? configuredFrames
-        : this.getState('maxFrames') || 63;
-
-    // Fresh start when:
-    // - No prior startTime (first run)
-    // - Not a continuation message (external trigger)
-    // - Previous run completed or reached frame limit
-    return !startTime || !isContinuation || completed || rendered >= maxFrames;
-  }
-
-  /**
-   * Resets all test state to initial values
-   */
-  reset() {
-    const resetValues = {
+    // Initialize or get state
+    let state = getState?.('perfState') || {
+      samples: [],
+      frameCount: 0,
       startTime: Date.now(),
-      chartData: [],
-      chartX: CHART_CONFIG_PERFORMANCE.CHART_START_X,
-      lastChartUpdate: Date.now(),
-      frameTimes: [],
-      perfStats: { sum: 0, count: 0, min: Infinity, max: 0 },
-      framesRendered: 0,
-      maxFrames: null,
-      stop: false,
-      testCompleted: false,
-      completionTime: null,
-      testActive: false,
-      _loopIteration: 0,
-      axesDrawn: false,
-      prevMode: null,
-      prevInterval: null,
-      prevFps: null,
-      loopTimer: null,
-      loopScheduled: false,
-      _isLoopContinuation: false,
-      _isContinuation: false,
+      chartX: CHART_CONFIG.CHART_START_X,
+      isRunning: false,
+      config: { interval, frames },
     };
 
-    Object.entries(resetValues).forEach(([key, value]) => {
-      this.setState(key, value);
+    // Reset if not a continuation and config changed
+    if (!isContinuation && !state.isRunning) {
+      state = {
+        samples: [],
+        frameCount: 0,
+        startTime: Date.now(),
+        chartX: CHART_CONFIG.CHART_START_X,
+        isRunning: true,
+        config: { interval, frames },
+      };
+
+      // Clear screen on new test
+      await device.clear();
+      logger.ok(
+        `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
+      );
+    }
+
+    // Calculate timing
+    const now = Date.now();
+    const frametime = context.frametime || 0;
+
+    // Add sample (skip first frame)
+    if (frametime > 0 && state.frameCount > 0) {
+      state.samples.push(frametime);
+      if (state.samples.length > MAX_SAMPLES) {
+        state.samples.shift();
+      }
+    }
+
+    // Calculate metrics
+    const avgFrametime =
+      state.samples.length > 0
+        ? Math.round(
+            state.samples.reduce((a, b) => a + b, 0) / state.samples.length,
+          )
+        : 0;
+
+    // Render display
+    await renderDisplay(device, state, avgFrametime, frametime);
+
+    // Draw chart point
+    if (frametime > 0 && state.chartX <= CHART_CONFIG.CHART_END_X) {
+      await drawChartPoint(device, state.chartX, frametime);
+      state.chartX++;
+    }
+
+    // Push frame
+    await device.push(name, publishOk);
+
+    // Update state
+    state.frameCount++;
+    setState?.('perfState', state);
+
+    // Check if test should continue
+    const shouldContinue =
+      state.frameCount < state.config.frames &&
+      state.chartX <= CHART_CONFIG.CHART_END_X;
+
+    if (shouldContinue) {
+      // Schedule next iteration
+      if (state.config.interval === null) {
+        // Adaptive mode: immediate
+        scheduleNextFrame(context, 0);
+      } else {
+        // Fixed interval mode
+        const elapsed = now - (state.lastFrameTime || now);
+        const delay = Math.max(0, state.config.interval - elapsed);
+        scheduleNextFrame(context, delay);
+      }
+      state.lastFrameTime = now;
+    } else {
+      // Test completed
+      state.isRunning = false;
+      const duration = now - state.startTime;
+      logger.ok(
+        `✅ [PERF V3] Test completed: ${state.frameCount} frames in ${duration}ms (avg: ${avgFrametime}ms)`,
+      );
+    }
+  } catch (error) {
+    logger.error(`❌ [PERF V3] Render error: ${error.message}`);
+  }
+}
+
+/**
+ * Render the performance display
+ */
+async function renderDisplay(device, state, avgFrametime, currentFrametime) {
+  const mode =
+    state.config.interval === null ? 'ADAPTIVE' : `${state.config.interval}ms`;
+
+  // Title
+  await drawTextRgbaAlignedWithBg(
+    device,
+    'PERF-V3',
+    [32, 3],
+    [255, 255, 255, 255],
+    'center',
+    true,
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
+  );
+
+  // Mode
+  await drawTextRgbaAlignedWithBg(
+    device,
+    mode,
+    [32, 11],
+    [200, 200, 200, 255],
+    'center',
+    false,
+    null,
+  );
+
+  // Current frame time
+  if (currentFrametime > 0) {
+    const color = getPerformanceColor(currentFrametime);
+    await drawTextRgbaAlignedWithBg(
+      device,
+      `${currentFrametime}ms`,
+      [32, 19],
+      color,
+      'center',
+      false,
+      null,
+    );
+  }
+
+  // Average
+  await drawTextRgbaAlignedWithBg(
+    device,
+    `AVG:${avgFrametime}`,
+    [32, 56],
+    [255, 255, 0, 255],
+    'center',
+    false,
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
+  );
+}
+
+/**
+ * Draw a single chart point
+ */
+async function drawChartPoint(device, x, frametime) {
+  // Calculate Y position (inverted, 0 at bottom)
+  const normalizedValue = Math.min(
+    Math.max(frametime, 0),
+    CHART_CONFIG.MAX_VALUE,
+  );
+  const scaledValue =
+    (normalizedValue / CHART_CONFIG.MAX_VALUE) * CHART_CONFIG.CHART_HEIGHT;
+  const y = CHART_CONFIG.CHART_BOTTOM_Y - Math.round(scaledValue);
+
+  // Get color based on performance
+  const color = getPerformanceColor(frametime);
+
+  // Draw the point
+  await device.drawPixelRgba([x, y], color);
+
+  // Draw grid lines for reference
+  if (x === CHART_CONFIG.CHART_START_X) {
+    // Y axis
+    for (
+      let gy = CHART_CONFIG.CHART_TOP_Y;
+      gy <= CHART_CONFIG.CHART_BOTTOM_Y;
+      gy += 5
+    ) {
+      await device.drawPixelRgba([x - 1, gy], [100, 100, 100, 255]);
+    }
+    // X axis
+    for (
+      let gx = CHART_CONFIG.CHART_START_X;
+      gx <= CHART_CONFIG.CHART_END_X;
+      gx += 5
+    ) {
+      await device.drawPixelRgba(
+        [gx, CHART_CONFIG.CHART_BOTTOM_Y + 1],
+        [100, 100, 100, 255],
+      );
+    }
+  }
+}
+
+/**
+ * Schedule the next frame
+ */
+function scheduleNextFrame(context, delay) {
+  const timer = setTimeout(() => {
+    const brokerUrl =
+      process.env.MQTT_BROKER_URL ||
+      `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
+
+    const client = mqtt.connect(brokerUrl, {
+      username: process.env.MOSQITTO_USER_MS24,
+      password: process.env.MOSQITTO_PASS_MS24,
+      connectTimeout: 5000,
+      reconnectPeriod: 0,
     });
 
-    // Clear any existing timers
-    const existingTimer = this.getState('loopTimer');
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-  }
-
-  /**
-   * Updates performance statistics
-   * @param {number} frametime - Current frame time
-   */
-  updatePerformanceStats(frametime) {
-    if (typeof frametime !== 'number' || frametime <= 0) return;
-
-    let frameTimes = this.getState('frameTimes') || [];
-    let perfStats = this.getState('perfStats') || {
-      sum: 0,
-      count: 0,
-      min: Infinity,
-      max: 0,
-    };
-
-    // Clamp frametime to chart bounds to avoid outliers
-    const clampedFrametime = Math.min(
-      CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
-      Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, frametime),
-    );
-
-    frameTimes.push(clampedFrametime);
-    if (frameTimes.length > CHART_CONFIG_PERFORMANCE.MAX_FRAME_SAMPLES) {
-      const removed = frameTimes.shift();
-      perfStats.sum -= removed;
-      perfStats.count--;
-    }
-
-    perfStats.sum += clampedFrametime;
-    perfStats.count++;
-    perfStats.min = Math.min(perfStats.min, clampedFrametime);
-    perfStats.max = Math.max(perfStats.max, clampedFrametime);
-
-    this.setState('frameTimes', frameTimes);
-    this.setState('perfStats', perfStats);
-  }
-
-  /**
-   * Gets computed performance metrics
-   * @returns {Object} Performance metrics
-   */
-  getPerformanceMetrics() {
-    const perfStats = this.getState('perfStats') || {
-      sum: 0,
-      count: 0,
-      min: Infinity,
-      max: 0,
-    };
-    const frameTimes = this.getState('frameTimes') || [];
-
-    const avg = perfStats.count > 0 ? perfStats.sum / perfStats.count : 0;
-    const avgInt = Math.round(
-      Math.min(
-        CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
-        Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, avg),
-      ),
-    );
-    const minInt = Math.round(
-      perfStats.min === Infinity
-        ? 0
-        : Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, perfStats.min),
-    );
-    const maxInt = Math.round(
-      Math.min(CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME, perfStats.max),
-    );
-
-    return {
-      avgFrametime: avgInt,
-      minFrametime: minInt,
-      maxFrametime: maxInt,
-      sampleCount: frameTimes.length,
-      fps: avgInt > 0 ? Math.round(1000 / avgInt) : 0,
-    };
-  }
-}
-
-/**
- * Professional Performance Tracker
- * @class
- */
-class PerformanceTracker {
-  /**
-   * @param {PerformanceTestState} stateManager - State management instance
-   */
-  constructor(stateManager) {
-    this.stateManager = stateManager;
-    this.lastLogTime = 0;
-  }
-
-  /**
-   * Records a frame timing measurement
-   * @param {number} frametime - Frame time in milliseconds
-   */
-  recordFrame(frametime) {
-    this.stateManager.updatePerformanceStats(frametime);
-  }
-
-  /**
-   * Gets current performance metrics
-   * @returns {Object} Current performance metrics
-   */
-  getMetrics() {
-    return this.stateManager.getPerformanceMetrics();
-  }
-
-  /**
-   * Logs performance data with intelligent throttling
-   * @param {string} mode - Current test mode
-   * @param {boolean} shouldRender - Whether rendering is active
-   */
-  logPerformance(mode, shouldRender) {
-    const now = Date.now();
-    if (now - this.lastLogTime < 1000) return; // Log max once per second
-
-    const metrics = this.getMetrics();
-    logger.debug(
-      `🎮 [PERF V3] ${mode} mode | ` +
-        `FT:${metrics.avgFrametime.toFixed(1)}ms | ` +
-        `FPS:${metrics.fps} | ` +
-        `Samples:${metrics.sampleCount} | ` +
-        `Render:${shouldRender}`,
-    );
-
-    this.lastLogTime = now;
-  }
-}
-
-/**
- * Handles continuation message processing
- * @param {Object} state - Current state
- * @param {Function} getState - State getter
- * @param {Function} setState - State setter
- */
-function handleContinuationMessages(state, getState, setState) {
-  if (state.get('_isLoopContinuation')) {
-    const existingTimer = getState('loopTimer');
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-      setState('loopTimer', null);
-    }
-    setState('loopScheduled', false);
-    setState('_loopIteration', state.get('_loopIteration') || 0);
-  }
-}
-
-/**
- * Handles fresh start initialization
- * @param {Object} device - Device interface
- * @param {Object} stateManager - State manager instance
- * @param {Object} config - Test configuration
- */
-async function handleFreshStart(device, stateManager, config) {
-  // Check if device is ready before proceeding
-  const deviceReady = await device.isReady();
-  if (!deviceReady) {
-    logger.debug(`⏳ [PERF V3] Device not ready, waiting...`);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Try again after delay
-    const stillNotReady = !(await device.isReady());
-    if (stillNotReady) {
-      logger.warn(`⚠️ [PERF V3] Device still not ready, proceeding anyway`);
-    }
-  }
-
-  try {
-    await device.clear();
-    stateManager.reset();
-
-    logger.debug(
-      `🎯 [PERF V3] Fresh test start | Mode: ${config.mode} | ` +
-        `Interval: ${config.testInterval}ms | Adaptive: ${config.adaptiveTiming}`,
-    );
-  } catch (error) {
-    logger.error(
-      `❌ [PERF V3] Failed to clear device on fresh start:`,
-      error.message,
-    );
-    // Continue anyway, the device might recover
-  }
-}
-
-/**
- * Handles frame counting and completion for continuous mode
- * @param {Object} config - Test configuration
- * @param {number} maxFrames - Maximum frames to render
- * @param {Function} getState - State getter
- * @param {Function} setState - State setter
- * @returns {boolean} True if test should continue
- */
-function handleFrameCounting(config, maxFrames, getState, setState) {
-  const currentFrames = getState('framesRendered') || 0;
-  setState('framesRendered', currentFrames + 1);
-
-  // Infinite looping when maxFrames === -1
-  if (maxFrames === -1) {
-    return true;
-  }
-
-  // Check if we've reached the frame limit
-  if (currentFrames + 1 >= maxFrames) {
-    logger.debug(
-      `🏁 [PERF V3] Reached frame limit (${maxFrames}) - test complete`,
-    );
-    setState('testCompleted', true);
-
-    // Clean up timers
-    const existingTimer = getState('loopTimer');
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-      setState('loopTimer', null);
-    }
-    setState('loopScheduled', false);
-    return false; // Stop rendering
-  }
-
-  return true; // Continue rendering
-}
-
-/**
- * Handles test completion
- * @param {Object} chartRenderer - Chart renderer instance
- * @param {Object} textRenderer - Text renderer instance
- * @param {Object} performanceTracker - Performance tracker instance
- * @param {Object} displayContent - Display content
- * @param {Object} device - Device interface
- * @param {Function} publishOk - Success callback
- * @param {Function} getState - State getter
- * @param {Function} setState - State setter
- * @param {number} frametime - Current frame time
- * @param {number} now - Current timestamp
- */
-// Note: handleTestCompletion removed; completion handled inline by frame counter
-
-/**
- * Main render function with professional architecture
- * @param {Object} ctx - Render context
- * @param {Object} ctx.device - Device interface
- * @param {Object} ctx.state - Current state
- * @param {Function} ctx.getState - State getter
- * @param {Function} ctx.setState - State setter
- * @param {Function} ctx.publishOk - Success callback
- * @param {number} ctx.frametime - Current frame time
- */
-async function render(ctx) {
-  const { device, state, getState, setState, publishOk, frametime } = ctx;
-
-  try {
-    const ADVANCED_FEATURES = deviceAdapter.ADVANCED_FEATURES || {
-      GRADIENT_RENDERING: false,
-      ADVANCED_CHART: false,
-      ENHANCED_TEXT: false,
-      IMAGE_PROCESSING: false,
-      ANIMATIONS: false,
-      PERFORMANCE_MONITORING: true,
-    };
-
-    // Initialize professional state management
-    const stateManager = new PerformanceTestState(getState, setState);
-    const performanceTracker = new PerformanceTracker(stateManager);
-
-    // Initialize advanced renderers if features are enabled
-    let gradientRenderer = null;
-    if (ADVANCED_FEATURES.GRADIENT_RENDERING) {
-      // This line was removed as per the edit hint
-    }
-
-    // Extract configuration with validation
-    const config = {
-      mode: TEST_MODES[state.get('mode')] || TEST_MODES.CONTINUOUS,
-      testInterval: Math.max(50, Math.min(2000, state.get('interval') || 150)),
-      loopDuration: state.get('duration') || V3_CONFIG.LOOP_DURATION_DEFAULT,
-      adaptiveTiming: Boolean(state.get('adaptiveTiming')),
-      // stop removed; test is controlled by frames or duration
-    };
-
-    // stop command removed
-
-    // Handle continuation messages
-    handleContinuationMessages(state, getState, setState);
-
-    // Fresh start logic with device readiness check
-    if (stateManager.isFreshStart(state)) {
-      await handleFreshStart(device, stateManager, config);
-    } else {
-      // Ensure no stale timers or flags prevent a clean rerun
-      const existingTimer = getState('loopTimer');
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        setState('loopTimer', null);
-      }
-      setState('loopScheduled', false);
-      setState('testCompleted', false);
-    }
-
-    const configuredFrames = Number(state.get('frames'));
-    const maxFrames =
-      Number.isFinite(configuredFrames) && configuredFrames > 0
-        ? configuredFrames
-        : 63; // Default: run once across screen (63 pixels, x=1 to x=63)
-    setState('maxFrames', maxFrames);
-    const framesRendered = getState('framesRendered') || 0;
-
-    // For continuous mode, check if we've reached the frame limit
-    const shouldRender =
-      config.mode === TEST_MODES.CONTINUOUS ? framesRendered < maxFrames : true; // Other modes use their own logic
-
-    const renderStart = Date.now();
-
-    // Log performance periodically
-    performanceTracker.logPerformance(config.mode, shouldRender);
-
-    // Set dynamic update interval on the chart renderer via state
-    setState(
-      'updateIntervalMs',
-      Number.isFinite(config.testInterval)
-        ? Math.max(0, Math.min(2000, config.testInterval))
-        : 0,
-    );
-
-    // Create professional chart and text renderers
-    const chartRenderer = new ChartRenderer(
-      device,
-      getState,
-      setState,
-      performanceTracker,
-      gradientRenderer,
-      ADVANCED_FEATURES,
-    );
-    const textRenderer = new TextRenderer(
-      device,
-      getState,
-      setState,
-      performanceTracker,
-    );
-
-    // Generate display content based on mode
-    const displayContent = generateDisplayContent(
-      config,
-      frametime,
-      getState,
-      performanceTracker,
-    );
-
-    // Render frame if within time limits
-    if (shouldRender) {
-      const lastFrameDuration =
-        getState('lastFrameDuration') || frametime || config.testInterval || 0;
-      await chartRenderer.render(renderStart, lastFrameDuration);
-      await textRenderer.render(displayContent, renderStart);
-
-      // Push rendered frame and measure actual frame time
-      await device.push(name, publishOk);
-      // stop removed
-
-      const frameEnd = Date.now();
-      const frameDuration = Math.max(1, frameEnd - renderStart);
-      performanceTracker.recordFrame(frameDuration);
-      setState('lastFrameDuration', frameDuration);
-
-      // Update frame count and check for completion
-      if (!handleFrameCounting(config, maxFrames, getState, setState)) {
-        // Overlay COMPLETE without full clear
-        const {
-          drawTextRgbaAlignedWithBg,
-          BACKGROUND_COLORS,
-        } = require('../lib/rendering-utils');
-        await drawTextRgbaAlignedWithBg(
-          device,
-          'COMPLETE',
-          [32, 32],
-          [255, 255, 255, 127],
-          'center',
-          true,
-          BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-        );
-        await device.push(name, publishOk);
-        return; // Test completed
-      }
-
-      // Schedule continuation ONLY if test not completed
-      if (!getState('loopScheduled')) {
-        const delay = config.adaptiveTiming
-          ? Math.max(0, V3_CONFIG.ADAPTIVE_OFFSET_MS)
-          : Math.max(
-              V3_CONFIG.MIN_DELAY_MS,
-              Math.min(V3_CONFIG.MAX_DELAY_MS, config.testInterval || 150),
-            );
-        scheduleContinuation(ctx, config, delay);
-      }
-    }
-
-    // Update render timestamp
-    setState('lastRender', renderStart);
-  } catch (error) {
-    logger.error(`❌ [PERF V3] Critical render error:`, error);
-    // Attempt graceful recovery
-    try {
-      if (typeof setState === 'function') {
-        setState('testCompleted', true);
-      }
-      if (typeof publishOk === 'function') {
-        publishOk(device?.host || 'unknown', name, 0, 0, {
-          pushes: 0,
-          skipped: 0,
-          errors: 1,
-          lastFrametime: 0,
-        });
-      }
-    } catch (recoveryError) {
-      logger.error(`❌ [PERF V3] Recovery failed:`, recoveryError);
-    }
-  }
-}
-
-/**
- * Professional Chart Renderer with optimized performance
- * @class
- */
-class ChartRenderer {
-  /**
-   * @param {Object} device - Device interface
-   * @param {Function} getState - State getter function
-   * @param {Function} setState - State setter function
-   * @param {PerformanceTracker} performanceTracker - Performance tracker instance
-   * @param {Object} gradientRenderer - Gradient renderer instance (optional)
-   * @param {Object} advancedFeatures - Advanced features configuration
-   */
-  constructor(
-    device,
-    getState,
-    setState,
-    performanceTracker,
-    gradientRenderer,
-    advancedFeatures,
-  ) {
-    this.device = device;
-    this.getState = getState;
-    this.setState = setState;
-    this.performanceTracker = performanceTracker;
-    this.gradientRenderer = gradientRenderer;
-    this.advancedFeatures = advancedFeatures;
-  }
-
-  /**
-   * Renders the performance chart with axes and data points
-   * @param {number} currentTime - Current timestamp
-   * @param {number} chartFrametime - Frame time for chart data
-   */
-  async render(currentTime, chartFrametime) {
-    await this.renderAxes();
-    await this.updateChartData(currentTime, chartFrametime);
-  }
-
-  /**
-   * Renders chart axes (only once per test)
-   */
-  async renderAxes() {
-    if (this.getState('axesDrawn')) return;
-
-    await clearRectangle(
-      this.device,
-      0,
-      CHART_CONFIG_PERFORMANCE.START_Y - CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
-      1,
-      CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
-    );
-    await clearRectangle(
-      this.device,
-      CHART_CONFIG_PERFORMANCE.CHART_START_X,
-      CHART_CONFIG_PERFORMANCE.START_Y,
-      64 - CHART_CONFIG_PERFORMANCE.CHART_START_X,
-      1,
-    );
-
-    // Batch draw Y-axis
-    for (
-      let y =
-        CHART_CONFIG_PERFORMANCE.START_Y -
-        CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT;
-      y < CHART_CONFIG_PERFORMANCE.START_Y;
-      y++
-    ) {
-      this.device.drawPixelRgba([0, y], CHART_CONFIG_PERFORMANCE.AXIS_COLOR);
-    }
-
-    // Batch draw X-axis
-    for (let x = CHART_CONFIG_PERFORMANCE.CHART_START_X; x < 64; x++) {
-      this.device.drawPixelRgba(
-        [x, CHART_CONFIG_PERFORMANCE.START_Y],
-        CHART_CONFIG_PERFORMANCE.AXIS_COLOR,
-      );
-    }
-
-    this.setState('axesDrawn', true);
-  }
-
-  /**
-   * Updates chart with new data point
-   * @param {number} currentTime - Current timestamp
-   * @param {number} chartFrametime - Frame time value
-   */
-  async updateChartData(currentTime, chartFrametime) {
-    const chartX =
-      this.getState('chartX') || CHART_CONFIG_PERFORMANCE.CHART_START_X;
-    const lastChartUpdate = this.getState('lastChartUpdate') || currentTime;
-    const updateIntervalMs = this.getState('updateIntervalMs');
-    if (
-      Number.isFinite(updateIntervalMs) &&
-      currentTime - lastChartUpdate < updateIntervalMs
-    ) {
-      return;
-    }
-
-    // For continuous mode, wrap around when chart reaches the end
-    if (chartX >= 63) {
-      // Clear the vertical line at the current position before wrapping
-      await this.device.drawRectangleRgba(
-        [
-          chartX,
-          CHART_CONFIG_PERFORMANCE.START_Y -
-            CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
-        ],
-        [1, CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT],
-        CHART_CONFIG_PERFORMANCE.BG_COLOR, // Black background
-      );
-
-      // Reset chart position for continuous mode
-      this.setState('chartX', CHART_CONFIG_PERFORMANCE.CHART_START_X);
-      this.setState('chartData', []); // Clear old data
-      return;
-    }
-
-    // Calculate chart position
-    const normalizedFrametime = Math.min(
-      CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME,
-      Math.max(CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME, chartFrametime),
-    );
-    const ratio =
-      (normalizedFrametime - CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME) /
-      (CHART_CONFIG_PERFORMANCE.MAX_FRAMETIME -
-        CHART_CONFIG_PERFORMANCE.MIN_FRAMETIME);
-    const yOffset = Math.round(ratio * CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT);
-    const yPos = CHART_CONFIG_PERFORMANCE.START_Y - 1 - yOffset;
-
-    // Add data point with memory management
-    let chartData = this.getState('chartData') || [];
-    if (chartData.length >= CHART_CONFIG_PERFORMANCE.MAX_CHART_POINTS) {
-      chartData.shift(); // Remove oldest point
-    }
-
-    const chartColor = getPerformanceColor(chartFrametime);
-    chartData.push({ x: chartX, y: yPos, color: chartColor });
-
-    // Clear the current line position before drawing new value
-    await this.device.drawRectangleRgba(
-      [
-        chartX,
-        CHART_CONFIG_PERFORMANCE.START_Y -
-          CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT,
-      ],
-      [1, CHART_CONFIG_PERFORMANCE.RANGE_HEIGHT],
-      CHART_CONFIG_PERFORMANCE.BG_COLOR, // Black background
-    );
-
-    // Draw line if we have at least 2 points
-    if (chartData.length > 1) {
-      const prev = chartData[chartData.length - 2];
-      const curr = chartData[chartData.length - 1];
-
-      // Use performance-based color for line drawing
-      // Always use the current frame's performance color for the line
-      drawLine(this.device, prev.x, prev.y, curr.x, curr.y, curr.color);
-    }
-
-    this.setState('chartData', chartData);
-    this.setState('chartX', chartX + 1);
-    this.setState('lastChartUpdate', currentTime);
-  }
-
-  /**
-   * Checks if chart is complete
-   * @returns {boolean} True if chart has all data points
-   */
-  isComplete() {
-    const chartX =
-      this.getState('chartX') || CHART_CONFIG_PERFORMANCE.CHART_START_X;
-    return chartX >= 63;
-  }
-}
-
-/**
- * Professional Text Renderer with optimized performance
- * @class
- */
-class TextRenderer {
-  /**
-   * @param {Object} device - Device interface
-   * @param {Function} getState - State getter function
-   * @param {Function} setState - State setter function
-   * @param {PerformanceTracker} performanceTracker - Performance tracker instance
-   */
-  constructor(device, getState, setState, performanceTracker) {
-    this.device = device;
-    this.getState = getState;
-    this.setState = setState;
-    this.performanceTracker = performanceTracker;
-  }
-
-  /**
-   * Renders all text elements with background clearing
-   * @param {Object} displayContent - Content to display
-   */
-  async render(displayContent) {
-    const { modeText, timingText, fpsText, metrics } = displayContent;
-
-    // Render header text
-    await this.renderHeader(modeText, timingText, fpsText);
-
-    // Render statistics (always update for accuracy)
-    await this.renderStatistics(metrics);
-  }
-
-  /**
-   * Renders header text elements
-   * @param {string} modeText - Mode display text
-   * @param {string} timingText - Timing display text
-   * @param {string} fpsText - FPS display text
-   */
-  async renderHeader(modeText, timingText, fpsText) {
-    if (modeText) {
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        modeText,
-        [2, 2],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    }
-    // Combine FPS and frametime on same line like gaming overlays
-    if (timingText && fpsText) {
-      const combinedText = `${fpsText}/${timingText}`;
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        combinedText,
-        [2, 10],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    } else if (timingText) {
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        timingText,
-        [2, 10],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    } else if (fpsText) {
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        fpsText,
-        [2, 10],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    }
-  }
-
-  /**
-   * Renders performance statistics at bottom (copied from v2)
-   * @param {Object} metrics - Performance metrics
-   */
-  async renderStatistics(metrics) {
-    if (metrics.sampleCount > 0) {
-      // Clear area below the chart axis (axis is at y=50, so start at y=51)
-      await this.device.drawRectangleRgba(
-        [0, 51],
-        [64, 13],
-        CHART_CONFIG_PERFORMANCE.BG_COLOR,
-      );
-
-      // Draw labels in gray, values in white with exact positioning from v2
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        'Frame:',
-        [0, 52],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
-        'left',
-        false,
-      );
-      const totalFrames = (this.getState('framesRendered') || 0).toString();
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        totalFrames,
-        [25, 52],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        false,
-      );
-
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        'Av:',
-        [36, 52],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
-        'left',
-        false,
-      );
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        String(Math.round(metrics.avgFrametime)),
-        [48, 52],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        false,
-      );
-
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        'Lo:',
-        [0, 58],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
-        'left',
-        false,
-      );
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        Math.round(metrics.minFrametime).toString(),
-        [12, 58],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        false,
-      );
-
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        'Hi:',
-        [36, 58],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_STATS,
-        'left',
-        false,
-      );
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        Math.round(metrics.maxFrametime).toString(),
-        [48, 58],
-        CHART_CONFIG_PERFORMANCE.TEXT_COLOR_HEADER,
-        'left',
-        false,
-      );
-    }
-  }
-
-  /**
-   * Renders test completion message
-   */
-  async renderCompletion() {
-    await drawTextRgbaAlignedWithBg(
-      this.device,
-      'COMPLETE',
-      [32, 32],
-      [255, 255, 255, 127], // White with 50% transparency
-      'center',
-      true,
-      BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-    ); // Semi-transparent black background
-  }
-}
-
-/**
- * Generates display content based on test configuration
- * @param {Object} config - Test configuration
- * @param {number} frametime - Current frame time
- * @param {Function} getState - State getter
- * @param {PerformanceTracker} performanceTracker - Performance tracker
- * @returns {Object} Display content object
- */
-function generateDisplayContent(
-  config,
-  frametime,
-  getState,
-  performanceTracker,
-) {
-  const metrics = performanceTracker.getMetrics();
-
-  let modeText = '';
-  let timingText = '';
-  let fpsText = '';
-
-  if (
-    config.mode === TEST_MODES.CONTINUOUS ||
-    config.mode === TEST_MODES.LOOP
-  ) {
-    const modeLabel =
-      config.mode === TEST_MODES.LOOP ? 'AUTO LOOP' : 'CONTINUOUS';
-    const adaptiveLabel = config.adaptiveTiming ? 'FT+' : '';
-    const currentFrametime = frametime || 0;
-
-    modeText = `${modeLabel} ${adaptiveLabel}`;
-    timingText = config.adaptiveTiming
-      ? `${Math.round(currentFrametime)}ms`
-      : `${config.testInterval}ms`;
-    fpsText = `${metrics.fps} FPS`;
-  }
-
-  return {
-    modeText,
-    timingText,
-    fpsText,
-    frametime: frametime || 0,
-    metrics,
-  };
-}
-
-/**
- * Schedules continuation message for adaptive timing
- * @param {Object} ctx - Render context
- * @param {Object} config - Test configuration
- * @param {number} delay - Delay in milliseconds
- */
-function scheduleContinuation(ctx, config, delay) {
-  const { getState, setState } = ctx;
-
-  const timer = setTimeout(async () => {
-    try {
-      const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
-
-      const client = mqtt.connect(brokerUrl, {
-        username: process.env.MOSQITTO_USER_MS24,
-        password: process.env.MOSQITTO_PASS_MS24,
-        connectTimeout: CHART_CONFIG_PERFORMANCE.MQTT_TIMEOUT_MS,
-        reconnectPeriod: 0,
-      });
-
-      client.on('connect', () => {
-        try {
-          const payload = JSON.stringify({
-            scene: name,
-            mode: config.mode,
-            adaptiveTiming: config.adaptiveTiming,
-            interval: config.testInterval,
-            frames: getState('maxFrames') || undefined,
-            _loopIteration: (getState('_loopIteration') || 0) + 1,
-            _isLoopContinuation: true,
-          });
-
-          const targetHost =
-            ctx.env && ctx.env.host
-              ? ctx.env.host
-              : process.env.PIXOO_DEVICES
-                ? process.env.PIXOO_DEVICES.split(';')[0].trim()
-                : '192.168.1.159';
-
-          client.publish(`pixoo/${targetHost}/state/upd`, payload, { qos: 1 });
+    client.on('connect', () => {
+      const deviceIp = context.device?.host || '192.168.1.159';
+      const state = context.getState?.('perfState');
+      const message = {
+        scene: 'performance_v3',
+        _continuation: true,
+        interval: state?.config?.interval,
+        frames: state?.config?.frames,
+      };
+
+      client.publish(
+        `pixoo/${deviceIp}/state/upd`,
+        JSON.stringify(message),
+        { qos: 1 },
+        (err) => {
+          if (err) {
+            logger.error(`❌ [PERF V3] MQTT publish error: ${err.message}`);
+          }
           client.end();
-        } catch (publishError) {
-          logger.error(`❌ [PERF V3] MQTT publish error:`, publishError);
-          client.end();
-        }
-      });
+        },
+      );
+    });
 
-      client.on('error', (error) => {
-        logger.error(`❌ [PERF V3] MQTT connection error:`, error.message);
-        try {
-          setState('loopScheduled', false);
-          setState('loopTimer', null);
-        } catch (stateError) {
-          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-        }
-        client.end();
-      });
-
-      client.on('close', () => {
-        try {
-          setState('loopScheduled', false);
-          setState('loopTimer', null);
-        } catch (stateError) {
-          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-        }
-      });
-    } catch (error) {
-      logger.error(`❌ [PERF V3] Continuation setup error:`, error);
-      try {
-        setState('loopScheduled', false);
-        setState('loopTimer', null);
-      } catch (stateError) {
-        logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-      }
-    }
+    client.on('error', (err) => {
+      logger.error(`❌ [PERF V3] MQTT error: ${err.message}`);
+      client.end();
+    });
   }, delay);
 
-  setState('loopTimer', timer);
-  setState('loopScheduled', true);
+  context.setState?.('timer', timer);
 }
 
-module.exports = { name, render, init, cleanup };
+module.exports = { name, init, render, cleanup };
