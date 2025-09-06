@@ -14,7 +14,7 @@ available in the Pixoo Daemon.
 Displays the daemon's version and build information.
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
 ```
 
 ### `empty`
@@ -22,7 +22,7 @@ mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"star
 Clears the screen.
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
 ```
 
 ### `fill`
@@ -31,7 +31,7 @@ Fills the screen with a solid color.
 
 ```bash
 # Fill with red
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill", "color": [255, 0, 0, 255]}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill","color":[255,0,0,255]}'
 ```
 
 ### `advanced_chart`
@@ -39,7 +39,7 @@ mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill
 Displays an advanced, dynamic line chart.
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"advanced_chart"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"advanced_chart"}'
 ```
 
 ---
@@ -51,8 +51,8 @@ mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"adva
 Demonstrates the drawing API primitives.
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api"}'
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
 ```
 
 ### `performance_v2` & `performance_v3`
@@ -60,6 +60,6 @@ mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw
 Used for performance benchmarking.
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
-mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
 ```

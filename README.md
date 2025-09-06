@@ -39,7 +39,7 @@ npm start
 Send your first command (replace the IP with your device's):
 
 ```bash
-mosquitto_pub -h localhost -t "pixoo/1-92.168.1.159/state/upd" -m '{"scene":"startup"}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
 ```
 
 ---

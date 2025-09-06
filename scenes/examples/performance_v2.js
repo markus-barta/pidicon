@@ -4,7 +4,7 @@
  * rendering techniques and their impact on performance. This scene is intended
  * for development and testing purposes.
  * @mqtt
- * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2"}'
  * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
@@ -20,12 +20,12 @@
 // - Configurable chart parameters
 
 // MQTT Commands:
-// {"scene":"test_performance_v2","mode":"continuous","interval":150}                    - Continuous mode, 150ms interval
-// {"scene":"test_performance_v2","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode
-// {"scene":"test_performance_v2","mode":"burst","interval":50}                         - Burst mode, 50ms interval
-// {"scene":"test_performance_v2","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
-// {"scene":"test_performance_v2","mode":"sweep"}                                       - Sweep mode through different intervals
-// {"scene":"test_performance_v2","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","mode":"continuous","interval":150}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","mode":"continuous","interval":100,"adaptiveTiming":true}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","mode":"burst","interval":50}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","mode":"loop","interval":200,"duration":60000}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","mode":"sweep"}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v2","clear":true,"mode":"continuous","interval":150}'
 
 // @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
 
