@@ -5,7 +5,7 @@
  * - Fixed: Frames run at specified interval (e.g., every 150ms)
  * @mqtt Examples:
  * Adaptive mode: mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
- * Fixed 150ms: mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","interval":150,"frames":100}'
+ * Fixed 150ms, 100 frames: mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","interval":150,"frames":100}'
  * @version 3.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI (Claude 3.5 Sonnet)
  * @license MIT
@@ -22,14 +22,14 @@ const {
 } = require('../../lib/performance-utils');
 const {
   drawTextRgbaAlignedWithBg,
+  clearRectangle,
   BACKGROUND_COLORS,
 } = require('../../lib/rendering-utils');
 
 const name = 'performance_v3';
 
-// Configuration constants
-const DEFAULT_FRAMES = 100; // number of frames to run
-const MAX_SAMPLES = 64; // matches chart width
+// Configuration defaults
+const DEFAULT_FRAMES = 100;
 
 /**
  * Initialize the performance test scene
@@ -48,7 +48,6 @@ function cleanup(context) {
   const timer = context.getState?.('timer');
   if (timer) {
     clearTimeout(timer);
-    context.setState?.('timer', null);
   }
 }
 
@@ -71,6 +70,9 @@ async function render(context) {
       startTime: Date.now(),
       chartX: CHART_CONFIG.CHART_START_X,
       isRunning: false,
+      minFrametime: Infinity,
+      maxFrametime: 0,
+      sumFrametime: 0,
       config: { interval, frames },
     };
 
@@ -82,6 +84,9 @@ async function render(context) {
         startTime: Date.now(),
         chartX: CHART_CONFIG.CHART_START_X,
         isRunning: true,
+        minFrametime: Infinity,
+        maxFrametime: 0,
+        sumFrametime: 0,
         config: { interval, frames },
       };
 
@@ -96,24 +101,22 @@ async function render(context) {
     const now = Date.now();
     const frametime = context.frametime || 0;
 
-    // Add sample (skip first frame)
+    // Update statistics (skip first frame)
     if (frametime > 0 && state.frameCount > 0) {
       state.samples.push(frametime);
-      if (state.samples.length > MAX_SAMPLES) {
-        state.samples.shift();
-      }
+      state.sumFrametime += frametime;
+      state.minFrametime = Math.min(state.minFrametime, frametime);
+      state.maxFrametime = Math.max(state.maxFrametime, frametime);
     }
 
     // Calculate metrics
     const avgFrametime =
       state.samples.length > 0
-        ? Math.round(
-            state.samples.reduce((a, b) => a + b, 0) / state.samples.length,
-          )
+        ? Math.round(state.sumFrametime / state.samples.length)
         : 0;
 
-    // Render display
-    await renderDisplay(device, state, avgFrametime, frametime);
+    // Render UI
+    await renderUI(device, state, avgFrametime, frametime);
 
     // Draw chart point
     if (frametime > 0 && state.chartX <= CHART_CONFIG.CHART_END_X) {
@@ -133,25 +136,35 @@ async function render(context) {
       state.frameCount < state.config.frames &&
       state.chartX <= CHART_CONFIG.CHART_END_X;
 
-    if (shouldContinue) {
-      // Schedule next iteration
+    if (shouldContinue && !isContinuation) {
+      // Only schedule next frame on initial render, not on continuations
+      // This prevents double-scheduling
       if (state.config.interval === null) {
-        // Adaptive mode: immediate
-        scheduleNextFrame(context, 0);
+        // Adaptive mode: schedule immediately
+        scheduleNextFrame(context, device, 0);
       } else {
         // Fixed interval mode
-        const elapsed = now - (state.lastFrameTime || now);
-        const delay = Math.max(0, state.config.interval - elapsed);
-        scheduleNextFrame(context, delay);
+        scheduleNextFrame(context, device, state.config.interval);
       }
-      state.lastFrameTime = now;
-    } else {
+    } else if (!shouldContinue) {
       // Test completed
       state.isRunning = false;
       const duration = now - state.startTime;
       logger.ok(
         `✅ [PERF V3] Test completed: ${state.frameCount} frames in ${duration}ms (avg: ${avgFrametime}ms)`,
       );
+
+      // Show completion overlay
+      await drawTextRgbaAlignedWithBg(
+        device,
+        'COMPLETE',
+        [32, 32],
+        [255, 255, 255, 127],
+        'center',
+        true,
+        BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+      );
+      await device.push(name, publishOk);
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
@@ -159,58 +172,127 @@ async function render(context) {
 }
 
 /**
- * Render the performance display
+ * Render the UI elements
  */
-async function renderDisplay(device, state, avgFrametime, currentFrametime) {
-  const mode =
-    state.config.interval === null ? 'ADAPTIVE' : `${state.config.interval}ms`;
-
-  // Title
+async function renderUI(device, state, avgFrametime, currentFrametime) {
+  // Mode and timing header
+  const modeText =
+    state.config.interval === null
+      ? 'ADAPTIVE'
+      : `FIXED ${state.config.interval}ms`;
   await drawTextRgbaAlignedWithBg(
     device,
-    'PERF-V3',
-    [32, 3],
-    [255, 255, 255, 255],
-    'center',
+    modeText,
+    [2, 2],
+    CHART_CONFIG.TEXT_COLOR_HEADER,
+    'left',
     true,
-    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
+    null,
   );
 
-  // Mode
+  // Current frametime and FPS
+  if (currentFrametime > 0) {
+    const fps = Math.round(1000 / currentFrametime);
+    const timingText = `${fps}FPS/${currentFrametime}ms`;
+    await drawTextRgbaAlignedWithBg(
+      device,
+      timingText,
+      [2, 10],
+      CHART_CONFIG.TEXT_COLOR_HEADER,
+      'left',
+      true,
+      null,
+    );
+  }
+
+  // Clear statistics area
+  await clearRectangle(device, 0, 51, 64, 13, CHART_CONFIG.BG_COLOR);
+
+  // Frame counter
   await drawTextRgbaAlignedWithBg(
     device,
-    mode,
-    [32, 11],
-    [200, 200, 200, 255],
-    'center',
+    'Frame:',
+    [0, 52],
+    CHART_CONFIG.TEXT_COLOR_STATS,
+    'left',
+    false,
+    null,
+  );
+  await drawTextRgbaAlignedWithBg(
+    device,
+    state.frameCount.toString(),
+    [25, 52],
+    CHART_CONFIG.TEXT_COLOR_HEADER,
+    'left',
     false,
     null,
   );
 
-  // Current frame time
-  if (currentFrametime > 0) {
-    const color = getPerformanceColor(currentFrametime);
+  // Average
+  await drawTextRgbaAlignedWithBg(
+    device,
+    'Av:',
+    [0, 58],
+    CHART_CONFIG.TEXT_COLOR_STATS,
+    'left',
+    false,
+    null,
+  );
+  const avgColor = getPerformanceColor(avgFrametime);
+  await drawTextRgbaAlignedWithBg(
+    device,
+    `${avgFrametime}`,
+    [12, 58],
+    avgColor,
+    'left',
+    false,
+    null,
+  );
+
+  // Min/Max
+  if (state.minFrametime !== Infinity) {
+    const minColor = getPerformanceColor(state.minFrametime);
     await drawTextRgbaAlignedWithBg(
       device,
-      `${currentFrametime}ms`,
-      [32, 19],
-      color,
-      'center',
+      'Lo:',
+      [28, 58],
+      CHART_CONFIG.TEXT_COLOR_STATS,
+      'left',
+      false,
+      null,
+    );
+    await drawTextRgbaAlignedWithBg(
+      device,
+      `${state.minFrametime}`,
+      [40, 58],
+      minColor,
+      'left',
       false,
       null,
     );
   }
 
-  // Average
-  await drawTextRgbaAlignedWithBg(
-    device,
-    `AVG:${avgFrametime}`,
-    [32, 56],
-    [255, 255, 0, 255],
-    'center',
-    false,
-    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
-  );
+  if (state.maxFrametime > 0) {
+    const maxColor = getPerformanceColor(state.maxFrametime);
+    await drawTextRgbaAlignedWithBg(
+      device,
+      'Hi:',
+      [52, 52],
+      CHART_CONFIG.TEXT_COLOR_STATS,
+      'left',
+      false,
+      null,
+    );
+    await drawTextRgbaAlignedWithBg(
+      device,
+      `${state.maxFrametime}`,
+      [63, 52],
+      maxColor,
+      'right',
+      false,
+      null,
+    );
+  }
 }
 
 /**
@@ -231,39 +313,16 @@ async function drawChartPoint(device, x, frametime) {
 
   // Draw the point
   await device.drawPixelRgba([x, y], color);
-
-  // Draw grid lines for reference
-  if (x === CHART_CONFIG.CHART_START_X) {
-    // Y axis
-    for (
-      let gy = CHART_CONFIG.CHART_TOP_Y;
-      gy <= CHART_CONFIG.CHART_BOTTOM_Y;
-      gy += 5
-    ) {
-      await device.drawPixelRgba([x - 1, gy], [100, 100, 100, 255]);
-    }
-    // X axis
-    for (
-      let gx = CHART_CONFIG.CHART_START_X;
-      gx <= CHART_CONFIG.CHART_END_X;
-      gx += 5
-    ) {
-      await device.drawPixelRgba(
-        [gx, CHART_CONFIG.CHART_BOTTOM_Y + 1],
-        [100, 100, 100, 255],
-      );
-    }
-  }
 }
 
 /**
- * Schedule the next frame
+ * Schedule the next frame using MQTT
  */
-function scheduleNextFrame(context, delay) {
+function scheduleNextFrame(context, device, delay) {
   const timer = setTimeout(() => {
-    const brokerUrl =
-      process.env.MQTT_BROKER_URL ||
-      `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
+    // Get broker config from environment
+    const brokerHost = process.env.MOSQITTO_HOST_MS24 || 'localhost';
+    const brokerUrl = `mqtt://${brokerHost}:1883`;
 
     const client = mqtt.connect(brokerUrl, {
       username: process.env.MOSQITTO_USER_MS24,
@@ -273,7 +332,7 @@ function scheduleNextFrame(context, delay) {
     });
 
     client.on('connect', () => {
-      const deviceIp = context.device?.host || '192.168.1.159';
+      const deviceIp = device?.host || '192.168.1.159';
       const state = context.getState?.('perfState');
       const message = {
         scene: 'performance_v3',
