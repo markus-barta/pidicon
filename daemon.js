@@ -70,7 +70,7 @@ if (fs.existsSync(exampleScenesDir)) {
       try {
         const scene = require(path.join(exampleScenesDir, file));
         sceneManager.registerScene(scene.name, scene);
-        logger.info(`Loaded example scene: ${scene.name}`);
+        logger.ok(`Loaded example scene: ${scene.name}`);
       } catch (error) {
         logger.error(`Failed to load example scene ${file}:`, {
           error: error.message,
@@ -81,25 +81,25 @@ if (fs.existsSync(exampleScenesDir)) {
 }
 
 const startTs = new Date().toLocaleString('de-AT');
-logger.info(`**************************************************`);
-logger.info(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
-logger.info(
+logger.ok(`**************************************************`);
+logger.ok(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
+logger.ok(
   `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`,
 );
-logger.info(`**************************************************`);
+logger.ok(`**************************************************`);
 
 // Reference to available commands documentation
 try {
   const fs = require('fs');
   const path = require('path');
-  const commandsPath = path.join(__dirname, 'PIXOO_COMMANDS.md');
+  const commandsPath = path.join(__dirname, 'MQTT_COMMANDS.md');
   if (fs.existsSync(commandsPath)) {
     logger.info(`Available commands documented in: ${commandsPath}`);
   } else {
-    logger.warn('PIXOO_COMMANDS.md not found');
+    logger.warn('MQTT_COMMANDS.md not found');
   }
 } catch (err) {
-  logger.warn('Could not check PIXOO_COMMANDS.md:', { error: err.message });
+  logger.warn('Could not check MQTT_COMMANDS.md:', { error: err.message });
 }
 
 logger.info('MQTT Broker:', { url: brokerUrl });
@@ -121,8 +121,8 @@ async function initializeDeployment() {
   try {
     logger.info('Initializing deployment tracker...');
     await deploymentTracker.initialize();
-    logger.info('Deployment tracker initialized.');
-    logger.info(deploymentTracker.getLogString());
+    logger.ok('Deployment tracker initialized.');
+    logger.ok(deploymentTracker.getLogString());
 
     // Auto-load startup scene for all configured devices
     const deviceTargets = Array.from(deviceDrivers.keys());
@@ -139,7 +139,7 @@ async function initializeDeployment() {
             );
             await sceneManager.switchScene('startup', ctx);
             await sceneManager.renderActiveScene(ctx);
-            logger.info(`Startup scene loaded for ${deviceIp.trim()}`);
+            logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
           } catch (error) {
             logger.warn(
               `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
@@ -198,7 +198,7 @@ function markDeviceBooted(deviceIp) {
     lastActivity: Date.now(),
   };
   if (!bootState.booted) {
-    logger.info(`[BOOT] Device ${deviceIp} marked as booted`);
+    logger.ok(`[BOOT] Device ${deviceIp} marked as booted`);
     bootState.booted = true;
   }
   deviceBootState.set(deviceIp, bootState);
@@ -221,7 +221,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   };
 
   // Log locally
-  logger.info(`OK [${deviceIp}]`, {
+  logger.ok(`OK [${deviceIp}]`, {
     scene: sceneName,
     frametime,
     diffPixels,
@@ -236,7 +236,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
 
 // On connect, subscribe to per-device state updates
 client.on('connect', () => {
-  logger.info('Connected to MQTT broker', { user: mqttUser });
+  logger.ok('Connected to MQTT broker', { user: mqttUser });
   client.subscribe(
     [
       'pixoo/+/state/upd',
@@ -248,7 +248,7 @@ client.on('connect', () => {
       if (err) {
         logger.error('MQTT subscribe error:', { error: err });
       } else {
-        logger.info(
+        logger.ok(
           'Subscribed to pixoo/+/state/upd, scene/set, driver/set, reset/set',
         );
       }
@@ -289,7 +289,7 @@ async function handleSceneCommand(deviceIp, action, payload) {
       return;
     }
     deviceDefaults.set(deviceIp, name);
-    logger.info(`Default scene for ${deviceIp} → '${name}'`);
+    logger.ok(`Default scene for ${deviceIp} → '${name}'`);
     client.publish(
       `pixoo/${deviceIp}/scene`,
       JSON.stringify({ default: name, ts: Date.now() }),
@@ -305,7 +305,7 @@ async function handleDriverCommand(deviceIp, action, payload) {
       return;
     }
     const applied = setDriverForDevice(deviceIp, drv);
-    logger.info(`Driver for ${deviceIp} set → ${applied}`);
+    logger.ok(`Driver for ${deviceIp} set → ${applied}`);
     client.publish(
       `pixoo/${deviceIp}/driver`,
       JSON.stringify({ driver: applied, ts: Date.now() }),
@@ -345,7 +345,7 @@ async function handleDriverCommand(deviceIp, action, payload) {
 
 async function handleResetCommand(deviceIp, action) {
   if (action === 'set') {
-    logger.info(`Reset requested for ${deviceIp}`);
+    logger.warn(`Reset requested for ${deviceIp}`);
     const ok = await softReset(deviceIp);
     client.publish(
       `pixoo/${deviceIp}/reset`,
@@ -402,11 +402,11 @@ async function handleStateUpdate(deviceIp, action, payload) {
       const device = require('./lib/device-adapter').getDevice(deviceIp);
       await device.clear();
       if (lastScene && lastScene !== sceneName) {
-        logger.info(
+        logger.ok(
           `Cleared screen on scene switch from '${lastScene}' to '${sceneName}'`,
         );
       } else if (payload.clear === true) {
-        logger.info("Cleared screen as requested by 'clear' parameter");
+        logger.ok("Cleared screen as requested by 'clear' parameter");
       }
     }
 
