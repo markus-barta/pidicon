@@ -28,7 +28,7 @@ const LAYOUT = Object.freeze({
   HEADER_Y: 3,
   BUILD_NUMBER_Y: 12,
   GIT_HASH_Y: 19,
-  STATUS_Y: 32,
+  STATUS_Y: 36,
   FOOTER_DATE_Y: 50,
   FOOTER_TIME_Y: 57,
   STATUS_PADDING: 2,
