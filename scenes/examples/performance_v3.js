@@ -1,9 +1,10 @@
 /**
- * @fileoverview Performance Test V3 - Professional-grade adaptive timing test
- * @description Advanced performance testing scene with real-time metrics, adaptive timing,
- * and professional-grade architecture for the Pixoo device ecosystem.
- * @version 3.0.0
- * @author: Sonic + Cursor + Markus Barta (mba)
+ * @fileoverview Performance Test V3
+ * @description A scene for performance benchmarking.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
  * @license MIT
  */
 

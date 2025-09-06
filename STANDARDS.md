@@ -2,275 +2,137 @@
 
 ## 🎯 Mission Statement
 
-This guide establishes the professional engineering standards for the Pixoo Daemon
-project. Its purpose is to foster a high-quality, maintainable, and performant
-codebase through senior-level practices.
+This guide establishes the professional engineering standards for the Pixoo
+Daemon project, fostering a high-quality, maintainable, and performant
+codebase.
 
 ## ⭐ Guiding Principle: Pragmatism over Dogma
 
-A senior engineer understands that standards are guidelines, not immutable laws.
-The ultimate goal is to create a robust and maintainable system. Always favor
-clarity, simplicity, and pragmatism. If a rule stands in the way of a better
-solution, be prepared to challenge it, but do so with a clear justification.
+Standards are guidelines, not immutable laws. The ultimate goal is a robust and
+maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ---
 
 ## 📋 Table of Contents
 
-- [🧹 Code Quality](#-code-quality)
-- [📚 Documentation](#-documentation)
-- [🧪 Testing Strategy](#-testing-strategy)
-- [⚡ Performance](#-performance)
-- [🚨 Error Handling & Logging](#-error-handling--logging)
-- [🔒 Security](#-security)
-- [📝 Markdown Formatting](#-markdown-formatting)
-- [📊 Commit Guidelines](#-commit-guidelines)
-- [🎬 Scene Development](#-scene-development)
+- [🧹 Code & Documentation](#-code--documentation)
+- [🧪 Testing & Performance](#-testing--performance)
+- [🚨 Error Handling & Security](#-error-handling--security)
+- [📝 Formatting & Commits](#-formatting--commits)
+- [🔧 Tooling & Checklists](#-tooling--checklists)
 - [🐟 Fish Shell Standards](#-fish-shell-standards)
-- [🔧 Linting Standards](#-linting-standards)
-- [✅ Developer Checklists](#-developer-checklists)
 
 ---
 
-## 🧹 Code Quality {#-code-quality}
+## 🧹 Code & Documentation {#code-documentation}
 
-### **DRY (Don't Repeat Yourself)**
+### **Code Quality**
 
-- **Goal**: Maximize reusability and reduce the cost of change.
-- **Action**: Abstract repeated logic into shared utilities (`/lib`). Avoid
-  duplication across scenes and modules. Use configuration objects over
-  hardcoded values.
+- **DRY (Don't Repeat Yourself)**: Abstract repeated logic into shared
+  utilities in `/lib`. Avoid duplication.
+- **SOLID Principles**: Adhere to Single Responsibility, Open/Closed, Liskov
+  Substitution, Interface Segregation, and Dependency Inversion.
+- **Best Practices**: Use descriptive names, aim for small functions (<50
+  lines), and write comments that explain _why_, not _what_.
 
-### **SOLID Principles**
+### **Documentation**
 
-- **Single Responsibility**: A function or module should do one thing well.
-- **Open/Closed**: Extend behavior with new code, don't modify existing, stable
-  code.
-- **Liskov Substitution**: Subtypes must be substitutable for their base types.
-- **Interface Segregation**: Keep interfaces small and focused on a specific role.
-- **Dependency Inversion**: Depend on abstractions (like a `logger` interface),
-  not on concrete implementations.
-
-### **General Best Practices**
-
-- **Naming**: Names should be descriptive and reveal intent (e.g.,
-  `calculatePerformanceMetrics` is better than `calc`).
-- **Function Size**: Aim for small, focused functions (under 50 lines is a good
-  guideline). If a function is long, it's often a sign it's doing too much.
-- **Comments**: Write comments to explain _why_ something is done, not _what_ it
-  does. The code itself should explain the "what".
+- **JSDoc**: Document all public functions and classes. Explain the _purpose_
+  and _intent_ of the code.
+- **READMEs**: Every major directory (`/lib`, `/scenes`) must have a `README.md`
+  explaining its purpose and architecture.
 
 ---
 
-## 📚 Documentation {#-documentation}
+## 🧪 Testing & Performance {#testing--performance}
 
-### **JSDoc**
+### **Testing Strategy**
 
-Document all public functions, classes, and complex logic. The goal is to provide
-enough context for another developer to use the code without having to read its
-implementation.
+- **Philosophy**: Build confidence and prevent regressions. Prioritize tests for
+  critical paths and complex logic.
+- **Pyramid**: Use fast, isolated **Unit Tests** for the foundation,
+  **Integration Tests** to verify module interactions, and **Manual/E2E Tests**
+  for visual validation.
 
-```javascript
-/**
- * Calculates the optimal interpolation factor for a color gradient.
- * This function uses a non-linear easing curve to ensure a smoother
- * visual transition at the color endpoints.
- *
- * @param {number} factor - The linear interpolation factor (0.0 to 1.0).
- * @returns {number} The eased interpolation factor.
- */
-function getEasedFactor(factor) {
-  // ... implementation ...
-}
-```
+### **Performance**
 
-### **README Files**
-
-Every major directory (`/lib`, `/scenes`) must have a `README.md` that explains
-its purpose, architecture, and how to use its contents.
+- **Data Structures**: Use the right tool for the job (`Map`, `Set`, `Array`).
+- **Batching**: Minimize device communication overhead by batching operations.
+- **Profiling**: Identify bottlenecks with profiling tools before optimizing.
 
 ---
 
-## 🧪 Testing Strategy {#-testing-strategy}
+## 🚨 Error Handling & Security {#error-handling--security}
 
-### **Philosophy**
+### **Error Handling & Logging**
 
-Our goal with testing is to build confidence that our system works as expected
-and to prevent regressions. We prioritize tests that cover critical paths and
-complex business logic.
+- **Fail Fast**: Validate inputs and state early. Use specific error types
+  (`ValidationError`, `DeviceError`).
+- **Structured Logging**: Use the `lib/logger.js` wrapper with appropriate
+  levels (`error`, `warn`, `info`, `debug`) and always include a metadata object
+  for context.
 
-### **Testing Pyramid**
+### **Security**
 
-- **Unit Tests**: The foundation. Test individual functions and modules in
-  isolation. They should be fast and focused. We use the built-in `node:test`
-  runner.
-- **Integration Tests**: Test how different modules interact. For example, verify
-  that the `SceneManager` can correctly load and transition between scenes.
-- **Manual/E2E Tests**: Use for verifying visual output and device-specific
-  behavior that is difficult to automate.
-
----
-
-## ⚡ Performance {#-performance}
-
-- **Data Structures**: Use the right tool for the job. `Map` for key-value pairs,
-  `Set` for unique collections, `Array` for ordered lists.
-- **Batching**: Minimize overhead by batching operations, especially when
-  communicating with the device.
-- **Profiling**: Don't guess. Use profiling tools to identify bottlenecks before
-  attempting to optimize.
+- **Input Validation**: Never trust external inputs. Validate all data from MQTT.
+- **Dependencies**: Keep dependencies updated and scan for vulnerabilities.
+- **Error Messages**: Do not leak sensitive information in external-facing
+  errors.
 
 ---
 
-## 🚨 Error Handling & Logging {#-error-handling--logging}
+## 📝 Formatting & Commits {#formatting--commits}
 
-### **Error Handling**
+### **Markdown & Linting**
 
-- **Fail Fast**: Validate inputs and state early to catch errors at their source.
-- **Custom Error Types**: Use specific error types (`ValidationError`,
-  `DeviceError`) to provide more context than generic `Error` objects.
-- **Graceful Degradation**: When an operation can fail, have a fallback. For
-  example, if an advanced chart fails to render, fall back to a simpler one.
+- **Zero Errors Policy**: All `.md` and `.js` files must have **zero linting
+  errors**.
+- **Auto-Fixing**: Run `npm run lint:fix` and `npx markdownlint --fix .` before
+  committing.
+- **Key Rules**: Target 80-char line length (max 120), add blank lines around
+  headings/lists, and specify the language for code blocks.
 
-### **Logging**
+### **Commit Guidelines**
 
-We use a structured logger (`lib/logger.js`).
-
-- **Levels**: Use the appropriate log level:
-  - `error`: For failures that require immediate attention.
-  - `warn`: For unexpected but recoverable issues.
-  - `info`: For normal operational messages.
-  - `debug`: For detailed diagnostic information.
-- **Context**: Always include a metadata object with relevant context (e.g.,
-  `deviceIp`, `sceneName`, `error`). This makes logs searchable and useful.
-
----
-
-## 🔒 Security {#-security}
-
-- **Input Validation**: Never trust external inputs. Validate all data received
-  from MQTT messages, including type, bounds, and format.
-- **Dependencies**: Keep dependencies up-to-date and periodically scan for
-  vulnerabilities.
-- **Error Messages**: Be careful not to leak sensitive information (like internal
-  stack traces) in error messages that are exposed externally.
-
----
-
-## 📝 Markdown Formatting {#-markdown-formatting}
-
-All `.md` files must have **zero linting errors**. Run `npx markdownlint --fix .`
-before committing. The most critical rules are:
-
-- **MD013 (Line Length)**: Target 80 characters for readability, with a hard max
-  of 120.
-- **MD022/MD032 (Spacing)**: Surround headings and lists with blank lines.
-- **MD040 (Code Blocks)**: Always specify the language for syntax highlighting.
-
----
-
-## 📊 Commit Guidelines {#-commit-guidelines}
-
-We follow the [Conventional Commits](https://www.conventionalcommits.org/)
-specification.
-
-- **Format**: `type(scope): description` (e.g., `feat(scenes): add new clock scene`)
+- **Conventional Commits**: Follow the `type(scope): description` format.
 - **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ---
 
-## 🎬 Scene Development {#-scene-development}
+## 🔧 Tooling & Checklists {#tooling--checklists}
 
-- **Interface**: A scene must export `name` (string) and `render` (async
-  function). `init` and `cleanup` are optional.
-- **`device.push()`**: You **must** call `await device.push()` after drawing to
-  make your changes visible on the device.
-- **State**: Use the `ctx.state` Map for managing scene-specific data.
+### **Scene Development & Shell Standards**
 
----
-
-## 🐟 Fish Shell Standards {#-fish-shell-standards}
-
-- **Local Development**: Use `fish` syntax (`set -x VAR value`).
-- **Scripts/Hooks**: All scripts intended for the server or Git hooks **must**
-  use `#!/usr/bin/env bash` and be written in POSIX-compliant shell script to
-  ensure portability.
+- **Scene Interface**: Scenes must export `name` and `render`. `init` and
+  `cleanup` are optional. **Always** call `await device.push()` to display
+  changes.
+- **Shell Scripts**: Server-side scripts **must** use `#!/usr/bin/env bash` for
+  portability. Use `fish` syntax for local development.
 
 ---
 
-## 🔧 Linting Standards {#-linting-standards}
-
-Linting rules are in place to catch common errors and enforce consistency.
-
-### **ESLint**
-
-Our configuration is tuned to be pragmatic:
-
-- **Complexity**: Warns at 20, errors at 30.
-- **Max Parameters**: Warns at 6.
-- **Max Lines/Function**: Warns at 150.
-
-**Refactor vs. Disable**: Always try to refactor code to comply with a rule.
-Only disable a rule with an inline comment if the code is justifiably complex or
-performance-critical.
-
-### **Auto-Fixing**
-
-Run `npm run lint:fix` and `npx markdownlint --fix .` to automatically fix most
-common issues.
-
----
-
-## ✅ Developer Checklists {#-developer-checklists}
+## ✅ Developer Checklists {#developer-checklists}
 
 ### **Before Committing**
 
-- [ ] Does the code work and is it tested?
-- [ ] Is it well-documented with JSDoc and comments?
-- [ ] Does it follow our error handling and logging standards?
-- [ ] Are there any magic numbers or duplicated code?
-- [ ] Have you run the linters and fixed all issues? (`npm run lint:fix`)
+- [ ] **Plan & Validate**: Have you planned the work and tested it locally?
+- [ ] **Quality & Docs**: Is the code clean, DRY, and well-documented? Have you
+      updated relevant READMEs?
+- [ ] **Standards & Linters**: Does it follow all project standards? Have you
+      run the linters and fixed all issues?
 
-### **Code Review**
+#### **Code Review**
 
-- [ ] Does the code solve the problem effectively and efficiently?
-- [ ] Is the architecture sound and does it align with SOLID principles?
-- [ ] Is the code readable, maintainable, and easy to understand?
-- [ ] Is the test coverage adequate?
-- [ ] Does the documentation reflect the changes?
+- [ ] Does the code solve the problem effectively?
+- [ ] Is the architecture sound and the code readable?
+- [ ] Is testing coverage adequate and does documentation reflect the changes?
 
 ---
 
-## 📚 Resources
+## 🐟 Fish Shell Standards {#fish-shell-standards}
 
-### **Recommended Reading**
-
-- [Clean Code](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882)
-  by Robert C. Martin
-- [The Pragmatic Programmer](https://www.amazon.com/Pragmatic-Programmer-journey-mastery-Anniversary/dp/0135957052)
-  by Hunt & Thomas
-- [JavaScript: The Good Parts](https://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742)
-  by Douglas Crockford
-
-### **Online Resources**
-
-- [MDN Web Docs](https://developer.mozilla.org/) - JavaScript/Node.js reference
-- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
-- [JavaScript Info](https://javascript.info/) - Modern JavaScript tutorial
-
-### **Tools**
-
-- [ESLint](https://eslint.org/) - Code linting
-- [Prettier](https://prettier.io/) - Code formatting
-- [JSDoc](https://jsdoc.app/) - Documentation generator
-- [Markdownlint](https://github.com/DavidAnson/markdownlint)
-  - Markdown linting
-
----
-
-**Remember**: Quality is not an accident. It's the result of intelligent effort
-and adherence to professional standards. Always strive to write code that your future
-self will thank you for maintaining.
-
-_Last updated: 2025-01-27_
-_Authors: Sonic + Cursor + Markus Barta (mba)_
+- **Local Development**: When working locally, use `fish` syntax for all shell
+  commands (e.g., `set -x VAR value`).
+- **Scripts & Hooks**: All scripts intended for the server (NixOS) or for Git
+  hooks **must** use `#!/usr/bin/env bash` and be written in POSIX-compliant
+  shell script to ensure maximum portability.

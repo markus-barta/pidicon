@@ -1,9 +1,10 @@
 /**
- * @fileoverview Advanced Chart Scene - Professional data visualization
- * @description Demonstrates the advanced chart rendering capabilities extracted from legacy Node-RED code.
- * Shows sophisticated chart features like negative values, overflow handling, and gradient rendering.
+ * @fileoverview Advanced Charting Module
+ * @description Renders an advanced, dynamic line chart.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"advanced_chart"}'
  * @version 1.0.0
- * @author: Sonic + Cursor + Markus Barta (mba)
+ * @author Sonic + Cursor + Markus Barta (mba)
  * @license MIT
  */
 

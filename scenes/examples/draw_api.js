@@ -1,15 +1,14 @@
-// Test Draw API Scene - Comprehensive API testing
-// MQTT Commands:
-// {"scene":"test_draw_api","test":"all"}            - Run all API tests
-// {"scene":"test_draw_api","test":"pixels"}         - Test pixel drawing
-// {"scene":"test_draw_api","test":"rectangles"}     - Test rectangle drawing
-// {"scene":"test_draw_api","test":"lines"}          - Test line drawing
-// {"scene":"test_draw_api","test":"text"}           - Test text rendering
-// {"scene":"test_draw_api","test":"gradients"}      - Test gradient rendering
-// {"scene":"test_draw_api","clear":true,"test":"all"} - Clear screen before running tests
-// @author: Sonic + Cursor + Markus Barta (mba)
+/**
+ * @fileoverview Draw API Example
+ * @description Demonstrates all available drawing primitives.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api"}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
 
-const name = 'test_draw_api';
+const name = 'draw_api';
 
 // Import shared utilities
 const { validateSceneContext } = require('../lib/performance-utils');

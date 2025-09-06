@@ -1,12 +1,12 @@
-// Fill Scene - Fill screen with specified color
-// MQTT Commands:
-// {"scene":"fill","color":[255,0,0,255]}         - Red fill
-// {"scene":"fill","color":[0,255,0,255]}         - Green fill
-// {"scene":"fill","color":[0,0,255,255]}         - Blue fill
-// {"scene":"fill","color":[255,255,0,255]}       - Yellow fill
-// {"scene":"fill","color":[128,128,128,255]}     - Gray fill
-// {"scene":"fill","clear":true,"color":[255,0,0,255]} - Clear screen before filling
-// @author: Sonic + Cursor + Markus Barta (mba)
+/**
+ * @fileoverview Fill Scene
+ * @description Fills the screen with a solid color.
+ * @mqtt
+ * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill", "color":[255,0,0,255]}'
+ * @version 1.0.0
+ * @author Sonic + Cursor + Markus Barta (mba)
+ * @license MIT
+ */
 
 const name = 'fill';
 
