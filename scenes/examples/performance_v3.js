@@ -5,19 +5,19 @@
  * advanced rendering techniques to minimize the number of pixels sent to the
  * device.
  * @mqtt
- * mosquitto_pub -h localhost -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
  * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
  * @license MIT
  */
 
 // MQTT Commands:
-// {"scene":"test_performance_v3","mode":"continuous","interval":150}                    - Continuous mode, 63 frames (default)
-// {"scene":"test_performance_v3","mode":"continuous","interval":100,"frames":200}       - Continuous mode, 200 frames
-// {"scene":"test_performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true} - Adaptive continuous mode, 63 frames
-// {"scene":"test_performance_v3","mode":"loop","interval":200,"duration":60000}        - Loop mode, 60s duration
-// {"scene":"test_performance_v3","interval":50,"adaptiveTiming":true}                  - Fast adaptive mode, 63 frames
-// {"scene":"test_performance_v3","clear":true,"mode":"continuous","interval":150}      - Clear screen before starting test
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":150}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":100,"frames":200}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"continuous","interval":100,"adaptiveTiming":true}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","mode":"loop","interval":200,"duration":60000}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","interval":50,"adaptiveTiming":true}'
+// mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3","clear":true,"mode":"continuous","interval":150}'
 
 'use strict';
 

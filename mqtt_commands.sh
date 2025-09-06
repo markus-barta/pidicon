@@ -8,17 +8,17 @@ echo "🚀 Pixoo Performance Test Commands"
 echo "=================================="
 echo ""
 
-# Check if PIXOO_COMMANDS.md exists
-if [ -f "PIXOO_COMMANDS.md" ]; then
+# Check if MQTT_COMMANDS.md exists
+if [ -f "MQTT_COMMANDS.md" ]; then
     echo "📋 Available Commands (copy & paste directly):"
     echo ""
-    cat PIXOO_COMMANDS.md
+    cat MQTT_COMMANDS.md
     echo ""
-    echo "✅ Commands loaded from PIXOO_COMMANDS.md"
+    echo "✅ Commands loaded from MQTT_COMMANDS.md"
 else
-    echo "❌ PIXOO_COMMANDS.md not found!"
+    echo "❌ MQTT_COMMANDS.md not found!"
     echo ""
-    echo "Please ensure PIXOO_COMMANDS.md exists in the same directory as this script."
+    echo "Please ensure MQTT_COMMANDS.md exists in the same directory as this script."
     exit 1
 fi
 
