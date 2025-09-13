@@ -168,7 +168,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Main info section
   // Build number (with leading '#')
   await device.drawTextRgbaAligned(
-    `Build: ${buildNumber}`,
+    `Build:${buildNumber}`,
     [32, LAYOUT.BUILD_NUMBER_Y],
     COLORS.BUILD_NUMBER,
     'center',
@@ -176,7 +176,7 @@ async function drawStartupInfo(device, versionInfo) {
 
   // Git hash
   await device.drawTextRgbaAligned(
-    `Commit: ${gitCommit}`,
+    `Commit:${gitCommit}`,
     [32, LAYOUT.GIT_HASH_Y],
     COLORS.GIT_HASH,
     'center',
