@@ -22,7 +22,6 @@
 const SCENE_NAME = 'advanced_chart';
 
 // Import shared utilities
-const AdvancedChart = require('../lib/advanced-chart');
 const logger = require('../lib/logger');
 const { validateSceneContext } = require('../lib/performance-utils');
 
@@ -31,19 +30,9 @@ const { validateSceneContext } = require('../lib/performance-utils');
  * @param {Object} ctx - Render context
  * @returns {Promise<void>}
  */
-async function init(context) {
+async function init() {
   // Initialize advanced chart scene - nothing special needed
   logger.debug(`🚀 [ADVANCED_CHART] Scene initialized`);
-  const chart = new AdvancedChart(context.device, {
-    id: 'advanced_chart_instance',
-    // The original code had a lot of options here, but they are not used in the current render function.
-    // Keeping them for now as they might be re-introduced or are part of the original context.
-    // scale: context.state.scale || 5,
-    // updateInterval: context.state.updateInterval || 2000,
-    // dataType: context.state.dataType || 'power', // 'power', 'temperature', 'random'
-    // mode: context.state.mode || 'demo',
-  });
-  context.setState('chart', chart);
 }
 
 async function render(ctx) {
@@ -52,7 +41,7 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state } = ctx;
+  const { device, state, publishOk } = ctx;
 
   // Advanced chart is always available
 
@@ -99,7 +88,7 @@ async function render(ctx) {
   }
 
   // Push the rendered frame
-  await device.push(SCENE_NAME);
+  await device.push(SCENE_NAME, publishOk);
 
   // Log performance
   if (result.success) {
@@ -156,18 +145,9 @@ function generateDemoData(config) {
   return data;
 }
 
-async function cleanup(context) {
+async function cleanup() {
   // Cleanup advanced chart scene - nothing special needed
   logger.debug(`🧹 [ADVANCED_CHART] Scene cleaned up`);
-  const chart = context.getState('chart');
-  if (chart) {
-    // The original code had a lot of options here, but they are not used in the current render function.
-    // Keeping them for now as they might be re-introduced or are part of the original context.
-    // scale: context.state.scale || 5,
-    // updateInterval: context.state.updateInterval || 2000,
-    // dataType: context.state.dataType || 'power', // 'power', 'temperature', 'random'
-    // mode: context.state.mode || 'demo',
-  }
 }
 
 module.exports = { name: SCENE_NAME, render, init, cleanup };
