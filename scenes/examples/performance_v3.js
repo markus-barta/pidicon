@@ -17,7 +17,6 @@ const MODE_COLORS = Object.freeze({
   ADAPTIVE: [0, 200, 0, 255], // Green
   INTERVAL: [0, 128, 255, 255], // Blue
 });
-const FPS_HEADER_COLOR = [180, 180, 180, 255]; // Light gray
 const LINE_ALPHA = 178; // ~70%
 
 // Import external dependencies
@@ -137,7 +136,7 @@ class PerformanceChartRenderer {
     }
   }
 
-  async renderHeader(modeHeaderText, modeHeaderColor, fpsText) {
+  async renderHeader(modeHeaderText, modeHeaderColor) {
     if (modeHeaderText) {
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -147,17 +146,6 @@ class PerformanceChartRenderer {
         'left',
         true,
         null,
-      );
-    }
-
-    if (fpsText) {
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        fpsText,
-        [2, 10],
-        FPS_HEADER_COLOR,
-        'left',
-        true,
       );
     }
   }
@@ -267,6 +255,57 @@ function computeYFromFrametime(frametime) {
   const scaledValue =
     (normalizedValue / CHART_CONFIG.MAX_VALUE) * CHART_CONFIG.CHART_HEIGHT;
   return CHART_CONFIG.CHART_BOTTOM_Y - Math.round(scaledValue);
+}
+
+// Estimate text width similar to drawTextRgbaAlignedWithBg internal logic
+function estimateTextWidth(str) {
+  let estimatedWidth = 0;
+  for (const char of String(str ?? '')) {
+    if (char === ' ' || char === ':') estimatedWidth += 3;
+    else if (char === 'M' || char === 'W') estimatedWidth += 5;
+    else if (char >= '0' && char <= '9') estimatedWidth += 4;
+    else estimatedWidth += 4;
+  }
+  return Math.max(1, Math.min(64, estimatedWidth));
+}
+
+// Draw colored status line: (X.Y FPS, Zms)
+async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
+  // Clear status line area (y = 10)
+  await device.drawRectangleRgba([0, 10], [64, 7], CHART_CONFIG.BG_COLOR);
+
+  let x = 2;
+  const y = 10;
+  const darkGray = CHART_CONFIG.TEXT_COLOR_STATS;
+
+  // '('
+  await device.drawTextRgbaAligned('(', [x, y], darkGray, 'left');
+  x += estimateTextWidth('(');
+
+  // FPS value (white)
+  const fpsVal = `${fpsOneDecimal}`;
+  await device.drawTextRgbaAligned(
+    fpsVal,
+    [x, y],
+    [255, 255, 255, 255],
+    'left',
+  );
+  x += estimateTextWidth(fpsVal) + 1;
+
+  // ' FPS, '
+  const token1 = ' FPS, ';
+  await device.drawTextRgbaAligned(token1, [x, y], darkGray, 'left');
+  x += estimateTextWidth(token1);
+
+  // ms numeric (colored by measurement)
+  const msVal = `${frametimeMs}`;
+  const msTextColor = [msColor[0], msColor[1], msColor[2], 255];
+  await device.drawTextRgbaAligned(msVal, [x, y], msTextColor, 'left');
+  x += estimateTextWidth(msVal);
+
+  // 'ms)'
+  const token2 = 'ms)';
+  await device.drawTextRgbaAligned(token2, [x, y], darkGray, 'left');
 }
 
 // Draw gradient line between last and current sample
@@ -487,14 +526,20 @@ async function renderFrame(context, config) {
   setState('lastValue', frametime);
   setState('chartX', Math.min(nextX + 1, CHART_CONFIG.CHART_END_X));
 
-  // Render headers
-  const currentFps =
-    displayContent.frametime > 0 ? 1000 / displayContent.frametime : 0;
-  const statusHeader = `(${currentFps.toFixed(1)} FPS, ${Math.round(displayContent.frametime)}ms)`;
+  // Render headers (mode on first line)
   await chartRenderer.renderHeader(
     displayContent.modeHeaderText,
     displayContent.modeHeaderColor,
-    statusHeader,
+  );
+
+  // Render colored status line on second line
+  const currentFps =
+    displayContent.frametime > 0 ? 1000 / displayContent.frametime : 0;
+  await drawStatusLine(
+    device,
+    currentFps.toFixed(1),
+    Math.round(displayContent.frametime),
+    colorEnd,
   );
 
   // Render statistics
