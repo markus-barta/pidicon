@@ -502,7 +502,7 @@ async function render(context) {
     const shouldContinue =
       framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
 
-    if (shouldContinue && !isContinuation) {
+    if (shouldContinue) {
       // Schedule next frame
       if (config.interval === null) {
         // Adaptive mode: schedule immediately
