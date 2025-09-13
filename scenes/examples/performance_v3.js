@@ -12,6 +12,14 @@
 
 const SCENE_NAME = 'performance_v3';
 
+// Visual constants for headers and lines
+const MODE_COLORS = Object.freeze({
+  ADAPTIVE: [0, 200, 0, 255], // Green
+  INTERVAL: [0, 128, 255, 255], // Blue
+});
+const FPS_HEADER_COLOR = [180, 180, 180, 255]; // Light gray
+const LINE_ALPHA = 178; // ~70%
+
 // Import external dependencies
 
 // Import internal modules
@@ -93,8 +101,10 @@ class PerformanceChartRenderer {
     // Draw Y-axis (left boundary)
     await drawLine(
       this.device,
-      [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_START_Y],
-      [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_BOTTOM_Y],
+      CHART_CONFIG.CHART_START_X,
+      CHART_CONFIG.CHART_START_Y,
+      CHART_CONFIG.CHART_START_X,
+      CHART_CONFIG.CHART_BOTTOM_Y,
       CHART_CONFIG.AXIS_COLOR,
     );
 
@@ -105,64 +115,47 @@ class PerformanceChartRenderer {
       Math.round(midRatio * CHART_CONFIG.CHART_HEIGHT);
     await drawLine(
       this.device,
-      [CHART_CONFIG.CHART_START_X, midY],
-      [CHART_CONFIG.CHART_END_X, midY],
+      CHART_CONFIG.CHART_START_X,
+      midY,
+      CHART_CONFIG.CHART_END_X,
+      midY,
       CHART_CONFIG.AXIS_COLOR,
     );
 
-    // Draw Y-axis grid lines (optional, keep subtle)
+    // Draw Y-axis grid lines (subtle)
     for (let i = 1; i <= 4; i++) {
       const y =
         CHART_CONFIG.CHART_BOTTOM_Y - (i * CHART_CONFIG.CHART_HEIGHT) / 5;
       await drawLine(
         this.device,
-        [CHART_CONFIG.CHART_START_X, y],
-        [CHART_CONFIG.CHART_END_X, y],
+        CHART_CONFIG.CHART_START_X,
+        y,
+        CHART_CONFIG.CHART_END_X,
+        y,
         CHART_CONFIG.GRID_COLOR,
       );
     }
   }
 
-  async renderHeader(modeText, timingText, fpsText) {
-    // Mode and timing header
-    if (modeText) {
+  async renderHeader(modeHeaderText, modeHeaderColor, fpsText) {
+    if (modeHeaderText) {
       await drawTextRgbaAlignedWithBg(
         this.device,
-        modeText,
+        modeHeaderText,
         [2, 2],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        modeHeaderColor,
         'left',
         true,
         null,
       );
     }
 
-    // Current frametime and FPS
-    if (timingText && fpsText) {
-      const combinedText = `${fpsText}/${timingText}`;
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        combinedText,
-        [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    } else if (timingText) {
-      await drawTextRgbaAlignedWithBg(
-        this.device,
-        timingText,
-        [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
-        'left',
-        true,
-      );
-    } else if (fpsText) {
+    if (fpsText) {
       await drawTextRgbaAlignedWithBg(
         this.device,
         fpsText,
         [2, 10],
-        CHART_CONFIG.TEXT_COLOR_HEADER,
+        FPS_HEADER_COLOR,
         'left',
         true,
       );
@@ -260,6 +253,58 @@ class PerformanceChartRenderer {
   }
 }
 
+// Utility: clamp and compose color with custom alpha
+function withAlpha(color, alpha) {
+  return [color[0] | 0, color[1] | 0, color[2] | 0, alpha | 0];
+}
+
+// Utility: compute chart Y from frametime
+function computeYFromFrametime(frametime) {
+  const normalizedValue = Math.min(
+    Math.max(frametime, 0),
+    CHART_CONFIG.MAX_VALUE,
+  );
+  const scaledValue =
+    (normalizedValue / CHART_CONFIG.MAX_VALUE) * CHART_CONFIG.CHART_HEIGHT;
+  return CHART_CONFIG.CHART_BOTTOM_Y - Math.round(scaledValue);
+}
+
+// Draw gradient line between last and current sample
+async function drawGradientSegment(
+  device,
+  x1,
+  y1,
+  x2,
+  y2,
+  colorStart,
+  colorEnd,
+) {
+  // DDA stepping with per-step color interpolation
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const steps = Math.max(Math.abs(dx), Math.abs(dy));
+  if (steps <= 0) {
+    await device.drawPixelRgba([x1, y1], withAlpha(colorEnd, LINE_ALPHA));
+    return;
+  }
+  const xInc = dx / steps;
+  const yInc = dy / steps;
+  let x = x1;
+  let y = y1;
+  for (let i = 0; i <= steps; i++) {
+    const t = steps === 0 ? 1 : i / steps;
+    const r = Math.round(colorStart[0] + (colorEnd[0] - colorStart[0]) * t);
+    const g = Math.round(colorStart[1] + (colorEnd[1] - colorStart[1]) * t);
+    const b = Math.round(colorStart[2] + (colorEnd[2] - colorStart[2]) * t);
+    await device.drawPixelRgba(
+      [Math.round(x), Math.round(y)],
+      [r, g, b, LINE_ALPHA],
+    );
+    x += xInc;
+    y += yInc;
+  }
+}
+
 /**
  * Generates display content based on test configuration
  * @param {Object} config - Test configuration
@@ -273,17 +318,23 @@ function generateDisplayContent(config, frametime, performanceState) {
   let modeText = '';
   let timingText = '';
   let fpsText = '';
+  let modeHeaderText = '';
+  let modeHeaderColor = MODE_COLORS.ADAPTIVE;
 
   if (config.interval === null) {
     // Adaptive mode
     modeText = 'ADAPTIVE';
     timingText = `${Math.round(frametime)}ms`;
     fpsText = `${metrics.fps} FPS`;
+    modeHeaderText = `ADAPTIVE ${config.frames}F`;
+    modeHeaderColor = MODE_COLORS.ADAPTIVE;
   } else {
     // Fixed interval mode
     modeText = `FIXED ${config.interval}ms`;
     timingText = `${config.interval}ms`;
     fpsText = `${metrics.fps} FPS`;
+    modeHeaderText = `INTERVAL ${config.interval}ms`;
+    modeHeaderColor = MODE_COLORS.INTERVAL;
   }
 
   return {
@@ -292,6 +343,8 @@ function generateDisplayContent(config, frametime, performanceState) {
     fpsText,
     frametime: frametime || 0,
     metrics,
+    modeHeaderText,
+    modeHeaderColor,
   };
 }
 
@@ -393,14 +446,52 @@ async function renderFrame(context, config) {
     setState('chartInitialized', true);
   }
 
-  // Draw chart point using measured frametime
-  await drawChartPoint(device, frametime, getState, setState);
+  // Determine X positions
+  const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X;
+  const nextX =
+    chartX <= CHART_CONFIG.CHART_END_X ? chartX : CHART_CONFIG.CHART_END_X;
 
-  // Render header
+  // Compute current Y
+  const currY = computeYFromFrametime(frametime);
+
+  // Compute previous point if available
+  const hasPrev =
+    (getState?.('hasPrevPoint') || false) &&
+    chartX > CHART_CONFIG.CHART_START_X;
+  const prevY = getState?.('lastY') || currY;
+  const prevValue = getState?.('lastValue') || frametime;
+
+  // Colors for gradient
+  const colorStart = getPerformanceColor(prevValue);
+  const colorEnd = getPerformanceColor(frametime);
+
+  // Draw gradient segment from previous to current point
+  if (hasPrev) {
+    await drawGradientSegment(
+      device,
+      nextX - 1,
+      prevY,
+      nextX,
+      currY,
+      colorStart,
+      colorEnd,
+    );
+  } else {
+    // First point: just plot a pixel
+    await device.drawPixelRgba([nextX, currY], withAlpha(colorEnd, LINE_ALPHA));
+    setState('hasPrevPoint', true);
+  }
+
+  // Save last point state and advance X
+  setState('lastY', currY);
+  setState('lastValue', frametime);
+  setState('chartX', Math.min(nextX + 1, CHART_CONFIG.CHART_END_X));
+
+  // Render headers
   await chartRenderer.renderHeader(
-    displayContent.modeText,
-    displayContent.timingText,
-    displayContent.fpsText,
+    displayContent.modeHeaderText,
+    displayContent.modeHeaderColor,
+    `${displayContent.metrics.fps} FPS/${displayContent.frametime}ms`,
   );
 
   // Render statistics
@@ -416,13 +507,14 @@ async function renderFrame(context, config) {
 
   // Check if should continue
   const framesRendered = getState('framesRendered') || 0;
-  const chartX = getState('chartX') || CHART_CONFIG.CHART_START_X;
   const shouldContinue =
-    framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
+    framesRendered < config.frames &&
+    (getState('chartX') || CHART_CONFIG.CHART_START_X) <=
+      CHART_CONFIG.CHART_END_X;
 
   setState('inFrame', false);
   logger.ok(
-    `[PERF V3] shouldContinue=${shouldContinue} frames=${framesRendered} chartX=${chartX}`,
+    `[PERF V3] shouldContinue=${shouldContinue} frames=${framesRendered} chartX=${getState('chartX')}`,
   );
 
   if (shouldContinue) {
@@ -470,30 +562,6 @@ async function updateStatistics(frametime, getState, setState) {
     setState('sumFrametime', sumFrametime);
     setState('minFrametime', minFrametime);
     setState('maxFrametime', maxFrametime);
-  }
-}
-
-async function drawChartPoint(device, frametime, getState, setState) {
-  if (frametime > 0) {
-    const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X;
-    if (chartX <= CHART_CONFIG.CHART_END_X) {
-      // Calculate Y position (inverted, 0 at bottom)
-      const normalizedValue = Math.min(
-        Math.max(frametime, 0),
-        CHART_CONFIG.MAX_VALUE,
-      );
-      const scaledValue =
-        (normalizedValue / CHART_CONFIG.MAX_VALUE) * CHART_CONFIG.CHART_HEIGHT;
-      const y = CHART_CONFIG.CHART_BOTTOM_Y - Math.round(scaledValue);
-
-      // Get color based on performance
-      const color = getPerformanceColor(frametime);
-
-      // Draw the point
-      await device.drawPixelRgba([chartX, y], color);
-
-      setState('chartX', chartX + 1);
-    }
   }
 }
 
