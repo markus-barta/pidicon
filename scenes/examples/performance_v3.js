@@ -184,7 +184,7 @@ class PerformanceChartRenderer {
       await drawTextRgbaAlignedWithBg(
         this.device,
         totalFrames,
-        [25, 52],
+        [23, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
         false,
@@ -200,7 +200,7 @@ class PerformanceChartRenderer {
       await drawTextRgbaAlignedWithBg(
         this.device,
         String(Math.round(metrics.avgFrametime)),
-        [48, 52],
+        [47, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
         false,
@@ -216,7 +216,7 @@ class PerformanceChartRenderer {
       await drawTextRgbaAlignedWithBg(
         this.device,
         Math.round(metrics.minFrametime).toString(),
-        [12, 58],
+        [11, 58],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
         false,
@@ -232,7 +232,7 @@ class PerformanceChartRenderer {
       await drawTextRgbaAlignedWithBg(
         this.device,
         Math.round(metrics.maxFrametime).toString(),
-        [48, 58],
+        [47, 58],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
         false,
