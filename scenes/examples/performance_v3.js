@@ -48,6 +48,7 @@ class PerformanceTestState {
     this.setState('chartX', CHART_CONFIG.CHART_START_X);
     this.setState('isRunning', true);
     this.setState('testCompleted', false);
+    this.setState('lastRenderTime', Date.now());
   }
 
   getMetrics() {
@@ -282,20 +283,26 @@ function generateDisplayContent(config, frametime, performanceState) {
 }
 
 /**
- * Schedules the next frame internally
+ * Schedules the next frame internally with mode-specific timing
  * @param {Object} context - Render context
  * @param {Object} config - Test configuration
+ * @param {number} timeTaken - Time taken for the previous frame (for fixed mode adjustment)
  */
-async function scheduleNextFrame(context, config) {
+async function scheduleNextFrame(context, config, timeTaken = 0) {
   const { getState, setState } = context;
 
   // Prevent multiple schedules
   if (getState('loopScheduled')) return;
   setState('loopScheduled', true);
 
-  const delay = config.interval === null ? 0 : config.interval;
+  let delay = 0;
+  if (config.interval !== null) {
+    delay = Math.max(0, config.interval - timeTaken);
+  }
 
-  setTimeout(async () => {
+  const scheduleFn = setTimeout;
+
+  scheduleFn(async () => {
     try {
       await renderFrame(context, config);
     } catch (error) {
@@ -307,28 +314,29 @@ async function scheduleNextFrame(context, config) {
 }
 
 /**
- * Internal frame rendering function
+ * Internal frame rendering function with accurate timing
  * @param {Object} context - Render context
  * @param {Object} config - Test configuration
  */
 async function renderFrame(context, config) {
   const { device, publishOk, getState, setState } = context;
 
-  // Get current frametime (would need proper timing)
-  const startTime = Date.now();
+  const now = Date.now();
+  const lastRenderTime = getState('lastRenderTime') || now;
+  const frametime = now - lastRenderTime;
 
-  // Render chart, header, etc. (move from main render)
-  const chartRenderer = new PerformanceChartRenderer(device);
-  await chartRenderer.renderChart();
+  logger.debug(`[PERF V3] Rendering frame with frametime: ${frametime}ms`);
 
-  // For now, use a dummy frametime; in real, measure
-  const frametime = Date.now() - startTime;
+  // Create performance state
+  const performanceState = new PerformanceTestState(getState, setState);
 
-  // Update statistics
-  await updateStatistics(frametime, getState, setState);
+  // Update statistics if valid frametime
+  if (getState('framesRendered') > 0 || frametime > 0) {
+    // Allow first frame with 0
+    await updateStatistics(frametime, getState, setState);
+  }
 
   // Get metrics
-  const performanceState = new PerformanceTestState(getState, setState);
   const metrics = performanceState.getMetrics();
 
   // Generate display content
@@ -338,7 +346,13 @@ async function renderFrame(context, config) {
     performanceState,
   );
 
-  // Draw chart point
+  // Create chart renderer
+  const chartRenderer = new PerformanceChartRenderer(device);
+
+  // Render chart background and grids
+  await chartRenderer.renderChart();
+
+  // Draw chart point using current frametime
   await drawChartPoint(device, frametime, getState, setState);
 
   // Render header
@@ -354,6 +368,9 @@ async function renderFrame(context, config) {
   // Push frame
   await device.push(SCENE_NAME, publishOk);
 
+  // Update last render time after push
+  setState('lastRenderTime', Date.now());
+
   // Check if should continue
   const framesRendered = getState('framesRendered') || 0;
   const chartX = getState('chartX') || CHART_CONFIG.CHART_START_X;
@@ -361,7 +378,9 @@ async function renderFrame(context, config) {
     framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
 
   if (shouldContinue) {
-    await scheduleNextFrame(context, config);
+    // Schedule next with time taken for this frame (now after push - now at start)
+    const timeTaken = Date.now() - now;
+    await scheduleNextFrame(context, config, timeTaken);
   } else {
     await handleTestCompletion(context, metrics, chartRenderer);
   }
@@ -471,15 +490,20 @@ async function render(context) {
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
 
-      // Start the loop
-      await renderFrame(context, config);
+      // Schedule the first frame
+      await scheduleNextFrame(context, config);
     } else {
-      // If already running, perhaps just log or ignore
-      logger.debug('[PERF V3] Test already in progress');
+      logger.warn(`⚠️ [PERF V3] Test already running. Skipping new test.`);
+      // If test is already running, just push the current state
+      await device.push(SCENE_NAME, true);
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
   }
 }
 
-module.exports = { name: SCENE_NAME, render, init, cleanup };
+module.exports = {
+  init,
+  cleanup,
+  render,
+};
