@@ -12,7 +12,6 @@
 const SCENE_NAME = 'performance_v3';
 
 // Import external dependencies
-const mqtt = require('mqtt');
 
 // Import internal modules
 const logger = require('../../lib/logger');
@@ -283,73 +282,89 @@ function generateDisplayContent(config, frametime, performanceState) {
 }
 
 /**
- * Schedules continuation message for adaptive timing
- * @param {Object} ctx - Render context
+ * Schedules the next frame internally
+ * @param {Object} context - Render context
  * @param {Object} config - Test configuration
- * @param {number} delay - Delay in milliseconds
  */
-function scheduleContinuation(ctx, config, delay) {
-  const { setState } = ctx;
-  const timer = setTimeout(async () => {
+async function scheduleNextFrame(context, config) {
+  const { getState, setState } = context;
+
+  // Prevent multiple schedules
+  if (getState('loopScheduled')) return;
+  setState('loopScheduled', true);
+
+  const delay = config.interval === null ? 0 : config.interval;
+
+  setTimeout(async () => {
     try {
-      const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
-      const client = mqtt.connect(brokerUrl, {
-        username: process.env.MOSQITTO_USER_MS24,
-        password: process.env.MOSQITTO_PASS_MS24,
-        connectTimeout: CHART_CONFIG.MQTT_TIMEOUT_MS,
-        reconnectPeriod: 0,
-      });
-
-      client.on('connect', () => {
-        try {
-          const payload = JSON.stringify({
-            scene: SCENE_NAME,
-            interval: config.interval,
-            frames: config.frames,
-            _continuation: true,
-          });
-          const targetHost =
-            process.env.PIXOO_DEVICE_TARGETS?.split(':')[0] || '192.168.1.159';
-          client.publish(`pixoo/${targetHost}/state/upd`, payload, { qos: 1 });
-          client.end();
-        } catch (publishError) {
-          logger.error(`❌ [PERF V3] MQTT publish error:`, publishError);
-          client.end();
-        }
-      });
-
-      client.on('error', (error) => {
-        logger.error(`❌ [PERF V3] MQTT connection error:`, error.message);
-        try {
-          setState('loopScheduled', false);
-          setState('loopTimer', null);
-        } catch (stateError) {
-          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-        }
-        client.end();
-      });
-
-      client.on('close', () => {
-        try {
-          setState('loopScheduled', false);
-          setState('loopTimer', null);
-        } catch (stateError) {
-          logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-        }
-      });
+      await renderFrame(context, config);
     } catch (error) {
-      logger.error(`❌ [PERF V3] Continuation setup error:`, error);
-      try {
-        setState('loopScheduled', false);
-        setState('loopTimer', null);
-      } catch (stateError) {
-        logger.error(`❌ [PERF V3] State cleanup error:`, stateError);
-      }
+      logger.error(`❌ [PERF V3] Frame error: ${error.message}`);
+    } finally {
+      setState('loopScheduled', false);
     }
   }, delay);
+}
 
-  setState('loopTimer', timer);
-  setState('loopScheduled', true);
+/**
+ * Internal frame rendering function
+ * @param {Object} context - Render context
+ * @param {Object} config - Test configuration
+ */
+async function renderFrame(context, config) {
+  const { device, publishOk, getState, setState } = context;
+
+  // Get current frametime (would need proper timing)
+  const startTime = Date.now();
+
+  // Render chart, header, etc. (move from main render)
+  const chartRenderer = new PerformanceChartRenderer(device);
+  await chartRenderer.renderChart();
+
+  // For now, use a dummy frametime; in real, measure
+  const frametime = Date.now() - startTime;
+
+  // Update statistics
+  await updateStatistics(frametime, getState, setState);
+
+  // Get metrics
+  const performanceState = new PerformanceTestState(getState, setState);
+  const metrics = performanceState.getMetrics();
+
+  // Generate display content
+  const displayContent = generateDisplayContent(
+    config,
+    frametime,
+    performanceState,
+  );
+
+  // Draw chart point
+  await drawChartPoint(device, frametime, getState, setState);
+
+  // Render header
+  await chartRenderer.renderHeader(
+    displayContent.modeText,
+    displayContent.timingText,
+    displayContent.fpsText,
+  );
+
+  // Render statistics
+  await chartRenderer.renderStatistics(metrics);
+
+  // Push frame
+  await device.push(SCENE_NAME, publishOk);
+
+  // Check if should continue
+  const framesRendered = getState('framesRendered') || 0;
+  const chartX = getState('chartX') || CHART_CONFIG.CHART_START_X;
+  const shouldContinue =
+    framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
+
+  if (shouldContinue) {
+    await scheduleNextFrame(context, config);
+  } else {
+    await handleTestCompletion(context, metrics, chartRenderer);
+  }
 }
 
 async function init() {
@@ -434,85 +449,33 @@ async function handleTestCompletion(context, metrics, chartRenderer) {
 }
 
 async function render(context) {
-  const { device, publishOk, payload, getState, setState } = context;
+  const { device, payload, getState, setState } = context;
 
   try {
     // Get configuration from payload
-    const interval = payload?.interval || null; // null = adaptive mode
-    const frames = payload?.frames || DEFAULT_FRAMES;
-    const isContinuation = payload?._continuation === true;
+    const interval = payload?.interval ?? null; // null = adaptive
+    const frames = payload?.frames ?? DEFAULT_FRAMES;
 
-    // Initialize state manager
-    const performanceState = new PerformanceTestState(getState, setState);
+    const config = { interval, frames };
+    setState('config', config);
 
-    // Reset if not a continuation and not running
-    if (!isContinuation && !getState?.('isRunning')) {
+    // Check if already running
+    if (!getState('isRunning')) {
+      // Reset state
+      const performanceState = new PerformanceTestState(getState, setState);
       performanceState.reset();
-      setState('config', { interval, frames });
 
       // Clear screen on new test
       await device.clear();
       logger.ok(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
-    }
 
-    // Get current config
-    const config = getState?.('config') || { interval, frames };
-    const frametime = context.frametime || 0;
-
-    // Update statistics
-    await updateStatistics(frametime, getState, setState);
-
-    // Get metrics
-    const metrics = performanceState.getMetrics();
-
-    // Generate display content
-    const displayContent = generateDisplayContent(
-      config,
-      frametime,
-      performanceState,
-    );
-
-    // Create chart renderer
-    const chartRenderer = new PerformanceChartRenderer(device);
-
-    // Render chart
-    await chartRenderer.renderChart();
-
-    // Draw chart point
-    await drawChartPoint(device, frametime, getState, setState);
-
-    // Render header
-    await chartRenderer.renderHeader(
-      displayContent.modeText,
-      displayContent.timingText,
-      displayContent.fpsText,
-    );
-
-    // Render statistics
-    await chartRenderer.renderStatistics(metrics);
-
-    // Push frame
-    await device.push(SCENE_NAME, publishOk);
-
-    // Check if test should continue
-    const framesRendered = getState?.('framesRendered') || 0;
-    const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X;
-    const shouldContinue =
-      framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
-
-    if (shouldContinue) {
-      // Schedule next frame
-      if (config.interval === null) {
-        // Adaptive mode: schedule immediately
-        scheduleContinuation(context, config, 0);
-      } else {
-        // Fixed interval mode
-        scheduleContinuation(context, config, config.interval);
-      }
-    } else if (!shouldContinue) {
-      await handleTestCompletion(context, metrics, chartRenderer);
+      // Start the loop
+      await renderFrame(context, config);
+    } else {
+      // If already running, perhaps just log or ignore
+      logger.debug('[PERF V3] Test already in progress');
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
