@@ -344,17 +344,16 @@ async function renderFrame(context, config) {
   }
   setState('inFrame', true);
 
-  const now = Date.now();
-  const lastRenderTime = getState('lastRenderTime') || now;
-  const frametime = now - lastRenderTime;
-
-  logger.ok(`[PERF V3] renderFrame: frametime=${frametime}ms`);
+  // Use previous push duration as the frame's measured frametime
+  const lastPushMetrics = device.getMetrics();
+  const frametime = lastPushMetrics.lastFrametime || 0;
+  logger.ok(`[PERF V3] renderFrame: frametime(prev push)=${frametime}ms`);
 
   // Create performance state
   const performanceState = new PerformanceTestState(getState, setState);
 
-  // Update statistics if valid frametime
-  if (getState('framesRendered') > 0 || frametime > 0) {
+  // Update statistics using measured frametime from previous push
+  if (frametime > 0) {
     await updateStatistics(frametime, getState, setState);
   }
 
@@ -364,7 +363,7 @@ async function renderFrame(context, config) {
     `[PERF V3] metrics: frames=${metrics.framesRendered}, avg=${Math.round(metrics.avgFrametime)}ms`,
   );
 
-  // Generate display content
+  // Generate display content for current frame (show previous frame time)
   const displayContent = generateDisplayContent(
     config,
     frametime,
@@ -377,7 +376,7 @@ async function renderFrame(context, config) {
   // Render chart background and grids
   await chartRenderer.renderChart();
 
-  // Draw chart point using current frametime
+  // Draw chart point using measured frametime
   await drawChartPoint(device, frametime, getState, setState);
 
   // Render header
@@ -390,11 +389,13 @@ async function renderFrame(context, config) {
   // Render statistics
   await chartRenderer.renderStatistics(metrics);
 
+  // Measure actual time for draw+push to schedule fixed interval correctly
+  const frameStart = Date.now();
+
   // Push frame
   await device.push(SCENE_NAME, publishOk);
 
-  // Update last render time after push
-  setState('lastRenderTime', Date.now());
+  const timeTaken = Date.now() - frameStart;
 
   // Check if should continue
   const framesRendered = getState('framesRendered') || 0;
@@ -408,7 +409,6 @@ async function renderFrame(context, config) {
   );
 
   if (shouldContinue) {
-    const timeTaken = Date.now() - now;
     await scheduleNextFrame(context, config, timeTaken);
   } else {
     await handleTestCompletion(context, metrics, chartRenderer);
@@ -521,14 +521,18 @@ async function render(context) {
       await scheduleNextFrame(context, config, 0);
       logger.ok(`[PERF V3] scheduled first frame`);
     }
+
+    // Main render loop
+    while (getState('isRunning')) {
+      await renderFrame(context, config);
+    }
   } catch (error) {
-    logger.error(`❌ [PERF V3] Render error: ${error.message}`);
+    logger.error(`❌ [PERF V3] Render encountered an error:`, error.message);
   }
 }
 
 module.exports = {
-  name: SCENE_NAME,
   init,
-  render,
   cleanup,
+  render,
 };
