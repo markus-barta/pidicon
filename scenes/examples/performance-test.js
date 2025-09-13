@@ -53,7 +53,7 @@ class PerformanceTestState {
     this.setState('maxFrametime', 0);
     this.setState('sumFrametime', 0);
     this.setState('samples', []);
-    this.setState('chartX', CHART_CONFIG.CHART_START_X);
+    this.setState('chartX', CHART_CONFIG.CHART_START_X + 1);
     this.setState('isRunning', true);
     this.setState('testCompleted', false);
     this.setState('lastRenderTime', Date.now());
@@ -478,7 +478,7 @@ async function renderFrame(context, config) {
   }
 
   // Determine X positions
-  const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X;
+  const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X + 1;
   const nextX =
     chartX <= CHART_CONFIG.CHART_END_X ? chartX : CHART_CONFIG.CHART_END_X;
 
@@ -549,7 +549,7 @@ async function renderFrame(context, config) {
   const framesRendered = getState('framesRendered') || 0;
   const shouldContinue =
     framesRendered < config.frames &&
-    (getState('chartX') || CHART_CONFIG.CHART_START_X) <
+    (getState('chartX') || CHART_CONFIG.CHART_START_X + 1) <
       CHART_CONFIG.CHART_END_X;
 
   setState('inFrame', false);
