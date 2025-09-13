@@ -488,10 +488,13 @@ async function renderFrame(context, config) {
   setState('chartX', Math.min(nextX + 1, CHART_CONFIG.CHART_END_X));
 
   // Render headers
+  const currentFps =
+    displayContent.frametime > 0 ? 1000 / displayContent.frametime : 0;
+  const statusHeader = `(${currentFps.toFixed(1)} FPS, ${Math.round(displayContent.frametime)}ms)`;
   await chartRenderer.renderHeader(
     displayContent.modeHeaderText,
     displayContent.modeHeaderColor,
-    `${displayContent.metrics.fps} FPS/${displayContent.frametime}ms`,
+    statusHeader,
   );
 
   // Render statistics
