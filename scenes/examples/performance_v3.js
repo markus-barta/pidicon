@@ -8,6 +8,7 @@
  * @license MIT
  */
 'use strict';
+/* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
 const SCENE_NAME = 'performance_v3';
 
@@ -300,17 +301,18 @@ async function scheduleNextFrame(context, config, timeTaken = 0) {
     delay = Math.max(0, config.interval - timeTaken);
   }
 
-  const scheduleFn = setTimeout;
-
-  scheduleFn(async () => {
+  const timerId = setTimeout(async () => {
     try {
       await renderFrame(context, config);
     } catch (error) {
       logger.error(`❌ [PERF V3] Frame error: ${error.message}`);
     } finally {
       setState('loopScheduled', false);
+      setState('loopTimer', null);
     }
   }, delay);
+
+  setState('loopTimer', timerId);
 }
 
 /**
@@ -320,6 +322,17 @@ async function scheduleNextFrame(context, config, timeTaken = 0) {
  */
 async function renderFrame(context, config) {
   const { device, publishOk, getState, setState } = context;
+
+  // Stop if scene not marked running
+  if (!getState('isRunning')) {
+    return;
+  }
+
+  // Prevent re-entrancy (e.g., slow frame overlaps)
+  if (getState('inFrame')) {
+    return;
+  }
+  setState('inFrame', true);
 
   const now = Date.now();
   const lastRenderTime = getState('lastRenderTime') || now;
@@ -332,7 +345,6 @@ async function renderFrame(context, config) {
 
   // Update statistics if valid frametime
   if (getState('framesRendered') > 0 || frametime > 0) {
-    // Allow first frame with 0
     await updateStatistics(frametime, getState, setState);
   }
 
@@ -377,8 +389,9 @@ async function renderFrame(context, config) {
   const shouldContinue =
     framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
 
+  setState('inFrame', false);
+
   if (shouldContinue) {
-    // Schedule next with time taken for this frame (now after push - now at start)
     const timeTaken = Date.now() - now;
     await scheduleNextFrame(context, config, timeTaken);
   } else {
@@ -489,22 +502,9 @@ async function render(context) {
       logger.ok(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
-
-      // Schedule the first frame
-      await scheduleNextFrame(context, config);
-    } else {
-      logger.warn(`⚠️ [PERF V3] Test already running. Skipping new test.`);
-      // If test is already running, just push the current state
-      await device.push(SCENE_NAME, true);
+      await scheduleNextFrame(context, config, 0);
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
   }
 }
-
-module.exports = {
-  name: SCENE_NAME,
-  render,
-  init,
-  cleanup,
-};
