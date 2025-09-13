@@ -508,3 +508,10 @@ async function render(context) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
   }
 }
+
+module.exports = {
+  name: SCENE_NAME,
+  init,
+  render,
+  cleanup,
+};
