@@ -509,7 +509,7 @@ async function renderFrame(context, config) {
   const framesRendered = getState('framesRendered') || 0;
   const shouldContinue =
     framesRendered < config.frames &&
-    (getState('chartX') || CHART_CONFIG.CHART_START_X) <=
+    (getState('chartX') || CHART_CONFIG.CHART_START_X) <
       CHART_CONFIG.CHART_END_X;
 
   setState('inFrame', false);
