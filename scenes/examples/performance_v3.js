@@ -503,7 +503,8 @@ async function render(context) {
 }
 
 module.exports = {
+  name: SCENE_NAME,
+  render,
   init,
   cleanup,
-  render,
 };
