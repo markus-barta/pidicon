@@ -39,4 +39,4 @@ how to use the drawing API.
 
 - `draw_api_animated.js`: Demonstrates various animation techniques.
 - `draw_api.js`: Shows examples of all available drawing primitives.
-- `performance_v2.js` / `performance_v3.js`: Used for performance benchmarking.
+- `performance-test.js`: Used for performance benchmarking.
