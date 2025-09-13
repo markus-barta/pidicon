@@ -2,7 +2,7 @@
 // - Loads scene modules from `./scenes`
 // - Subscribes to MQTT updates per device
 // - Routes each state update to the selected scene renderer
-// @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
+// @author Markus Barta (mba) with assistance from Cursor AI
 
 const fs = require('fs');
 const mqtt = require('mqtt');
