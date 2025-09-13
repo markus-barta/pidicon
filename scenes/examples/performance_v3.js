@@ -82,7 +82,7 @@ class PerformanceChartRenderer {
     this.device = device;
   }
 
-  async renderChart() {
+  async renderChartStatic() {
     // Draw chart background
     await this.device.drawRectangleRgba(
       [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_START_Y],
@@ -90,15 +90,27 @@ class PerformanceChartRenderer {
       CHART_CONFIG.BG_COLOR,
     );
 
-    // Draw chart border
+    // Draw Y-axis (left boundary)
     await drawLine(
       this.device,
+      [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_START_Y],
       [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_BOTTOM_Y],
-      [CHART_CONFIG.CHART_END_X, CHART_CONFIG.CHART_BOTTOM_Y],
       CHART_CONFIG.AXIS_COLOR,
     );
 
-    // Draw Y-axis grid lines
+    // Draw X-axis (mid at ~250ms relative to MAX_VALUE / CHART_HEIGHT)
+    const midRatio = 250 / CHART_CONFIG.MAX_VALUE;
+    const midY =
+      CHART_CONFIG.CHART_BOTTOM_Y -
+      Math.round(midRatio * CHART_CONFIG.CHART_HEIGHT);
+    await drawLine(
+      this.device,
+      [CHART_CONFIG.CHART_START_X, midY],
+      [CHART_CONFIG.CHART_END_X, midY],
+      CHART_CONFIG.AXIS_COLOR,
+    );
+
+    // Draw Y-axis grid lines (optional, keep subtle)
     for (let i = 1; i <= 4; i++) {
       const y =
         CHART_CONFIG.CHART_BOTTOM_Y - (i * CHART_CONFIG.CHART_HEIGHT) / 5;
@@ -360,7 +372,9 @@ async function renderFrame(context, config) {
   // Get metrics
   const metrics = performanceState.getMetrics();
   logger.ok(
-    `[PERF V3] metrics: frames=${metrics.framesRendered}, avg=${Math.round(metrics.avgFrametime)}ms`,
+    `[PERF V3] metrics: frames=${metrics.framesRendered}, avg=${Math.round(
+      metrics.avgFrametime,
+    )}ms`,
   );
 
   // Generate display content for current frame (show previous frame time)
@@ -373,8 +387,11 @@ async function renderFrame(context, config) {
   // Create chart renderer
   const chartRenderer = new PerformanceChartRenderer(device);
 
-  // Render chart background and grids
-  await chartRenderer.renderChart();
+  // Render chart static layer only once
+  if (!getState('chartInitialized')) {
+    await chartRenderer.renderChartStatic();
+    setState('chartInitialized', true);
+  }
 
   // Draw chart point using measured frametime
   await drawChartPoint(device, frametime, getState, setState);
@@ -512,6 +529,7 @@ async function render(context) {
       // Reset state
       const performanceState = new PerformanceTestState(getState, setState);
       performanceState.reset();
+      setState('chartInitialized', false);
 
       // Clear screen on new test
       await device.clear();
@@ -521,13 +539,8 @@ async function render(context) {
       await scheduleNextFrame(context, config, 0);
       logger.ok(`[PERF V3] scheduled first frame`);
     }
-
-    // Main render loop
-    while (getState('isRunning')) {
-      await renderFrame(context, config);
-    }
   } catch (error) {
-    logger.error(`❌ [PERF V3] Render encountered an error:`, error.message);
+    logger.error(`❌ [PERF V3] Render error: ${error.message}`);
   }
 }
 
