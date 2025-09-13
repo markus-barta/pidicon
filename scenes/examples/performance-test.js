@@ -2,7 +2,7 @@
  * @fileoverview Performance Test V3 - Simplified Two-Mode Version
  * @description A scene for performance benchmarking with adaptive and fixed interval modes.
  * @mqtt
- * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance_v3"}'
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance-test"}'
  * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
@@ -269,7 +269,7 @@ function estimateTextWidth(str) {
   return Math.max(1, Math.min(64, estimatedWidth));
 }
 
-// Draw colored status line: (X.Y FPS, Zms)
+// Draw colored status line: X.Y FPS, Z ms
 async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
   // Clear status line area (y = 10)
   await device.drawRectangleRgba([0, 10], [64, 7], CHART_CONFIG.BG_COLOR);
@@ -278,11 +278,7 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
   const y = 10;
   const darkGray = CHART_CONFIG.TEXT_COLOR_STATS;
 
-  // '('
-  await device.drawTextRgbaAligned('(', [x, y], darkGray, 'left');
-  x += estimateTextWidth('(');
-
-  // FPS value (white)
+  // FPS numeric (white), then one pixel gap, then 'FPS'
   const fpsVal = `${fpsOneDecimal}`;
   await device.drawTextRgbaAligned(
     fpsVal,
@@ -291,21 +287,19 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
     'left',
   );
   x += estimateTextWidth(fpsVal) + 1;
+  await device.drawTextRgbaAligned('FPS', [x, y], darkGray, 'left');
+  x += estimateTextWidth('FPS');
 
-  // ' FPS, '
-  const token1 = ' FPS, ';
-  await device.drawTextRgbaAligned(token1, [x, y], darkGray, 'left');
-  x += estimateTextWidth(token1);
+  // Comma and space
+  await device.drawTextRgbaAligned(', ', [x, y], darkGray, 'left');
+  x += estimateTextWidth(', ');
 
-  // ms numeric (colored by measurement)
+  // ms numeric (colored by measurement), then one pixel gap, then 'ms'
   const msVal = `${frametimeMs}`;
   const msTextColor = [msColor[0], msColor[1], msColor[2], 255];
   await device.drawTextRgbaAligned(msVal, [x, y], msTextColor, 'left');
-  x += estimateTextWidth(msVal);
-
-  // 'ms)'
-  const token2 = 'ms)';
-  await device.drawTextRgbaAligned(token2, [x, y], darkGray, 'left');
+  x += estimateTextWidth(msVal) + 1;
+  await device.drawTextRgbaAligned('ms', [x, y], darkGray, 'left');
 }
 
 // Draw gradient line between last and current sample
