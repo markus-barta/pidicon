@@ -6,7 +6,7 @@
  * @mqtt
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill","color":[255,0,0,255]}'
  * @version 1.0.0
- * @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
+ * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */
 
