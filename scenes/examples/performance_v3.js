@@ -307,15 +307,15 @@ async function scheduleNextFrame(context, config, timeTaken = 0) {
   setState('loopScheduled', true);
 
   const timerId = setTimeout(async () => {
+    // Allow renderFrame to schedule the next frame immediately
+    setState('loopScheduled', false);
+    logger.ok(`[PERF V3] timer fired -> renderFrame()`);
     try {
-      logger.ok(`[PERF V3] timer fired -> renderFrame()`);
       await renderFrame(context, config);
     } catch (error) {
       logger.error(`❌ [PERF V3] Frame error: ${error.message}`);
     } finally {
-      setState('loopScheduled', false);
       setState('loopTimer', null);
-      logger.ok(`[PERF V3] cleared schedule flag`);
     }
   }, delay);
 
