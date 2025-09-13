@@ -42,8 +42,11 @@ const sceneManager = new SceneManager();
 fs.readdirSync(path.join(__dirname, 'scenes')).forEach((file) => {
   if (file.endsWith('.js')) {
     try {
-      const scene = require(path.join(__dirname, 'scenes', file));
-      sceneManager.registerScene(scene.name, scene);
+      const sceneModule = require(path.join(__dirname, 'scenes', file));
+      const derivedName = path.basename(file, '.js');
+      const sceneName = sceneModule.name || derivedName;
+      sceneManager.registerScene(sceneName, sceneModule);
+      logger.ok(`Scene registered: ${sceneName}`);
     } catch (error) {
       logger.error(`Failed to load scene ${file}:`, { error: error.message });
     }
@@ -56,9 +59,11 @@ if (fs.existsSync(exampleScenesDir)) {
   fs.readdirSync(exampleScenesDir).forEach((file) => {
     if (file.endsWith('.js')) {
       try {
-        const scene = require(path.join(exampleScenesDir, file));
-        sceneManager.registerScene(scene.name, scene);
-        logger.ok(`Loaded example scene: ${scene.name}`);
+        const sceneModule = require(path.join(exampleScenesDir, file));
+        const derivedName = path.basename(file, '.js');
+        const sceneName = sceneModule.name || derivedName;
+        sceneManager.registerScene(sceneName, sceneModule);
+        logger.ok(`Loaded example scene: ${sceneName}`);
       } catch (error) {
         logger.error(`Failed to load example scene ${file}:`, {
           error: error.message,
