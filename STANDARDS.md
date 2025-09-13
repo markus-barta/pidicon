@@ -15,12 +15,12 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ## 📋 Table of Contents
 
-- [🧹 Code & Documentation](#-code--documentation)
-- [🧪 Testing & Performance](#-testing--performance)
-- [🚨 Error Handling & Security](#-error-handling--security)
-- [📝 Formatting & Commits](#-formatting--commits)
-- [🔧 Tooling & Checklists](#-tooling--checklists)
-- [🐟 Fish Shell Standards](#-fish-shell-standards)
+- [🧹 Code & Documentation](#code--documentation)
+- [🧪 Testing & Performance](#testing--performance)
+- [🚨 Error Handling & Security](#error-handling--security)
+- [📝 Formatting & Commits](#formatting--commits)
+- [🔧 Tooling & Checklists](#-ooling--checklists)
+- [🐟 Shell Standards](#shell-standards)
 
 ---
 
@@ -40,7 +40,7 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 - **JSDoc**: Document all public functions and classes. Explain the _purpose_
   and _intent_ of the code. The `@author` tag should credit both the human
   developer and any AI assistance. The recommended format is:
-  `[Developer Name] ([developer initials]) with assistance from [AI Tool Name] ([Selected AI Model])`
+  `[Developer Name] ([developer initials]) with assistance from [AI Tool Name] ([Currently selected AI Model])`
   (e.g., `mba (Markus Barta) with assistance from Cursor AI`).
 - **READMEs**: Every major directory (`/lib`, `/scenes`) must have a `README.md`
   explaining its purpose and architecture.
@@ -137,10 +137,12 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ---
 
-## 🐟 Fish Shell Standards {#fish-shell-standards}
+## 🐟 Shell Standards {#shell-standards}
 
-- **Local Development**: When working locally, use `fish` syntax for all shell
-  commands (e.g., `set -x VAR value`).
+- **Command Line Usage**: For local or server-side shell commands, prefer the use
+  of `fish` shell syntax (e.g., `set -x VAR value`) whenever practical.
+  If `fish` syntax introduces unnecessary complexity or reduces clarity,
+  default to standard `bash` syntax.
 - **Scripts & Hooks**: All scripts intended for the server (NixOS) or for Git
   hooks **must** use `#!/usr/bin/env bash` and be written in POSIX-compliant
   shell script to ensure maximum portability.
