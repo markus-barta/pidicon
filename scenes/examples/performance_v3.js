@@ -10,12 +10,12 @@
 'use strict';
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
-const SCENE_NAME = 'performance_v3';
+const SCENE_NAME = 'performance-test';
 
 // Visual constants for headers and lines
 const MODE_COLORS = Object.freeze({
-  ADAPTIVE: [0, 200, 0, 255], // Green
-  INTERVAL: [0, 128, 255, 255], // Blue
+  ADAPTIVE: [0, 128, 255, 255], // Bright blue for adaptive
+  INTERVAL: [255, 255, 255, 255], // White for fixed interval
 });
 const LINE_ALPHA = 178; // ~70%
 
@@ -355,31 +355,23 @@ async function drawGradientSegment(
 function generateDisplayContent(config, frametime, performanceState) {
   const metrics = performanceState.getMetrics();
   let modeText = '';
-  let timingText = '';
-  let fpsText = '';
   let modeHeaderText = '';
   let modeHeaderColor = MODE_COLORS.ADAPTIVE;
 
   if (config.interval === null) {
     // Adaptive mode
     modeText = 'ADAPTIVE';
-    timingText = `${Math.round(frametime)}ms`;
-    fpsText = `${metrics.fps} FPS`;
     modeHeaderText = `ADAPTIVE ${config.frames}F`;
     modeHeaderColor = MODE_COLORS.ADAPTIVE;
   } else {
     // Fixed interval mode
     modeText = `FIXED ${config.interval}ms`;
-    timingText = `${config.interval}ms`;
-    fpsText = `${metrics.fps} FPS`;
     modeHeaderText = `INTERVAL ${config.interval}ms`;
     modeHeaderColor = MODE_COLORS.INTERVAL;
   }
 
   return {
     modeText,
-    timingText,
-    fpsText,
     frametime: frametime || 0,
     metrics,
     modeHeaderText,
