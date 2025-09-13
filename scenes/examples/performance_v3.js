@@ -293,22 +293,31 @@ async function scheduleNextFrame(context, config, timeTaken = 0) {
   const { getState, setState } = context;
 
   // Prevent multiple schedules
-  if (getState('loopScheduled')) return;
-  setState('loopScheduled', true);
+  if (getState('loopScheduled')) {
+    logger.debug(`[PERF V3] scheduleNextFrame: skip, already scheduled`);
+    return;
+  }
 
   let delay = 0;
   if (config.interval !== null) {
     delay = Math.max(0, config.interval - timeTaken);
   }
 
+  logger.debug(
+    `[PERF V3] scheduleNextFrame: scheduling next frame in ${delay}ms`,
+  );
+  setState('loopScheduled', true);
+
   const timerId = setTimeout(async () => {
     try {
+      logger.debug(`[PERF V3] scheduleNextFrame: tick -> renderFrame()`);
       await renderFrame(context, config);
     } catch (error) {
       logger.error(`❌ [PERF V3] Frame error: ${error.message}`);
     } finally {
       setState('loopScheduled', false);
       setState('loopTimer', null);
+      logger.debug(`[PERF V3] scheduleNextFrame: cleared schedule flag`);
     }
   }, delay);
 
@@ -324,12 +333,15 @@ async function renderFrame(context, config) {
   const { device, publishOk, getState, setState } = context;
 
   // Stop if scene not marked running
-  if (!getState('isRunning')) {
+  const running = !!getState('isRunning');
+  if (!running) {
+    logger.debug(`[PERF V3] renderFrame: isRunning=false; abort frame`);
     return;
   }
 
   // Prevent re-entrancy (e.g., slow frame overlaps)
   if (getState('inFrame')) {
+    logger.debug(`[PERF V3] renderFrame: inFrame=true; skip overlapping frame`);
     return;
   }
   setState('inFrame', true);
@@ -338,7 +350,9 @@ async function renderFrame(context, config) {
   const lastRenderTime = getState('lastRenderTime') || now;
   const frametime = now - lastRenderTime;
 
-  logger.debug(`[PERF V3] Rendering frame with frametime: ${frametime}ms`);
+  logger.debug(
+    `[PERF V3] renderFrame: frametime=${frametime}ms, lastRenderTime=${lastRenderTime}`,
+  );
 
   // Create performance state
   const performanceState = new PerformanceTestState(getState, setState);
@@ -350,6 +364,9 @@ async function renderFrame(context, config) {
 
   // Get metrics
   const metrics = performanceState.getMetrics();
+  logger.debug(
+    `[PERF V3] renderFrame: frames=${metrics.framesRendered}, avg=${Math.round(metrics.avgFrametime)}ms`,
+  );
 
   // Generate display content
   const displayContent = generateDisplayContent(
@@ -390,6 +407,9 @@ async function renderFrame(context, config) {
     framesRendered < config.frames && chartX <= CHART_CONFIG.CHART_END_X;
 
   setState('inFrame', false);
+  logger.debug(
+    `[PERF V3] renderFrame: shouldContinue=${shouldContinue}, framesRendered=${framesRendered}, chartX=${chartX}`,
+  );
 
   if (shouldContinue) {
     const timeTaken = Date.now() - now;
@@ -503,6 +523,7 @@ async function render(context) {
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
       await scheduleNextFrame(context, config, 0);
+      logger.debug(`[PERF V3] render: scheduled first frame`);
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
