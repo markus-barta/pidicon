@@ -153,6 +153,19 @@ async function render(ctx) {
     );
 
     const timer = setTimeout(async () => {
+      // Abort if scene has been stopped/cleaned up to avoid re-switching scenes
+      try {
+        if (
+          getState('isRunning') === false ||
+          getState('animationScheduled') === false
+        ) {
+          setState('animationScheduled', false);
+          return;
+        }
+      } catch {
+        // If state access fails, be safe and do nothing
+        return;
+      }
       try {
         const mqtt = require('mqtt');
         const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
