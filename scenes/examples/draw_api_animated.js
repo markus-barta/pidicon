@@ -45,6 +45,7 @@ async function cleanup(ctx) {
   // Clear animation scheduling flag to stop any pending frames
   setState('animationScheduled', false);
   setState('frameCount', 0);
+  setState('isRunning', false);
 
   logger.debug(
     `🧹 [TEST_DRAW_API_ANIMATED] Scene cleaned up - animation state reset`,
@@ -58,6 +59,11 @@ async function render(ctx) {
   }
 
   const { device, state, getState, setState, publishOk } = ctx;
+
+  // If explicitly stopped via state (e.g., during scene switch), abort render quickly
+  if (getState('isRunning') === false) {
+    return;
+  }
 
   // Configuration
   const duration = state.get('duration') || ANIMATION_CONFIG.DEFAULT_DURATION;
@@ -82,6 +88,7 @@ async function render(ctx) {
     setState('startTime', startTime);
     setState('frameCount', 0);
     setState('animationScheduled', false);
+    setState('isRunning', true);
     logger.debug(`🎬 [ANIMATED DEMO] Starting ${duration}-frame animation`);
   }
 
@@ -132,7 +139,7 @@ async function render(ctx) {
   }
 
   // Schedule next frame with adaptive timing
-  if (!getState('animationScheduled')) {
+  if (!getState('animationScheduled') && getState('isRunning') !== false) {
     setState('animationScheduled', true); // Set flag immediately to prevent race conditions
 
     // Calculate adaptive delay: frame duration + small offset, but respect max FPS

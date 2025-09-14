@@ -24,6 +24,13 @@ const ANIMATION_CONFIG = Object.freeze({
   DEFAULT_INTERVAL_MS: 0, // used only for fixed mode
 });
 
+// Movement smoothing configuration
+const MOVEMENT_LIMITS = Object.freeze({
+  MAX_DELTA_SLOW: 1, // default per-frame pixel movement
+  MAX_DELTA_FAST: 2, // when frames are slow
+  FAST_THRESHOLD_MS: 300, // if frametime exceeds this, allow 2px
+});
+
 // Imports
 const logger = require('../../lib/logger');
 const {
@@ -145,6 +152,29 @@ class AnimatedV2State {
   }
 }
 
+// --- Helpers ---
+/**
+ * Clamp value movement per frame
+ * @param {number} prev - Previous value
+ * @param {number} target - Target value
+ * @param {number} maxDelta - Maximum delta per frame
+ * @returns {number} Clamped next value
+ */
+function stepTowards(prev, target, maxDelta) {
+  const delta = target - prev;
+  if (Math.abs(delta) <= maxDelta) return target;
+  return prev + Math.sign(delta) * maxDelta;
+}
+
+function getPrev(getState, key, fallback) {
+  const v = getState(key);
+  return typeof v === 'number' ? v : fallback;
+}
+
+function setPrev(setState, key, value) {
+  setState(key, value);
+}
+
 // --- Scheduler (inspired by performance-test.js) ---
 async function scheduleNextFrame(context, config, timeTaken = 0) {
   const { getState, setState } = context;
@@ -196,6 +226,12 @@ async function renderFrame(context, config) {
   const elapsedMs = Date.now() - startTime;
   const t = elapsedMs / 1000; // seconds
 
+  // Determine allowed per-frame delta
+  const maxDelta =
+    (frametime || 0) > MOVEMENT_LIMITS.FAST_THRESHOLD_MS
+      ? MOVEMENT_LIMITS.MAX_DELTA_FAST
+      : MOVEMENT_LIMITS.MAX_DELTA_SLOW;
+
   // Frame counter for functions that use discrete steps
   const frameCount = (getState('frameCount') || 0) + 1;
   setState('frameCount', frameCount);
@@ -205,10 +241,10 @@ async function renderFrame(context, config) {
 
   // Draw animated layers (ported from draw_api_animated.js)
   await drawAnimatedBackground(device, t, frameCount);
-  await drawMovingShapes(device, t);
-  await drawSweepingLines(device, t);
-  await drawAnimatedText(device, t);
-  await drawParticleSystem(device, t);
+  await drawMovingShapes(device, t, getState, setState, maxDelta);
+  await drawSweepingLines(device, t, getState, setState, maxDelta);
+  await drawAnimatedText(device, t, getState, setState, maxDelta);
+  await drawParticleSystem(device, t, getState, setState, maxDelta);
   await drawFinalOverlay(device, t);
 
   // Header label
@@ -216,10 +252,10 @@ async function renderFrame(context, config) {
     device,
     'ANIMATED V2',
     [2, 2],
-    [0, 200, 255, 255],
+    [0, 200, 255, 178], // 70% opacity
     'left',
     true,
-    null,
+    [0, 0, 0, 102], // 40% opacity background
   );
 
   // Status line: FPS, ms (use color scale from performance utils)
@@ -333,15 +369,21 @@ async function drawAnimatedBackground(device, t, frameCount) {
   }
 }
 
-async function drawMovingShapes(device, t) {
-  const rectX = Math.max(
+async function drawMovingShapes(device, t, getState, setState, maxDelta) {
+  const rectXTarget = Math.max(
     2,
     Math.min(47, Math.round(Math.sin(t * 0.5) * 20 + 32)),
   );
-  const rectY = Math.max(
+  const rectYTarget = Math.max(
     2,
     Math.min(47, Math.round(Math.cos(t * 0.3) * 15 + 32)),
   );
+  const rectXPrev = getPrev(getState, 'rectXPrev', rectXTarget);
+  const rectYPrev = getPrev(getState, 'rectYPrev', rectYTarget);
+  const rectX = stepTowards(rectXPrev, rectXTarget, maxDelta);
+  const rectY = stepTowards(rectYPrev, rectYTarget, maxDelta);
+  setPrev(setState, 'rectXPrev', rectX);
+  setPrev(setState, 'rectYPrev', rectY);
   const shadowX = Math.max(0, Math.min(49, rectX + 2));
   const shadowY = Math.max(0, Math.min(49, rectY + 2));
   await device.fillRectangleRgba([shadowX, shadowY], [15, 15], [0, 0, 0, 80]);
@@ -351,14 +393,20 @@ async function drawMovingShapes(device, t) {
     [255, 100, 100, 200],
   );
 
-  const orbitX = Math.max(
+  const orbitXTarget = Math.max(
     8,
     Math.min(56, Math.round(Math.sin(t * 1.2) * 25 + 32)),
   );
-  const orbitY = Math.max(
+  const orbitYTarget = Math.max(
     8,
     Math.min(56, Math.round(Math.cos(t * 1.2) * 25 + 32)),
   );
+  const orbitXPrev = getPrev(getState, 'orbitXPrev', orbitXTarget);
+  const orbitYPrev = getPrev(getState, 'orbitYPrev', orbitYTarget);
+  const orbitX = stepTowards(orbitXPrev, orbitXTarget, maxDelta);
+  const orbitY = stepTowards(orbitYPrev, orbitYTarget, maxDelta);
+  setPrev(setState, 'orbitXPrev', orbitX);
+  setPrev(setState, 'orbitYPrev', orbitY);
 
   for (let dx = -8; dx <= 8; dx++) {
     for (let dy = -8; dy <= 8; dy++) {
@@ -386,20 +434,28 @@ async function drawMovingShapes(device, t) {
   const angle = t * 2;
   const size = 10;
   for (let i = 0; i < 3; i++) {
-    const triangleX = Math.max(
+    const triangleXTarget = Math.max(
       2,
       Math.min(
         62,
         Math.round(Math.sin(angle + (i * Math.PI * 2) / 3) * size + 32),
       ),
     );
-    const triangleY = Math.max(
+    const triangleYTarget = Math.max(
       35,
       Math.min(
         55,
         Math.round(Math.cos(angle + (i * Math.PI * 2) / 3) * size + 45),
       ),
     );
+    const txKey = `tri${i}XPrev`;
+    const tyKey = `tri${i}YPrev`;
+    const triXPrev = getPrev(getState, txKey, triangleXTarget);
+    const triYPrev = getPrev(getState, tyKey, triangleYTarget);
+    const triangleX = stepTowards(triXPrev, triangleXTarget, maxDelta);
+    const triangleY = stepTowards(triYPrev, triangleYTarget, maxDelta);
+    setPrev(setState, txKey, triangleX);
+    setPrev(setState, tyKey, triangleY);
     const sx = Math.round(triangleX + 1);
     const sy = Math.round(triangleY + 1);
     if (sx >= 0 && sx < 64 && sy >= 0 && sy < 64) {
@@ -413,20 +469,29 @@ async function drawMovingShapes(device, t) {
   }
 }
 
-async function drawSweepingLines(device, t) {
-  const sweepY = Math.round(Math.sin(t * 2) * 25 + 32);
+async function drawSweepingLines(device, t, getState, setState, maxDelta) {
+  const sweepYTarget = Math.round(Math.sin(t * 2) * 25 + 32);
+  const sweepYPrev = getPrev(getState, 'sweepYPrev', sweepYTarget);
+  const sweepY = stepTowards(sweepYPrev, sweepYTarget, maxDelta);
+  setPrev(setState, 'sweepYPrev', sweepY);
   for (let x = 0; x < 64; x++) {
     const alpha = Math.round(Math.max(0, 255 - Math.abs(x - 32) * 4));
     await device.drawPixelRgba([x, sweepY], [255, 255, 0, alpha]);
   }
 
-  const sweepX = Math.round(Math.cos(t * 1.5) * 25 + 32);
+  const sweepXTarget = Math.round(Math.cos(t * 1.5) * 25 + 32);
+  const sweepXPrev = getPrev(getState, 'sweepXPrev', sweepXTarget);
+  const sweepX = stepTowards(sweepXPrev, sweepXTarget, maxDelta);
+  setPrev(setState, 'sweepXPrev', sweepX);
   for (let y = 0; y < 64; y++) {
     const alpha = Math.round(Math.max(0, 255 - Math.abs(y - 32) * 4));
     await device.drawPixelRgba([sweepX, y], [0, 255, 255, alpha]);
   }
 
-  const diagProgress = ((t * 20) % 128) - 64;
+  const diagTarget = ((t * 20) % 128) - 64;
+  const diagPrev = getPrev(getState, 'diagOffsetPrev', diagTarget);
+  const diagProgress = stepTowards(diagPrev, diagTarget, maxDelta);
+  setPrev(setState, 'diagOffsetPrev', diagProgress);
   for (let i = -32; i < 32; i++) {
     const x = Math.round(32 + i);
     const y = Math.round(32 + i + diagProgress);
@@ -437,9 +502,15 @@ async function drawSweepingLines(device, t) {
   }
 }
 
-async function drawAnimatedText(device, t) {
-  const textX = Math.round(Math.sin(t * 0.8) * 15 + 32);
-  const textY = Math.round(Math.cos(t * 0.6) * 10 + 20);
+async function drawAnimatedText(device, t, getState, setState, maxDelta) {
+  const textXTarget = Math.round(Math.sin(t * 0.8) * 15 + 32);
+  const textYTarget = Math.round(Math.cos(t * 0.6) * 10 + 20);
+  const textXPrev = getPrev(getState, 'textXPrev', textXTarget);
+  const textYPrev = getPrev(getState, 'textYPrev', textYTarget);
+  const textX = stepTowards(textXPrev, textXTarget, maxDelta);
+  const textY = stepTowards(textYPrev, textYTarget, maxDelta);
+  setPrev(setState, 'textXPrev', textX);
+  setPrev(setState, 'textYPrev', textY);
   await device.drawTextRgbaAligned(
     'ANIM',
     [textX + 1, textY + 1],
@@ -466,7 +537,10 @@ async function drawAnimatedText(device, t) {
   );
 
   const frameText = `T:${Math.round(t * 10)}`;
-  const scrollX = 64 - ((t * 30) % (64 + 40));
+  const scrollTarget = 64 - ((t * 30) % (64 + 40));
+  const scrollPrev = getPrev(getState, 'scrollXPrev', scrollTarget);
+  const scrollX = stepTowards(scrollPrev, scrollTarget, maxDelta);
+  setPrev(setState, 'scrollXPrev', scrollX);
   const safeScrollX = Math.max(-20, Math.min(64, Math.round(scrollX)));
   await device.drawTextRgbaAligned(
     frameText,
@@ -476,18 +550,26 @@ async function drawAnimatedText(device, t) {
   );
 }
 
-async function drawParticleSystem(device, t) {
+async function drawParticleSystem(device, t, getState, setState, maxDelta) {
   const numParticles = 8;
   for (let i = 0; i < numParticles; i++) {
     const pt = t + (i * Math.PI) / 4;
-    const x = Math.max(
+    const xTarget = Math.max(
       2,
       Math.min(62, Math.round(Math.sin(pt * 1.5) * 25 + 32)),
     );
-    const y = Math.max(
+    const yTarget = Math.max(
       2,
       Math.min(62, Math.round(Math.cos(pt * 1.2) * 20 + 32)),
     );
+    const pxKey = `p${i}XPrev`;
+    const pyKey = `p${i}YPrev`;
+    const xPrev = getPrev(getState, pxKey, xTarget);
+    const yPrev = getPrev(getState, pyKey, yTarget);
+    const x = stepTowards(xPrev, xTarget, maxDelta);
+    const y = stepTowards(yPrev, yTarget, maxDelta);
+    setPrev(setState, pxKey, x);
+    setPrev(setState, pyKey, y);
     for (let trail = 0; trail < 3; trail++) {
       const tx = Math.max(
         0,
