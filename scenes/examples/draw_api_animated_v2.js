@@ -322,7 +322,7 @@ async function cleanup(context) {
 
 async function render(context) {
   if (!validateSceneContext(context, SCENE_NAME)) return;
-  const { device, payload, getState, setState } = context;
+  const { device, payload, getState, setState, loopDriven } = context;
   try {
     // Derive configuration
     const interval = payload?.interval ?? null; // null => adaptive
@@ -338,7 +338,10 @@ async function render(context) {
       logger.ok(
         `🎬 [ANIM V2] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} animation${frames ? ` for ${frames} frames` : ''}`,
       );
-      await scheduleNextFrame(context, config, 0);
+      // Under central scheduler, we do not self-schedule
+      if (!loopDriven) {
+        await scheduleNextFrame(context, config, 0);
+      }
     }
   } catch (error) {
     logger.error(`❌ [ANIM V2] Render error: ${error.message}`);

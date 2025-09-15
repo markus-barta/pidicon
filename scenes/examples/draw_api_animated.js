@@ -58,7 +58,7 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state, getState, setState, publishOk } = ctx;
+  const { device, state, getState, setState, publishOk, loopDriven } = ctx;
 
   // If explicitly stopped via state (e.g., during scene switch), abort render quickly
   if (getState('isRunning') === false) {
@@ -138,8 +138,12 @@ async function render(ctx) {
     return; // End this animation cycle
   }
 
-  // Schedule next frame with adaptive timing
-  if (!getState('animationScheduled') && getState('isRunning') !== false) {
+  // Schedule next frame with adaptive timing (disabled if loopDriven is true)
+  if (
+    !loopDriven &&
+    !getState('animationScheduled') &&
+    getState('isRunning') !== false
+  ) {
     setState('animationScheduled', true); // Set flag immediately to prevent race conditions
 
     // Calculate adaptive delay: frame duration + small offset, but respect max FPS
