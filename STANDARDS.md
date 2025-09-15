@@ -129,6 +129,15 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 - [ ] **Standards & Linters**: Does it follow all project standards? Have you
       run the linters and fixed all issues?
 
+### **Backlog Hygiene**
+
+- **Single Source of Truth**: The backlog in `docs/BACKLOG.md` is authoritative
+  and must be kept up to date at all times.
+- **Structure**: Maintain the summary table (ID, TODO, State, Test Name, Last
+  Test Result, Last Test Run) and detailed sections per ID.
+- **Traceability**: Update the backlog when tasks start, when tests are run, and
+  when results are known.
+
 #### **Code Review**
 
 - [ ] Does the code solve the problem effectively?
