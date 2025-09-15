@@ -69,7 +69,8 @@ async function render(ctx) {
   const duration = state.get('duration') || ANIMATION_CONFIG.DEFAULT_DURATION;
   const startTime = getState('startTime') || Date.now();
   // Handle animation continuation messages
-  const isContinuation = Boolean(state.get('_isAnimationFrame'));
+  const isContinuation =
+    !ctx.loopDriven && Boolean(state.get('_isAnimationFrame'));
   let frameCount = getState('frameCount') || 0;
 
   // For continuation messages, use the frameCount from the payload
