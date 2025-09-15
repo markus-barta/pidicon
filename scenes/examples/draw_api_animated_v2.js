@@ -610,4 +610,7 @@ async function drawFinalOverlay(device, t) {
   await device.fillRectangleRgba([61, 61], [3, 3], [255, 255, 255, 100]);
 }
 
-module.exports = { name: SCENE_NAME, render, init, cleanup };
+// Opt-in to central loop
+const wantsLoop = true;
+
+module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };

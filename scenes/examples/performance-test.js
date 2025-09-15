@@ -657,4 +657,5 @@ module.exports = {
   init,
   cleanup,
   render,
+  wantsLoop: true,
 };
