@@ -174,6 +174,9 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
     pushes: metrics.pushes,
     skipped: metrics.skipped,
     errors: metrics.errors,
+    version: versionInfo.version,
+    buildNumber: versionInfo.buildNumber,
+    gitCommit: versionInfo.gitCommit,
     ts: Date.now(),
   };
 
@@ -185,6 +188,9 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
     pushes: metrics.pushes,
     skipped: metrics.skipped,
     errors: metrics.errors,
+    version: versionInfo.version,
+    buildNumber: versionInfo.buildNumber,
+    gitCommit: versionInfo.gitCommit,
   });
 
   // Publish to MQTT
@@ -368,7 +374,13 @@ async function handleStateUpdate(deviceIp, action, payload) {
           const st = sceneManager.getDeviceSceneState(deviceIp);
           client.publish(
             `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-            JSON.stringify({ ...st, ts: Date.now() }),
+            JSON.stringify({
+              ...st,
+              version: versionInfo.version,
+              buildNumber: versionInfo.buildNumber,
+              gitCommit: versionInfo.gitCommit,
+              ts: Date.now(),
+            }),
           );
         } catch (e) {
           logger.warn('Failed to publish device scene state', {
@@ -384,7 +396,13 @@ async function handleStateUpdate(deviceIp, action, payload) {
           const st = sceneManager.getDeviceSceneState(deviceIp);
           client.publish(
             `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-            JSON.stringify({ ...st, ts: Date.now() }),
+            JSON.stringify({
+              ...st,
+              version: versionInfo.version,
+              buildNumber: versionInfo.buildNumber,
+              gitCommit: versionInfo.gitCommit,
+              ts: Date.now(),
+            }),
           );
         } catch (e) {
           logger.warn('Failed to publish device scene state', {
