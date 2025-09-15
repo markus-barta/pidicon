@@ -343,6 +343,11 @@ async function render(context) {
         await scheduleNextFrame(context, config, 0);
       }
     }
+
+    // Loop-driven: render a frame directly each tick
+    if (loopDriven && getState('isRunning')) {
+      await renderFrame(context, getState('config') || config);
+    }
   } catch (error) {
     logger.error(`❌ [ANIM V2] Render error: ${error.message}`);
   }

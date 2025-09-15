@@ -643,6 +643,11 @@ async function render(context) {
         logger.ok(`[PERF V3] scheduled first frame`);
       }
     }
+
+    // Loop-driven: render a frame directly each tick
+    if (loopDriven && getState('isRunning')) {
+      await renderFrame(context, getState('config') || config);
+    }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
   }

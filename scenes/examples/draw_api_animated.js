@@ -223,6 +223,9 @@ async function render(ctx) {
   }
 }
 
+// If central scheduler is active (loopDriven), it will invoke render repeatedly.
+// This legacy scene avoids self-scheduling when loopDriven is true.
+
 async function drawAnimatedBackground(device, time, progress, frameCount) {
   // Animated gradient background
   // NOTE: This uses 4096 individual drawPixelRgba calls (64x64) which is inefficient
