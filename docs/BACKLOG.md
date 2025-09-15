@@ -11,7 +11,7 @@ of truth for upcoming work and its validation status.
 | ID       | TODO                                                                   | State       | Test Name              | Last Test Result | Last Test Run |
 | -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ---------------- | ------------- |
 | SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | -                | -             |
-| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | -                | -             |
+| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (mock)      | now           |
 | GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | pass (mock)      | now           |
 | REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | planned     | TEST-REF-scenes-pure   | -                | -             |
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | planned     | TEST-MDEV-dual-device  | -                | -             |
