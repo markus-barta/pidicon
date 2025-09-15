@@ -497,4 +497,4 @@ async function drawFinalOverlay(device, time) {
   await device.fillRectangleRgba([61, 61], [3, 3], [255, 255, 255, 100]); // Bottom-right
 }
 
-module.exports = { name, render, init, cleanup };
+module.exports = { name, render, init, cleanup, wantsLoop: true };
