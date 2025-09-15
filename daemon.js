@@ -368,6 +368,29 @@ async function handleStateUpdate(deviceIp, action, payload) {
       let success;
       if (isSceneChange) {
         logger.info(`Switching to new scene: ${sceneName}`);
+        // Publish 'switching' state with target scene and next generationId
+        try {
+          const prev = sceneManager.getDeviceSceneState(deviceIp);
+          const genNext = ((prev.generationId || 0) + 1) | 0;
+          client.publish(
+            `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+            JSON.stringify({
+              currentScene: prev.currentScene,
+              targetScene: sceneName,
+              status: 'switching',
+              generationId: genNext,
+              version: versionInfo.version,
+              buildNumber: versionInfo.buildNumber,
+              gitCommit: versionInfo.gitCommit,
+              ts: Date.now(),
+            }),
+          );
+        } catch (e) {
+          logger.warn('Failed to publish switching state', {
+            deviceIp,
+            error: e?.message,
+          });
+        }
         success = await sceneManager.switchScene(sceneName, ctx);
         // Mirror device scene state to MQTT
         try {
