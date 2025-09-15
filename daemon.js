@@ -363,7 +363,10 @@ async function handleStateUpdate(deviceIp, action, payload) {
         logger.info(`Updating parameters for scene: ${sceneName}`);
         success = await sceneManager.updateSceneParameters(sceneName, ctx);
       } else {
-        logger.info(`Re-rendering same scene: ${sceneName}`);
+        // With central scheduler, we rely on the device loop; no immediate render here
+        logger.info(
+          `No-op: same scene with same parameters (central scheduler active)`,
+        );
         success = true;
       }
 
@@ -371,14 +374,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
         throw new Error(`Failed to handle scene update: ${sceneName}`);
       }
 
-      if (isParameterChange || (!isSceneChange && !isParameterChange)) {
-        logger.info(`Rendering scene with updated parameters: ${sceneName}`);
-        const renderContext = {
-          ...ctx,
-          payload: payload,
-        };
-        await sceneManager.renderActiveScene(renderContext);
-      }
+      // Rendering is handled by the central device loop; nothing to do here
 
       publishMetrics(deviceIp);
     } catch (err) {

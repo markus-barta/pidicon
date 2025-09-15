@@ -616,7 +616,7 @@ async function handleTestCompletion(context, metrics, chartRenderer) {
 }
 
 async function render(context) {
-  const { device, payload, getState, setState } = context;
+  const { device, payload, getState, setState, loopDriven } = context;
 
   try {
     // Get configuration from payload
@@ -638,8 +638,10 @@ async function render(context) {
       logger.ok(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
-      await scheduleNextFrame(context, config, 0);
-      logger.ok(`[PERF V3] scheduled first frame`);
+      if (!loopDriven) {
+        await scheduleNextFrame(context, config, 0);
+        logger.ok(`[PERF V3] scheduled first frame`);
+      }
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);
