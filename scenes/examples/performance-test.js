@@ -382,6 +382,11 @@ function generateDisplayContent(config, frametime, performanceState) {
 async function scheduleNextFrame(context, config, timeTaken = 0) {
   const { getState, setState } = context;
 
+  // In loop-driven mode (central scheduler), do not self-schedule
+  if (context.loopDriven) {
+    return;
+  }
+
   // Prevent multiple schedules
   if (getState('loopScheduled')) {
     logger.debug(`[PERF V3] scheduleNextFrame: skip, already scheduled`);
