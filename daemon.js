@@ -155,6 +155,10 @@ const client = mqtt.connect(brokerUrl, {
   password: mqttPass,
 });
 
+// Configurable base for scene state topic mirror
+const SCENE_STATE_TOPIC_BASE =
+  process.env.SCENE_STATE_TOPIC_BASE || '/home/pixoo';
+
 function publishMetrics(deviceIp) {
   const dev = devices.get(deviceIp);
   if (!dev) return;
@@ -359,9 +363,35 @@ async function handleStateUpdate(deviceIp, action, payload) {
       if (isSceneChange) {
         logger.info(`Switching to new scene: ${sceneName}`);
         success = await sceneManager.switchScene(sceneName, ctx);
+        // Mirror device scene state to MQTT
+        try {
+          const st = sceneManager.getDeviceSceneState(deviceIp);
+          client.publish(
+            `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+            JSON.stringify({ ...st, ts: Date.now() }),
+          );
+        } catch (e) {
+          logger.warn('Failed to publish device scene state', {
+            deviceIp,
+            error: e?.message,
+          });
+        }
       } else if (isParameterChange) {
         logger.info(`Updating parameters for scene: ${sceneName}`);
         success = await sceneManager.updateSceneParameters(sceneName, ctx);
+        // Publish state on parameter updates as well (for observability)
+        try {
+          const st = sceneManager.getDeviceSceneState(deviceIp);
+          client.publish(
+            `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+            JSON.stringify({ ...st, ts: Date.now() }),
+          );
+        } catch (e) {
+          logger.warn('Failed to publish device scene state', {
+            deviceIp,
+            error: e?.message,
+          });
+        }
       } else {
         // With central scheduler, we rely on the device loop; no immediate render here
         logger.info(
