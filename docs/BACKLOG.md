@@ -15,7 +15,7 @@ of truth for upcoming work and its validation status.
 | GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | pass (mock)              | 2025-09-15T17:11:20Z |
 | REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | in_progress | TEST-REF-scenes-pure   | smoke pass (mock)        | 2025-09-17T18:20:01Z |
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (mock)              | 2025-09-17T17:26:55Z |
-| CFG-006  | Configurable topic base and state keys                                 | planned     | TEST-CFG-topic-base    | -                        | -                    |
+| CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6) | 2025-09-17T18:26:49Z |
 | OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30) | 2025-09-17T18:20:01Z |
 | TST-008  | Automation: mock-driver integration tests + manual scripts             | planned     | TEST-TST-harness       | -                        | -                    |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                        | -                    |
