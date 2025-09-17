@@ -119,18 +119,16 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ### **Live Server Testing Protocol**
 
-- **Wait for Deployment**: After pushing changes, wait for the server to update
-  via Watchtower and the daemon to restart.
-- **Verify Build on Device**: Before running any live tests, subscribe to the
-  scene state topic (default: `/home/pixoo/<ip>/scene/state`, configurable via
-  `SCENE_STATE_TOPIC_BASE`) and verify that `buildNumber` and `gitCommit`
-  reported by the server match the latest local build/commit.
-- **Polling Window**: Poll for the updated `buildNumber` for up to 5 minutes
-  (e.g., check every 15–30 seconds). Do not proceed with tests until the new
-  build is confirmed on the device.
+- **Deploy & Confirm**: After pushing changes, ask the user to confirm when
+  Watchtower has deployed the new build and the daemon has restarted.
+- **Single Check**: Once the user confirms, perform a single check of the scene
+  state topic (default: `/home/pixoo/<ip>/scene/state`, configurable via
+  `SCENE_STATE_TOPIC_BASE`) to verify `buildNumber` and `gitCommit` match the
+  local build/commit. If they do not match, stop and notify the user.
+- **Run Tests**: If the build matches, proceed with live tests.
 - **Traceability**: Record the confirmed `buildNumber`, `gitCommit`, and
-  timestamp in the backlog test table when executing live tests.
-  - Update the relevant row(s) in `docs/BACKLOG.md` with these values.
+  timestamp in the backlog test table when executing live tests. Update the
+  relevant row(s) in `docs/BACKLOG.md` with these values.
 
 ---
 
