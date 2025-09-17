@@ -130,6 +130,7 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
   build is confirmed on the device.
 - **Traceability**: Record the confirmed `buildNumber`, `gitCommit`, and
   timestamp in the backlog test table when executing live tests.
+  - Update the relevant row(s) in `docs/BACKLOG.md` with these values.
 
 ---
 
@@ -151,6 +152,8 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
   Test Result, Last Test Run) and detailed sections per ID.
 - **Traceability**: Update the backlog when tasks start, when tests are run, and
   when results are known.
+- **Build Reference Required**: Every test entry MUST include the exact
+  `buildNumber` (and preferably `gitCommit`) that the test ran against.
 
 #### **Code Review**
 
