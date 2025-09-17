@@ -117,6 +117,20 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
   testing on the real device is necessary, always obtain permission from the user
   before proceeding.
 
+### **Live Server Testing Protocol**
+
+- **Wait for Deployment**: After pushing changes, wait for the server to update
+  via Watchtower and the daemon to restart.
+- **Verify Build on Device**: Before running any live tests, subscribe to the
+  scene state topic (default: `/home/pixoo/<ip>/scene/state`, configurable via
+  `SCENE_STATE_TOPIC_BASE`) and verify that `buildNumber` and `gitCommit`
+  reported by the server match the latest local build/commit.
+- **Polling Window**: Poll for the updated `buildNumber` for up to 5 minutes
+  (e.g., check every 15–30 seconds). Do not proceed with tests until the new
+  build is confirmed on the device.
+- **Traceability**: Record the confirmed `buildNumber`, `gitCommit`, and
+  timestamp in the backlog test table when executing live tests.
+
 ---
 
 ## ✅ Developer Checklists {#developer-checklists}
