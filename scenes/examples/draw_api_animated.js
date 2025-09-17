@@ -58,7 +58,7 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state, getState, setState, publishOk, loopDriven } = ctx;
+  const { device, state, getState, setState, publishOk } = ctx;
 
   // If explicitly stopped via state (e.g., during scene switch), abort render quickly
   if (getState('isRunning') === false) {
@@ -117,14 +117,11 @@ async function render(ctx) {
   await drawParticleSystem(device, time, progress);
   await drawFinalOverlay(device, time, progress);
 
-  // Measure frame rendering time for adaptive timing
-  const frameStartTime = Date.now();
-
   // Push frame to device
   await device.push(name, publishOk);
 
   // Calculate actual frame rendering time
-  const frameDuration = Date.now() - frameStartTime;
+  /* measure not used in loop-driven refactor */
 
   // Animation control
   const nextFrame = frameCount + 1;
@@ -139,89 +136,7 @@ async function render(ctx) {
     return; // End this animation cycle
   }
 
-  // Schedule next frame with adaptive timing (disabled if loopDriven is true)
-  if (
-    !loopDriven &&
-    !getState('animationScheduled') &&
-    getState('isRunning') !== false
-  ) {
-    setState('animationScheduled', true); // Set flag immediately to prevent race conditions
-
-    // Calculate adaptive delay: frame duration + small offset, but respect max FPS
-    const adaptiveDelay = Math.max(
-      frameDuration + ANIMATION_CONFIG.ADAPTIVE_OFFSET_MS,
-      ANIMATION_CONFIG.MIN_FRAME_INTERVAL,
-    );
-
-    logger.debug(
-      `🎬 [ANIMATION] Frame ${frameCount} took ${frameDuration}ms, scheduling next in ${adaptiveDelay}ms`,
-    );
-
-    const timer = setTimeout(async () => {
-      // Abort if scene has been stopped/cleaned up to avoid re-switching scenes
-      try {
-        if (
-          getState('isRunning') === false ||
-          getState('animationScheduled') === false
-        ) {
-          setState('animationScheduled', false);
-          return;
-        }
-      } catch {
-        // If state access fails, be safe and do nothing
-        return;
-      }
-      try {
-        const mqtt = require('mqtt');
-        const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
-
-        const client = mqtt.connect(brokerUrl, {
-          username: process.env.MOSQITTO_USER_MS24,
-          password: process.env.MOSQITTO_PASS_MS24,
-          connectTimeout: 5000,
-          reconnectPeriod: 0,
-        });
-
-        client.on('connect', () => {
-          try {
-            const payload = JSON.stringify({
-              scene: name,
-              frameCount: nextFrame,
-              _isAnimationFrame: true,
-            });
-
-            const targetHost = process.env.PIXOO_DEVICES
-              ? process.env.PIXOO_DEVICES.split(';')[0].trim()
-              : '192.168.1.159';
-
-            client.publish(`pixoo/${targetHost}/state/upd`, payload, {
-              qos: 1,
-            });
-            client.end();
-          } catch (publishError) {
-            logger.error(`❌ [ANIMATION] MQTT publish error:`, publishError);
-            client.end();
-          }
-        });
-
-        client.on('error', (error) => {
-          logger.error(`❌ [ANIMATION] MQTT connection error:`, error.message);
-          setState('animationScheduled', false); // Reset flag on error
-          client.end();
-        });
-
-        client.on('close', () => {
-          setState('animationScheduled', false); // Reset flag when connection closes
-        });
-      } catch (error) {
-        logger.error(`❌ [ANIMATION] Setup error:`, error);
-        setState('animationScheduled', false); // Reset flag on error
-      }
-    }, adaptiveDelay); // Dynamic timing based on actual frame performance
-
-    // Store timer for cleanup
-    setState('animationTimer', timer);
-  }
+  // No self-scheduling: central scheduler (loopDriven) will invoke render repeatedly
 }
 
 // If central scheduler is active (loopDriven), it will invoke render repeatedly.
