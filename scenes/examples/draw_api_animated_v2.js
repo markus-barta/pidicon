@@ -1,9 +1,9 @@
 /**
- * @fileoverview Draw API Animated V2
+ * @fileoverview Draw API Animated
  * @description Smoothly animated scene using the performance test's internal scheduler
  * combined with the original animated demo visuals. Adds an FPS/frametime overlay.
  * @mqtt
- * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated_v2"}'
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
  * @version 2.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
@@ -13,7 +13,7 @@
 
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
-const SCENE_NAME = 'draw_api_animated_v2';
+const SCENE_NAME = 'draw_api_animated';
 
 // Visual constants and animation parameters
 const ANIMATION_CONFIG = Object.freeze({
