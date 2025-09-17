@@ -8,18 +8,18 @@ of truth for upcoming work and its validation status.
 
 ## Summary Table
 
-| ID       | TODO                                                                   | State       | Test Name              | Last Test Result | Last Test Run        |
-| -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ---------------- | -------------------- |
-| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real)      | 2025-09-15T17:41:12Z |
-| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (mock)      | 2025-09-15T17:11:20Z |
-| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | pass (mock)      | 2025-09-15T17:11:20Z |
-| REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | planned     | TEST-REF-scenes-pure   | -                | -                    |
-| MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (mock)      | 2025-09-17T17:26:55Z |
-| CFG-006  | Configurable topic base and state keys                                 | planned     | TEST-CFG-topic-base    | -                | -                    |
-| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real)      | 2025-09-15T17:41:12Z |
-| TST-008  | Automation: mock-driver integration tests + manual scripts             | planned     | TEST-TST-harness       | -                | -                    |
-| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                | -                    |
-| DOC-010  | Documentation: developer guide updates and backlog hygiene             | planned     | TEST-DOC-checklist     | -                | -                    |
+| ID       | TODO                                                                   | State       | Test Name              | Last Test Result         | Last Test Run        |
+| -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ------------------------ | -------------------- |
+| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real)              | 2025-09-15T17:41:12Z |
+| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (mock)              | 2025-09-15T17:11:20Z |
+| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | pass (mock)              | 2025-09-15T17:11:20Z |
+| REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | in_progress | TEST-REF-scenes-pure   | smoke pass (mock)        | 2025-09-17T18:20:01Z |
+| MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (mock)              | 2025-09-17T17:26:55Z |
+| CFG-006  | Configurable topic base and state keys                                 | planned     | TEST-CFG-topic-base    | -                        | -                    |
+| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30) | 2025-09-17T18:20:01Z |
+| TST-008  | Automation: mock-driver integration tests + manual scripts             | planned     | TEST-TST-harness       | -                        | -                    |
+| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                        | -                    |
+| DOC-010  | Documentation: developer guide updates and backlog hygiene             | planned     | TEST-DOC-checklist     | -                        | -                    |
 
 ---
 
