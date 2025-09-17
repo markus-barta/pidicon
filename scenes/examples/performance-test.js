@@ -379,43 +379,7 @@ function generateDisplayContent(config, frametime, performanceState) {
  * @param {Object} config - Test configuration
  * @param {number} timeTaken - Time taken for the previous frame (for fixed mode adjustment)
  */
-async function scheduleNextFrame(context, config, timeTaken = 0) {
-  const { getState, setState } = context;
-
-  // In loop-driven mode (central scheduler), do not self-schedule
-  if (context.loopDriven) {
-    return;
-  }
-
-  // Prevent multiple schedules
-  if (getState('loopScheduled')) {
-    logger.debug(`[PERF V3] scheduleNextFrame: skip, already scheduled`);
-    return;
-  }
-
-  let delay = 0;
-  if (config.interval !== null) {
-    delay = Math.max(0, config.interval - timeTaken);
-  }
-
-  logger.ok(`[PERF V3] scheduling next frame in ${delay}ms`);
-  setState('loopScheduled', true);
-
-  const timerId = setTimeout(async () => {
-    // Allow renderFrame to schedule the next frame immediately
-    setState('loopScheduled', false);
-    logger.ok(`[PERF V3] timer fired -> renderFrame()`);
-    try {
-      await renderFrame(context, config);
-    } catch (error) {
-      logger.error(`❌ [PERF V3] Frame error: ${error.message}`);
-    } finally {
-      setState('loopTimer', null);
-    }
-  }, delay);
-
-  setState('loopTimer', timerId);
-}
+// Removed internal scheduling to honor pure-render contract
 
 /**
  * Internal frame rendering function with accurate timing
@@ -556,11 +520,15 @@ async function renderFrame(context, config) {
     `[PERF V3] shouldContinue=${shouldContinue} frames=${framesRendered} chartX=${getState('chartX')}`,
   );
 
-  if (shouldContinue) {
-    await scheduleNextFrame(context, config, timeTaken);
-  } else {
+  if (!shouldContinue) {
     await handleTestCompletion(context, metrics, chartRenderer);
   }
+
+  // Return next delay for central scheduler
+  if (config.interval === null) {
+    return 0;
+  }
+  return Math.max(0, (config.interval || 0) - timeTaken);
 }
 
 async function init() {
@@ -643,15 +611,12 @@ async function render(context) {
       logger.ok(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
       );
-      if (!loopDriven) {
-        await scheduleNextFrame(context, config, 0);
-        logger.ok(`[PERF V3] scheduled first frame`);
-      }
+      // No self-scheduling in pure-render contract
     }
 
     // Loop-driven: render a frame directly each tick
     if (loopDriven && getState('isRunning')) {
-      await renderFrame(context, getState('config') || config);
+      return await renderFrame(context, getState('config') || config);
     }
   } catch (error) {
     logger.error(`❌ [PERF V3] Render error: ${error.message}`);

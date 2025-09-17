@@ -175,30 +175,6 @@ function setPrev(setState, key, value) {
   setState(key, value);
 }
 
-// --- Scheduler (inspired by performance-test.js) ---
-async function scheduleNextFrame(context, config, timeTaken = 0) {
-  const { getState, setState } = context;
-  if (getState('loopScheduled')) {
-    return;
-  }
-  let delay = 0;
-  if (config.interval !== null) {
-    delay = Math.max(0, config.interval - timeTaken);
-  }
-  setState('loopScheduled', true);
-  const timerId = setTimeout(async () => {
-    setState('loopScheduled', false);
-    try {
-      await renderFrame(context, config);
-    } catch (error) {
-      logger.error(`❌ [ANIM V2] Frame error: ${error.message}`);
-    } finally {
-      setState('loopTimer', null);
-    }
-  }, delay);
-  setState('loopTimer', timerId);
-}
-
 // --- Frame renderer ---
 async function renderFrame(context, config) {
   const { device, publishOk, getState, setState } = context;
@@ -281,9 +257,7 @@ async function renderFrame(context, config) {
   const framesCap = config.frames;
   const framesRendered = getState('framesRendered') || 0;
   const shouldContinue = !framesCap || framesRendered < framesCap;
-  if (shouldContinue) {
-    await scheduleNextFrame(context, config, timeTaken);
-  } else {
+  if (!shouldContinue) {
     // Show completion overlay once
     await drawTextRgbaAlignedWithBg(
       device,
@@ -297,6 +271,13 @@ async function renderFrame(context, config) {
     await device.push(SCENE_NAME, publishOk);
     setState('isRunning', false);
   }
+
+  // Compute next delay for central scheduler
+  if (config.interval === null) {
+    // Adaptive mode: schedule ASAP
+    return 0;
+  }
+  return Math.max(0, (config.interval || 0) - timeTaken);
 }
 
 // --- Scene lifecycle ---
@@ -306,13 +287,7 @@ async function init() {
 
 async function cleanup(context) {
   try {
-    const { getState, setState } = context;
-    const loopTimer = getState?.('loopTimer');
-    if (loopTimer) {
-      clearTimeout(loopTimer);
-      setState('loopTimer', null);
-    }
-    setState?.('loopScheduled', false);
+    const { setState } = context;
     setState?.('isRunning', false);
   } catch (e) {
     logger.warn('⚠️ [ANIM V2] Cleanup issue', { message: e?.message });
@@ -339,14 +314,12 @@ async function render(context) {
         `🎬 [ANIM V2] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} animation${frames ? ` for ${frames} frames` : ''}`,
       );
       // Under central scheduler, we do not self-schedule
-      if (!loopDriven) {
-        await scheduleNextFrame(context, config, 0);
-      }
+      // No self-scheduling in pure-render contract
     }
 
     // Loop-driven: render a frame directly each tick
     if (loopDriven && getState('isRunning')) {
-      await renderFrame(context, getState('config') || config);
+      return await renderFrame(context, getState('config') || config);
     }
   } catch (error) {
     logger.error(`❌ [ANIM V2] Render error: ${error.message}`);
