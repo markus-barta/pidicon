@@ -8,6 +8,7 @@ const fs = require('fs');
 const mqtt = require('mqtt');
 const path = require('path');
 
+const { SCENE_STATE_TOPIC_BASE, SCENE_STATE_KEYS } = require('./lib/config');
 const DeploymentTracker = require('./lib/deployment-tracker');
 const {
   getContext,
@@ -155,9 +156,7 @@ const client = mqtt.connect(brokerUrl, {
   password: mqttPass,
 });
 
-// Configurable base for scene state topic mirror
-const SCENE_STATE_TOPIC_BASE =
-  process.env.SCENE_STATE_TOPIC_BASE || '/home/pixoo';
+// SCENE_STATE_TOPIC_BASE is provided by lib/config.js
 
 function publishMetrics(deviceIp) {
   const dev = devices.get(deviceIp);
@@ -375,14 +374,14 @@ async function handleStateUpdate(deviceIp, action, payload) {
           client.publish(
             `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
             JSON.stringify({
-              currentScene: prev.currentScene,
-              targetScene: sceneName,
-              status: 'switching',
-              generationId: genNext,
-              version: versionInfo.version,
-              buildNumber: versionInfo.buildNumber,
-              gitCommit: versionInfo.gitCommit,
-              ts: Date.now(),
+              [SCENE_STATE_KEYS.currentScene]: prev.currentScene,
+              [SCENE_STATE_KEYS.targetScene]: sceneName,
+              [SCENE_STATE_KEYS.status]: 'switching',
+              [SCENE_STATE_KEYS.generationId]: genNext,
+              [SCENE_STATE_KEYS.version]: versionInfo.version,
+              [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+              [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+              [SCENE_STATE_KEYS.ts]: Date.now(),
             }),
           );
         } catch (e) {
@@ -398,11 +397,13 @@ async function handleStateUpdate(deviceIp, action, payload) {
           client.publish(
             `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
             JSON.stringify({
-              ...st,
-              version: versionInfo.version,
-              buildNumber: versionInfo.buildNumber,
-              gitCommit: versionInfo.gitCommit,
-              ts: Date.now(),
+              [SCENE_STATE_KEYS.currentScene]: st.currentScene,
+              [SCENE_STATE_KEYS.generationId]: st.generationId,
+              [SCENE_STATE_KEYS.status]: st.status,
+              [SCENE_STATE_KEYS.version]: versionInfo.version,
+              [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+              [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+              [SCENE_STATE_KEYS.ts]: Date.now(),
             }),
           );
         } catch (e) {
@@ -420,11 +421,13 @@ async function handleStateUpdate(deviceIp, action, payload) {
           client.publish(
             `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
             JSON.stringify({
-              ...st,
-              version: versionInfo.version,
-              buildNumber: versionInfo.buildNumber,
-              gitCommit: versionInfo.gitCommit,
-              ts: Date.now(),
+              [SCENE_STATE_KEYS.currentScene]: st.currentScene,
+              [SCENE_STATE_KEYS.generationId]: st.generationId,
+              [SCENE_STATE_KEYS.status]: st.status,
+              [SCENE_STATE_KEYS.version]: versionInfo.version,
+              [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+              [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+              [SCENE_STATE_KEYS.ts]: Date.now(),
             }),
           );
         } catch (e) {
