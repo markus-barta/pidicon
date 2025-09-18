@@ -10,8 +10,8 @@
     "format": "prettier -w .",
     "format:check": "prettier -c .",
     "lint:errors": "eslint . --quiet -f codeframe || true",
-    "md:lint": "markdownlint \"**/*.md\" --ignore node_modules",
-    "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules",
+    "md:lint": "markdownlint \"**/*.md\" --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc",
+    "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc",
     "test": "node --test",
     "coverage": "c8 npm test",
     "hooks:setup": "husky init"
