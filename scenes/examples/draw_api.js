@@ -26,7 +26,7 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state } = ctx;
+  const { device, state, publishOk } = ctx;
   const testType = state.test || 'all'; // "all", "pixels", "rectangles", "lines", "text", "gradients"
 
   await device.clear();
@@ -55,7 +55,7 @@ async function render(ctx) {
   }
 
   // Push the rendered frame to the device
-  await device.push(name);
+  await device.push(name, publishOk);
 }
 
 async function testPixels(device) {
