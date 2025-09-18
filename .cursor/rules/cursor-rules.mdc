@@ -1,0 +1,7 @@
+---
+description: timeout
+globs:
+  - "*"
+alwaysApply: true
+timeoutMinutes: 30
+---
