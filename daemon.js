@@ -324,6 +324,27 @@ async function handleStateUpdate(deviceIp, action, payload) {
       return;
     }
 
+    // Gate legacy animation continuation frames: central scheduler does not use them
+    if (payload && payload._isAnimationFrame === true) {
+      try {
+        const st = sceneManager.getDeviceSceneState(deviceIp);
+        const frameScene = payload.scene;
+        const frameGen = payload.generationId;
+        if (frameScene !== st.currentScene || frameGen !== st.generationId) {
+          logger.info(
+            `⚑ [GATE] Drop stale animation frame for ${frameScene} (gen ${frameGen}) on ${deviceIp}; active ${st.currentScene} (gen ${st.generationId})`,
+          );
+        } else {
+          logger.info(
+            `⚑ [GATE] Drop animation frame (loop-driven) for ${frameScene} (gen ${frameGen}) on ${deviceIp}`,
+          );
+        }
+      } catch {
+        logger.info(`[GATE] Drop animation frame (no state) on ${deviceIp}`);
+      }
+      return; // Always ignore _isAnimationFrame inputs
+    }
+
     const ts = new Date().toLocaleString('de-AT');
     logger.info(`State update for ${deviceIp}`, {
       scene: sceneName,
