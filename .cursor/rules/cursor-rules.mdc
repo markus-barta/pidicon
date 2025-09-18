@@ -1,7 +1,93 @@
----
-description: timeout
+# Cursor Rules for Pixoo Daemon Development
+
+These rules are consumed by Cursor to enforce quality and safety. The content
+below is specified as YAML blocks for clarity and to satisfy markdown linting.
+
+## ⏳ Universal timeout
+
+```yaml
+description: Timeout after 30 minutes
 globs:
   - "*"
 alwaysApply: true
 timeoutMinutes: 30
----
+reference: "./docs/standards.md"
+```
+
+## 🧹 Formatting & Linting
+
+```yaml
+description: Enforce linting and formatting rules for JS + Markdown
+globs:
+  - "**/*.js"
+  - "**/*.md"
+alwaysApply: true
+lint: true
+maxLineLength: 120
+preferredLineLength: 80
+requireCodeBlockLanguage: true
+reference: "./docs/standards.md#formatting--commits"
+```
+
+## 📝 Git Commit Messages
+
+```yaml
+description: Enforce Conventional Commit format
+globs:
+  - "COMMIT_MSG"
+alwaysApply: true
+commitConvention: conventional
+reference: "./docs/standards.md#commit-guidelines"
+```
+
+## 📗 Require Documentation
+
+```yaml
+description: Require README.md in all critical directories
+globs:
+  - "lib/*"
+  - "scenes/*"
+alwaysApply: true
+requireReadme: true
+reference: "./docs/standards.md#documentation"
+```
+
+## 🧾 Require JSDoc
+
+```yaml
+description: Require JSDoc on all exported functions
+globs:
+  - "lib/**/*.js"
+  - "scenes/**/*.js"
+alwaysApply: true
+requireJsdoc: true
+reference: "./docs/standards.md#code-documentation"
+```
+
+## 🐟 Shell Script Standards (Server)
+
+```yaml
+description: Require POSIX shebang in server scripts
+globs:
+  - "scripts/**/*.sh"
+alwaysApply: true
+requireShebang: "#!/usr/bin/env bash"
+reference: "./docs/standards.md#shell-standards"
+```
+
+## 🐟 Fish Shell Usage (Clients & Servers)
+
+```yaml
+description: Prefer fish shell for interactive usage; fallback to bash after 3 failed AI attempts
+globs:
+  - "terminal:*"
+alwaysApply: true
+preferredShell: fish
+fallbackShell: bash
+maxRetries: 3
+notes: |
+  - AI often generates bash syntax by default; correct manually or convert.
+  - After 3 failed attempts, run command via bash or move logic into a portable script.
+  - For complex logic, prefer writing `script.sh` with `#!/usr/bin/env bash` and call from fish.
+reference: "./docs/standards.md#shell-standards"
+```
