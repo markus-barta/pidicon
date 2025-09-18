@@ -18,8 +18,12 @@ of truth for upcoming work and its validation status.
 | CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6)      | 2025-09-17T18:26:49Z |
 | OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30)      | 2025-09-17T18:20:01Z |
 | TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
-| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                             | -                    |
-| DOC-010  | Documentation: developer guide updates and backlog hygiene             | planned     | TEST-DOC-checklist     | -                             | -                    |
+| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                             | -                    |
+| DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | -                             | -                    |
+| ARC-101  | Architecture audit & alignment with standards                          | planned     | TEST-ARC-audit         | -                             | -                    |
+| CON-102  | Consistency pass: naming, contracts, return values                     | planned     | TEST-CON-contracts     | -                             | -                    |
+| CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | planned     | TEST-CLN-deadcode      | -                             | -                    |
+| REL-104  | Release checklist for public v1.1: final smoke & notes                 | planned     | TEST-REL-smoke         | -                             | -                    |
 
 ---
 
@@ -135,16 +139,78 @@ of truth for upcoming work and its validation status.
 - Test Plan (TEST-SOAK-stability):
   - Scripted switches every 5–15 seconds across multiple scenes; monitor metrics.
 
+State: postponed (defer until after public v1.1 release)
+
 ### DOC-010: Documentation updates
 
-- Summary: Update README(s) and developer docs to explain the scheduler, the
-  state machine, configuration, MQTT topics, and test procedures. Ensure
-  backlog hygiene rules are clear.
+- Summary: Comprehensive documentation overhaul and backlog hygiene.
 - Acceptance Criteria:
-  - Docs explain how to add a new scene under the pure render contract.
-  - Backlog table kept current with test results and timestamps.
+  - README files are updated with a welcoming, informative homepage, listing all
+    current features and functions, and highlighting project capabilities.
+  - Developer documentation clearly explains the scheduler, state machine,
+    configuration, MQTT topics, and test procedures.
+  - Backlog hygiene rules are documented and visible.
+  - Instructions for adding a new scene under the pure render contract are included and easy to follow.
+  - Backlog table is kept current with test results, timestamps, and build information.
 - Test Plan (TEST-DOC-checklist):
-  - Peer-check: can a developer follow docs to add a new scene and validate switching?
+  - Peer review: A developer can follow the documentation to add a new scene,
+    understand the scheduler and state machine, configure the system, and
+    validate scene switching.
+  - Verify that all features and functions are listed in the README.
+  - Confirm that backlog hygiene rules and test result tracking are present and up to date.
+
+---
+
+## Release Block: Public v1.1
+
+### ARC-101: Architecture audit & alignment
+
+- Summary: Perform a comprehensive architecture review to ensure the codebase
+  follows our standards, centralized scheduler model, and clean boundaries.
+- Acceptance Criteria:
+  - Verify single source of truth for per-device state and generation in `scene-manager` and `daemon`.
+  - Confirm all scenes are pure-render, no self-timers/MQTT, and return `nextDelayMs|null`.
+  - Ensure MQTT topic base and keys sourced from `lib/config.js` only.
+  - Validate error handling/logging levels and metadata.
+- Test Plan (TEST-ARC-audit):
+  - Static review checklist; grep scans for forbidden patterns (`setTimeout(` in scenes, direct MQTT in scenes).
+  - Run harness to confirm behavior unchanged.
+
+### CON-102: Consistency pass (naming & contracts)
+
+- Summary: Make naming and contracts consistent across modules.
+- Acceptance Criteria:
+  - Scenes export `name`, `init`, `render`, `cleanup`, and `wantsLoop` consistently.
+  - `render` returns `number` delay or `null` on completion; scheduler interprets correctly.
+  - Consistent logger prefixes and levels.
+  - Remove redundant branches (e.g., legacy `_isAnimationFrame` code paths now gated).
+- Test Plan (TEST-CON-contracts):
+  - Lint pass zero errors; run harness and perf-once tests; verify no behavior change.
+
+### CLN-103: Cleanup (dead code & dev overrides)
+
+- Summary: Remove dead code, disable dev-only overrides, and delete unused branches.
+- Acceptance Criteria:
+  - Remove or guard `DEVICE_TARGETS_OVERRIDE` in `lib/device-adapter.js` for
+    production.
+  - Drop unreachable/unused code paths now superseded by the scheduler (e.g.,
+    legacy animation frame handling in update paths) while keeping behavior.
+  - Ensure no unused files remain; update README references.
+- Test Plan (TEST-CLN-deadcode):
+  - Static analysis (unused code/exports), minimal functional smoke via harness.
+
+### REL-104: Release checklist for public v1.1
+
+- Summary: Finalize public release with traceable tests and notes.
+- Acceptance Criteria:
+  - Run `live_test_perf_once.js`, `live_test_gate.js`, and
+    `live_test_harness.js` against live build; record build/commit in
+    backlog.
+  - Tag release with changelog; confirm README updated.
+  - SOAK-009 explicitly postponed.
+- Test Plan (TEST-REL-smoke):
+  - Execute the three scripts and update this backlog with confirmed
+    build/commit and timestamps.
 
 ---
 
