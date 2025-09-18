@@ -522,6 +522,8 @@ async function renderFrame(context, config) {
 
   if (!shouldContinue) {
     await handleTestCompletion(context, metrics, chartRenderer);
+    // Signal completion to central scheduler: return non-number
+    return null;
   }
 
   // Return next delay for central scheduler

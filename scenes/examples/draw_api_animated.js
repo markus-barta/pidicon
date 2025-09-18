@@ -270,6 +270,8 @@ async function renderFrame(context, config) {
     );
     await device.push(SCENE_NAME, publishOk);
     setState('isRunning', false);
+    // Signal completion to central scheduler: return non-number
+    return null;
   }
 
   // Compute next delay for central scheduler
