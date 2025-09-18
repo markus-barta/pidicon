@@ -324,7 +324,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
       return;
     }
 
-    // Gate legacy animation continuation frames: central scheduler does not use them
+    // Gate legacy animation continuation frames entirely (central scheduler only)
     if (payload && payload._isAnimationFrame === true) {
       try {
         const st = sceneManager.getDeviceSceneState(deviceIp);
@@ -342,7 +342,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
       } catch {
         logger.info(`[GATE] Drop animation frame (no state) on ${deviceIp}`);
       }
-      return; // Always ignore _isAnimationFrame inputs
+      return; // Always ignore animation frame inputs
     }
 
     const ts = new Date().toLocaleString('de-AT');
