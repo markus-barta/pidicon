@@ -17,7 +17,7 @@ of truth for upcoming work and its validation status.
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (mock)              | 2025-09-17T17:26:55Z |
 | CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6) | 2025-09-17T18:26:49Z |
 | OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30) | 2025-09-17T18:20:01Z |
-| TST-008  | Automation: mock-driver integration tests + manual scripts             | planned     | TEST-TST-harness       | -                        | -                    |
+| TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 342/cd80003) | 2025-09-18T14:12:33Z |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                        | -                    |
 | DOC-010  | Documentation: developer guide updates and backlog hygiene             | planned     | TEST-DOC-checklist     | -                        | -                    |
 
