@@ -10,14 +10,14 @@ of truth for upcoming work and its validation status.
 
 | ID       | TODO                                                                   | State       | Test Name              | Last Test Result              | Last Test Run        |
 | -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ----------------------------- | -------------------- |
-| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real, 344/2a69430)      | 2025-09-18T14:34:10Z |
-| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (real, 344/2a69430)      | 2025-09-18T14:34:10Z |
-| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | fail (real, 343/85f2714)      | 2025-09-18T14:24:37Z |
+| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
+| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
+| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | completed   | TEST-GATE-stale-drop   | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
 | REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | in_progress | TEST-REF-scenes-pure   | pass (real, 341/8415058)      | 2025-09-18T13:57:54Z |
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (real+mock, 343/85f2714) | 2025-09-18T14:26:12Z |
 | CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6)      | 2025-09-17T18:26:49Z |
 | OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30)      | 2025-09-17T18:20:01Z |
-| TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 342/cd80003)      | 2025-09-18T14:12:33Z |
+| TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | planned     | TEST-SOAK-stability    | -                             | -                    |
 | DOC-010  | Documentation: developer guide updates and backlog hygiene             | planned     | TEST-DOC-checklist     | -                             | -                    |
 
