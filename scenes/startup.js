@@ -253,4 +253,5 @@ async function cleanup() {
   logger.info(`[STARTUP] Scene cleaned up`);
 }
 
-module.exports = { name, render, init, cleanup };
+const wantsLoop = false;
+module.exports = { name, render, init, cleanup, wantsLoop };
