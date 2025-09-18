@@ -12,12 +12,23 @@ focus on clean architecture and helpful, positive logs.
 
 ## ✨ Features
 
-- **Scene Management**: Robust scene lifecycle with `init`, `render`, and `cleanup` hooks.
-- **MQTT Control**: Full control per device, including scene selection, driver switching, and metrics.
-- **Hot-Swappable Drivers**: Switch between a `real` HTTP driver and a `mock` driver on the fly.
-- **Advanced Renderers**: Includes high-quality renderers for charts and gradients.
-- **Smart Boot Handling**: Automatically detects freshly booted devices and handles them gracefully.
-- **Structured Logging**: Clean, informative logs with a positive tone.
+- **Central Scheduler**: One loop per device; scenes are pure renderers and return
+  a next delay (ms) or `null` when complete.
+- **Per-Device State Machine**: Tracks `currentScene`, `generationId`, and
+  `status` (switching/running) for robust scene switching.
+- **Pure-Render Scenes**: No scene-owned timers or MQTT; timing and gating are
+  handled centrally.
+- **MQTT Control**: Full control per device (scene selection, driver switching,
+  resets) and metrics.
+- **Observability**: Publishes `/home/pixoo/<ip>/scene/state` with version,
+  build number, git commit for traceability.
+- **Hot-Swappable Drivers**: Switch between `real` HTTP driver and `mock` driver
+  on the fly.
+- **Advanced Renderers**: High-quality renderers for charts, gradients, and
+  smooth animations.
+- **Smart Boot Handling**: Detects freshly booted devices and handles them
+  gracefully.
+- **Structured Logging**: Clean, informative logs with helpful context.
 
 ---
 
@@ -52,6 +63,8 @@ deployment, please refer to the documents below:
 - **[MQTT Commands (`MQTT_COMMANDS.md`)]**: A quick reference for all scene commands.
 - **[Deployment Guide (`DEPLOYMENT.md`)]**: Instructions for deploying the daemon with Docker and GitHub Actions.
 - **[Development Standards (`STANDARDS.md`)]**: Our guide to code quality, testing, and contributions.
+- **[Scenes Guide (`scenes/README.md`)]**: Scene contract, `wantsLoop`, and
+  pure-render architecture.
 
 ---
 
