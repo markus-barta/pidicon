@@ -10,8 +10,8 @@ of truth for upcoming work and its validation status.
 
 | ID       | TODO                                                                   | State       | Test Name              | Last Test Result              | Last Test Run        |
 | -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ----------------------------- | -------------------- |
-| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real, 343/85f2714)      | 2025-09-18T14:26:12Z |
-| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (real, 343/85f2714)      | 2025-09-18T14:26:12Z |
+| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real, 344/2a69430)      | 2025-09-18T14:34:10Z |
+| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (real, 344/2a69430)      | 2025-09-18T14:34:10Z |
 | GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | in_progress | TEST-GATE-stale-drop   | fail (real, 343/85f2714)      | 2025-09-18T14:24:37Z |
 | REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | in_progress | TEST-REF-scenes-pure   | pass (real, 341/8415058)      | 2025-09-18T13:57:54Z |
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (real+mock, 343/85f2714) | 2025-09-18T14:26:12Z |
@@ -64,6 +64,17 @@ of truth for upcoming work and its validation status.
   - Logs indicate drop with device, scene, and generation details.
 - Test Plan (TEST-GATE-stale-drop):
   - Manually fire a continuation for old generation; verify it is dropped and no draw occurs.
+
+### BUG-011: Performance scene does not fully reset on restart
+
+- Summary: After running `performance-test`, switching to `empty`, and back to
+  `performance-test`, the scene resumed mid-state. Cleanup lacked full state
+  reset.
+- Fix: Enhanced `cleanup` in `scenes/examples/performance-test.js` to clear
+  `isRunning`, `inFrame`, `chartInitialized`, and related flags.
+- Test Plan (TEST-PERF-restart):
+  - Run perf → empty → perf; verify fresh initialization on the second run.
+  - Automated by `scripts/live_test_perf_restart.js`.
 
 ### REF-004: Refactor all scenes to pure render
 
