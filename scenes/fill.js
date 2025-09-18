@@ -53,9 +53,5 @@ function cleanup() {
   logger.debug(`🧹 [FILL] Scene cleaned up`);
 }
 
-module.exports = {
-  name,
-  init,
-  render,
-  cleanup,
-};
+const wantsLoop = false;
+module.exports = { name, init, render, cleanup, wantsLoop };

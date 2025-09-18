@@ -150,4 +150,5 @@ async function cleanup() {
   logger.debug(`🧹 [ADVANCED_CHART] Scene cleaned up`);
 }
 
-module.exports = { name: SCENE_NAME, render, init, cleanup };
+const wantsLoop = false;
+module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
