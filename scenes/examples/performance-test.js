@@ -508,16 +508,20 @@ async function renderFrame(context, config) {
 
   const timeTaken = Date.now() - frameStart;
 
-  // Check if should continue
-  const framesRendered = getState('framesRendered') || 0;
+  // Track frames pushed independent of frametime
+  const prevPushed = getState('framesPushed') || 0;
+  const nextPushed = prevPushed + 1;
+  setState('framesPushed', nextPushed);
+
+  // Check if should continue (stop after exactly config.frames pushes)
   const shouldContinue =
-    framesRendered < config.frames &&
+    nextPushed < config.frames &&
     (getState('chartX') || CHART_CONFIG.CHART_START_X + 1) <
       CHART_CONFIG.CHART_END_X;
 
   setState('inFrame', false);
   logger.ok(
-    `[PERF V3] shouldContinue=${shouldContinue} frames=${framesRendered} chartX=${getState('chartX')}`,
+    `[PERF V3] shouldContinue=${shouldContinue} pushes=${nextPushed} chartX=${getState('chartX')}`,
   );
 
   if (!shouldContinue) {
