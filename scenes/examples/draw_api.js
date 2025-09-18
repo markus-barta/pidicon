@@ -285,4 +285,5 @@ async function cleanup() {
   logger.debug(`🧹 [TEST_DRAW_API] Scene cleaned up`);
 }
 
-module.exports = { name, render, init, cleanup };
+const wantsLoop = false;
+module.exports = { name, render, init, cleanup, wantsLoop };
