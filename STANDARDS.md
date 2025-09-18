@@ -150,6 +150,9 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
   Test Result, Last Test Run) and detailed sections per ID.
 - **Traceability**: Update the backlog when tasks start, when tests are run, and
   when results are known.
+- **Add New Items**: If new issues or requirements are discovered during work or
+  testing, create a new backlog ID immediately (e.g., BUG-011, GATE-012) and
+  record the context. Keep the backlog comprehensive and current.
 - **Build Reference Required**: Every test entry MUST include the exact
   `buildNumber` (and preferably `gitCommit`) that the test ran against.
 

@@ -543,7 +543,12 @@ async function cleanup(context) {
       clearTimeout(loopTimer);
       setState('loopTimer', null);
     }
+    // Ensure the next run fully re-initializes
     setState?.('loopScheduled', false);
+    setState?.('inFrame', false);
+    setState?.('isRunning', false);
+    setState?.('chartInitialized', false);
+    setState?.('hasPrevPoint', false);
     setState?.('testCompleted', true);
   } catch (e) {
     logger.warn(`⚠️ [PERF V3] Cleanup encountered an issue:`, e?.message);
