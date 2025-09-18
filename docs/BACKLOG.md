@@ -20,7 +20,7 @@ of truth for upcoming work and its validation status.
 | TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                             | -                    |
 | DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | -                             | -                    |
-| ARC-101  | Architecture audit & alignment with standards                          | planned     | TEST-ARC-audit         | -                             | -                    |
+| ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)      | 2025-09-18T17:21:27Z |
 | CON-102  | Consistency pass: naming, contracts, return values                     | planned     | TEST-CON-contracts     | -                             | -                    |
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | planned     | TEST-CLN-deadcode      | -                             | -                    |
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | planned     | TEST-REL-smoke         | -                             | -                    |
