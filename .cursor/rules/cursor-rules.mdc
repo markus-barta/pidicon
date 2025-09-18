@@ -1,93 +1,89 @@
+---
+rules:
+  - description: Timeout after 30 minutes
+    globs:
+      - "*"
+    alwaysApply: true
+    # Custom: timeoutMinutes: 30
+    reference: "./docs/standards.md"
+  - description: Enforce linting and formatting rules for JS + Markdown
+    globs:
+      - "**/*.js"
+      - "**/*.md"
+    alwaysApply: true
+    # Custom: lint: true, maxLineLength: 120, preferredLineLength: 80, requireCodeBlockLanguage: true
+    reference: "./docs/standards.md#formatting--commits"
+  - description: Enforce Conventional Commit format
+    globs:
+      - "COMMIT_MSG"
+    alwaysApply: true
+    # Custom: commitConvention: conventional
+    reference: "./docs/standards.md#commit-guidelines"
+  - description: Require README.md in all critical directories
+    globs:
+      - "lib/*"
+      - "scenes/*"
+    alwaysApply: true
+    # Custom: requireReadme: true
+    reference: "./docs/standards.md#documentation"
+  - description: Require JSDoc on all exported functions
+    globs:
+      - "lib/**/*.js"
+      - "scenes/**/*.js"
+    alwaysApply: true
+    # Custom: requireJsdoc: true
+    reference: "./docs/standards.md#code-documentation"
+  - description: Require POSIX shebang in server scripts
+    globs:
+      - "scripts/**/*.sh"
+    alwaysApply: true
+    # Custom: requireShebang: "#!/usr/bin/env bash"
+    reference: "./docs/standards.md#shell-standards"
+  - description: Prefer fish shell for interactive usage; fallback to bash
+    globs:
+      - "**/*.sh" # Replaced terminal:* with standard glob for shell scripts
+    alwaysApply: true
+    # Custom: preferredShell: fish, fallbackShell: bash, maxRetries: 3
+    # Notes: AI often generates bash syntax; correct manually or convert. After 3 failed attempts, use bash or write portable script.
+    reference: "./docs/standards.md#shell-standards"
+---
+
 # Cursor Rules for Pixoo Daemon Development
 
-These rules are consumed by Cursor to enforce quality and safety. The content
-below is specified as YAML blocks for clarity and to satisfy markdown linting.
+These rules enforce quality and safety for the Pixoo Daemon project, consumed by Cursor.
 
-## ⏳ Universal timeout
+## Universal Timeout
+- Applies to all files (`*`).
+- Timeout after 30 minutes.
+- Reference: [Standards Documentation](./docs/standards.md).
 
-```yaml
-description: Timeout after 30 minutes
-globs:
-  - "*"
-alwaysApply: true
-timeoutMinutes: 30
-reference: "./docs/standards.md"
-```
+## Formatting & Linting
+- Applies to JavaScript (`**/*.js`) and Markdown (`**/*.md`) files.
+- Enforce linting, max line length of 120, preferred line length of 80, and require code block languages in Markdown.
+- Reference: [Formatting Guidelines](./docs/standards.md#formatting--commits).
 
-## 🧹 Formatting & Linting
+## Git Commit Messages
+- Applies to `COMMIT_MSG` file.
+- Enforce Conventional Commit format (e.g., `feat:`, `fix:`).
+- Reference: [Commit Guidelines](./docs/standards.md#commit-guidelines).
 
-```yaml
-description: Enforce linting and formatting rules for JS + Markdown
-globs:
-  - "**/*.js"
-  - "**/*.md"
-alwaysApply: true
-lint: true
-maxLineLength: 120
-preferredLineLength: 80
-requireCodeBlockLanguage: true
-reference: "./docs/standards.md#formatting--commits"
-```
+## Require Documentation
+- Applies to `lib/*` and `scenes/*` directories.
+- Require a `README.md` in each critical directory.
+- Reference: [Documentation Standards](./docs/standards.md#documentation).
 
-## 📝 Git Commit Messages
+## Require JSDoc
+- Applies to JavaScript files in `lib/` and `scenes/` (`**/*.js`).
+- Require JSDoc comments on all exported functions.
+- Reference: [Code Documentation Standards](./docs/standards.md#code-documentation).
 
-```yaml
-description: Enforce Conventional Commit format
-globs:
-  - "COMMIT_MSG"
-alwaysApply: true
-commitConvention: conventional
-reference: "./docs/standards.md#commit-guidelines"
-```
+## Shell Script Standards (Server)
+- Applies to shell scripts in `scripts/` (`**/*.sh`).
+- Require POSIX shebang (`#!/usr/bin/env bash`).
+- Reference: [Shell Standards](./docs/standards.md#shell-standards).
 
-## 📗 Require Documentation
-
-```yaml
-description: Require README.md in all critical directories
-globs:
-  - "lib/*"
-  - "scenes/*"
-alwaysApply: true
-requireReadme: true
-reference: "./docs/standards.md#documentation"
-```
-
-## 🧾 Require JSDoc
-
-```yaml
-description: Require JSDoc on all exported functions
-globs:
-  - "lib/**/*.js"
-  - "scenes/**/*.js"
-alwaysApply: true
-requireJsdoc: true
-reference: "./docs/standards.md#code-documentation"
-```
-
-## 🐟 Shell Script Standards (Server)
-
-```yaml
-description: Require POSIX shebang in server scripts
-globs:
-  - "scripts/**/*.sh"
-alwaysApply: true
-requireShebang: "#!/usr/bin/env bash"
-reference: "./docs/standards.md#shell-standards"
-```
-
-## 🐟 Fish Shell Usage (Clients & Servers)
-
-```yaml
-description: Prefer fish shell for interactive usage; fallback to bash after 3 failed AI attempts
-globs:
-  - "terminal:*"
-alwaysApply: true
-preferredShell: fish
-fallbackShell: bash
-maxRetries: 3
-notes: |
-  - AI often generates bash syntax by default; correct manually or convert.
-  - After 3 failed attempts, run command via bash or move logic into a portable script.
-  - For complex logic, prefer writing `script.sh` with `#!/usr/bin/env bash` and call from fish.
-reference: "./docs/standards.md#shell-standards"
-```
+## Fish Shell Usage (Clients & Servers)
+- Applies to shell scripts (`**/*.sh`).
+- Prefer `fish` shell for interactive usage; fallback to `bash` after 3 failed attempts.
+- Convert AI-generated bash syntax to fish or write portable scripts.
+- Reference: [Shell Standards](./docs/standards.md#shell-standards).
