@@ -442,8 +442,7 @@ async function renderFrame(context, config) {
 
   // Determine X positions
   const chartX = getState?.('chartX') || CHART_CONFIG.CHART_START_X + 1;
-  const nextX =
-    chartX <= CHART_CONFIG.CHART_END_X ? chartX : CHART_CONFIG.CHART_END_X;
+  const nextX = chartX;
 
   // Compute current Y
   const currY = computeYFromFrametime(frametime);
@@ -479,7 +478,14 @@ async function renderFrame(context, config) {
   // Save last point state and advance X
   setState('lastY', currY);
   setState('lastValue', frametime);
-  setState('chartX', Math.min(nextX + 1, CHART_CONFIG.CHART_END_X));
+  // Advance chart position with wrap-around
+  const wrapped = nextX + 1;
+  setState(
+    'chartX',
+    wrapped > CHART_CONFIG.CHART_END_X
+      ? CHART_CONFIG.CHART_START_X + 1
+      : wrapped,
+  );
 
   // Render headers (mode on first line)
   await chartRenderer.renderHeader(
@@ -514,10 +520,7 @@ async function renderFrame(context, config) {
   setState('framesPushed', nextPushed);
 
   // Check if should continue (stop after exactly config.frames pushes)
-  const shouldContinue =
-    nextPushed < config.frames &&
-    (getState('chartX') || CHART_CONFIG.CHART_START_X + 1) <
-      CHART_CONFIG.CHART_END_X;
+  const shouldContinue = nextPushed < config.frames;
 
   setState('inFrame', false);
   logger.ok(

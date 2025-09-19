@@ -434,28 +434,90 @@ async function handleStateUpdate(deviceIp, action, payload) {
           });
         }
       } else if (isParameterChange) {
-        logger.info(`Updating parameters for scene: ${sceneName}`);
-        success = await sceneManager.updateSceneParameters(sceneName, ctx);
-        // Publish state on parameter updates as well (for observability)
-        try {
-          const st = sceneManager.getDeviceSceneState(deviceIp);
-          client.publish(
-            `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-            JSON.stringify({
-              [SCENE_STATE_KEYS.currentScene]: st.currentScene,
-              [SCENE_STATE_KEYS.generationId]: st.generationId,
-              [SCENE_STATE_KEYS.status]: st.status,
-              [SCENE_STATE_KEYS.version]: versionInfo.version,
-              [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
-              [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
-              [SCENE_STATE_KEYS.ts]: Date.now(),
-            }),
+        // For loop-driven scenes, a frames/interval change should trigger a full restart
+        const wantsLoop = !!sceneManager.getScene(sceneName)?.wantsLoop;
+        const framesChanged =
+          wantsLoop &&
+          (payload?.frames ?? null) !== (lastPayload?.frames ?? null);
+        const intervalChanged =
+          wantsLoop &&
+          (payload?.interval ?? null) !== (lastPayload?.interval ?? null);
+        const explicitRestart =
+          payload?.restart === true || payload?.reset === true;
+
+        if (framesChanged || intervalChanged || explicitRestart) {
+          logger.info(
+            `Restarting loop-driven scene due to param change: ${sceneName}`,
           );
-        } catch (e) {
-          logger.warn('Failed to publish device scene state', {
-            deviceIp,
-            error: e?.message,
-          });
+          // Publish 'switching' on restart
+          try {
+            const prev = sceneManager.getDeviceSceneState(deviceIp);
+            const genNext = ((prev.generationId || 0) + 1) | 0;
+            client.publish(
+              `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+              JSON.stringify({
+                [SCENE_STATE_KEYS.currentScene]: prev.currentScene,
+                [SCENE_STATE_KEYS.targetScene]: sceneName,
+                [SCENE_STATE_KEYS.status]: 'switching',
+                [SCENE_STATE_KEYS.generationId]: genNext,
+                [SCENE_STATE_KEYS.version]: versionInfo.version,
+                [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+                [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+                [SCENE_STATE_KEYS.ts]: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.warn('Failed to publish switching state', {
+              deviceIp,
+              error: e?.message,
+            });
+          }
+          success = await sceneManager.switchScene(sceneName, ctx);
+          // Publish running state after restart
+          try {
+            const st = sceneManager.getDeviceSceneState(deviceIp);
+            client.publish(
+              `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+              JSON.stringify({
+                [SCENE_STATE_KEYS.currentScene]: st.currentScene,
+                [SCENE_STATE_KEYS.generationId]: st.generationId,
+                [SCENE_STATE_KEYS.status]: st.status,
+                [SCENE_STATE_KEYS.version]: versionInfo.version,
+                [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+                [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+                [SCENE_STATE_KEYS.ts]: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.warn('Failed to publish device scene state', {
+              deviceIp,
+              error: e?.message,
+            });
+          }
+        } else {
+          logger.info(`Updating parameters for scene: ${sceneName}`);
+          success = await sceneManager.updateSceneParameters(sceneName, ctx);
+          // Publish state on parameter updates as well (for observability)
+          try {
+            const st = sceneManager.getDeviceSceneState(deviceIp);
+            client.publish(
+              `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+              JSON.stringify({
+                [SCENE_STATE_KEYS.currentScene]: st.currentScene,
+                [SCENE_STATE_KEYS.generationId]: st.generationId,
+                [SCENE_STATE_KEYS.status]: st.status,
+                [SCENE_STATE_KEYS.version]: versionInfo.version,
+                [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+                [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+                [SCENE_STATE_KEYS.ts]: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.warn('Failed to publish device scene state', {
+              deviceIp,
+              error: e?.message,
+            });
+          }
         }
       } else {
         // Same scene, same parameters. Decide whether to restart/apply parameters.
