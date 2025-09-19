@@ -635,6 +635,7 @@ async function render(context) {
 }
 
 module.exports = {
+  name: SCENE_NAME,
   init,
   cleanup,
   render,

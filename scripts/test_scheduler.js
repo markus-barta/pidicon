@@ -42,19 +42,19 @@ async function main() {
     logger.ok(`TEST OK [${deviceIp}] scene=${scene} frametime=${frametime}`);
   };
 
-  // Start with v2
-  const ctxV2 = getContext(
+  // Start with animated
+  const ctxAnim = getContext(
     host,
-    'draw_api_animated_v2',
-    { scene: 'draw_api_animated_v2' },
+    'draw_api_animated',
+    { scene: 'draw_api_animated' },
     publishOk,
   );
-  await sceneManager.switchScene('draw_api_animated_v2', ctxV2);
+  await sceneManager.switchScene('draw_api_animated', ctxAnim);
 
   // Allow some loop ticks
   await new Promise((resolve) => setTimeout(resolve, 300));
 
-  // Switch to draw_api
+  // Switch to draw_api (static)
   const ctxDraw = getContext(
     host,
     'draw_api',

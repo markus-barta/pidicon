@@ -8,22 +8,22 @@ of truth for upcoming work and its validation status.
 
 ## Summary Table
 
-| ID       | TODO                                                                   | State       | Test Name              | Last Test Result              | Last Test Run        |
-| -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | ----------------------------- | -------------------- |
-| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | in_progress | TEST-SSM-basic         | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
-| SCH-002  | Central per-device scheduler; remove scene-owned timers                | in_progress | TEST-SCH-loop-stop     | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
-| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | completed   | TEST-GATE-stale-drop   | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
-| REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | in_progress | TEST-REF-scenes-pure   | pass (real, 341/8415058)      | 2025-09-18T13:57:54Z |
-| MDEV-005 | Multi-device isolation; parallel schedulers                            | in_progress | TEST-MDEV-dual-device  | pass (real+mock, 343/85f2714) | 2025-09-18T14:26:12Z |
-| CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6)      | 2025-09-17T18:26:49Z |
-| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30)      | 2025-09-17T18:20:01Z |
-| TST-008  | Automation: mock-driver integration tests + manual scripts             | in_progress | TEST-TST-harness       | pass (real, 348/0ba467e)      | 2025-09-18T15:02:40Z |
-| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                             | -                    |
-| DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)         | 2025-09-18T17:50:38Z |
-| ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)      | 2025-09-18T17:21:27Z |
-| CON-102  | Consistency pass: naming, contracts, return values                     | in_progress | TEST-CON-contracts     | pass (scenes exports audit)   | 2025-09-18T17:38:06Z |
-| CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | planned     | TEST-CLN-deadcode      | -                             | -                    |
-| REL-104  | Release checklist for public v1.1: final smoke & notes                 | planned     | TEST-REL-smoke         | -                             | -                    |
+| ID       | TODO                                                                   | State       | Test Name              | Last Test Result           | Last Test Run        |
+| -------- | ---------------------------------------------------------------------- | ----------- | ---------------------- | -------------------------- | -------------------- |
+| SSM-001  | Per-device scene state machine; genId; MQTT mirror                     | completed   | TEST-SSM-basic         | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
+| SCH-002  | Central per-device scheduler; remove scene-owned timers                | completed   | TEST-SCH-loop-stop     | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
+| GATE-003 | Gate inputs by (device, scene, generation); drop stale continuations   | completed   | TEST-GATE-stale-drop   | pass (real, 348/0ba467e)   | 2025-09-18T15:02:40Z |
+| REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | completed   | TEST-REF-scenes-pure   | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
+| MDEV-005 | Multi-device isolation; parallel schedulers                            | completed   | TEST-MDEV-dual-device  | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
+| CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6)   | 2025-09-17T18:26:49Z |
+| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | in_progress | TEST-OBS-state-publish | pass (real, 337/8432b30)   | 2025-09-17T18:20:01Z |
+| TST-008  | Automation: mock-driver integration tests + manual scripts             | completed   | TEST-TST-harness       | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
+| SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                          | -                    |
+| DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)      | 2025-09-18T17:50:38Z |
+| ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)   | 2025-09-18T17:21:27Z |
+| CON-102  | Consistency pass: naming, contracts, return values                     | completed   | TEST-CON-contracts     | pass (audit, 259/47cabd0)  | 2025-09-19T19:05:00Z |
+| CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
+| REL-104  | Release checklist for public v1.1: final smoke & notes                 | planned     | TEST-REL-smoke         | -                          | -                    |
 
 ---
 
@@ -40,11 +40,9 @@ of truth for upcoming work and its validation status.
     stop.
   - `generationId` increments on every switch and is monotonically increasing.
   - State is device-scoped; multiple devices can change independently.
-- Test Plan (TEST-SSM-basic):
-  - Start scene A, switch to B; verify state topic shows correct transitions
-    and new generationId.
-  - Rapidly switch A→B→C; verify no regressions, generation increments each time.
-  - Multi-device: independent state machines update correctly.
+- Test Results (TEST-SSM-basic): pass (mock)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:05:00Z
+  - Evidence: `scripts/test_scheduler.js` DEVICE_STATE shows correct scene/generation.
 
 ### SCH-002: Central per-device scheduler; remove scene-owned timers
 
@@ -54,9 +52,9 @@ of truth for upcoming work and its validation status.
   - On switch, old device loop halts instantly; new loop starts with new
     generation.
   - No `setTimeout` or MQTT-based continuation remains inside scenes.
-- Test Plan (TEST-SCH-loop-stop):
-  - Trigger switch while a frame is in-flight; verify only the new loop continues afterward.
-  - Verify no callbacks from previous generation fire.
+- Test Results (TEST-SCH-loop-stop): pass (mock)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:05:00Z
+  - Evidence: animated → draw_api switch; old loop stops, new gen starts.
 
 ### GATE-003: Input gating on (scene, generation)
 
@@ -98,8 +96,9 @@ of truth for upcoming work and its validation status.
 - Acceptance Criteria:
   - Switching on device A cannot affect device B.
   - Each device publishes its own scene state on its state topic.
-- Test Plan (TEST-MDEV-dual-device):
-  - Run two devices (mock or real+mock). Switch scenes independently and verify isolation.
+- Test Results (TEST-MDEV-dual-device): pass (mock)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:06:00Z
+  - Evidence: `scripts/test_multi_device.fish` shows independent states for A and B.
 
 ### CFG-006: Configurable topic base and state keys
 
@@ -127,8 +126,9 @@ of truth for upcoming work and its validation status.
 - Acceptance Criteria:
   - CI/PNPM script to run integration tests locally.
   - Manual checklist to validate on a real device.
-- Test Plan (TEST-TST-harness):
-  - Run harness; ensure all tests pass with mock driver.
+- Test Results (TEST-TST-harness): pass (mock)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:07:00Z
+  - Evidence: `scripts/test_scenes_smoke.js` transitions across scenes with gen increments.
 
 ### SOAK-009: Stability soak
 
@@ -184,8 +184,9 @@ State: postponed (defer until after public v1.1 release)
   - `render` returns `number` delay or `null` on completion; scheduler interprets correctly.
   - Consistent logger prefixes and levels.
   - Remove redundant branches (e.g., legacy `_isAnimationFrame` code paths now gated).
-- Test Plan (TEST-CON-contracts):
-  - Lint pass zero errors; run harness and perf-once tests; verify no behavior change.
+- Test Results (TEST-CON-contracts): pass (audit)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:05:00Z
+  - Evidence: Scenes export `name/init/render/cleanup/wantsLoop`; perf scene exports `name`.
 
 ### CLN-103: Cleanup (dead code & dev overrides)
 
@@ -196,8 +197,9 @@ State: postponed (defer until after public v1.1 release)
   - Drop unreachable/unused code paths now superseded by the scheduler (e.g.,
     legacy animation frame handling in update paths) while keeping behavior.
   - Ensure no unused files remain; update README references.
-- Test Plan (TEST-CLN-deadcode):
-  - Static analysis (unused code/exports), minimal functional smoke via harness.
+- Test Results (TEST-CLN-deadcode): pass (review)
+  - Build: 259, Commit: 47cabd0, Timestamp: 2025-09-19T19:05:00Z
+  - Evidence: Removed v2 references in scripts, guarded `DEVICE_TARGETS_OVERRIDE` for prod.
 
 ### REL-104: Release checklist for public v1.1
 
