@@ -357,9 +357,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
     const lastScene = lastState[deviceIp]?.sceneName;
     const lastPayload = lastState[deviceIp]?.payload;
     const isSceneChange = !lastScene || lastScene !== sceneName;
-    const isParameterChange =
-      lastScene === sceneName &&
-      JSON.stringify(lastPayload) !== JSON.stringify(payload);
+    const isParameterChange = lastScene === sceneName && true; // treat any new command as authoritative
     const shouldClear = isSceneChange || payload.clear === true;
 
     if (isParameterChange) {
