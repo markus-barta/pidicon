@@ -19,7 +19,7 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 - [🧪 Testing & Performance](#testing--performance)
 - [🚨 Error Handling & Security](#error-handling--security)
 - [📝 Formatting & Commits](#formatting--commits)
-- [🔧 Tooling & Checklists](#-ooling--checklists)
+- [🔧 Tooling & Checklists](#tooling--checklists)
 - [🐟 Shell Standards](#shell-standards)
 
 ---
@@ -72,8 +72,8 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 - **Fail Fast**: Validate inputs and state early. Use specific error types
   (`ValidationError`, `DeviceError`).
 - **Structured Logging**: Use the `lib/logger.js` wrapper with appropriate
-  levels (`error`, `warn`, `info`, `debug`) and always include a metadata object
-  for context.
+  levels (`error`, `warn`, `ok`, `info`, `debug`) and always include a
+  metadata object for context.
 
 ### **Security**
 
@@ -106,9 +106,12 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ### **Scene Development & Shell Standards**
 
-- **Scene Interface**: Scenes must export `name` and `render`. `init` and
-  `cleanup` are optional. **Always** call `await device.push()` to display
-  changes, but minimize its use as it is a time-intensive operation.
+- **Scene Interface**: Scenes must export `name`, `render`, and `wantsLoop`.
+  `init` and `cleanup` are recommended for consistency.
+  `render` must return a `number` delay in milliseconds for the central
+  scheduler, or a non-number (e.g., `null`) to signal completion.
+  **Always** call `await device.push()` to display changes, but minimize its
+  use as it is a time-intensive operation.
 - **Shell Scripts**: Server-side scripts **must** use `#!/usr/bin/env bash` for
   portability. Use `fish` syntax for local development.
 - **Testing Locally**: Local testing is encouraged, but be mindful that the device
