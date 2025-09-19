@@ -458,11 +458,75 @@ async function handleStateUpdate(deviceIp, action, payload) {
           });
         }
       } else {
-        // With central scheduler, we rely on the device loop; no immediate render here
-        logger.info(
-          `No-op: same scene with same parameters (central scheduler active)`,
+        // Same scene, same parameters. Decide whether to restart/apply parameters.
+        const wantsLoop = !!sceneManager.getScene(sceneName)?.wantsLoop;
+        const hasFrames = Object.prototype.hasOwnProperty.call(
+          payload || {},
+          'frames',
         );
-        success = true;
+        const explicitRestart =
+          payload?.restart === true || payload?.reset === true;
+        const wantsRestart = explicitRestart || (wantsLoop && hasFrames);
+
+        if (wantsRestart) {
+          logger.info(
+            `Restarting scene on identical parameters (explicit or completed run): ${sceneName}`,
+          );
+          // Publish 'switching' state similar to scene change path
+          try {
+            const prev = sceneManager.getDeviceSceneState(deviceIp);
+            const genNext = ((prev.generationId || 0) + 1) | 0;
+            client.publish(
+              `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+              JSON.stringify({
+                [SCENE_STATE_KEYS.currentScene]: prev.currentScene,
+                [SCENE_STATE_KEYS.targetScene]: sceneName,
+                [SCENE_STATE_KEYS.status]: 'switching',
+                [SCENE_STATE_KEYS.generationId]: genNext,
+                [SCENE_STATE_KEYS.version]: versionInfo.version,
+                [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+                [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+                [SCENE_STATE_KEYS.ts]: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.warn('Failed to publish switching state', {
+              deviceIp,
+              error: e?.message,
+            });
+          }
+
+          // Do a full switch to restart cleanly (increments generation and restarts loop)
+          success = await sceneManager.switchScene(sceneName, ctx);
+
+          // Publish updated running state
+          try {
+            const st = sceneManager.getDeviceSceneState(deviceIp);
+            client.publish(
+              `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
+              JSON.stringify({
+                [SCENE_STATE_KEYS.currentScene]: st.currentScene,
+                [SCENE_STATE_KEYS.generationId]: st.generationId,
+                [SCENE_STATE_KEYS.status]: st.status,
+                [SCENE_STATE_KEYS.version]: versionInfo.version,
+                [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
+                [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
+                [SCENE_STATE_KEYS.ts]: Date.now(),
+              }),
+            );
+          } catch (e) {
+            logger.warn('Failed to publish device scene state', {
+              deviceIp,
+              error: e?.message,
+            });
+          }
+        } else {
+          // With central scheduler, we rely on the device loop; no immediate render here
+          logger.info(
+            `No-op: same scene with same parameters (central scheduler active)`,
+          );
+          success = true;
+        }
       }
 
       if (!success) {
