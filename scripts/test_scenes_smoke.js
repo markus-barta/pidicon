@@ -40,7 +40,6 @@ async function main() {
     'fill',
     'empty',
     'advanced_chart',
-    'draw_api_animated_v2',
     'performance-test',
     'draw_api_animated',
   ].filter((n) => all.includes(n));
