@@ -119,6 +119,9 @@ of truth for upcoming work and its validation status.
   - Stale events are logged at `info` or `ok` with reason.
 - Test Plan (TEST-OBS-state-publish):
   - Observe MQTT stream while switching; confirm messages and logs.
+  - Verify keys from `lib/config.js` are used and payload includes
+    `version`, `buildNumber`, and `gitCommit`.
+  - Topic base configurable via `SCENE_STATE_TOPIC_BASE`.
 
 ### TST-008: Test harness and procedures
 
