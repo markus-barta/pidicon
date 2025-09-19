@@ -230,15 +230,24 @@ class PerformanceChartRenderer {
   }
 
   async renderCompletion() {
+    // Centered box + text; nudge text +1 on x for better visual centering
+    const boxWidth = 40;
+    const boxHeight = 10;
+    const left = Math.max(0, Math.floor((64 - boxWidth) / 2));
+    const top = Math.max(0, Math.floor((64 - boxHeight) / 2));
+    await this.device.fillRectangleRgba(
+      [left, top],
+      [boxWidth, boxHeight],
+      BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+    );
     await drawTextRgbaAlignedWithBg(
       this.device,
       'COMPLETE',
-      [32, 32],
-      [255, 255, 255, 127], // White with 50% transparency
+      [32 + 1, 32],
+      [255, 255, 255, 200],
       'center',
-      true,
-      BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-    ); // Semi-transparent black background
+      false,
+    );
   }
 }
 
