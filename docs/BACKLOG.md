@@ -16,14 +16,14 @@ of truth for upcoming work and its validation status.
 | REF-004  | Refactor all scenes to pure render; no self-MQTT/timers                | completed   | TEST-REF-scenes-pure   | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
 | MDEV-005 | Multi-device isolation; parallel schedulers                            | completed   | TEST-MDEV-dual-device  | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
 | CFG-006  | Configurable topic base and state keys                                 | completed   | TEST-CFG-topic-base    | pass (real, 338/54f35c6)   | 2025-09-17T18:26:49Z |
-| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | completed   | TEST-OBS-state-publish | pass (real, 366/d221a52)   | 2025-09-19T19:40:00Z |
+| OBS-007  | Observability: publish `/home/pixoo/<ip>/scene/state`; log stale drops | completed   | TEST-OBS-state-publish | pass (real, 373/13e814d)   | 2025-09-19T20:15:00Z |
 | TST-008  | Automation: mock-driver integration tests + manual scripts             | completed   | TEST-TST-harness       | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                          | -                    |
 | DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)      | 2025-09-18T17:50:38Z |
 | ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)   | 2025-09-18T17:21:27Z |
 | CON-102  | Consistency pass: naming, contracts, return values                     | completed   | TEST-CON-contracts     | pass (audit, 259/47cabd0)  | 2025-09-19T19:05:00Z |
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
-| REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 366/d221a52)   | 2025-09-19T19:42:00Z |
+| REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
 
 ---
 
@@ -118,8 +118,8 @@ of truth for upcoming work and its validation status.
   - Every transition produces a state message.
   - Stale events are logged at `info` or `ok` with reason.
 - Test Results (TEST-OBS-state-publish): pass (real)
-  - Build: 366, Commit: d221a52, Timestamp: 2025-09-19T19:40:00Z
-  - Evidence: `GATE_OK build=366 commit=d221a52 ...` from `scripts/live_test_gate.js`.
+  - Build: 373, Commit: 13e814d, Timestamp: 2025-09-19T20:15:00Z
+  - Evidence: `GATE_OK build=373 commit=13e814d ...` from `scripts/live_test_gate.js`.
 
 ### TST-008: Test harness and procedures
 
@@ -212,8 +212,8 @@ State: postponed (defer until after public v1.1 release)
   - Tag release with changelog; confirm README updated.
   - SOAK-009 explicitly postponed.
 - Test Results (TEST-REL-smoke): pass (real)
-  - Build: 366, Commit: d221a52, Timestamp: 2025-09-19T19:42:00Z
-  - Evidence: `SCENE_OK ... build=366 commit=d221a52` lines from `scripts/live_test_harness.js`.
+  - Build: 373, Commit: 13e814d, Timestamp: 2025-09-19T20:17:00Z
+  - Evidence: `SCENE_OK ... build=373 commit=13e814d` lines from `scripts/live_test_harness.js`.
 
 ---
 
