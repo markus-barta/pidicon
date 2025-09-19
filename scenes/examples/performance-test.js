@@ -569,6 +569,7 @@ async function cleanup(context) {
     setState?.('chartInitialized', false);
     setState?.('hasPrevPoint', false);
     setState?.('testCompleted', true);
+    setState?.('config', null);
   } catch (e) {
     logger.warn(`⚠️ [PERF V3] Cleanup encountered an issue:`, e?.message);
   }
