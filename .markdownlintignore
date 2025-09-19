@@ -1,0 +1,3 @@
+# Ignore Cursor rules from markdownlint (CLI and editor)
+.cursor/rules/
+.cursor/rules/**

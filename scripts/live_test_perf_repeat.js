@@ -54,20 +54,30 @@ function once(client, topic, predicate, timeoutMs) {
 }
 
 async function runOnce(client, frames = 8) {
+  // Prepare listeners BEFORE publish to avoid race conditions
+  const switchingWait = once(
+    client,
+    stateTopic,
+    (m) => m.status === 'switching' && m.targetScene === 'performance-test',
+    45000,
+  );
+  const runningWait = once(
+    client,
+    stateTopic,
+    (m) => m.status === 'running' && m.currentScene === 'performance-test',
+    45000,
+  );
+
   // Start perf test (adaptive, N frames)
   client.publish(
     cmdTopic,
     JSON.stringify({ scene: 'performance-test', interval: null, frames }),
     { qos: 0 },
   );
+
   // Wait for switching and running
-  await once(client, stateTopic, (m) => m.status === 'switching', 45000);
-  const running = await once(
-    client,
-    stateTopic,
-    (m) => m.status === 'running' && m.currentScene === 'performance-test',
-    45000,
-  );
+  await switchingWait;
+  const running = await runningWait;
   const buildNumber = running.buildNumber;
   const gitCommit = running.gitCommit;
 

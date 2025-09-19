@@ -1,1 +1,11 @@
-{}
+{
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.validate": ["javascript", "javascriptreact", "json"],
+  "eslint.options": {
+    "ignorePattern": [".cursor/rules/**"]
+  },
+  "markdownlint.ignore": [".cursor/rules/**"],
+  "files.watcherExclude": {
+    "**/.cursor/**": true
+  }
+}
