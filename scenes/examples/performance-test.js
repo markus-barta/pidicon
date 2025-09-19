@@ -48,6 +48,7 @@ class PerformanceTestState {
 
   reset() {
     this.setState('framesRendered', 0);
+    this.setState('framesPushed', 0);
     this.setState('startTime', Date.now());
     this.setState('minFrametime', Infinity);
     this.setState('maxFrametime', 0);
@@ -515,12 +516,11 @@ async function renderFrame(context, config) {
   const timeTaken = Date.now() - frameStart;
 
   // Track frames pushed independent of frametime
-  const prevPushed = getState('framesPushed') || 0;
-  const nextPushed = prevPushed + 1;
+  const nextPushed = (getState('framesPushed') || 0) + 1;
   setState('framesPushed', nextPushed);
 
-  // Check if should continue (stop after exactly config.frames pushes)
-  const shouldContinue = nextPushed < config.frames;
+  // Decide continuation strictly by framesPushed counter
+  const shouldContinue = nextPushed < (config.frames | 0);
 
   setState('inFrame', false);
   logger.ok(
@@ -556,6 +556,7 @@ async function cleanup(context) {
     setState?.('loopScheduled', false);
     setState?.('inFrame', false);
     setState?.('isRunning', false);
+    setState?.('framesPushed', 0);
     setState?.('chartInitialized', false);
     setState?.('hasPrevPoint', false);
     setState?.('testCompleted', true);
@@ -611,22 +612,26 @@ async function render(context) {
     const frames = payload?.frames ?? DEFAULT_FRAMES;
 
     const config = { interval, frames };
-    setState('config', config);
 
-    // Check if already running
-    if (!getState('isRunning')) {
-      // Reset state
+    // Detect config change; if any, reset state machine for a clean run
+    const prevConfig = getState('config');
+    const configChanged =
+      !prevConfig ||
+      prevConfig.interval !== interval ||
+      prevConfig.frames !== frames;
+    if (configChanged) {
       const performanceState = new PerformanceTestState(getState, setState);
       performanceState.reset();
       setState('chartInitialized', false);
-
-      // Clear screen on new test
       await device.clear();
       logger.ok(
-        `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames`,
+        `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames (reset on param change)`,
       );
-      // No self-scheduling in pure-render contract
     }
+    setState('config', config);
+
+    // Check if already running
+    // No self-scheduling in pure-render contract; loop-driven will call renderFrame
 
     // Loop-driven: render a frame directly each tick
     if (loopDriven && getState('isRunning')) {
