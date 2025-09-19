@@ -466,7 +466,11 @@ async function handleStateUpdate(deviceIp, action, payload) {
         );
         const explicitRestart =
           payload?.restart === true || payload?.reset === true;
-        const wantsRestart = explicitRestart || (wantsLoop && hasFrames);
+        const isNotRunning =
+          typeof ctx.getState === 'function' &&
+          ctx.getState('isRunning', false) === false;
+        const wantsRestart =
+          explicitRestart || (wantsLoop && hasFrames) || isNotRunning;
 
         if (wantsRestart) {
           logger.info(

@@ -53,36 +53,43 @@ rules:
 These rules enforce quality and safety for the Pixoo Daemon project, consumed by Cursor.
 
 ## Universal Timeout
+
 - Applies to all files (`*`).
 - Timeout after 30 minutes.
 - Reference: [Standards Documentation](./docs/standards.md).
 
 ## Formatting & Linting
+
 - Applies to JavaScript (`**/*.js`) and Markdown (`**/*.md`) files.
 - Enforce linting, max line length of 120, preferred line length of 80, and require code block languages in Markdown.
 - Reference: [Formatting Guidelines](./docs/standards.md#formatting--commits).
 
 ## Git Commit Messages
+
 - Applies to `COMMIT_MSG` file.
 - Enforce Conventional Commit format (e.g., `feat:`, `fix:`).
 - Reference: [Commit Guidelines](./docs/standards.md#commit-guidelines).
 
 ## Require Documentation
+
 - Applies to `lib/*` and `scenes/*` directories.
 - Require a `README.md` in each critical directory.
 - Reference: [Documentation Standards](./docs/standards.md#documentation).
 
 ## Require JSDoc
+
 - Applies to JavaScript files in `lib/` and `scenes/` (`**/*.js`).
 - Require JSDoc comments on all exported functions.
 - Reference: [Code Documentation Standards](./docs/standards.md#code-documentation).
 
 ## Shell Script Standards (Server)
+
 - Applies to shell scripts in `scripts/` (`**/*.sh`).
 - Require POSIX shebang (`#!/usr/bin/env bash`).
 - Reference: [Shell Standards](./docs/standards.md#shell-standards).
 
 ## Fish Shell Usage (Clients & Servers)
+
 - Applies to shell scripts (`**/*.sh`).
 - Prefer `fish` shell for interactive usage; fallback to `bash` after 3 failed attempts.
 - Convert AI-generated bash syntax to fish or write portable scripts.

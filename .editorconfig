@@ -1,9 +1,13 @@
 root = true
 
-[*]
+[*.md]
+max_line_length = off
+
+[.cursor/rules/**]
 charset = utf-8
 end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = false
 indent_style = space
 indent_size = 2
-insert_final_newline = true
-trim_trailing_whitespace = true
+max_line_length = off
