@@ -71,6 +71,7 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
     [255, 255, 255, 255],
     'left',
   );
+
   x += estimateTextWidth(fpsVal) + 1;
   await device.drawTextRgbaAligned('FPS', [x, y], darkGray, 'left');
   x += estimateTextWidth('FPS');

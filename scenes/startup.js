@@ -17,7 +17,7 @@ const { validateSceneContext } = require('../lib/performance-utils');
 const COLORS = Object.freeze({
   BACKGROUND: [20, 20, 40, 255],
   HEADER: [255, 255, 255, 255],
-  BUILD_NUMBER: [255, 255, 0, 255], // Yellow
+  BUILD_NUMBER: [0, 255, 0, 255], // Green
   GIT_HASH: [255, 150, 0, 255], // Orange
   STATUS_TEXT: [0, 155, 55, 255], // Green
   STATUS_BOX: [255, 255, 255, 255], // White
