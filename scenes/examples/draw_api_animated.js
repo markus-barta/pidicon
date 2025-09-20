@@ -57,7 +57,11 @@ function estimateTextWidth(str) {
 
 async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
   // Clear status line area (y = 10)
-  await device.drawRectangleRgba([0, 10], [64, 7], CHART_CONFIG.BG_COLOR);
+  await device.drawRectangleRgba(
+    [0, 10],
+    [64, 7],
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
+  );
 
   let x = 2;
   const y = 10;
@@ -227,10 +231,10 @@ async function renderFrame(context, config) {
   // Header label
   await drawTextRgbaAlignedWithBg(
     device,
-    'ANIMATED V2',
-    [2, 2],
+    'TEST: ANIMATED',
+    [32, 2],
     [0, 200, 255, 178], // 70% opacity
-    'left',
+    'center',
     true,
     [0, 0, 0, 102], // 40% opacity background
   );
@@ -252,24 +256,18 @@ async function renderFrame(context, config) {
   await device.push(SCENE_NAME, publishOk);
   const timeTaken = Date.now() - frameStart;
 
+  // Track frames pushed independent of frametime measurement
+  const nextPushed = (getState('framesPushed') || 0) + 1;
+  setState('framesPushed', nextPushed);
+
   setState('inFrame', false);
 
   // Continue unless frames cap specified
-  const framesCap = config.frames;
-  const framesRendered = getState('framesRendered') || 0;
-  const shouldContinue = !framesCap || framesRendered < framesCap;
+  const framesCap = typeof config.frames === 'number' ? config.frames : null;
+  const shouldContinue =
+    framesCap == null || framesCap < 0 || nextPushed < framesCap;
   if (!shouldContinue) {
-    // Show completion overlay once
-    await drawTextRgbaAlignedWithBg(
-      device,
-      'COMPLETE',
-      [32, 32],
-      [255, 255, 255, 127],
-      'center',
-      true,
-      BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-    );
-    await device.push(SCENE_NAME, publishOk);
+    await renderCompletion(device, publishOk);
     setState('isRunning', false);
     // Signal completion to central scheduler: return non-number
     return null;
@@ -520,7 +518,7 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
     'center',
   );
 
-  const frameText = `T:${Math.round(t * 10)}`;
+  const frameText = `F:${getState('frameCount') || 0}`;
   const scrollTarget = 64 - ((t * 30) % (64 + 40));
   const scrollPrev = getPrev(getState, 'scrollXPrev', scrollTarget);
   const scrollX = stepTowards(scrollPrev, scrollTarget, maxDelta);
@@ -590,3 +588,25 @@ async function drawFinalOverlay(device, t) {
 const wantsLoop = true;
 
 module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
+
+// --- Completion overlay (centered box + text with slight x nudge) ---
+async function renderCompletion(device, publishOk) {
+  const boxWidth = 40;
+  const boxHeight = 10;
+  const left = Math.max(0, Math.floor((64 - boxWidth) / 2));
+  const top = Math.max(0, Math.floor((64 - boxHeight) / 2));
+  await device.fillRectangleRgba(
+    [left, top],
+    [boxWidth, boxHeight],
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+  );
+  await drawTextRgbaAlignedWithBg(
+    device,
+    'COMPLETE',
+    [32 + 1, 32],
+    [255, 255, 255, 200],
+    'center',
+    false,
+  );
+  await device.push(SCENE_NAME, publishOk);
+}
