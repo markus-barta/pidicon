@@ -1,9 +1,24 @@
 /**
  * @fileoverview Draw API Animated
- * @description Smoothly animated scene using the performance test's internal scheduler
- * combined with the original animated demo visuals. Adds an FPS/frametime overlay.
+ * @description Smoothly animated scene using the central scheduler with an
+ * FPS/frametime overlay. The ms value is color-coded by performance and the
+ * overlay background is 50% black for readability.
+ *
+ * Controls:
+ * - interval: number | null  → null (adaptive ASAP) or fixed interval in ms
+ * - frames: number           → if omitted or <0 runs indefinitely; otherwise
+ *                              stops after N pushes and shows a centered
+ *                              "COMPLETE" overlay
+ *
  * @mqtt
+ * # Indefinite (adaptive)
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
+ *
+ * # Finite (adaptive, 64 frames)
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","frames":64}'
+ *
+ * # Finite (fixed 150ms interval, 100 frames)
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","interval":150,"frames":100}'
  * @version 2.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
