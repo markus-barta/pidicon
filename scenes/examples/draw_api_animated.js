@@ -17,8 +17,8 @@
  * # Finite (adaptive, 64 frames)
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","frames":64}'
  *
- * # Finite (fixed 150ms interval, 100 frames)
- * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","interval":150,"frames":100}'
+ * # Finite (fixed 200ms interval, 100 frames)
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","interval":200,"frames":100}'
  * @version 2.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
@@ -247,7 +247,7 @@ async function renderFrame(context, config) {
   await drawTextRgbaAlignedWithBg(
     device,
     'TEST: ANIMATED',
-    [32, 2],
+    [32, 42],
     [0, 200, 255, 178], // 70% opacity
     'center',
     true,
@@ -618,7 +618,7 @@ async function renderCompletion(device, publishOk) {
   await drawTextRgbaAlignedWithBg(
     device,
     'COMPLETE',
-    [32 + 1, 32],
+    [32 + 1, 29],
     [255, 255, 255, 200],
     'center',
     false,

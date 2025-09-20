@@ -243,7 +243,7 @@ class PerformanceChartRenderer {
     await drawTextRgbaAlignedWithBg(
       this.device,
       'COMPLETE',
-      [32 + 1, 32],
+      [32 + 1, 29],
       [255, 255, 255, 200],
       'center',
       false,
