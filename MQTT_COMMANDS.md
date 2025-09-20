@@ -48,11 +48,22 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ### `draw_api` & `draw_api_animated`
 
-Demonstrates the drawing API primitives.
+Demonstrates the drawing API primitives. The animated version supports optional
+`frames` and `interval` parameters and adheres to the pure-render contract
+with a central scheduler.
 
 ```bash
+# Static draw_api
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api"}'
+
+# draw_api_animated adaptive (indefinite)
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
+
+# draw_api_animated adaptive with finite frames (stops after 64 pushes)
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","frames":64}'
+
+# draw_api_animated fixed interval 150ms, 100 frames
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","interval":150,"frames":100}'
 ```
 
 ### `performance-test`
