@@ -4,6 +4,14 @@
   <img src="pixxo_opener.png" alt="Pixoo Daemon" width="600">
 </p>
 
+<p align="center">
+  
+  [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pixoo-daemon)
+  [![Version](https://img.shields.io/badge/version-v1.1-blue)](#-observability)
+  [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+
+</p>
+
 Pixoo Daemon is a friendly, MQTT-driven scene renderer for the Divoom Pixoo 64.
 It listens to MQTT messages, manages scenes, and renders pixels with an upbeat
 vibe and a professional, production-ready architecture.
@@ -45,6 +53,7 @@ visuals – all under your control with a few simple MQTT messages.
 - [Local Development](#-local-development)
 - [Testing & Live Recipes](#-testing--live-recipes)
 - [Observability](#-observability)
+- [Changelog](#-changelog)
 - [FAQ](#-faq)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
@@ -228,6 +237,18 @@ Payload keys include `currentScene`, `targetScene`, `status`, `generationId`,
 the right build is live before running tests.
 
 Each successful `push()` also emits `pixoo/<ip>/ok` with per-frame metrics.
+
+---
+
+## 📝 Changelog
+
+- v1.1
+  - Centralized scheduler and pure-render scenes
+  - Input gating for stale frames; per-device state mirrored to MQTT
+  - Performance scene improvements; animated demo with frames cap and completion
+  - Expanded docs (README, MQTT commands) and live test scripts
+
+Older history lives in commits and `docs/BACKLOG.md` with build/commit evidence.
 
 ---
 
