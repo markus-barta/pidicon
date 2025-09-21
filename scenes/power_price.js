@@ -196,15 +196,10 @@ const SCENE_CONFIG = {
  * Migrated from Node-RED POWER_PRICE_RENDERER function node
  */
 async function render(context) {
-  logger.debug('🎬 [POWER_PRICE] Render function called');
-
   // Validate context
   if (!SceneUtils.validateContext(context, 'power_price')) {
-    logger.error('❌ [POWER_PRICE] Context validation failed, aborting render');
     return null;
   }
-
-  logger.debug('✅ [POWER_PRICE] Context validation passed');
 
   const {
     device,
