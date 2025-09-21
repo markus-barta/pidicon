@@ -17,6 +17,7 @@ async function testPowerPrice() {
     // Create test context
     const context = {
       device,
+      state: new Map(), // Required for validation
       payload: {
         // Test data - normally would come from MQTT
         powerPriceData: {
