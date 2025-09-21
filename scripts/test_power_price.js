@@ -18,6 +18,7 @@ async function testPowerPrice() {
     const context = {
       device,
       state: new Map(), // Required for validation
+      publishOk: () => {}, // Required for device.push
       payload: {
         // Test data - normally would come from MQTT
         powerPriceData: {
@@ -49,7 +50,6 @@ async function testPowerPrice() {
       },
       getState: (key, defaultValue) => defaultValue,
       setState: () => {},
-      publishOk: () => {},
       env: {},
       loopDriven: true,
     };

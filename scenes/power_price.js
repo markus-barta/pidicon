@@ -205,6 +205,7 @@ async function render(context) {
     payload,
     getState,
     setState,
+    publishOk,
     loopDriven: _loopDriven, // eslint-disable-line no-unused-vars
   } = context;
 
@@ -255,6 +256,9 @@ async function render(context) {
     await renderPvData(device, config);
     await renderUviText(device, config, timeInfo);
     await renderPowerPriceChart(device, config, timeInfo);
+
+    // Push the rendered frame to the device
+    await device.push('power_price', publishOk);
 
     // Animation is now time-based, no need to track frame index
 
