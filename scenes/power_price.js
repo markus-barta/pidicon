@@ -201,6 +201,7 @@ async function render(context) {
 
   const {
     device,
+    state, // eslint-disable-line no-unused-vars
     payload,
     getState,
     setState,
