@@ -151,6 +151,45 @@ When parameters are not provided, the scene will:
 - Apply afternoon layout shift based on system time
 - Enable animations by default
 
+### Migration from Node-RED
+
+To migrate from the original Node-RED POWER_PRICE_RENDERER function node:
+
+1. **Replace the function node** with MQTT command nodes
+2. **Map your global contexts** to MQTT payload parameters:
+
+   ```javascript
+   // Instead of: global.get('powerPriceData', 'powerprices')
+   // Use: msg.payload.powerPriceData = global.get('powerPriceData', 'powerprices')
+
+   // Instead of: global.get('currentCentprice', 'powerprices')
+   // Use: msg.payload.currentCentPrice = global.get('currentCentprice', 'powerprices')
+   ```
+
+3. **Send to the daemon topic**: `pixoo/YOUR_DEVICE_IP/state/upd`
+4. **Remove complex logic**: The scene handles time-based shifts, animations, and layout automatically
+
+**Example Migration Flow**:
+
+```javascript
+// Original Node-RED flow
+const priceData = global.get('powerPriceData', 'powerprices');
+const currentPrice = global.get('currentCentprice', 'powerprices');
+const pvData = global.get('dailyPvDataActual');
+// ... complex processing ...
+
+// New MQTT-based flow
+const payload = {
+  scene: 'power_price',
+  powerPriceData: global.get('powerPriceData', 'powerprices'),
+  currentCentPrice: global.get('currentCentprice', 'powerprices'),
+  dailyPvDataActual: global.get('dailyPvDataActual'),
+  // ... other data sources
+};
+
+return { payload: payload, topic: 'pixoo/192.168.1.159/state/upd' };
+```
+
 ## Example Scenes
 
 The `scenes/examples/` directory contains scenes used for testing and
