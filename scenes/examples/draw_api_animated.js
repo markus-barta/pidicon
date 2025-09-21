@@ -53,10 +53,7 @@ const {
   getPerformanceColor,
   validateSceneContext,
 } = require('../../lib/performance-utils');
-const {
-  drawTextWithPixelPerfectBackdrop,
-  BACKGROUND_COLORS,
-} = require('../../lib/rendering-utils');
+const { drawText, BACKGROUND_COLORS } = require('../../lib/rendering-utils');
 
 // --- FPS/frametime overlay utilities (lightweight copies from performance test) ---
 function estimateTextWidth(str) {
@@ -244,7 +241,7 @@ async function renderFrame(context, config) {
   await drawFinalOverlay(device, t);
 
   // Header label with pixel-perfect backdrop
-  await drawTextWithPixelPerfectBackdrop(
+  await drawText(
     device,
     'TEST: ANIMATED',
     [32, 42],
@@ -512,8 +509,8 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
   // Pixel-perfect backdrop with configurable offset (1 pixel around text)
   const BACKDROP_OFFSET = 1;
 
-  // Draw "ANIM" with pixel-perfect backdrop
-  await drawTextWithPixelPerfectBackdrop(
+  // Draw "ANIM" with professional backdrop
+  await drawText(
     device,
     'ANIM',
     [textX, textY],
@@ -523,8 +520,8 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
     BACKDROP_OFFSET,
   );
 
-  // Draw "ATED" with pixel-perfect backdrop
-  await drawTextWithPixelPerfectBackdrop(
+  // Draw "ATED" with professional backdrop
+  await drawText(
     device,
     'ATED',
     [textX, textY + 8],
@@ -542,7 +539,7 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
   setPrev(setState, 'scrollXPrev', scrollX);
   const safeScrollX = Math.max(-20, Math.min(64, Math.round(scrollX)));
 
-  await drawTextWithPixelPerfectBackdrop(
+  await drawText(
     device,
     frameText,
     [safeScrollX, 58],
@@ -613,7 +610,7 @@ module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
 // --- Completion overlay (pixel-perfect backdrop) ---
 async function renderCompletion(device, publishOk) {
   // Use pixel-perfect backdrop for completion text
-  await drawTextWithPixelPerfectBackdrop(
+  await drawText(
     device,
     'COMPLETE',
     [32, 29], // Center position
