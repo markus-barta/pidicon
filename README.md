@@ -17,7 +17,9 @@ Pixoo Daemon is a friendly, MQTT-driven scene renderer for the Divoom Pixoo 64.
 It listens to MQTT messages, manages scenes, and renders pixels with an upbeat
 vibe and a professional, production-ready architecture.
 
-**🚀 v2.0.0 - Stable Release**: Complete architectural overhaul with senior-level code quality, professional error handling, and enterprise-grade robustness. Features centralized scheduling, pixel-perfect text rendering, and maximum code reusability.
+**🚀 v2.0.0 - Stable Release**: Complete architectural overhaul with senior-level code quality,
+professional error handling, and enterprise-grade robustness. Features centralized scheduling,
+pixel-perfect text rendering, and maximum code reusability.
 
 Think: clean code, smart scheduling, rock-solid scene switching, and beautiful
 visuals – all under your control with a few simple MQTT messages.
@@ -49,7 +51,8 @@ visuals – all under your control with a few simple MQTT messages.
 
 ### 🏗️ **Senior-Level Architecture**
 
-- **5 New Professional Modules**: Complete consolidation with `scene-base.js`, `mqtt-utils.js`, `scene-loader.js`, `device-context.js`, and `error-handler.js`
+- **5 New Professional Modules**: Complete consolidation with `scene-base.js`, `mqtt-utils.js`,
+  `scene-loader.js`, `device-context.js`, and `error-handler.js`
 - **Single Responsibility**: Each module has a clear, focused purpose with maximum reusability
 - **Clean Interfaces**: Professional APIs with comprehensive JSDoc documentation
 

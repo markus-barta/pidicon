@@ -36,13 +36,15 @@ control cadence.
 - `advanced_chart.js`: Renders an advanced, dynamic line chart.
 - `empty.js`: A blank scene, used to clear the display.
 - `fill.js`: Fills the entire screen with a solid color.
-- `power_price.js`: **Professional power price display** - Complete migration from Node-RED POWER_PRICE_RENDERER with all features: clock, battery status, PV charts, price charts, UVI, and moon phase.
+- `power_price.js`: **Professional power price display** - Complete migration from Node-RED
+  POWER_PRICE_RENDERER with all features: clock, battery status, PV charts, price charts, UVI, and moon phase.
 - `startup.js`: Displays deployment and version information when the daemon
   starts.
 
 ## Power Price Scene (`power_price.js`)
 
-The `power_price` scene is a professional migration of the Node-RED POWER_PRICE_RENDERER function node. It replicates all the original functionality while using the new daemon architecture.
+The `power_price` scene is a professional migration of the Node-RED POWER_PRICE_RENDERER function node.
+It replicates all the original functionality while using the new daemon architecture.
 
 ### Features
 
