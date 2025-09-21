@@ -44,10 +44,11 @@ mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS
 
 ### `power_price`
 
-Displays a comprehensive electricity pricing dashboard with prices, PV generation, battery status, weather data, and animated clock.
+Displays a comprehensive electricity pricing dashboard with prices, PV generation,
+battery status, weather data, and animated clock.
 
 ```bash
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"power_price","powerPriceData":{"data":{"2025-01-20-14":{"currentCentPrice":25.5},"2025-01-20-15":{"currentCentPrice":23.2}}},"currentCentPrice":24.7,"dailyPvDataActual":[1500,1800,2100],"pvHourlyYieldPrediction":[1600,1900,2200],"batteryStatus":{"USOC":85,"BatteryCharging":false,"BatteryDischarging":true},"uviData":{"currentUvi":[null,5,7]},"enableAnimation":true}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"power_price","currentCentPrice":24.7,"batteryStatus":{"USOC":85},"enableAnimation":true}'
 ```
 
 ---
