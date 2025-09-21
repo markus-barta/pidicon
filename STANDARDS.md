@@ -167,6 +167,61 @@ maintainable system. Always favor clarity, simplicity, and pragmatism.
 
 ---
 
+## 🎨 Rendering & Text Standards {#rendering-text-standards}
+
+### **Text Rendering**
+
+- **Exact Font Metrics**: Always use `FONT_METRICS` for character dimensions, never guess or estimate
+- **Professional Function Names**: Use `drawText()` instead of pixel-perfect monikers
+- **Optional Parameters**: Make backdrop parameters truly optional with sensible defaults
+- **Consistent Naming**: Use `position` instead of `pos`, `alignment` instead of `align`
+- **Font Metric Usage**: Leverage `measureText()` for exact bounds calculation
+
+#### **Text Rendering Best Practices**
+
+```javascript
+// Preferred: Professional API with optional parameters
+await drawText(
+  device,
+  'Hello',
+  [10, 20],
+  [255, 255, 255, 255],
+  'left',
+  [0, 0, 0, 128],
+  1,
+);
+
+// Minimal: Just text at position
+await drawText(device, 'Hello', [10, 20], [255, 255, 255, 255]);
+
+// With backdrop
+await drawText(
+  device,
+  'Complete',
+  [32, 32],
+  [255, 255, 255, 200],
+  'center',
+  BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+  2,
+);
+```
+
+#### **Character Font Specifications**
+
+- **Base Characters**: Use exact pixel widths from `FONT_METRICS.CHARS`
+- **Special Characters**: Account for narrow characters (space: 2px, 'I': 3px, 'M': 5px)
+- **Font Dimensions**: Use `FONT_METRICS.LINE_HEIGHT` (7px) for consistent spacing
+- **Baseline**: Characters sit on `FONT_METRICS.BASELINE` (5px line)
+
+### **Graphics Primitives**
+
+- **Rectangle Drawing**: Use `drawRectangleRgba()` for precise bounds
+- **Line Drawing**: Use `drawLine()` for smooth anti-aliased lines
+- **Text Bounds**: Always calculate exact bounds before drawing backdrops
+- **Device Limits**: Ensure all rendering stays within 64x64 pixel bounds
+
+---
+
 ## 🐟 Shell Standards {#shell-standards}
 
 - **Command Line Usage**: For local or server-side shell commands, prefer the use
