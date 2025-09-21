@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "mqtt": "^5.9.0",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "suncalc": "^1.9.0"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx}": [

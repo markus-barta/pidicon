@@ -8,6 +8,8 @@
  * @stability Production-grade with comprehensive error handling
  */
 
+const SunCalc = require('suncalc');
+
 const { drawVerticalGradientLine } = require('../lib/gradient-renderer');
 const logger = require('../lib/logger');
 const { drawText } = require('../lib/rendering-utils');
@@ -50,7 +52,10 @@ const SCENE_CONFIG = {
     POWER_PRICE: {
       position: [12, 52], // Top-left position FOR DRAWING BARS
       maxHeight: 20,
-      BLINK: { MAX_ALPHA: 255, MIN_ALPHA: 125 },
+      BLINK: {
+        MAX_ALPHA: 255,
+        MIN_ALPHA: 125,
+      },
       GRID: {
         startPos: [12, 23], // Top-left corner [x, y]
         endPos: [60, 53], // Bottom-right corner [x, y]
@@ -77,6 +82,15 @@ const SCENE_CONFIG = {
         negative: [0, 255, 0, 255],
         overflow: [255, 0, 0, 255],
       },
+      ZERO_LINE_MARKER: {
+        enabled: true,
+        color: [0, 0, 0, 90],
+        pastAlpha: 70,
+      },
+      CURRENT_HOUR_INDICATOR: {
+        enabled: true,
+        color: [255, 255, 255, 220],
+      },
       settings: {
         maxHoursToDraw: 26,
         zeroThreshold: 0.005,
@@ -87,53 +101,53 @@ const SCENE_CONFIG = {
   // Image assets configuration
   IMAGES: {
     PRICE_BACKGROUND: {
-      path: '/pixoo-media/header-price-bg-10px.png',
+      path: 'scenes/media/header-price-bg-10px.png',
       dimensions: [64, 10],
       position: [0, 0],
     },
     PV_BACKGROUND: {
-      path: '/pixoo-media/header-pv-bg.png',
+      path: 'scenes/media/header-pv-bg.png',
       dimensions: [64, 10],
       position: [0, 10],
     },
     BATTERY: {
-      path: '/pixoo-media/battery-icon.png',
+      path: 'scenes/media/battery-icon.png',
       dimensions: [13, 6],
       position: [26, 2],
       alpha: 250,
       fillframe: [1, 1, 10, 3],
     },
     CENT_SIGN: {
-      path: '/pixoo-media/cent-sign.png',
+      path: 'scenes/media/cent-sign.png',
       dimensions: [4, 5],
       position: [56, 2],
       alpha: 250,
     },
     KWH_UNIT: {
-      path: '/pixoo-media/kWh-black.png',
+      path: 'scenes/media/kWh-black.png',
       dimensions: [11, 4],
       position: [13, 13],
       alpha: 250,
     },
     SUN: {
-      path: '/pixoo-media/sun.png',
+      path: 'scenes/media/sun.png',
       dimensions: [9, 9],
       position: [32, 19],
       alpha: 225,
     },
     MOON: {
-      path: '/pixoo-media/moon.png',
+      path: 'scenes/media/moon.png',
       dimensions: [5, 5],
       position: [58, 21],
       alpha: 225,
     },
     CHARGE_LIGHTNING: {
-      path: '/pixoo-media/charge-lightning.png',
+      path: 'scenes/media/charge-lightning.png',
       position: [38, 2],
       dimensions: [6, 6],
     },
     DISCHARGE_LIGHTNING: {
-      path: '/pixoo-media/discharge-lightning.png',
+      path: 'scenes/media/discharge-lightning.png',
       position: [21, 2],
       dimensions: [6, 6],
     },
@@ -232,7 +246,7 @@ async function render(context) {
     // Render all components
     await renderBackground(device);
     await renderGrid(device);
-    await renderImages(device, timeInfo, config);
+    await renderImages(device, timeInfo);
     await renderClock(device, config);
     await renderBattery(device, config);
     await renderPriceText(device, config);
@@ -240,11 +254,7 @@ async function render(context) {
     await renderUviText(device, config, timeInfo);
     await renderPowerPriceChart(device, config, timeInfo);
 
-    // Update animation state
-    const animationIndex = getState('animationIndex', 0);
-    const newAnimationIndex =
-      (animationIndex + 1) % (SCENE_CONFIG.FLOW_ANI_INDEX_MAX + 1);
-    setState('animationIndex', newAnimationIndex);
+    // Animation is now time-based, no need to track frame index
 
     // Handle frame counting
     const frameCounter = new FrameCounter(getState, setState);
@@ -286,6 +296,39 @@ function getTimeInfo(config) {
 }
 
 /**
+ * Calculate moon phase filename based on SunCalc
+ */
+function getMoonPhaseFilename(date = new Date()) {
+  // Coordinates for calculation (Graz, Austria) - Adjust if needed
+  const lat = 47.07;
+  const lng = 15.44;
+
+  try {
+    // Calculate moon illumination details
+    const moonIllumination = SunCalc.getMoonIllumination(date, lat, lng);
+    const phaseValue = moonIllumination.phase; // Phase: 0=New, 0.5=Full, 1=New
+
+    // Phase calculation: shift so 0 = Full moon, 0.5 = New moon
+    const shiftedPhase = (phaseValue + 0.5) % 1.0;
+    // Map shifted phase to index 0-25
+    let imageIndex = Math.round(shiftedPhase * 25);
+    // Ensure index stays in range 0-25
+    imageIndex = Math.max(0, Math.min(25, imageIndex));
+
+    // Format the index with leading zero (e.g., 5 -> "05")
+    const formattedPhase = imageIndex.toString().padStart(2, '0');
+    const imagePath = `scenes/media/moonphase/5x5/Moon_${formattedPhase}.png`;
+    logger.debug(
+      `Moon phase: ${phaseValue.toFixed(2)}, Index: ${imageIndex}, Path: ${imagePath}`,
+    );
+    return imagePath;
+  } catch (error) {
+    logger.warn('Error calculating moon phase: ' + error.message);
+    return 'scenes/media/moon.png'; // Fallback to static moon
+  }
+}
+
+/**
  * Apply afternoon layout shift to all configurations
  */
 function applyAfternoonShift(isAfterNoon) {
@@ -305,6 +348,7 @@ function applyAfternoonShift(isAfterNoon) {
   // Shift text positions
   SCENE_CONFIG.TEXTS.PV_TOTAL.position[0] -= shift;
   SCENE_CONFIG.TEXTS.PV_PREDICTION_TOTAL.position[0] -= shift;
+  SCENE_CONFIG.TEXTS.UVI.position[0] -= shift;
 }
 
 /**
@@ -318,18 +362,16 @@ async function renderBackground(device) {
     SCENE_CONFIG.IMAGES.CENT_SIGN,
     SCENE_CONFIG.IMAGES.KWH_UNIT,
     SCENE_CONFIG.IMAGES.SUN,
-    SCENE_CONFIG.IMAGES.MOON,
   ];
 
   for (const image of images) {
     if (image.path) {
       try {
-        // Note: drawImageWithAlpha would need to be implemented or use drawText
-        await device.drawTextRgbaAligned(
-          image.path.split('/').pop().replace('.png', ''),
+        await device.drawImageWithAlpha(
+          image.path,
           image.position,
-          [100, 100, 100, image.alpha || 255],
-          'left',
+          image.dimensions,
+          image.alpha || 255,
         );
       } catch (error) {
         logger.debug(`Error rendering image ${image.path}: ${error.message}`);
@@ -394,10 +436,10 @@ async function renderClock(device, config) {
   const minute = timeInfo.minute.toString().padStart(2, '0');
 
   // Get current animation state for separator blinking
-  const animationIndex = config.enableAnimation
-    ? config.animationIndex || 0
-    : 0;
-  const separatorAlpha = calculateSeparatorAlpha(animationIndex);
+  const currentTime = Date.now();
+  const separatorAlpha = config.enableAnimation
+    ? calculateSeparatorAlpha(currentTime)
+    : SCENE_CONFIG.CLOCK.separator.baseAlpha;
   const separatorColor = [
     ...SCENE_CONFIG.CLOCK.color.slice(0, 3),
     separatorAlpha,
@@ -465,16 +507,22 @@ async function renderClock(device, config) {
 }
 
 /**
- * Calculate separator alpha for blinking effect
+ * Calculate separator alpha for blinking effect using time-based animation
  */
-function calculateSeparatorAlpha(animationIndex) {
-  const { minAlpha, maxAlpha, fadeDelta } = SCENE_CONFIG.CLOCK.separator; // eslint-disable-line no-unused-vars
-  const normalizedProgress = Math.abs(
-    (animationIndex / SCENE_CONFIG.FLOW_ANI_INDEX_MAX) * 2 - 1,
-  );
-  const fadeStartOpacity = minAlpha;
-  const fadeMaxOpacity = maxAlpha - fadeStartOpacity;
-  const alpha = fadeStartOpacity + normalizedProgress * fadeMaxOpacity;
+function calculateSeparatorAlpha(currentTime) {
+  const { minAlpha, maxAlpha } = SCENE_CONFIG.CLOCK.separator;
+
+  // Create a smooth pulsing effect based on time
+  // Complete cycle every 2 seconds (1 second fade out, 1 second fade in)
+  const cycleTime = 2000; // milliseconds
+  const progress = (currentTime % cycleTime) / cycleTime;
+
+  // Use sine wave for smooth transition
+  // 0 -> 1 -> 0 over the cycle
+  const sineProgress = Math.sin(progress * Math.PI * 2);
+  const normalizedProgress = (sineProgress + 1) / 2; // Convert -1,1 to 0,1
+
+  const alpha = minAlpha + (maxAlpha - minAlpha) * normalizedProgress;
   return Math.floor(alpha);
 }
 
@@ -530,11 +578,14 @@ async function renderBattery(device, config) {
     }
   }
 
-  // Render charge/discharge indicator
-  const animationIndex = config.animationIndex || 0;
-  const normalizedProgress = Math.abs(
-    (animationIndex / SCENE_CONFIG.FLOW_ANI_INDEX_MAX) * 2 - 1,
-  );
+  // Render charge/discharge indicator with time-based animation
+  const currentTime = Date.now();
+  // Faster pulsing for battery status (1.5 second cycle)
+  const cycleTime = 1500;
+  const progress = (currentTime % cycleTime) / cycleTime;
+  const sineProgress = Math.sin(progress * Math.PI * 2);
+  const normalizedProgress = Math.abs(sineProgress);
+
   const fadeStartOpacity = 10;
   const fadeMaxOpacity = 255 - fadeStartOpacity;
   const statusImgAlpha = Math.floor(
@@ -542,20 +593,18 @@ async function renderBattery(device, config) {
   );
 
   if (batteryStatus.BatteryCharging) {
-    await drawText(
-      device,
-      '⚡',
+    await device.drawImageWithAlpha(
+      SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.path,
       SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.position,
-      [255, 255, 255, statusImgAlpha],
-      'left',
+      SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.dimensions,
+      statusImgAlpha,
     );
   } else if (batteryStatus.BatteryDischarging) {
-    await drawText(
-      device,
-      '⚡',
+    await device.drawImageWithAlpha(
+      SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.path,
       SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.position,
-      [255, 255, 255, statusImgAlpha],
-      'left',
+      SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.dimensions,
+      statusImgAlpha,
     );
   }
 }
@@ -807,18 +856,70 @@ async function drawPriceChart(device, prices) {
     config.settings.maxHoursToDraw * 2,
   );
 
-  const _zeroLineY = config.position[1] + 1; // eslint-disable-line no-unused-vars
+  const zeroLineY = config.position[1] + 1;
 
   for (let i = 0; i < prices.length; i++) {
     const x = xStart + i * 2;
     if (x >= xStart + maxPixels) break;
 
     const pricePoint = prices[i] || {};
+    const isPastHour = pricePoint.isPastHour ?? false;
+
+    // Draw zero line marker if enabled
+    if (config.ZERO_LINE_MARKER?.enabled) {
+      await drawZeroLineMarker(device, x, zeroLineY, isPastHour);
+    }
+
     const priceData = extractPriceData(pricePoint, config, prices);
 
     if (typeof priceData?.price === 'number') {
       await renderPriceBar(device, priceData, config, x);
     }
+
+    // Draw current hour indicator (triangle) if this is the current hour
+    if (pricePoint.isCurrent && config.CURRENT_HOUR_INDICATOR?.enabled) {
+      await drawCurrentHourIndicator(device, x, config);
+    }
+  }
+}
+
+/**
+ * Draw a marker at the zero line position
+ */
+async function drawZeroLineMarker(device, x, y, isPastHour) {
+  const markerConfig = SCENE_CONFIG.CHART.POWER_PRICE.ZERO_LINE_MARKER;
+  const baseColor = markerConfig.color;
+  const alpha = isPastHour ? markerConfig.pastAlpha : baseColor[3];
+  const color = [...baseColor.slice(0, 3), alpha];
+
+  try {
+    await device.drawPixelRgba([x, y], color);
+  } catch (error) {
+    logger.debug(`Zero line marker error at [${x}, ${y}]: ${error.message}`);
+  }
+}
+
+/**
+ * Draw current hour indicator (triangle shape)
+ */
+async function drawCurrentHourIndicator(device, x, config) {
+  const indicatorConfig = config.CURRENT_HOUR_INDICATOR;
+  const color = indicatorConfig.color;
+  const yOffset = 2;
+
+  // Triangle pointing up: one pixel at top, three pixels at bottom
+  const yTip = SCENE_CONFIG.GRID_ZERO_LINE_Y + yOffset + 1;
+  const yBase = SCENE_CONFIG.GRID_ZERO_LINE_Y + yOffset + 2;
+
+  try {
+    // Top point
+    await device.drawPixelRgba([x, yTip], color);
+    // Base row (3 pixels)
+    await device.drawPixelRgba([x - 1, yBase], color);
+    await device.drawPixelRgba([x, yBase], color);
+    await device.drawPixelRgba([x + 1, yBase], color);
+  } catch (error) {
+    logger.debug(`Current hour indicator error at x=${x}: ${error.message}`);
   }
 }
 
@@ -933,6 +1034,12 @@ function calculateOverflowPixels(price, linearCap) {
 async function renderPriceBar(device, priceData, config, x) {
   const barColors = determineBarColors(priceData, config.colors);
 
+  // Calculate blink state for overflow prices
+  const currentTime = Date.now();
+  const blinkCycle = 1000; // 1 second cycle (500ms on, 500ms off)
+  const blinkProgress = (currentTime % blinkCycle) / blinkCycle;
+  const isBlinkOn = blinkProgress < 0.5;
+
   if (priceData.isNegative) {
     await drawNegativePrice(device, priceData, config, x);
   } else if (
@@ -942,9 +1049,16 @@ async function renderPriceBar(device, priceData, config, x) {
   ) {
     await drawZeroPrice(device, priceData, config, x);
   } else {
-    await drawPositiveBar(device, priceData, config, x, barColors);
+    await drawPositiveBar(device, priceData, config, x, barColors, isBlinkOn);
     if (priceData.isOverflow) {
-      await drawOverflowPixels(device, priceData, config, x, barColors);
+      await drawOverflowPixels(
+        device,
+        priceData,
+        config,
+        x,
+        barColors,
+        isBlinkOn,
+      );
     }
   }
 }
@@ -1014,10 +1128,29 @@ async function drawZeroPrice(device, priceData, config, x) {
 /**
  * Draw positive price bar
  */
-async function drawPositiveBar(device, priceData, config, x, barColors) {
-  const { bottomY, fullPixels } = priceData;
+async function drawPositiveBar(
+  device,
+  priceData,
+  config,
+  x,
+  barColors,
+  isBlinkOn,
+) {
+  const { bottomY, fullPixels, remainder, isOverflow } = priceData;
   const barHeight = fullPixels;
   const topY = bottomY - barHeight + 1;
+
+  // Calculate top pixel alpha
+  let topPixelAlpha = undefined;
+  if (remainder > 0) {
+    const baseAlpha = calculateTopPixelAlpha(remainder, 0, 255);
+    // Apply blinking to top pixel if this is an overflow bar
+    if (isOverflow && baseAlpha !== undefined) {
+      topPixelAlpha = isBlinkOn ? baseAlpha : config.BLINK.MIN_ALPHA;
+    } else {
+      topPixelAlpha = baseAlpha;
+    }
+  }
 
   await drawVerticalGradientLine(
     device,
@@ -1025,23 +1158,46 @@ async function drawPositiveBar(device, priceData, config, x, barColors) {
     [x, bottomY],
     barColors.endColor,
     barColors.startColor,
-    undefined,
+    topPixelAlpha,
     'start',
   );
 }
 
 /**
+ * Calculate alpha for the top pixel based on remainder
+ */
+function calculateTopPixelAlpha(remainder, minAlpha, maxAlpha) {
+  if (remainder <= 0) return undefined;
+  const cappedRemainder = Math.min(remainder, 1.0);
+  const interpolatedAlpha = minAlpha + (maxAlpha - minAlpha) * cappedRemainder;
+  return Math.max(0, Math.min(255, Math.round(interpolatedAlpha)));
+}
+
+/**
  * Draw overflow pixels
  */
-async function drawOverflowPixels(device, priceData, config, x, barColors) {
+async function drawOverflowPixels(
+  device,
+  priceData,
+  config,
+  x,
+  barColors,
+  isBlinkOn,
+) {
   const { bottomY, fullPixels, overflowPixels } = priceData;
   const overflowStartY = bottomY - fullPixels;
+
+  // Apply blinking alpha to overflow pixels
+  const overflowAlpha = isBlinkOn
+    ? config.BLINK.MAX_ALPHA
+    : config.BLINK.MIN_ALPHA;
+  const baseColor = config.colors.overflow;
+  const color = [...baseColor.slice(0, 3), overflowAlpha];
 
   for (const pixel of overflowPixels) {
     const positionOffset =
       typeof pixel.position === 'number' ? pixel.position : 0;
     const pixelY = overflowStartY - positionOffset - 1;
-    const color = barColors.endColor; // Use the bar's end color for overflow
     await device.drawPixelRgba([x, pixelY], color);
   }
 }
@@ -1049,23 +1205,30 @@ async function drawOverflowPixels(device, priceData, config, x, barColors) {
 /**
  * Render images that depend on data (like moon phase)
  */
-async function renderImages(device, timeInfo, config) {
-  // Moon phase rendering - use data from config if available
-  const moonPhaseData = config.moonPhaseData;
+async function renderImages(device, timeInfo) {
+  // Update moon image path based on moon phase
+  const moonPath = getMoonPhaseFilename(timeInfo.currentDate);
+  const moonConfig = SCENE_CONFIG.IMAGES.MOON;
 
-  // For now, render static moon emoji
-  // TODO: Implement actual moon phase rendering when moonPhaseData is available
-  await drawText(
-    device,
-    '🌙',
-    SCENE_CONFIG.IMAGES.MOON.position,
-    [255, 255, 255, timeInfo.isDaytime ? 225 : 255],
-    'left',
-  );
+  // Update alpha based on day/night
+  const moonAlpha = timeInfo.isDaytime ? 225 : 255;
 
-  // Log if moon phase data is available for future implementation
-  if (moonPhaseData) {
-    logger.debug('Moon phase data available:', moonPhaseData);
+  try {
+    await device.drawImageWithAlpha(
+      moonPath,
+      moonConfig.position,
+      moonConfig.dimensions,
+      moonAlpha,
+    );
+  } catch (error) {
+    logger.debug(`Error rendering moon phase: ${error.message}`);
+    // Fallback to static moon
+    await device.drawImageWithAlpha(
+      'scenes/media/moon.png',
+      moonConfig.position,
+      moonConfig.dimensions,
+      moonAlpha,
+    );
   }
 }
 
