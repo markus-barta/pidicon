@@ -28,6 +28,9 @@ async function render(context) {
   await device.push(name, publishOk);
 
   logger.debug(`🖤 [EMPTY] Screen cleared to black`);
+
+  // Static scene - signal completion by returning null
+  return null;
 }
 
 function cleanup() {
