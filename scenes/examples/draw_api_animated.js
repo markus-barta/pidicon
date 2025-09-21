@@ -120,6 +120,7 @@ class AnimatedV2State {
     this.setState('startTime', now);
     this.setState('framesRendered', 0);
     this.setState('frameCount', 0);
+    this.setState('framesPushed', 0); // Reset frame counting for new scene
     // metrics
     this.setState('minFrametime', Infinity);
     this.setState('maxFrametime', 0);
