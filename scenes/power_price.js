@@ -187,8 +187,8 @@ async function render(context) {
     payload,
     getState,
     setState,
-    loopDriven: _loopDriven,
-  } = context; // eslint-disable-line no-unused-vars
+    loopDriven: _loopDriven, // eslint-disable-line no-unused-vars
+  } = context;
 
   try {
     // Get configuration from payload or use defaults
@@ -1025,7 +1025,6 @@ async function drawPositiveBar(device, priceData, config, x, barColors) {
  * Draw overflow pixels
  */
 async function drawOverflowPixels(device, priceData, config, x, barColors) {
-  // eslint-disable-line no-unused-vars
   const { bottomY, fullPixels, overflowPixels } = priceData;
   const overflowStartY = bottomY - fullPixels;
 
@@ -1033,7 +1032,7 @@ async function drawOverflowPixels(device, priceData, config, x, barColors) {
     const positionOffset =
       typeof pixel.position === 'number' ? pixel.position : 0;
     const pixelY = overflowStartY - positionOffset - 1;
-    const color = config.colors.overflow;
+    const color = barColors.endColor; // Use the bar's end color for overflow
     await device.drawPixelRgba([x, pixelY], color);
   }
 }
