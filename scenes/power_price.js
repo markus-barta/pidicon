@@ -1,11 +1,10 @@
 /**
  * @fileoverview Power Price Scene - Professional Power Price Renderer
- * @description Migrated from Node-RED POWER_PRICE_RENDERER function node to work with
- * the new Pixoo Daemon architecture. Replicates all functionality with professional
- * code quality and full parameter configurability.
+ * @description Comprehensive electricity pricing dashboard displaying real-time prices,
+ * PV generation, battery status, weather data, and animated digital clock optimized
+ * for 64x64 pixel displays with professional rendering quality.
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
- * @stability Production-grade with comprehensive error handling
  */
 
 const SunCalc = require('suncalc');

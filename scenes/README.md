@@ -36,15 +36,16 @@ control cadence.
 - `advanced_chart.js`: Renders an advanced, dynamic line chart.
 - `empty.js`: A blank scene, used to clear the display.
 - `fill.js`: Fills the entire screen with a solid color.
-- `power_price.js`: **Professional power price display** - Complete migration from Node-RED
-  POWER_PRICE_RENDERER with all features: clock, battery status, PV charts, price charts, UVI, and moon phase.
+- `power_price.js`: **Comprehensive power price dashboard** - Displays electricity prices,
+  PV generation, battery status, weather data, and a digital clock with animated elements.
 - `startup.js`: Displays deployment and version information when the daemon
   starts.
 
 ## Power Price Scene (`power_price.js`)
 
-The `power_price` scene is a professional migration of the Node-RED POWER_PRICE_RENDERER function node.
-It replicates all the original functionality while using the new daemon architecture.
+The `power_price` scene displays a comprehensive electricity pricing dashboard with real-time data visualization.
+It combines electricity prices, photovoltaic generation, battery status, weather information, and a digital clock
+in an animated, professional display optimized for the 64x64 pixel screen.
 
 ### Features
 
@@ -109,6 +110,13 @@ mosquitto_pub -h $HOST -t "pixoo/$DEVICE_IP/state/upd" -m '{
   "dailyPvDataActual": [1200, 1800, 2400, 3000, 2800, 2200, 1500, 800],
   "batteryStatus": {"USOC": 85, "BatteryCharging": false}
 }'
+```
+
+### MQTT Command
+
+```bash
+# Basic power price dashboard
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"power_price","currentCentPrice":24.7,"batteryStatus":{"USOC":85},"enableAnimation":true}'
 ```
 
 **Complete Configuration**:
