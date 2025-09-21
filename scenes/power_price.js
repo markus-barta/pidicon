@@ -1237,9 +1237,19 @@ async function renderImages(device, timeInfo) {
 const name = 'power_price';
 const wantsLoop = true;
 
+function init() {
+  logger.debug(`🚀 [POWER_PRICE] Scene initialized`);
+}
+
+function cleanup() {
+  logger.debug(`🧹 [POWER_PRICE] Scene cleaned up`);
+}
+
 // Export scene interface
 module.exports = {
   name,
   render,
+  init,
+  cleanup,
   wantsLoop,
 };
