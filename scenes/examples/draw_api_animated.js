@@ -54,7 +54,7 @@ const {
   validateSceneContext,
 } = require('../../lib/performance-utils');
 const {
-  drawTextRgbaAlignedWithBg,
+  drawTextWithPixelPerfectBackdrop,
   BACKGROUND_COLORS,
 } = require('../../lib/rendering-utils');
 
@@ -243,15 +243,15 @@ async function renderFrame(context, config) {
   await drawParticleSystem(device, t, getState, setState, maxDelta);
   await drawFinalOverlay(device, t);
 
-  // Header label
-  await drawTextRgbaAlignedWithBg(
+  // Header label with pixel-perfect backdrop
+  await drawTextWithPixelPerfectBackdrop(
     device,
     'TEST: ANIMATED',
     [32, 42],
-    [0, 200, 255, 178], // 70% opacity
+    [0, 200, 255, 178], // Cyan text with transparency
     'center',
-    true,
-    [0, 0, 0, 102], // 40% opacity background
+    [0, 0, 0, 102], // Semi-transparent black backdrop
+    1, // 1-pixel offset
   );
 
   // Status line: FPS, ms (use color scale from performance utils)
@@ -508,42 +508,48 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
   const textY = stepTowards(textYPrev, textYTarget, maxDelta);
   setPrev(setState, 'textXPrev', textX);
   setPrev(setState, 'textYPrev', textY);
-  await device.drawTextRgbaAligned(
-    'ANIM',
-    [textX + 1, textY + 1],
-    [0, 0, 0, 120],
-    'center',
-  );
-  await device.drawTextRgbaAligned(
-    'ATED',
-    [textX + 1, textY + 9],
-    [0, 0, 0, 120],
-    'center',
-  );
-  await device.drawTextRgbaAligned(
+
+  // Pixel-perfect backdrop with configurable offset (1 pixel around text)
+  const BACKDROP_OFFSET = 1;
+
+  // Draw "ANIM" with pixel-perfect backdrop
+  await drawTextWithPixelPerfectBackdrop(
+    device,
     'ANIM',
     [textX, textY],
-    [255, 255, 255, 255],
+    [255, 255, 255, 255], // White text
     'center',
-  );
-  await device.drawTextRgbaAligned(
-    'ATED',
-    [textX, textY + 8],
-    [255, 200, 100, 255],
-    'center',
+    [0, 0, 0, 120], // Semi-transparent black backdrop
+    BACKDROP_OFFSET,
   );
 
+  // Draw "ATED" with pixel-perfect backdrop
+  await drawTextWithPixelPerfectBackdrop(
+    device,
+    'ATED',
+    [textX, textY + 8],
+    [255, 200, 100, 255], // Orange text
+    'center',
+    [0, 0, 0, 120], // Semi-transparent black backdrop
+    BACKDROP_OFFSET,
+  );
+
+  // Draw scrolling frame counter with pixel-perfect backdrop
   const frameText = `F:${getState('frameCount') || 0}`;
   const scrollTarget = 64 - ((t * 30) % (64 + 40));
   const scrollPrev = getPrev(getState, 'scrollXPrev', scrollTarget);
   const scrollX = stepTowards(scrollPrev, scrollTarget, maxDelta);
   setPrev(setState, 'scrollXPrev', scrollX);
   const safeScrollX = Math.max(-20, Math.min(64, Math.round(scrollX)));
-  await device.drawTextRgbaAligned(
+
+  await drawTextWithPixelPerfectBackdrop(
+    device,
     frameText,
     [safeScrollX, 58],
-    [200, 200, 200, 180],
+    [200, 200, 200, 180], // Light gray text
     'left',
+    [0, 0, 0, 100], // More transparent black backdrop for scrolling text
+    BACKDROP_OFFSET,
   );
 }
 
@@ -604,24 +610,18 @@ const wantsLoop = true;
 
 module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
 
-// --- Completion overlay (centered box + text with slight x nudge) ---
+// --- Completion overlay (pixel-perfect backdrop) ---
 async function renderCompletion(device, publishOk) {
-  const boxWidth = 40;
-  const boxHeight = 10;
-  const left = Math.max(0, Math.floor((64 - boxWidth) / 2));
-  const top = Math.max(0, Math.floor((64 - boxHeight) / 2));
-  await device.fillRectangleRgba(
-    [left, top],
-    [boxWidth, boxHeight],
-    BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-  );
-  await drawTextRgbaAlignedWithBg(
+  // Use pixel-perfect backdrop for completion text
+  await drawTextWithPixelPerfectBackdrop(
     device,
     'COMPLETE',
-    [32 + 1, 29],
-    [255, 255, 255, 200],
+    [32, 29], // Center position
+    [255, 255, 255, 200], // White text with transparency
     'center',
-    false,
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_75, // Semi-transparent black backdrop
+    2, // 2-pixel offset for more prominent backdrop
   );
+
   await device.push(SCENE_NAME, publishOk);
 }
