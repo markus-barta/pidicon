@@ -48,7 +48,7 @@ Displays a comprehensive electricity pricing dashboard with prices, PV generatio
 battery status, weather data, and animated clock.
 
 ```bash
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"power_price","currentCentPrice":24.7,"batteryStatus":{"USOC":85},"enableAnimation":true}'
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"power_price","currentCentPrice":24.7,"batteryStatus":{"USOC":85},"enableAnimation":true,"enableFPS":false}'
 ```
 
 ---

@@ -6,7 +6,7 @@
  * @mqtt
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
  *   -t "pixoo/192.168.1.159/state/upd" \
- *   -m '{"scene":"power_price","powerPriceData":{"data":{"2025-01-20-08":{"currentCentPrice":12.5},"2025-01-20-09":{"currentCentPrice":15.2},"2025-01-20-10":{"currentCentPrice":18.7},"2025-01-20-11":{"currentCentPrice":22.1},"2025-01-20-12":{"currentCentPrice":25.5},"2025-01-20-13":{"currentCentPrice":28.9},"2025-01-20-14":{"currentCentPrice":24.7},"2025-01-20-15":{"currentCentPrice":21.3},"2025-01-20-16":{"currentCentPrice":18.0},"2025-01-20-17":{"currentCentPrice":15.5},"2025-01-20-18":{"currentCentPrice":13.2},"2025-01-20-19":{"currentCentPrice":11.8},"2025-01-20-20":{"currentCentPrice":10.5},"2025-01-20-21":{"currentCentPrice":9.8},"2025-01-20-22":{"currentCentPrice":9.2},"2025-01-20-23":{"currentCentPrice":8.9},"2025-01-20-00":{"currentCentPrice":8.5},"2025-01-20-01":{"currentCentPrice":8.2},"2025-01-20-02":{"currentCentPrice":8.0},"2025-01-20-03":{"currentCentPrice":7.8},"2025-01-20-04":{"currentCentPrice":7.6},"2025-01-20-05":{"currentCentPrice":7.5},"2025-01-20-06":{"currentCentPrice":8.1},"2025-01-20-07":{"currentCentPrice":10.3}}},"currentCentPrice":24.7,"dailyPvDataActual":[800,1200,1600,2000,2400,2800,2400,2000,1600,1200,800,400,200,100,50,25,10,5,0,0,0,0,0,0],"pvHourlyYieldPrediction":[900,1300,1700,2100,2500,2900,2500,2100,1700,1300,900,500,300,150,75,35,15,8,0,0,0,0,0,0],"batteryStatus":{"USOC":75,"BatteryCharging":false,"BatteryDischarging":true},"uviData":{"currentUvi":[null,6.5,7.2]},"enableAnimation":true}'
+ *   -m '{"scene":"power_price","powerPriceData":{"data":{"2025-01-20-08":{"currentCentPrice":12.5},"2025-01-20-09":{"currentCentPrice":15.2},"2025-01-20-10":{"currentCentPrice":18.7},"2025-01-20-11":{"currentCentPrice":22.1},"2025-01-20-12":{"currentCentPrice":25.5},"2025-01-20-13":{"currentCentPrice":28.9},"2025-01-20-14":{"currentCentPrice":24.7},"2025-01-20-15":{"currentCentPrice":21.3},"2025-01-20-16":{"currentCentPrice":18.0},"2025-01-20-17":{"currentCentPrice":15.5},"2025-01-20-18":{"currentCentPrice":13.2},"2025-01-20-19":{"currentCentPrice":11.8},"2025-01-20-20":{"currentCentPrice":10.5},"2025-01-20-21":{"currentCentPrice":9.8},"2025-01-20-22":{"currentCentPrice":9.2},"2025-01-20-23":{"currentCentPrice":8.9},"2025-01-20-00":{"currentCentPrice":8.5},"2025-01-20-01":{"currentCentPrice":8.2},"2025-01-20-02":{"currentCentPrice":8.0},"2025-01-20-03":{"currentCentPrice":7.8},"2025-01-20-04":{"currentCentPrice":7.6},"2025-01-20-05":{"currentCentPrice":7.5},"2025-01-20-06":{"currentCentPrice":8.1},"2025-01-20-07":{"currentCentPrice":10.3}}},"currentCentPrice":24.7,"dailyPvDataActual":[800,1200,1600,2000,2400,2800,2400,2000,1600,1200,800,400,200,100,50,25,10,5,0,0,0,0,0,0],"pvHourlyYieldPrediction":[900,1300,1700,2100,2500,2900,2500,2100,1700,1300,900,500,300,150,75,35,15,8,0,0,0,0,0,0],"batteryStatus":{"USOC":75,"BatteryCharging":false,"BatteryDischarging":true},"uviData":{"currentUvi":[null,6.5,7.2]},"enableAnimation":true,"enableFPS":false}'
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */
@@ -72,6 +72,8 @@ const SCENE_CONFIG = {
         vertical: {
           count: 5,
           color: [125, 125, 125, 70],
+          minAlpha: 30,
+          alphaRange: 40,
         },
       },
       colors: {
@@ -227,6 +229,7 @@ async function render(context) {
       // Configuration options
       enableDebug: false,
       enableAnimation: true,
+      enableFPS: false,
       frames: null, // null for continuous, number for limited frames
     });
 
@@ -245,6 +248,9 @@ async function render(context) {
     // Get current time info (normally from global.get('suncalc') and time functions)
     const timeInfo = getTimeInfo(config);
 
+    // Clear display to prevent overdrawing of semi-transparent elements
+    await device.clear();
+
     // Apply afternoon layout shift if needed
     applyAfternoonShift(timeInfo.isAfterNoon);
 
@@ -255,12 +261,16 @@ async function render(context) {
     await renderClock(device, config);
     await renderBattery(device, config);
     await renderPriceText(device, config);
-    await renderPvData(device, config);
+    await renderPvData(device, config, timeInfo);
     await renderUviText(device, config, timeInfo);
     await renderPowerPriceChart(device, config, timeInfo);
 
     // Push the rendered frame to the device
     await device.push('power_price', publishOk);
+
+    // Render FPS counter if enabled (after push so it doesn't affect frametime)
+    const frametime = device.getMetrics?.()?.lastFrametime || 0;
+    await renderFPSCounter(device, config, frametime);
 
     // Animation is now time-based, no need to track frame index
 
@@ -274,8 +284,9 @@ async function render(context) {
       return null;
     }
 
-    // Continue rendering
-    return config.interval || 1000; // Default 1 second interval
+    // Return interval based on frametime + 5ms to ensure smooth rendering
+    // If frametime is 200ms, next call will be in 205ms
+    return Math.max(50, frametime + 5); // Minimum 50ms to prevent too frequent calls
   } catch (error) {
     return SceneUtils.createErrorResponse(error, 'power_price', {
       device: device?.host,
@@ -339,24 +350,20 @@ function getMoonPhaseFilename(date = new Date()) {
 /**
  * Apply afternoon layout shift to all configurations
  */
-function applyAfternoonShift(isAfterNoon) {
-  if (!isAfterNoon) return;
+/**
+ * Get X position adjusted for afternoon layout shift
+ * @param {number} baseX - Base X position
+ * @param {boolean} isAfterNoon - Whether it's afternoon
+ * @returns {number} Adjusted X position
+ */
+function getShiftedX(baseX, isAfterNoon) {
+  return isAfterNoon ? baseX - SCENE_CONFIG.AFTERNOON_SHIFT_PX : baseX;
+}
 
-  const shift = SCENE_CONFIG.AFTERNOON_SHIFT_PX;
-
-  // Shift PV chart positions
-  SCENE_CONFIG.CHART.PV.PREDICTION.position[0] -= shift;
-  SCENE_CONFIG.CHART.PV.ACTUAL.position[0] -= shift;
-
-  // Shift image positions
-  SCENE_CONFIG.IMAGES.KWH_UNIT.position[0] -= shift;
-  SCENE_CONFIG.IMAGES.SUN.position[0] -= shift;
-  SCENE_CONFIG.IMAGES.MOON.position[0] -= shift;
-
-  // Shift text positions
-  SCENE_CONFIG.TEXTS.PV_TOTAL.position[0] -= shift;
-  SCENE_CONFIG.TEXTS.PV_PREDICTION_TOTAL.position[0] -= shift;
-  SCENE_CONFIG.TEXTS.UVI.position[0] -= shift;
+// Legacy function for compatibility - now does nothing as positions are calculated dynamically
+function applyAfternoonShift() {
+  // No-op: positions are now calculated dynamically in render functions
+  return;
 }
 
 /**
@@ -418,7 +425,7 @@ async function renderGrid(device) {
     );
   }
 
-  // Draw vertical lines
+  // Draw vertical lines with opacity gradient
   for (let i = 0; i < grid.vertical.count; i++) {
     const x =
       grid.startPos[0] +
@@ -426,11 +433,17 @@ async function renderGrid(device) {
         Math.floor(
           (grid.endPos[0] - grid.startPos[0]) / (grid.vertical.count - 1),
         );
+    const alpha = Math.min(
+      255,
+      grid.vertical.minAlpha +
+        Math.round((i / (grid.vertical.count - 1)) * grid.vertical.alphaRange),
+    );
+    const color = [...grid.vertical.color.slice(0, 3), alpha];
 
     await device.drawLineRgba(
       [x, grid.startPos[1] - grid.overhang],
       [x, grid.endPos[1] + grid.overhang],
-      grid.vertical.color,
+      color,
     );
   }
 }
@@ -653,14 +666,15 @@ async function renderPriceText(device, config) {
 /**
  * Render PV data (actual and prediction)
  */
-async function renderPvData(device, config) {
+async function renderPvData(device, config, timeInfo) {
   const actualData = config.dailyPvDataActual || [];
   const predictionData = config.pvHourlyYieldPrediction || [];
 
   // Render PV actual bars
   if (actualData.length > 0) {
     const pvConfig = SCENE_CONFIG.CHART.PV.ACTUAL;
-    const [startX, startY] = pvConfig.position;
+    const [baseX, startY] = pvConfig.position;
+    const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
     const chartWidth = pvConfig.size[0];
     const chartHeight = pvConfig.size[1];
     const maxYieldWh = 1000 * chartHeight;
@@ -711,7 +725,8 @@ async function renderPvData(device, config) {
   // Render PV prediction bars
   if (predictionData.length > 0) {
     const pvConfig = SCENE_CONFIG.CHART.PV.PREDICTION;
-    const [startX, startY] = pvConfig.position;
+    const [baseX, startY] = pvConfig.position;
+    const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
     const chartWidth = pvConfig.size[0];
     const chartHeight = pvConfig.size[1];
     const maxPredictionWh = 1000 * chartHeight;
@@ -751,10 +766,15 @@ async function renderUviText(device, config, timeInfo) {
     typeof uviData.currentUvi[1] !== 'number' ||
     typeof uviData.currentUvi[2] !== 'number'
   ) {
+    const uviPosition = [
+      getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
+      SCENE_CONFIG.TEXTS.UVI.position[1],
+    ];
+
     await drawText(
       device,
       '-',
-      SCENE_CONFIG.TEXTS.UVI.position,
+      uviPosition,
       [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
       'left',
     );
@@ -771,10 +791,15 @@ async function renderUviText(device, config, timeInfo) {
   // Format with appropriate arrow
   const uviText = `${currentUvi}${arrow}${nextUvi}`;
 
+  const uviPosition = [
+    getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
+    SCENE_CONFIG.TEXTS.UVI.position[1],
+  ];
+
   await drawText(
     device,
     uviText,
-    SCENE_CONFIG.TEXTS.UVI.position,
+    uviPosition,
     [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
     'left',
   );
@@ -1221,10 +1246,16 @@ async function renderImages(device, timeInfo) {
   // Update alpha based on day/night
   const moonAlpha = timeInfo.isDaytime ? 225 : 255;
 
+  // Apply afternoon shift to moon position
+  const moonPosition = [
+    getShiftedX(moonConfig.position[0], timeInfo.isAfterNoon),
+    moonConfig.position[1],
+  ];
+
   try {
     await device.drawImageWithAlpha(
       moonPath,
-      moonConfig.position,
+      moonPosition,
       moonConfig.dimensions,
       moonAlpha,
     );
@@ -1238,6 +1269,26 @@ async function renderImages(device, timeInfo) {
       moonAlpha,
     );
   }
+}
+
+/**
+ * Render FPS counter at the bottom of the display
+ * @param {Object} device - Pixoo device
+ * @param {Object} config - Scene configuration
+ * @param {number} frametime - Last frame time in ms
+ */
+async function renderFPSCounter(device, config, frametime) {
+  if (!config.enableFPS) return;
+
+  // Calculate FPS from frametime (frametime is the time the last frame took)
+  const fps = frametime > 0 ? Math.round(1000 / frametime) : 0;
+
+  // Position at bottom center
+  const fpsText = `FPS:${fps}`;
+  const position = [32, 60]; // Center bottom
+  const color = [255, 255, 0, 255]; // Yellow
+
+  await drawText(device, fpsText, position, color, 'center');
 }
 
 // Scene metadata
