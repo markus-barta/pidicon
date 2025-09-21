@@ -8,6 +8,7 @@
  * @stability Production-grade with comprehensive error handling
  */
 
+const { drawVerticalGradientLine } = require('../lib/gradient-renderer');
 const logger = require('../lib/logger');
 const { drawText } = require('../lib/rendering-utils');
 const {
@@ -164,6 +165,7 @@ const SCENE_CONFIG = {
     LABEL10: { position: [9, 41], color: [155, 155, 155, 220], text: '10' },
     LABEL20: { position: [9, 31], color: [155, 155, 155, 190], text: '20' },
     LABEL_MORE: { position: [5, 21], color: [155, 155, 155, 160], text: '+' },
+    UVI: { position: [42, 20], color: [148, 0, 211, 200] }, // UV index position
   },
 
   // Animation configuration
@@ -634,7 +636,8 @@ async function renderPvData(device, config) {
       }
 
       try {
-        await device.drawVerticalGradientLine(
+        await drawVerticalGradientLine(
+          device,
           [x, lineStartY],
           [x, lineEndY],
           pvConfig.colors.end,
@@ -829,6 +832,7 @@ function extractPriceData(priceEntry, config, prices) {
   const actualCurrentKey = prices.find((p) => p.isCurrent)?.key;
   const isPastHour = key < actualCurrentKey;
   const zeroThreshold = config.settings?.zeroThreshold ?? 0.005;
+  const bottomY = config.position[1]; // Bottom Y coordinate for bars
 
   if (price === undefined || price === null || typeof price !== 'number') {
     return {
@@ -842,6 +846,7 @@ function extractPriceData(priceEntry, config, prices) {
       negativePixels: [],
       isOverflow: false,
       overflowPixels: [],
+      bottomY,
     };
   }
 
@@ -857,6 +862,7 @@ function extractPriceData(priceEntry, config, prices) {
       negativePixels: [],
       isOverflow: false,
       overflowPixels: [],
+      bottomY,
     };
   }
 
@@ -873,6 +879,7 @@ function extractPriceData(priceEntry, config, prices) {
       negativePixels: calculateNegativePixels(cappedNegativePrice),
       isOverflow: false,
       overflowPixels: [],
+      bottomY,
     };
   }
 
@@ -893,6 +900,7 @@ function extractPriceData(priceEntry, config, prices) {
     overflowPixels: overflowPixels,
     isNegative: false,
     negativePixels: [],
+    bottomY,
   };
 }
 
@@ -1011,7 +1019,8 @@ async function drawPositiveBar(device, priceData, config, x, barColors) {
   const barHeight = fullPixels;
   const topY = bottomY - barHeight + 1;
 
-  await device.drawVerticalGradientLine(
+  await drawVerticalGradientLine(
+    device,
     [x, topY],
     [x, bottomY],
     barColors.endColor,
@@ -1041,9 +1050,11 @@ async function drawOverflowPixels(device, priceData, config, x, barColors) {
  * Render images that depend on data (like moon phase)
  */
 async function renderImages(device, timeInfo, config) {
-  // eslint-disable-line no-unused-vars
-  // Moon phase rendering would go here if moonPhaseData was available
-  // For now, render static moon image
+  // Moon phase rendering - use data from config if available
+  const moonPhaseData = config.moonPhaseData;
+
+  // For now, render static moon emoji
+  // TODO: Implement actual moon phase rendering when moonPhaseData is available
   await drawText(
     device,
     '🌙',
@@ -1051,6 +1062,11 @@ async function renderImages(device, timeInfo, config) {
     [255, 255, 255, timeInfo.isDaytime ? 225 : 255],
     'left',
   );
+
+  // Log if moon phase data is available for future implementation
+  if (moonPhaseData) {
+    logger.debug('Moon phase data available:', moonPhaseData);
+  }
 }
 
 // Scene metadata
