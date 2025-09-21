@@ -270,6 +270,116 @@ Older history lives in commits and `docs/BACKLOG.md` with build/commit evidence.
   - Yes. Each device has its own state machine and scheduler loop; devices are
     fully isolated.
 
+- **How do I create a new scene?**
+  - Copy `scenes/template.js` and customize it. Follow the pure-render contract:
+    return a delay (ms) for animated scenes or `null` for static scenes.
+
+- **Why is my scene not updating?**
+  - Check that you're calling `await device.push()` after drawing.
+  - Verify your scene exports the correct interface: `name`, `render`, `init`, `cleanup`, `wantsLoop`.
+  - Ensure `wantsLoop: true` for animated scenes that need regular updates.
+
+- **How do I debug scene issues?**
+  - Enable debug logging: `LOG_LEVEL=debug npm start`
+  - Check MQTT messages: `mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#'`
+  - Use the mock driver for faster development: `PIXOO_DEVICE_TARGETS="192.168.1.159=mock"`
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### **Scene Not Loading**
+
+- **Symptoms**: Scene not appearing in logs or not responding to MQTT commands
+- **Causes**:
+  - Missing required exports (`name`, `render`)
+  - Syntax errors in scene file
+  - Incorrect file permissions
+- **Solutions**:
+  - Check logs for registration messages: `Scene registered: your_scene_name`
+  - Validate scene interface with `npm run lint`
+  - Ensure scene file ends with `.js` extension
+
+#### **MQTT Connection Issues**
+
+- **Symptoms**: No MQTT messages being processed
+- **Causes**:
+  - Incorrect broker configuration
+  - Network connectivity issues
+  - Authentication problems
+- **Solutions**:
+  - Verify environment variables: `MOSQITTO_HOST_MS24`, `MOSQITTO_USER_MS24`, `MOSQITTO_PASS_MS24`
+  - Test connection: `mosquitto_pub -h $MOSQITTO_HOST_MS24 -t 'test' -m 'hello'`
+  - Check firewall settings and port accessibility
+
+#### **Device Communication Problems**
+
+- **Symptoms**: Drawing commands not appearing on device
+- **Causes**:
+  - Device offline or unreachable
+  - Wrong IP address configured
+  - Device driver mismatch
+- **Solutions**:
+  - Ping device: `ping 192.168.1.159`
+  - Use mock driver for testing: `PIXOO_DEVICE_TARGETS="192.168.1.159=mock"`
+  - Check device is on same network and accessible
+
+#### **Performance Issues**
+
+- **Symptoms**: Slow rendering, high CPU usage, dropped frames
+- **Causes**:
+  - Complex drawing operations
+  - Inefficient scene logic
+  - Memory leaks in scene state
+- **Solutions**:
+  - Profile with `LOG_LEVEL=debug` to identify bottlenecks
+  - Use `device.clear()` sparingly - only when needed
+  - Implement proper cleanup in scene `cleanup()` function
+  - Consider using static scenes (`wantsLoop: false`) when possible
+
+#### **Stale Frame Issues**
+
+- **Symptoms**: Old scenes affecting current display after switching
+- **Causes**:
+  - Missing cleanup in scene `cleanup()` function
+  - State not properly cleared between scene switches
+- **Solutions**:
+  - Implement proper cleanup: clear timers, reset state variables
+  - Use scene state Map for consistent state management
+  - Test scene switching: `scripts/live_test_harness.js`
+
+### Debug Commands
+
+```bash
+# Check daemon logs with debug level
+LOG_LEVEL=debug npm start
+
+# Monitor all MQTT traffic
+mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#' -v
+
+# Test device connectivity
+mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
+  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
+
+# Check device state
+mosquitto_sub -h $MOSQITTO_HOST_MS24 -t '/home/pixoo/192.168.1.159/scene/state'
+
+# Test with mock driver
+PIXOO_DEVICE_TARGETS="192.168.1.159=mock" npm start
+```
+
+### Getting Help
+
+1. **Check the logs**: Always start with `LOG_LEVEL=debug` to see detailed information
+2. **Test with mock driver**: Use `PIXOO_DEVICE_TARGETS="ip=mock"` to isolate scene logic from device issues
+3. **Validate scene interface**: Ensure your scene exports all required functions
+4. **Check MQTT topics**: Verify commands are reaching the correct topics
+5. **Review scene state**: Use the scene state topic to monitor device state changes
+
+If issues persist, check `docs/BACKLOG.md` for known issues or create a new entry for tracking.
+
 ---
 
 ## 🗺️ Roadmap

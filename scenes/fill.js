@@ -47,6 +47,9 @@ async function render(context) {
   await device.push(name, publishOk);
 
   logger.debug(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
+
+  // Static scene - signal completion by returning null
+  return null;
 }
 
 function cleanup() {
