@@ -243,7 +243,7 @@ async function renderFrame(context, config) {
   // Header label with pixel-perfect backdrop
   await drawText(
     device,
-    'TEST: ANIMATED',
+    'TEST:ANIMATED',
     [32, 42],
     [0, 200, 255, 178], // Cyan text with transparency
     'center',
