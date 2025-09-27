@@ -239,6 +239,7 @@ async function renderFrame(context, config) {
   await drawSweepingLines(device, t, getState, setState, maxDelta);
   await drawAnimatedText(device, t, getState, setState, maxDelta);
   await drawParticleSystem(device, t, getState, setState, maxDelta);
+  await drawMoonAnimation(device, t, frameCount, getState, setState, maxDelta);
   await drawFinalOverlay(device, t);
 
   // Header label with pixel-perfect backdrop
@@ -588,6 +589,72 @@ async function drawParticleSystem(device, t, getState, setState, maxDelta) {
     if (x >= 0 && x < 64 && y >= 0 && y < 64) {
       await device.drawPixelRgba([x, y], [255, 255, 255, 255]);
     }
+  }
+}
+
+async function drawMoonAnimation(
+  device,
+  t,
+  frameCount,
+  getState,
+  setState,
+  maxDelta,
+) {
+  // Moon phase cycling based on framecount, 26 phases available (0-25)
+  const moonPhase = frameCount % 26;
+  const formattedPhase = moonPhase.toString().padStart(2, '0');
+  const moonImagePath = `scenes/media/moonphase/5x5/Moon_${formattedPhase}.png`;
+
+  // Moon movement - circular path around the screen center
+  const moonCenterX = 32;
+  const moonCenterY = 32;
+  const moonRadius = 20;
+  const moonSpeed = 0.02; // radians per frame
+
+  const moonAngleTarget = (frameCount * moonSpeed) % (Math.PI * 2);
+  const moonXTarget = Math.round(
+    moonCenterX + Math.cos(moonAngleTarget) * moonRadius,
+  );
+  const moonYTarget = Math.round(
+    moonCenterY + Math.sin(moonAngleTarget) * moonRadius,
+  );
+
+  // Smooth moon movement with same pattern as other elements
+  const moonXPrev = getPrev(getState, 'moonXPrev', moonXTarget);
+  const moonYPrev = getPrev(getState, 'moonYPrev', moonYTarget);
+  const moonX = stepTowards(moonXPrev, moonXTarget, maxDelta);
+  const moonY = stepTowards(moonYPrev, moonYTarget, maxDelta);
+  setPrev(setState, 'moonXPrev', moonX);
+  setPrev(setState, 'moonYPrev', moonY);
+
+  // Draw moon image with shadow effect for depth
+  const shadowOffset = 1;
+  const shadowAlpha = 60;
+
+  // Draw shadow first (darker, offset)
+  await device.drawImage(
+    moonImagePath,
+    [
+      Math.max(0, Math.min(59, moonX + shadowOffset)),
+      Math.max(0, Math.min(59, moonY + shadowOffset)),
+    ],
+    [5, 5],
+    shadowAlpha,
+  );
+
+  // Draw main moon image
+  await device.drawImage(
+    moonImagePath,
+    [Math.max(0, Math.min(59, moonX)), Math.max(0, Math.min(59, moonY))],
+    [5, 5],
+    255,
+  );
+
+  // Debug logging for first few frames
+  if (frameCount <= 3) {
+    logger.debug(
+      `🌙 Moon animation: frame=${frameCount}, phase=${moonPhase}, pos=[${moonX},${moonY}], path=${moonImagePath}`,
+    );
   }
 }
 
