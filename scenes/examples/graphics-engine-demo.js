@@ -436,9 +436,14 @@ class GraphicsEngineDemoScene {
     this.hue = (this.hue + 5) % 360; // Faster cycling
     const rainbowColor = this._hslToRgb(this.hue / 360, 0.9, 0.7);
 
-    // Moving rainbow text across screen (opposite direction of squares)
+    // Moving colorful squares right-to-left (rtl)
     this.rainbowX -= 1.5;
     if (this.rainbowX < -20) this.rainbowX = 50;
+
+    // Moving rainbow text left-to-right (ltr) - opposite direction
+    if (!this.rainbowTextX) this.rainbowTextX = -20; // Initialize if not set
+    this.rainbowTextX += 1.5;
+    if (this.rainbowTextX > 50) this.rainbowTextX = -20;
 
     // Draw rainbow background stripes for visibility
     for (let i = 0; i < 6; i++) {
@@ -453,7 +458,7 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'RAINBOW',
-      [Math.round(this.rainbowX + 20), 40], // Moved 8px up from y=48
+      [Math.round(this.rainbowTextX), 40], // Independent ltr movement
       [...rainbowColor, Math.round(alpha * 0.5)], // 50% transparent text
       {
         alignment: 'center',
@@ -600,25 +605,20 @@ class GraphicsEngineDemoScene {
     const moonFrame = this.frameCount % 26;
     const moonImagePath = `scenes/media/moonphase/5x5/Moon_${moonFrame.toString().padStart(2, '0')}.png`;
 
-    // Sun animation - cycles through 3 different sun states
-    const sunFrame = Math.floor(this.frameCount / 8) % 3; // Slower sun animation
-    let sunImagePath,
-      sunImageSize = [16, 16];
-    if (sunFrame === 0) {
-      sunImagePath = 'scenes/media/sun.png';
-    } else {
-      sunImagePath = 'scenes/media/circle-sun.gif'; // Animated sun
-    }
+    // Sun animation - static 9x9 image (not animated)
+    const sunImagePath = 'scenes/media/sun.png';
+    const sunImageSize = [9, 9]; // Static 9x9 image
 
     // Moon movement (clockwise)
     this.moonAngle += 0.05;
     const moonX = Math.round(32 + Math.cos(this.moonAngle) * 18);
     const moonY = Math.round(32 + Math.sin(this.moonAngle) * 12);
 
-    // Sun movement (counter-clockwise, opposite direction)
-    this.sunAngle = (this.sunAngle || 0) - 0.05; // Opposite direction
-    const sunX = Math.round(32 + Math.cos(this.sunAngle) * 18);
-    const sunY = Math.round(32 + Math.sin(this.sunAngle) * 12);
+    // Sun movement (clockwise, same direction as moon but positioned opposite)
+    this.sunAngle = (this.sunAngle || 0) + 0.05; // Clockwise like moon
+    // Position sun opposite to moon by adding π (180 degrees) to angle
+    const sunX = Math.round(32 + Math.cos(this.sunAngle + Math.PI) * 18);
+    const sunY = Math.round(32 + Math.sin(this.sunAngle + Math.PI) * 12);
 
     try {
       // Draw moon with shadow
@@ -655,8 +655,7 @@ class GraphicsEngineDemoScene {
 
       // Show celestial info
       const moonInfo = `Moon:${moonFrame}`;
-      const sunInfo = sunFrame === 0 ? 'Static Sun' : 'Circle Sun';
-      const combinedInfo = `${moonInfo} | ${sunInfo}`;
+      const combinedInfo = `${moonInfo} | Static Sun`;
 
       await this.graphicsEngine.device.drawText(
         combinedInfo,
