@@ -132,9 +132,11 @@ class GraphicsEngineDemoScene {
       );
     }
 
-    // Update demo phase
+    // Update demo phase (moonphase takes twice as long)
     const framesInPhase = this.frameCount - this.phaseStartFrame;
-    if (framesInPhase >= this.phaseDuration) {
+    const currentPhaseDuration =
+      this.demoPhase === 3 ? this.phaseDuration * 2 : this.phaseDuration;
+    if (framesInPhase >= currentPhaseDuration) {
       this.demoPhase = (this.demoPhase + 1) % 5;
       this.phaseStartFrame = this.frameCount;
 
@@ -359,7 +361,7 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'H-RGB',
-      [32, 38],
+      [32, 33], // Moved up 5px from y=38
       [255, 255, 255, alpha],
       {
         alignment: 'center',
@@ -594,39 +596,66 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Animated moon phase display
-    this.moonPhase = this.frameCount % 26;
-    const moonImagePath = `scenes/media/moonphase/5x5/Moon_${this.moonPhase.toString().padStart(2, '0')}.png`;
+    // Animated celestial display (moon phases + sun)
+    const totalFrames = 26 + 3; // 26 moon phases + 3 sun variations
+    const currentFrame = this.frameCount % totalFrames;
 
-    // Circular moon movement with transparency
+    let imagePath, imageSize;
+    if (currentFrame < 26) {
+      // Moon phases (0-25)
+      imagePath = `scenes/media/moonphase/5x5/Moon_${currentFrame.toString().padStart(2, '0')}.png`;
+      imageSize = [5, 5];
+    } else {
+      // Sun images (26-28)
+      const sunIndex = currentFrame - 26;
+      if (sunIndex === 0) {
+        imagePath = 'scenes/media/sun.png';
+        imageSize = [16, 16]; // Assuming sun.png is larger
+      } else if (sunIndex === 1) {
+        imagePath = 'scenes/media/circle-sun.gif';
+        imageSize = [16, 16]; // Assuming circle-sun.gif is larger
+      } else {
+        imagePath = 'scenes/media/circle-sun.gif'; // Repeat for longer display
+        imageSize = [16, 16];
+      }
+    }
+
+    // Circular celestial movement with transparency
     this.moonAngle += 0.05; // Slow rotation
-    const moonX = Math.round(32 + Math.cos(this.moonAngle) * 18);
-    const moonY = Math.round(32 + Math.sin(this.moonAngle) * 12);
+    const celestialX = Math.round(32 + Math.cos(this.moonAngle) * 18);
+    const celestialY = Math.round(32 + Math.sin(this.moonAngle) * 12);
 
     try {
-      // Draw moon with shadow for depth
+      // Draw celestial object with shadow for depth
       await this.graphicsEngine.drawImageBlended(
-        moonImagePath,
-        [moonX + 1, moonY + 1],
-        [5, 5],
+        imagePath,
+        [celestialX + 1, celestialY + 1],
+        imageSize,
         Math.round(80 * opacity), // Semi-transparent shadow
         'normal', // Normal blend for shadow
       );
 
-      // Draw main moon image with multiply blend mode
+      // Draw main celestial image with multiply blend mode
       // This treats black background as transparent (Photoshop multiply effect)
       await this.graphicsEngine.drawImageBlended(
-        moonImagePath,
-        [moonX, moonY],
-        [5, 5],
+        imagePath,
+        [celestialX, celestialY],
+        imageSize,
         alpha,
-        'multiply', // Multiply blend mode for moon (no black background visible)
+        'multiply', // Multiply blend mode (no black background visible)
       );
 
-      // Show moon phase info with transparency
-      const phaseText = `Phase:${this.moonPhase}`;
+      // Show celestial info with transparency
+      let infoText;
+      if (currentFrame < 26) {
+        infoText = `Moon:${currentFrame}`;
+      } else {
+        const sunIndex = currentFrame - 26;
+        const sunType = sunIndex === 0 ? 'Static' : 'Circle';
+        infoText = `${sunType} Sun`;
+      }
       await this.graphicsEngine.device.drawText(
-        phaseText,
+        infoText,
         [32, 50],
         [180, 180, 255, Math.round(200 * opacity)],
         'center',
