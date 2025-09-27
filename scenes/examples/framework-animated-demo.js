@@ -21,6 +21,7 @@ class BouncingBallScene extends AnimatedScene {
   constructor(options = {}) {
     super({
       name: 'bouncing_ball',
+      frameRate: 0, // Adaptive timing - render as fast as possible
       config: {
         debug: false,
         ballColor: [255, 100, 100, 255], // Red
