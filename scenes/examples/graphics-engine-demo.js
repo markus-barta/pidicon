@@ -55,6 +55,8 @@ class GraphicsEngineDemoScene {
     this.bounceSpeed = 2.0; // Faster bouncing
     this.hue = 0;
     this.rainbowX = 10; // For rainbow text movement
+    this.hue = 0;
+    this.rainbowX = 10; // For rainbow text movement
   }
 
   _setupTextEffectsPhase() {
