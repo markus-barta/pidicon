@@ -211,13 +211,12 @@ async function testGraphicsEngine() {
   });
 
   await runTest('Graphics Engine Demo scene', () => {
-    const demoScene = require('../scenes/examples/graphics-engine-demo.js');
-    const sceneInstance = new demoScene();
+    const sceneModule = require('../scenes/examples/graphics-engine-demo.js');
 
     return (
-      sceneInstance.name === 'graphics_engine_demo' &&
-      typeof sceneInstance.init === 'function' &&
-      typeof sceneInstance.render === 'function'
+      sceneModule.name === 'graphics_engine_demo' &&
+      typeof sceneModule.init === 'function' &&
+      typeof sceneModule.render === 'function'
     );
   });
 

@@ -393,4 +393,12 @@ class GraphicsEngineDemoScene {
   }
 }
 
-module.exports = GraphicsEngineDemoScene;
+// Create scene instance and export in standard format
+const scene = new GraphicsEngineDemoScene();
+const name = scene.name;
+const render = (context) => scene.render(context);
+const init = (context) => scene.init(context);
+const cleanup = (context) => scene.cleanup(context);
+const wantsLoop = true;
+
+module.exports = { name, render, init, cleanup, wantsLoop };
