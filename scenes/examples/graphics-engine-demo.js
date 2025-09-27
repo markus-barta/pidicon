@@ -48,6 +48,32 @@ class GraphicsEngineDemoScene {
     this.frameCount = 0;
     this.demoPhase = 0;
     this.phaseStartFrame = 0;
+
+    // Animation state
+    this.bounceY = 32;
+    this.bounceDirection = 1;
+    this.bounceSpeed = 0.8;
+    this.hue = 0;
+  }
+
+  _setupTextEffectsPhase() {
+    // No special setup needed
+  }
+
+  _setupGradientsPhase() {
+    // No special setup needed
+  }
+
+  _setupAnimationsPhase() {
+    // Reset animation state
+    this.bounceY = 32;
+    this.bounceDirection = 1;
+    this.hue = 0;
+  }
+
+  _setupFadeOutPhase() {
+    // Start fade out transition
+    this.graphicsEngine.startFadeTransition(2000, 1, 0);
   }
 
   async render(context) {
@@ -60,38 +86,76 @@ class GraphicsEngineDemoScene {
       );
     }
 
-    try {
-      // Clear screen with solid color first (test basic functionality)
-      await context.device.clear();
-      await context.device.fillRect([0, 0], [64, 64], [50, 100, 200, 255]);
+    // Update fade transition
+    const opacity = this.graphicsEngine.updateFadeTransition();
 
-      // Add simple text
-      await context.device.drawText(
-        'GFX TEST',
-        [20, 30],
-        [255, 255, 255, 255],
-        'center',
-      );
+    // Clear screen with gradient background
+    await this._drawBackground(opacity);
 
-      // Add frame counter
-      await context.device.drawText(
-        `F:${this.frameCount}`,
-        [5, 5],
-        [255, 255, 0, 255],
-        'left',
-      );
+    // Update demo phase
+    const framesInPhase = this.frameCount - this.phaseStartFrame;
+    if (framesInPhase >= this.phaseDuration) {
+      this.demoPhase = (this.demoPhase + 1) % 4;
+      this.phaseStartFrame = this.frameCount;
 
-      if (this.frameCount % 30 === 1) {
-        logger.debug(`🎨 GFX Demo basic render successful`);
+      // Switch configurations for each phase
+      switch (this.demoPhase) {
+        case 0:
+          this._setupTextEffectsPhase();
+          break;
+        case 1:
+          this._setupGradientsPhase();
+          break;
+        case 2:
+          this._setupAnimationsPhase();
+          break;
+        case 3:
+          this._setupFadeOutPhase();
+          break;
       }
 
-      // Push the frame to the display!
+      logger.debug(
+        `🎨 [${context.device.host}] GFX Demo phase ${this.demoPhase}`,
+      );
+    }
+
+    try {
+      // Render current demo phase
+      switch (this.demoPhase) {
+        case 0:
+          await this._renderTextEffects(opacity);
+          break;
+        case 1:
+          await this._renderGradients(opacity);
+          break;
+        case 2:
+          await this._renderAnimations(opacity);
+          break;
+        case 3:
+          await this._renderFadeOut(opacity);
+          break;
+      }
+
+      // Draw UI elements (performance info)
+      await this._drawPerformanceInfo();
+
+      // Push frame to display
       await context.device.push('graphics_engine_demo', context.publishOk);
 
       return 200; // ~5fps
     } catch (error) {
       logger.error(`🎨 GFX Demo render error: ${error.message}`);
-      // Return a valid delay even on error
+
+      // Fallback display
+      await context.device.clear();
+      await context.device.drawText(
+        'GFX ERROR',
+        [32, 32],
+        [255, 0, 0, 255],
+        'center',
+      );
+      await context.device.push('graphics_engine_demo', context.publishOk);
+
       return 1000;
     }
   }
@@ -134,6 +198,7 @@ class GraphicsEngineDemoScene {
   }
 
   async _renderTextEffects(opacity) {
+    // context is available from the parent render method
     const phaseProgress =
       (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
     const alpha = Math.round(255 * opacity);
