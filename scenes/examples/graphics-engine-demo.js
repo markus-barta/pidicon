@@ -52,9 +52,10 @@ class GraphicsEngineDemoScene {
     // Animation state
     this.bounceY = 32;
     this.bounceDirection = 1;
+    // Animation state
+    this.bounceY = 32;
+    this.bounceDirection = 1;
     this.bounceSpeed = 2.0; // Faster bouncing
-    this.hue = 0;
-    this.rainbowX = 10; // For rainbow text movement
     this.hue = 0;
     this.rainbowX = 10; // For rainbow text movement
   }
@@ -73,9 +74,7 @@ class GraphicsEngineDemoScene {
     this.bounceDirection = 1;
     this.hue = 0;
     this.rainbowX = 10;
-  }
-
-  _setupFadeOutPhase() {
+    this.rainbowX = 10;
     // Start fade out transition
     this.graphicsEngine.startFadeTransition(2000, 1, 0);
   }
