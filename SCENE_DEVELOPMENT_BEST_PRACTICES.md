@@ -70,7 +70,28 @@ class MyScene {
 module.exports = MyScene; // ✅ Required
 ```
 
-#### **3. Test Scene Registration**
+#### **3. Push Frames to Display**
+
+```javascript
+async render(context) {
+  // Draw your scene content
+  await context.device.clear();
+  await context.device.fillRect([0, 0], [64, 64], [255, 0, 0, 255]);
+
+  // ❌ FORGETTING THIS = BLANK SCREEN!
+  await context.device.push('my_scene', context.publishOk);
+
+  return 200; // Delay until next frame
+}
+```
+
+**CRITICAL**: Every render method **MUST** call `await device.push(sceneName, publishOk)` at the end!
+
+- Without push, nothing appears on screen despite successful rendering
+- Scene initializes, logs show success, but display stays blank
+- This is the #1 reason scenes appear "broken"
+
+#### **4. Test Scene Registration**
 
 ```bash
 # 1. Start daemon and check logs
@@ -86,7 +107,7 @@ mosquitto_pub -h $HOST -t "pixoo/$DEVICE/state/upd" -m '{"scene":"my_scene"}'
 # 4. If you get "No renderer found" - scene not registered!
 ```
 
-#### **4. Debug Registration Issues**
+#### **5. Debug Registration Issues**
 
 ```bash
 # Check if file exists and is valid JS
