@@ -530,7 +530,7 @@ class GraphicsEngineDemoScene {
       // Format ultra-compact display: "fps,decimal/frametime ms #framecount"
       const fpsValue = 1000 / avgFrameTime; // Calculate actual FPS with decimals
       const fpsInt = Math.floor(fpsValue);
-      const fpsDecimal = Math.round((fpsValue % 1) * 10);
+      const fpsDecimal = Math.floor((fpsValue % 1) * 10); // Always 1 decimal, never rounds up
       const frametimeMs = Math.round(avgFrameTime);
 
       // Color for frametime based on performance
@@ -568,7 +568,7 @@ class GraphicsEngineDemoScene {
 
       // Frame counter: " #12345" (right-aligned)
       const frameText = ` #${this.frameCount.toString().padStart(5, '0')}`;
-      const frameX = 64 - frameText.length * 4 - 1; // Right-aligned with 1px margin
+      const frameX = 64 - frameText.length * 4 - 3; // Right-aligned with 3px margin (moved 2px right)
       await this.graphicsEngine.device.drawText(
         frameText,
         [frameX, y],
