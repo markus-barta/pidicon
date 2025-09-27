@@ -38,14 +38,16 @@ const GFX_DEMO_CONFIG = {
 
   // Text effects phase
   TEXT_EFFECTS: {
-    TITLE_POSITION: [32, 8],
-    SHADOW_POSITION: [32, 20],
-    OUTLINE_POSITION: [32, 32],
-    COMBO_POSITION: [32, 44],
-    TITLE_COLOR: [255, 255, 255, 255],
-    SHADOW_COLOR: [100, 100, 255, 255],
-    OUTLINE_COLOR: [255, 100, 100, 255],
-    COMBO_COLOR: [255, 255, 100, 255],
+    TITLE_POSITION: [32, 8], // "TEXT EFFECTS" title
+    SHADOW_POSITION: [32, 20], // (not used in current code)
+    OUTLINE_POSITION: [32, 20], // "OUTLINE" text
+    GRADIENT_POSITION: [32, 32], // "GRADIENT" text
+    COMBO_POSITION: [32, 44], // "COMBO" text
+    TITLE_COLOR: [255, 255, 255, 255], // White
+    SHADOW_COLOR: [100, 100, 255, 255], // Blue
+    OUTLINE_COLOR: [255, 200, 100, 255], // Orange
+    GRADIENT_COLOR: [100, 200, 255, 255], // Light blue
+    COMBO_COLOR: [255, 255, 100, 255], // Yellow
   },
 
   // Gradients phase
@@ -468,8 +470,8 @@ class GraphicsEngineDemoScene {
     // Gradient text - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'GRADIENT',
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_POSITION,
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_COLOR.map((c) =>
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.GRADIENT_POSITION,
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.GRADIENT_COLOR.map((c) =>
         c === 255 ? alpha : c,
       ),
       {
