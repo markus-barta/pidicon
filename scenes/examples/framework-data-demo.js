@@ -77,10 +77,10 @@ class SensorDashboardScene extends DataScene {
     await device.clear();
     await device.fillRect([0, 0], [64, 64], [15, 15, 35, 255]);
 
-    // Title (moved down to avoid indicator overlap)
+    // Title (shortened to avoid indicator overlap)
     await device.drawText(
-      'Sensor Dashboard',
-      [32, 6],
+      'Sensors',
+      [28, 6], // Moved left to make room for indicator
       [255, 255, 255, 255],
       'center',
     );
@@ -100,7 +100,7 @@ class SensorDashboardScene extends DataScene {
       'center',
     );
 
-    // Humidity and pressure (moved down)
+    // Humidity and pressure (moved down, pressure without fraction)
     await device.drawText(
       `H:${data.humidity}%`,
       [8, 28],
@@ -108,7 +108,7 @@ class SensorDashboardScene extends DataScene {
       'left',
     );
     await device.drawText(
-      `P:${data.pressure}`,
+      `P:${Math.round(data.pressure)}`,
       [8, 36],
       [255, 200, 200, 255],
       'left',
@@ -128,7 +128,7 @@ class SensorDashboardScene extends DataScene {
       statusColor,
       'right',
     );
-    await device.drawText('Devices', [56, 36], [200, 200, 200, 255], 'right');
+    await device.drawText('Dev', [56, 36], [200, 200, 200, 255], 'right');
 
     // Status indicator (moved to center-right to avoid text overlap)
     const indicatorSize = 3;
