@@ -53,42 +53,44 @@ class GraphicsEngineDemoScene {
   async render(context) {
     this.frameCount++;
 
-    // Update fade transition
-    const opacity = this.graphicsEngine.updateFadeTransition();
-
-    // Clear screen with gradient background
-    await this._drawBackground(opacity);
-
-    // Update demo phase
-    const framesInPhase = this.frameCount - this.phaseStartFrame;
-    if (framesInPhase >= this.phaseDuration) {
-      this.demoPhase = (this.demoPhase + 1) % 4;
-      this.phaseStartFrame = this.frameCount;
+    // Debug: Log every 30 frames to avoid spam
+    if (this.frameCount % 30 === 1) {
       logger.debug(
-        `🎨 [${context.device.host}] Switching to demo phase ${this.demoPhase}`,
+        `🎨 [${context.device.host}] GFX Demo render frame ${this.frameCount}, phase ${this.demoPhase}`,
       );
     }
 
-    // Render current demo phase
-    switch (this.demoPhase) {
-      case 0:
-        await this._renderTextEffects(opacity);
-        break;
-      case 1:
-        await this._renderGradients(opacity);
-        break;
-      case 2:
-        await this._renderAnimations(opacity);
-        break;
-      case 3:
-        await this._renderFadeOut(opacity);
-        break;
+    try {
+      // Clear screen with solid color first (test basic functionality)
+      await context.device.clear();
+      await context.device.fillRect([0, 0], [64, 64], [50, 100, 200, 255]);
+
+      // Add simple text
+      await context.device.drawText(
+        'GFX TEST',
+        [20, 30],
+        [255, 255, 255, 255],
+        'center',
+      );
+
+      // Add frame counter
+      await context.device.drawText(
+        `F:${this.frameCount}`,
+        [5, 5],
+        [255, 255, 0, 255],
+        'left',
+      );
+
+      if (this.frameCount % 30 === 1) {
+        logger.debug(`🎨 GFX Demo basic render successful`);
+      }
+
+      return 200; // ~5fps
+    } catch (error) {
+      logger.error(`🎨 GFX Demo render error: ${error.message}`);
+      // Return a valid delay even on error
+      return 1000;
     }
-
-    // Performance info (bottom right)
-    await this._drawPerformanceInfo();
-
-    return 200; // ~5fps
   }
 
   async _drawBackground(opacity) {
@@ -107,11 +109,25 @@ class GraphicsEngineDemoScene {
       Math.round(255 * opacity),
     ];
 
-    await this.graphicsEngine.drawGradientBackground(
-      topColor,
-      bottomColor,
-      'vertical',
-    );
+    // Debug: Log background drawing
+    if (this.frameCount % 60 === 1) {
+      logger.debug(
+        `🎨 [${this.graphicsEngine.device?.host || 'unknown'}] GFX Demo drawing background`,
+      );
+    }
+
+    try {
+      await this.graphicsEngine.drawGradientBackground(
+        topColor,
+        bottomColor,
+        'vertical',
+      );
+      if (this.frameCount % 60 === 1) {
+        logger.debug(`🎨 GFX Demo background drawn successfully`);
+      }
+    } catch (error) {
+      logger.error(`🎨 GFX Demo background draw error: ${error.message}`);
+    }
   }
 
   async _renderTextEffects(opacity) {
@@ -348,13 +364,26 @@ class GraphicsEngineDemoScene {
   }
 
   async _drawPerformanceInfo() {
-    // Small performance counter (bottom right)
-    await this.graphicsEngine.device.drawText(
-      `F:${this.frameCount}`,
-      [50, 58],
-      [150, 150, 150, 180],
-      'left',
-    );
+    // Debug: Log frame push
+    if (this.frameCount % 30 === 1) {
+      logger.debug(`🎨 GFX Demo pushing frame ${this.frameCount}`);
+    }
+
+    try {
+      // Small performance counter (bottom right)
+      await this.graphicsEngine.device.drawText(
+        `F:${this.frameCount}`,
+        [50, 58],
+        [150, 150, 150, 180],
+        'left',
+      );
+
+      if (this.frameCount % 30 === 1) {
+        logger.debug(`🎨 GFX Demo text drawn successfully`);
+      }
+    } catch (error) {
+      logger.error(`🎨 GFX Demo performance info error: ${error.message}`);
+    }
   }
 
   // Helper: Convert HSL to RGB
