@@ -9,21 +9,179 @@
 const GraphicsEngine = require('../../lib/graphics-engine');
 const logger = require('../../lib/logger');
 
+// Configuration constants - no more magic numbers!
+const GFX_DEMO_CONFIG = {
+  // Display dimensions
+  DISPLAY: {
+    WIDTH: 64,
+    HEIGHT: 64,
+    CENTER_X: 32,
+    CENTER_Y: 32,
+  },
+
+  // Demo phases
+  PHASES: {
+    TEXT_EFFECTS: 0,
+    GRADIENTS: 1,
+    ANIMATIONS: 2,
+    IMAGES: 3,
+    FADE_OUT: 4,
+  },
+
+  // Timing and animation
+  TIMING: {
+    PHASE_DURATION_FRAMES: 60, // ~12 seconds at 5fps
+    FADE_IN_DURATION_MS: 1000,
+    FADE_OUT_DURATION_MS: 3000,
+    FRAME_TIME_HISTORY_SIZE: 10,
+  },
+
+  // Text effects phase
+  TEXT_EFFECTS: {
+    TITLE_POSITION: [32, 8],
+    SHADOW_POSITION: [32, 20],
+    OUTLINE_POSITION: [32, 32],
+    COMBO_POSITION: [32, 44],
+    TITLE_COLOR: [255, 255, 255, 255],
+    SHADOW_COLOR: [100, 100, 255, 255],
+    OUTLINE_COLOR: [255, 100, 100, 255],
+    COMBO_COLOR: [255, 255, 100, 255],
+  },
+
+  // Gradients phase
+  GRADIENTS: {
+    TITLE_POSITION: [32, 8],
+    VERTICAL_POSITION: [32, 20],
+    HORIZONTAL_POSITION: [8, 33], // Moved left for full width
+    HORIZONTAL_WIDTH: 48,
+    TITLE_COLOR: [255, 255, 255, 255],
+    VERTICAL_TEXT_COLOR: [255, 255, 255, 255],
+    HORIZONTAL_TEXT_COLOR: [255, 255, 255, 255],
+    VERTICAL_GRADIENT: {
+      START: [255, 0, 0, 255], // Red top
+      END: [0, 0, 255, 255], // Blue bottom
+    },
+    HORIZONTAL_GRADIENT: {
+      START: [255, 0, 255, 255], // Magenta left
+      END: [0, 255, 255, 255], // Cyan right
+    },
+  },
+
+  // Animations phase
+  ANIMATIONS: {
+    TITLE_POSITION: [32, 8],
+    SMOOTH_POSITION: [32, 52],
+    RAINBOW_POSITION: [32, 40],
+    BOUNCE_AREA: {
+      MIN_Y: 24,
+      MAX_Y: 48,
+      START_Y: 32,
+    },
+    BOUNCE_SPEED: 2.0,
+    RAINBOW_TEXT: {
+      START_X: -20,
+      END_X: 50,
+      SPEED: 1.5,
+    },
+    COLORFUL_BOXES: {
+      START_X: 10,
+      END_X: 50,
+      SPEED: 1.5,
+      STRIPE_COUNT: 6,
+      STRIPE_WIDTH: 6,
+      STRIPE_HEIGHT: 6,
+      SATURATION: 0.8,
+      VALUE: 0.5,
+    },
+    HUE_INCREMENT: 5,
+    TITLE_COLOR: [255, 255, 255, 255],
+    SMOOTH_COLOR: [200, 200, 200, 255],
+    BOUNCE_COLOR: [255, 100, 100, 255],
+    TRAIL_COLOR: [100, 100, 255, 150],
+    BALL_SIZE: 4,
+  },
+
+  // Images phase
+  IMAGES: {
+    TITLE_POSITION: [32, 8],
+    INFO_POSITION: [32, 50],
+    MOON: {
+      RADIUS: 18,
+      SIZE: [5, 5],
+      PHASE_COUNT: 26,
+      ANGLE_INCREMENT: 0.05,
+    },
+    SUN: {
+      RADIUS: 18,
+      SIZE: [9, 9],
+      ANGLE_INCREMENT: 0.05,
+      ORBIT_OFFSET: Math.PI, // Opposite side of moon
+    },
+    TITLE_COLOR: [255, 255, 255, 255],
+    INFO_COLOR: [180, 180, 255, 200],
+  },
+
+  // Fade out phase
+  FADE_OUT: {
+    GOODBYE_POSITION: [32, 40],
+    FADE_OUT_POSITION: [32, 16],
+    SPARKLE_COUNT: 5,
+    SPARKLE_SPEED: 0.2,
+    WAVE_BAR_COUNT: 3,
+    GOODBYE_COLOR: [255, 255, 255, 255],
+    FADE_OUT_COLOR: [255, 255, 255, 255],
+  },
+
+  // Performance display
+  PERFORMANCE: {
+    BAR_HEIGHT: 7,
+    BAR_Y: 57,
+    TEXT_Y: 58,
+    FPS_COLORS: {
+      GOOD: [100, 255, 100], // Green for <=200ms
+      MEDIUM: [255, 255, 100], // Yellow for 200-300ms
+      BAD: [255, 100, 100], // Red for >300ms
+    },
+    THRESHOLDS: {
+      GOOD_MS: 200,
+      MEDIUM_MS: 300,
+    },
+    DARK_GRAY: [100, 100, 100, 255],
+  },
+
+  // Colors
+  COLORS: {
+    BLACK: [0, 0, 0, 255],
+    WHITE: [255, 255, 255, 255],
+    TRANSPARENT_BLACK: [0, 0, 0, 120],
+    SEMI_TRANSPARENT_BLACK: [0, 0, 0, 150],
+  },
+
+  // Animation parameters
+  ANIMATION: {
+    GLOBAL_OVERLAY_ALPHA: 25, // 10% transparency
+    PARTICLE_COUNT: 5,
+    PARTICLE_SIZE: 2,
+    ROTATING_TEXT_RADIUS: 15,
+    ROTATING_TEXT_SPEED: 0.05,
+  },
+};
+
 class GraphicsEngineDemoScene {
   constructor() {
     this.name = 'graphics_engine_demo';
     this.frameCount = 0;
     this.graphicsEngine = null;
 
-    // Demo state
-    this.demoPhase = 0; // 0: text effects, 1: gradients, 2: animations, 3: images, 4: fade out
+    // Demo state - using config constants
+    this.demoPhase = GFX_DEMO_CONFIG.PHASES.TEXT_EFFECTS;
     this.phaseStartFrame = 0;
-    this.phaseDuration = 60; // ~12 seconds at 5fps
+    this.phaseDuration = GFX_DEMO_CONFIG.TIMING.PHASE_DURATION_FRAMES;
 
-    // Animation variables
-    this.bounceY = 32;
+    // Animation variables - using config constants
+    this.bounceY = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.START_Y;
     this.bounceDirection = 1;
-    this.bounceSpeed = 0.8;
+    this.bounceSpeed = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.START_Y; // Will be set properly in setup
 
     // Color cycling
     this.hue = 0;
@@ -42,19 +200,23 @@ class GraphicsEngineDemoScene {
       'scenes/media/moonphase/5x5/Moon_00.png', // Example resource
     ]);
 
-    // Start with fade in
-    this.graphicsEngine.startFadeTransition(1000, 0, 1);
+    // Start with fade in - using config constants
+    this.graphicsEngine.startFadeTransition(
+      GFX_DEMO_CONFIG.TIMING.FADE_IN_DURATION_MS,
+      0,
+      1,
+    );
 
     this.frameCount = 0;
-    this.demoPhase = 0;
+    this.demoPhase = GFX_DEMO_CONFIG.PHASES.TEXT_EFFECTS;
     this.phaseStartFrame = 0;
 
-    // Animation state
-    this.bounceY = 32;
+    // Animation state - using config constants
+    this.bounceY = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.START_Y;
     this.bounceDirection = 1;
-    this.bounceSpeed = 2.0; // Faster bouncing
+    this.bounceSpeed = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_SPEED;
     this.hue = 0;
-    this.rainbowX = 10; // For rainbow text movement
+    this.rainbowX = GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.START_X;
     this.rotateAngle = 0; // For rotating text effects
 
     // Performance tracking for FPS/frametime display
@@ -72,11 +234,13 @@ class GraphicsEngineDemoScene {
   }
 
   _setupAnimationsPhase() {
-    // Reset animation state
-    this.bounceY = 32;
+    // Reset animation state - using config constants
+    this.bounceY = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.START_Y;
     this.bounceDirection = 1;
+    this.bounceSpeed = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_SPEED;
     this.hue = 0;
-    this.rainbowX = 10;
+    this.rainbowX = GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.START_X;
+    this.rainbowTextX = GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.START_X;
   }
 
   _setupImagesPhase() {
@@ -86,8 +250,12 @@ class GraphicsEngineDemoScene {
   }
 
   _setupFadeOutPhase() {
-    // Start fade out transition - longer duration for better effect
-    this.graphicsEngine.startFadeTransition(3000, 1, 0);
+    // Start fade out transition - using config constants
+    this.graphicsEngine.startFadeTransition(
+      GFX_DEMO_CONFIG.TIMING.FADE_OUT_DURATION_MS,
+      1,
+      0,
+    );
   }
 
   async render(context) {
@@ -99,8 +267,10 @@ class GraphicsEngineDemoScene {
     this.lastFrameTime = currentTime;
     this.frameTimes.push(frameTime);
 
-    // Keep only last 30 frame times for averaging
-    if (this.frameTimes.length > 30) {
+    // Keep only configured frame times for averaging - using config constants
+    if (
+      this.frameTimes.length > GFX_DEMO_CONFIG.TIMING.FRAME_TIME_HISTORY_SIZE
+    ) {
       this.frameTimes.shift();
     }
 
@@ -122,39 +292,46 @@ class GraphicsEngineDemoScene {
     // Clear screen with gradient background
     await this._drawBackground(opacity);
 
-    // Add global transparency overlay for depth
-    if (this.demoPhase !== 4) {
+    // Add global transparency overlay for depth - using config constants
+    if (this.demoPhase !== GFX_DEMO_CONFIG.PHASES.FADE_OUT) {
       // Skip during fade out
       await context.device.fillRect(
         [0, 0],
-        [64, 64],
-        [0, 0, 0, Math.round(10 * opacity)],
+        [GFX_DEMO_CONFIG.DISPLAY.WIDTH, GFX_DEMO_CONFIG.DISPLAY.HEIGHT],
+        [
+          0,
+          0,
+          0,
+          Math.round(GFX_DEMO_CONFIG.ANIMATION.GLOBAL_OVERLAY_ALPHA * opacity),
+        ],
       );
     }
 
-    // Update demo phase (moonphase takes twice as long)
+    // Update demo phase (moonphase takes twice as long) - using config constants
     const framesInPhase = this.frameCount - this.phaseStartFrame;
     const currentPhaseDuration =
-      this.demoPhase === 3 ? this.phaseDuration * 2 : this.phaseDuration;
+      this.demoPhase === GFX_DEMO_CONFIG.PHASES.IMAGES
+        ? this.phaseDuration * 2
+        : this.phaseDuration;
     if (framesInPhase >= currentPhaseDuration) {
       this.demoPhase = (this.demoPhase + 1) % 5;
       this.phaseStartFrame = this.frameCount;
 
-      // Switch configurations for each phase
+      // Switch configurations for each phase - using config constants
       switch (this.demoPhase) {
-        case 0:
+        case GFX_DEMO_CONFIG.PHASES.TEXT_EFFECTS:
           this._setupTextEffectsPhase();
           break;
-        case 1:
+        case GFX_DEMO_CONFIG.PHASES.GRADIENTS:
           this._setupGradientsPhase();
           break;
-        case 2:
+        case GFX_DEMO_CONFIG.PHASES.ANIMATIONS:
           this._setupAnimationsPhase();
           break;
-        case 3:
+        case GFX_DEMO_CONFIG.PHASES.IMAGES:
           this._setupImagesPhase();
           break;
-        case 4:
+        case GFX_DEMO_CONFIG.PHASES.FADE_OUT:
           this._setupFadeOutPhase();
           break;
       }
@@ -165,21 +342,21 @@ class GraphicsEngineDemoScene {
     }
 
     try {
-      // Render current demo phase
+      // Render current demo phase - using config constants
       switch (this.demoPhase) {
-        case 0:
+        case GFX_DEMO_CONFIG.PHASES.TEXT_EFFECTS:
           await this._renderTextEffects(opacity);
           break;
-        case 1:
+        case GFX_DEMO_CONFIG.PHASES.GRADIENTS:
           await this._renderGradients(opacity);
           break;
-        case 2:
+        case GFX_DEMO_CONFIG.PHASES.ANIMATIONS:
           await this._renderAnimations(opacity);
           break;
-        case 3:
+        case GFX_DEMO_CONFIG.PHASES.IMAGES:
           await this._renderImages(opacity);
           break;
-        case 4:
+        case GFX_DEMO_CONFIG.PHASES.FADE_OUT:
           await this._renderFadeOut(opacity);
           break;
       }
@@ -253,42 +430,48 @@ class GraphicsEngineDemoScene {
       (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
     const alpha = Math.round(255 * opacity);
 
-    // Title with shadow
+    // Title with shadow - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'TEXT EFFECTS',
-      [32, 8],
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.TITLE_POSITION,
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.TITLE_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: {
           shadow: true,
           shadowOffset: 1,
-          shadowColor: [0, 0, 0, Math.round(150 * opacity)],
+          shadowColor: GFX_DEMO_CONFIG.COLORS.SEMI_TRANSPARENT_BLACK,
         },
       },
     );
 
-    // Outlined text (animated)
+    // Outlined text (animated) - using config constants
     const outlineWidth = Math.floor(phaseProgress * 2) + 1;
     await this.graphicsEngine.drawTextEnhanced(
       'OUTLINE',
-      [32, 20],
-      [255, 200, 100, alpha],
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_POSITION,
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: {
           outline: true,
-          outlineColor: [100, 50, 0, alpha],
+          outlineColor: GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR,
           outlineWidth: outlineWidth,
         },
       },
     );
 
-    // Gradient text
+    // Gradient text - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'GRADIENT',
-      [32, 32],
-      [100, 200, 255, alpha],
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_POSITION,
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: {
@@ -297,18 +480,20 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Combined effects (shadow + outline + gradient)
+    // Combined effects (shadow + outline + gradient) - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'COMBO',
-      [32, 44],
-      [255, 100, 255, alpha],
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_POSITION,
+      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: {
           shadow: true,
           outline: true,
           gradient: true,
-          outlineColor: [100, 0, 100, alpha],
+          outlineColor: GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR,
         },
       },
     );
@@ -317,43 +502,57 @@ class GraphicsEngineDemoScene {
   async _renderGradients(opacity) {
     const alpha = Math.round(255 * opacity);
 
-    // Title
+    // Title - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'GRADIENTS',
-      [32, 8],
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.GRADIENTS.TITLE_POSITION,
+      GFX_DEMO_CONFIG.GRADIENTS.TITLE_COLOR.map((c) => (c === 255 ? alpha : c)),
       {
         alignment: 'center',
         effects: { shadow: true },
       },
     );
 
-    // Vertical gradient demo
+    // Vertical gradient demo - using config constants
     await this.graphicsEngine.drawGradientBackground(
-      [255, 0, 0, alpha], // Red top
-      [0, 0, 255, alpha], // Blue bottom
+      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.START.map((c) =>
+        c === 255 ? alpha : c,
+      ),
+      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.END.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       'vertical',
     );
 
-    // Add some text over the gradient
+    // Add some text over the gradient - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'VERTICAL',
-      [32, 20],
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_POSITION,
+      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_TEXT_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
-        effects: { outline: true, outlineColor: [0, 0, 0, alpha] },
+        effects: {
+          outline: true,
+          outlineColor: GFX_DEMO_CONFIG.COLORS.BLACK.map((c) =>
+            c === 255 ? alpha : c,
+          ),
+        },
       },
     );
 
-    // Horizontal gradient demo (moved more left, full width)
-    for (let x = 0; x < 48; x++) {
-      const factor = x / 47;
+    // Horizontal gradient demo - using config constants
+    for (let x = 0; x < GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_WIDTH; x++) {
+      const factor = x / (GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_WIDTH - 1);
       const r = Math.round(255 * factor);
       const g = Math.round(255 * (1 - factor));
       const b = 100;
       await this.graphicsEngine.device.fillRect(
-        [8 + x, 30],
+        [
+          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION[0] + x,
+          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION[1],
+        ],
         [1, 16],
         [r, g, b, alpha],
       );
@@ -361,8 +560,10 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'H-RGB',
-      [32, 33], // Moved up 5px from y=38
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION,
+      GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_TEXT_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: { shadow: true },
@@ -375,26 +576,32 @@ class GraphicsEngineDemoScene {
     const phaseProgress =
       (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
 
-    // Title
+    // Title - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'ANIMATIONS',
-      [32, 8],
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.ANIMATIONS.TITLE_POSITION,
+      GFX_DEMO_CONFIG.ANIMATIONS.TITLE_COLOR.map((c) =>
+        c === 255 ? alpha : c,
+      ),
       {
         alignment: 'center',
         effects: { shadow: true },
       },
     );
 
-    // Bouncing ball animation - faster and more visible
-    this.bounceY += this.bounceSpeed * this.bounceDirection;
+    // Bouncing ball animation - using config constants
+    this.bounceY +=
+      GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_SPEED * this.bounceDirection;
 
-    if (this.bounceY >= 48 || this.bounceY <= 24) {
+    if (
+      this.bounceY >= GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.MAX_Y ||
+      this.bounceY <= GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_AREA.MIN_Y
+    ) {
       this.bounceDirection *= -1;
     }
 
-    // Draw "ball" as a filled circle with glow effect
-    const ballX = 32;
+    // Draw "ball" as a filled circle with glow effect - using config constants
+    const ballX = GFX_DEMO_CONFIG.DISPLAY.CENTER_X;
     const ballY = Math.round(this.bounceY);
 
     // Draw glow/trail effect (semi-transparent)
@@ -432,33 +639,54 @@ class GraphicsEngineDemoScene {
       }
     }
 
-    // Rainbow color cycling - faster and more visible
-    this.hue = (this.hue + 5) % 360; // Faster cycling
+    // Rainbow color cycling - using config constants
+    this.hue = (this.hue + GFX_DEMO_CONFIG.ANIMATIONS.HUE_INCREMENT) % 360;
     const rainbowColor = this._hslToRgb(this.hue / 360, 0.9, 0.7);
 
-    // Moving colorful squares right-to-left (rtl)
-    this.rainbowX -= 1.5;
-    if (this.rainbowX < -20) this.rainbowX = 50;
+    // Moving colorful squares right-to-left (rtl) - using config constants
+    this.rainbowX -= GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.SPEED;
+    if (this.rainbowX < GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.START_X)
+      this.rainbowX = GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.END_X;
 
-    // Moving rainbow text left-to-right (ltr) - opposite direction
-    if (!this.rainbowTextX) this.rainbowTextX = -20; // Initialize if not set
-    this.rainbowTextX += 1.5;
-    if (this.rainbowTextX > 50) this.rainbowTextX = -20;
+    // Moving rainbow text left-to-right (ltr) - opposite direction - using config constants
+    if (!this.rainbowTextX)
+      this.rainbowTextX = GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.START_X;
+    this.rainbowTextX += GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.SPEED;
+    if (this.rainbowTextX > GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.END_X)
+      this.rainbowTextX = GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_TEXT.START_X;
 
-    // Draw rainbow background stripes for visibility
-    for (let i = 0; i < 6; i++) {
+    // Draw rainbow background stripes for visibility - using config constants
+    for (
+      let i = 0;
+      i < GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_COUNT;
+      i++
+    ) {
       const stripeHue = ((this.hue + i * 60) % 360) / 360;
-      const stripeColor = this._hslToRgb(stripeHue, 0.8, 0.5);
+      const stripeColor = this._hslToRgb(
+        stripeHue,
+        GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.SATURATION,
+        GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.VALUE,
+      );
       await this.graphicsEngine.device.fillRect(
-        [Math.round(this.rainbowX) + i * 8, 38], // Moved 8px up from y=46
-        [6, 6],
+        [
+          Math.round(this.rainbowX) +
+            i * GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_WIDTH,
+          GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_POSITION[1] - 2,
+        ],
+        [
+          GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_WIDTH,
+          GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_HEIGHT,
+        ],
         [...stripeColor, alpha],
       );
     }
 
     await this.graphicsEngine.drawTextEnhanced(
       'RAINBOW',
-      [Math.round(this.rainbowTextX), 40], // Independent ltr movement
+      [
+        Math.round(this.rainbowTextX),
+        GFX_DEMO_CONFIG.ANIMATIONS.RAINBOW_POSITION[1],
+      ], // Independent ltr movement
       [...rainbowColor, Math.round(alpha * 0.5)], // 50% transparent text
       {
         alignment: 'center',
@@ -590,35 +818,50 @@ class GraphicsEngineDemoScene {
   async _renderImages(opacity) {
     const alpha = Math.round(255 * opacity);
 
-    // Title with transparency effect
+    // Title with transparency effect - using config constants
     await this.graphicsEngine.drawTextEnhanced(
       'IMAGES',
-      [32, 8],
-      [255, 255, 255, alpha],
+      GFX_DEMO_CONFIG.IMAGES.TITLE_POSITION,
+      GFX_DEMO_CONFIG.IMAGES.TITLE_COLOR.map((c) => (c === 255 ? alpha : c)),
       {
         alignment: 'center',
         effects: { shadow: true },
       },
     );
 
-    // Separate moon and sun animations - sun moves opposite to moon
-    const moonFrame = this.frameCount % 26;
+    // Separate moon and sun animations - sun moves opposite to moon - using config constants
+    const moonFrame = this.frameCount % GFX_DEMO_CONFIG.IMAGES.MOON.PHASE_COUNT;
     const moonImagePath = `scenes/media/moonphase/5x5/Moon_${moonFrame.toString().padStart(2, '0')}.png`;
 
-    // Sun animation - static 9x9 image (not animated)
+    // Sun animation - static image (not animated) - using config constants
     const sunImagePath = 'scenes/media/sun.png';
-    const sunImageSize = [9, 9]; // Static 9x9 image
+    const sunImageSize = GFX_DEMO_CONFIG.IMAGES.SUN.SIZE;
 
-    // Moon movement (clockwise)
-    this.moonAngle += 0.05;
-    const moonX = Math.round(32 + Math.cos(this.moonAngle) * 18);
-    const moonY = Math.round(32 + Math.sin(this.moonAngle) * 12);
+    // Moon movement (clockwise) - using config constants
+    this.moonAngle += GFX_DEMO_CONFIG.IMAGES.MOON.ANGLE_INCREMENT;
+    const moonX = Math.round(
+      GFX_DEMO_CONFIG.DISPLAY.CENTER_X +
+        Math.cos(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS,
+    );
+    const moonY = Math.round(
+      GFX_DEMO_CONFIG.DISPLAY.CENTER_Y +
+        Math.sin(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS,
+    );
 
-    // Sun movement (clockwise, same direction as moon but positioned opposite)
-    this.sunAngle = (this.sunAngle || 0) + 0.05; // Clockwise like moon
+    // Sun movement (clockwise, same direction as moon but positioned opposite) - using config constants
+    this.sunAngle =
+      (this.sunAngle || 0) + GFX_DEMO_CONFIG.IMAGES.SUN.ANGLE_INCREMENT;
     // Position sun opposite to moon by adding π (180 degrees) to angle
-    const sunX = Math.round(32 + Math.cos(this.sunAngle + Math.PI) * 18);
-    const sunY = Math.round(32 + Math.sin(this.sunAngle + Math.PI) * 12);
+    const sunX = Math.round(
+      GFX_DEMO_CONFIG.DISPLAY.CENTER_X +
+        Math.cos(this.sunAngle + GFX_DEMO_CONFIG.IMAGES.SUN.ORBIT_OFFSET) *
+          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS,
+    );
+    const sunY = Math.round(
+      GFX_DEMO_CONFIG.DISPLAY.CENTER_Y +
+        Math.sin(this.sunAngle + GFX_DEMO_CONFIG.IMAGES.SUN.ORBIT_OFFSET) *
+          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS,
+    );
 
     try {
       // Draw moon with shadow

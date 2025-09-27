@@ -140,8 +140,177 @@ scenes/
     ├── framework-static-demo.js
     ├── framework-animated-demo.js
     ├── framework-data-demo.js
-    └── graphics-engine-demo.js  # ✅ Auto-loaded
+    └── graphics-engine-demo.js  # ✅ Auto-loaded (configurable)
 ```
+
+## 🎨 **CONFIGURABLE CONSTANTS - No More Magic Numbers!**
+
+### **✅ Why Configurable Constants?**
+
+Modern scenes should use **configurable constants** instead of hardcoded "magic numbers":
+
+- **🔧 Easy Adaptation**: Change display dimensions without rewriting code
+- **📱 Scalability**: Support larger displays (128x128, 256x256, etc.)
+- **🎯 Maintainability**: Single source of truth for all positioning and timing
+- **🧪 Testability**: Easy to modify values for testing different scenarios
+- **📚 Documentation**: Self-documenting code with clear intent
+
+### **🚀 Graphics Engine Demo - Configuration Example**
+
+```javascript
+// Configuration constants - no more magic numbers!
+const GFX_DEMO_CONFIG = {
+  // Display dimensions
+  DISPLAY: {
+    WIDTH: 64, // ← Change this for larger displays
+    HEIGHT: 64,
+    CENTER_X: 32,
+    CENTER_Y: 32,
+  },
+
+  // Timing and animation
+  TIMING: {
+    PHASE_DURATION_FRAMES: 60, // ~12 seconds at 5fps
+    FADE_IN_DURATION_MS: 1000,
+    FADE_OUT_DURATION_MS: 3000,
+  },
+
+  // Text effects phase
+  TEXT_EFFECTS: {
+    TITLE_POSITION: [32, 8],
+    TITLE_COLOR: [255, 255, 255, 255],
+    SHADOW_COLOR: [100, 100, 255, 255],
+    // ... more config
+  },
+
+  // Animations phase
+  ANIMATIONS: {
+    BOUNCE_AREA: {
+      MIN_Y: 24,
+      MAX_Y: 48,
+      START_Y: 32,
+    },
+    BOUNCE_SPEED: 2.0,
+    RAINBOW_TEXT: {
+      START_X: -20,
+      END_X: 50,
+      SPEED: 1.5,
+    },
+    // ... more config
+  },
+};
+
+// Usage in render methods:
+const ballX = GFX_DEMO_CONFIG.DISPLAY.CENTER_X; // Instead of: const ballX = 32;
+this.bounceSpeed = GFX_DEMO_CONFIG.ANIMATIONS.BOUNCE_SPEED; // Instead of: 2.0
+```
+
+### **📏 Configuration Structure Guidelines**
+
+**1. Display Properties:**
+
+```javascript
+DISPLAY: {
+  WIDTH: 64, HEIGHT: 64,        // Canvas dimensions
+  CENTER_X: 32, CENTER_Y: 32,   // Calculated centers
+}
+```
+
+**2. Timing Constants:**
+
+```javascript
+TIMING: {
+  PHASE_DURATION_FRAMES: 60,     // Animation phases
+  FADE_IN_DURATION_MS: 1000,     // Transition timing
+  FRAME_TIME_HISTORY_SIZE: 10,   // Performance tracking
+}
+```
+
+**3. Position Constants:**
+
+```javascript
+ELEMENT_NAME: {
+  POSITION: [x, y],              // Screen coordinates
+  SIZE: [width, height],         // Dimensions
+  COLOR: [r, g, b, a],           // RGBA values
+}
+```
+
+**4. Animation Parameters:**
+
+```javascript
+ANIMATION: {
+  SPEED: 2.0,                    // Movement speed
+  AREA: { MIN: 0, MAX: 100 },    // Movement bounds
+  RADIUS: 15,                    // Orbital radius
+  ANGLE_INCREMENT: 0.05,         // Rotation speed
+}
+```
+
+### **🔧 Adapting for Larger Displays**
+
+When upgrading to larger displays (128x128, 256x256), only change the config:
+
+```javascript
+const GFX_DEMO_CONFIG = {
+  DISPLAY: {
+    WIDTH: 128, // ← Changed from 64
+    HEIGHT: 128, // ← Changed from 64
+    CENTER_X: 64, // ← Changed from 32
+    CENTER_Y: 64, // ← Changed from 32
+  },
+
+  // All other values scale proportionally...
+  ANIMATIONS: {
+    BOUNCE_AREA: {
+      MIN_Y: 48,
+      MAX_Y: 96,
+      START_Y: 64, // ← Scaled up
+    },
+    // ... rest unchanged!
+  },
+};
+```
+
+**Result**: All scenes work on larger displays without code changes!
+
+### **🧪 Testing with Different Configurations**
+
+```javascript
+// Test different display sizes
+const testConfigs = [
+  { width: 64, height: 64, centerX: 32, centerY: 32 },
+  { width: 128, height: 128, centerX: 64, centerY: 64 },
+  { width: 256, height: 256, centerX: 128, centerY: 128 },
+];
+
+// Run same scene code with different configs
+testConfigs.forEach((config) => {
+  const scene = new GraphicsEngineDemoScene({ displayConfig: config });
+  // Test rendering...
+});
+```
+
+### **✅ Implementation Checklist**
+
+- [x] **Replace Magic Numbers**: All hardcoded values → config constants
+- [x] **Display Scaling**: Easy adaptation for larger screens
+- [x] **Animation Bounds**: Configurable movement areas
+- [x] **Color Schemes**: Centralized color definitions
+- [x] **Timing Values**: Configurable durations and speeds
+- [x] **Position Coordinates**: Named position constants
+- [x] **Test Coverage**: All tests pass with new config
+- [x] **Documentation**: Updated best practices guide
+
+### **🚨 Pro Tips for Configurable Scenes**
+
+1. **✅ Always use config constants** instead of magic numbers
+2. **✅ Group related values** (positions, colors, timing)
+3. **✅ Calculate centers** from width/height for scalability
+4. **✅ Use descriptive names** for all configuration keys
+5. **✅ Test with different sizes** before committing
+6. **✅ Document scaling behavior** for larger displays
+7. **❌ Never hardcode positions** like `[32, 8]` in render code
 
 ### **🛠️ Development Tools**
 
