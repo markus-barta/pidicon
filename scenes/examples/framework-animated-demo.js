@@ -26,7 +26,7 @@ class BouncingBallScene extends AnimatedScene {
         ballColor: [255, 100, 100, 255], // Red
         trailColor: [100, 100, 255, 150], // Blue with transparency
         ballSize: 4,
-        speed: 0.05, // Animation speed multiplier
+        speed: 0.5, // Animation speed multiplier (10x faster)
         ...options.config,
       },
     });

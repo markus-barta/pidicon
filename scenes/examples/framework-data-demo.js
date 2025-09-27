@@ -77,10 +77,10 @@ class SensorDashboardScene extends DataScene {
     await device.clear();
     await device.fillRect([0, 0], [64, 64], [15, 15, 35, 255]);
 
-    // Title
+    // Title (moved down to avoid indicator overlap)
     await device.drawText(
       'Sensor Dashboard',
-      [32, 2],
+      [32, 6],
       [255, 255, 255, 255],
       'center',
     );
@@ -95,26 +95,26 @@ class SensorDashboardScene extends DataScene {
 
     await device.drawText(
       `${data.temperature}°${temperatureUnit}`,
-      [32, 12],
+      [32, 16],
       tempColor,
       'center',
     );
 
-    // Humidity and pressure
+    // Humidity and pressure (moved down)
     await device.drawText(
       `H:${data.humidity}%`,
-      [8, 22],
+      [8, 28],
       [200, 200, 255, 255],
       'left',
     );
     await device.drawText(
       `P:${data.pressure}`,
-      [8, 30],
+      [8, 36],
       [255, 200, 200, 255],
       'left',
     );
 
-    // Device status
+    // Device status (moved to avoid overlap)
     const statusColor =
       data.onlineCount === data.totalDevices
         ? [0, 255, 0, 255]
@@ -124,16 +124,16 @@ class SensorDashboardScene extends DataScene {
 
     await device.drawText(
       `${data.onlineCount}/${data.totalDevices}`,
-      [56, 22],
+      [56, 28],
       statusColor,
       'right',
     );
-    await device.drawText('Devices', [56, 30], [200, 200, 200, 255], 'right');
+    await device.drawText('Devices', [56, 36], [200, 200, 200, 255], 'right');
 
-    // Status indicator
+    // Status indicator (moved to center-right to avoid text overlap)
     const indicatorSize = 3;
-    const indicatorX = 32 - indicatorSize / 2;
-    const indicatorY = 38;
+    const indicatorX = 58;
+    const indicatorY = 6;
 
     await device.fillRect(
       [indicatorX, indicatorY],
@@ -155,21 +155,21 @@ class SensorDashboardScene extends DataScene {
       [...statusColor.slice(0, 3), pulseAlpha],
     );
 
-    // Framework info
+    // Framework info (moved up to fit new layout)
     await device.drawText(
       'Framework Demo',
-      [32, 50],
+      [32, 46],
       [150, 150, 150, 255],
       'center',
     );
     await device.drawText(
       `Frame: ${frameCount}`,
-      [32, 58],
+      [32, 54],
       [120, 120, 120, 255],
       'center',
     );
 
-    // Data freshness indicator (small dot that changes color based on data age)
+    // Data freshness indicator (moved to avoid title overlap)
     const dataAge = Date.now() - (data.timestamp || 0);
     const freshnessColor =
       dataAge < 1000
@@ -178,7 +178,7 @@ class SensorDashboardScene extends DataScene {
           ? [255, 255, 0, 255]
           : [255, 0, 0, 255];
 
-    await device.fillRect([2, 2], [2, 2], freshnessColor);
+    await device.fillRect([1, 1], [2, 2], freshnessColor);
   }
 }
 
