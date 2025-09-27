@@ -469,7 +469,7 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'SMOOTH',
-      [Math.round(easedX), 56],
+      [Math.round(easedX), 52], // Moved up from y=56 to avoid bottom bar at y=58+
       [150, 255, 150, alpha],
       {
         alignment: 'center',
@@ -518,21 +518,21 @@ class GraphicsEngineDemoScene {
 
   async _drawPerformanceMetrics(fps, avgFrameTime) {
     try {
-      // Draw bottom bar like performance test: "X FPS, Y ms"
-      // Reserve bottom 7 pixels for black bar with performance info
+      // Draw compact bottom bar: "XFPS Yms" (skip comma/space for brevity)
+      // Reserve bottom 6 pixels for black bar (y=58-63) so frame counter at y=57 is visible
 
-      // Draw black background bar at bottom
+      // Draw black background bar at bottom (6px height, starting at y=58)
       await this.graphicsEngine.device.fillRect(
-        [0, 57],
-        [64, 7],
+        [0, 58],
+        [64, 6],
         [0, 0, 0, 255],
       );
 
-      // Format FPS with one decimal place like performance test
-      const fpsOneDecimal = Math.round(fps * 10) / 10;
+      // Format compact display (max 16 chars with 1px spacing between 3x5 chars)
+      const fpsInt = Math.round(fps);
       const frametimeMs = Math.round(avgFrameTime);
 
-      // Color for frametime based on performance (green=good, yellow=ok, red=bad)
+      // Color for frametime based on performance
       let msColor;
       if (frametimeMs <= 200)
         msColor = [100, 255, 100]; // Green for <=200ms
@@ -541,31 +541,27 @@ class GraphicsEngineDemoScene {
       else msColor = [255, 100, 100]; // Red for >300ms
 
       let x = 2;
-      const y = 57;
+      const y = 59; // 1px down from 58 for better centering in 6px bar
       const darkGray = [100, 100, 100, 255];
 
-      // FPS numeric (white), then one pixel gap, then 'FPS'
-      const fpsVal = `${fpsOneDecimal}`;
+      // FPS numeric (white), then 'FPS'
+      const fpsVal = `${fpsInt}`;
       await this.graphicsEngine.device.drawText(
         fpsVal,
         [x, y],
         [255, 255, 255, 255],
         'left',
       );
-      x += fpsVal.length * 4 + 1; // 4px per char + 1px gap
+      x += fpsVal.length * 4 + 1; // value width + 1px gap
       await this.graphicsEngine.device.drawText(
         'FPS',
         [x, y],
         darkGray,
         'left',
       );
-      x += 3 * 4; // 'FPS' width
+      x += 3 * 4 + 1; // 'FPS' width + 1px gap
 
-      // Comma and space
-      await this.graphicsEngine.device.drawText(', ', [x, y], darkGray, 'left');
-      x += 2 * 4; // ', ' width
-
-      // Frametime numeric (colored), then one pixel gap, then 'ms'
+      // Frametime numeric (colored), then 'ms'
       const msVal = `${frametimeMs}`;
       await this.graphicsEngine.device.drawText(
         msVal,
