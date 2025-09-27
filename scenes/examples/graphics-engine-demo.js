@@ -443,7 +443,7 @@ class GraphicsEngineDemoScene {
       const stripeHue = ((this.hue + i * 60) % 360) / 360;
       const stripeColor = this._hslToRgb(stripeHue, 0.8, 0.5);
       await this.graphicsEngine.device.fillRect(
-        [Math.round(this.rainbowX) + i * 8, 46],
+        [Math.round(this.rainbowX) + i * 8, 38], // Moved 8px up from y=46
         [6, 6],
         [...stripeColor, alpha],
       );
@@ -451,7 +451,7 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'RAINBOW',
-      [Math.round(this.rainbowX + 20), 48],
+      [Math.round(this.rainbowX + 20), 40], // Moved 8px up from y=48
       [...rainbowColor, Math.round(alpha * 0.5)], // 50% transparent text
       {
         alignment: 'center',
@@ -541,7 +541,7 @@ class GraphicsEngineDemoScene {
         msColor = [255, 255, 100]; // Yellow for 200-300ms
       else msColor = [255, 100, 100]; // Red for >300ms
 
-      let x = 2;
+      let x = 0; // Moved 2px left for better spacing
       const y = 59; // Centered in 6px bar (58-63)
       const darkGray = [100, 100, 100, 255];
 
@@ -568,7 +568,7 @@ class GraphicsEngineDemoScene {
 
       // Frame counter: " #12345" (right-aligned)
       const frameText = ` #${this.frameCount.toString().padStart(5, '0')}`;
-      const frameX = 64 - frameText.length * 4 - 3; // Right-aligned with 3px margin (moved 2px right)
+      const frameX = 64 - frameText.length * 4 - 1; // Right-aligned with 1px margin (moved 4px right total)
       await this.graphicsEngine.device.drawText(
         frameText,
         [frameX, y],
@@ -655,71 +655,36 @@ class GraphicsEngineDemoScene {
 
   async _renderFadeOut(opacity) {
     const alpha = Math.round(255 * opacity);
-    const phaseProgress =
-      (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
 
-    // Creative pixelated dissolve effect
-    const dissolveProgress = Math.min(1, phaseProgress * 2); // Dissolve over first half
-    const dissolveAlpha = Math.round(alpha * (1 - dissolveProgress * 0.7));
-
-    // Title with creative dissolving effect - moved down to avoid cutoff
+    // Simple, clear fade out - no complex effects that make text invisible
     await this.graphicsEngine.drawTextEnhanced(
       'FADE OUT',
-      [32, 12], // Moved down from y=8 to avoid top cutoff
-      [255, 255, 255, dissolveAlpha],
+      [32, 16], // Clear position, not too high
+      [255, 255, 255, alpha],
       {
         alignment: 'center',
         effects: {
-          // Conditional shadow - only show when not too faded
-          shadow: dissolveProgress < 0.5,
-          shadowColor: [0, 0, 0, Math.round(dissolveAlpha * 0.6)],
+          shadow: true,
+          shadowColor: [0, 0, 0, Math.round(alpha * 0.8)], // Strong shadow
         },
       },
     );
 
-    // Creative pulsing elements with wave effect
-    const waveOffset = Math.sin(phaseProgress * Math.PI * 4) * 3;
-    const centerY = 32 + waveOffset;
-
-    // Dynamic color based on fade progress
-    const redIntensity = Math.round(255 * (1 - phaseProgress));
-    const blueIntensity = Math.round(100 * phaseProgress);
-
+    // Clear, visible GOODBYE text throughout entire fade
     await this.graphicsEngine.drawTextEnhanced(
       'GOODBYE',
-      [32, centerY],
-      [redIntensity, blueIntensity, blueIntensity, alpha],
+      [32, 40], // Fixed position, clearly visible
+      [255, 100, 100, alpha], // Red text, full alpha throughout
       {
         alignment: 'center',
         effects: {
-          // Creative conditional effects
-          shadow: phaseProgress < 0.7, // Shadow fades out first
-          shadowColor: [redIntensity * 0.4, 0, 0, Math.round(alpha * 0.5)],
-          outline: phaseProgress > 0.3, // Outline appears later
-          outlineColor: [redIntensity, blueIntensity, blueIntensity * 2, alpha],
+          shadow: true,
+          shadowColor: [100, 0, 0, Math.round(alpha * 0.6)],
+          outline: true,
+          outlineColor: [150, 50, 50, alpha],
         },
       },
     );
-
-    // Add some dissolving particles for extra creativity
-    if (phaseProgress > 0.2) {
-      const particleCount = Math.floor(phaseProgress * 8);
-      for (let i = 0; i < particleCount; i++) {
-        const particleX = Math.round(
-          32 + Math.sin(phaseProgress * 10 + i) * 25,
-        );
-        const particleY = Math.round(20 + Math.cos(phaseProgress * 8 + i) * 20);
-        const particleAlpha = Math.round(alpha * (0.3 - phaseProgress * 0.2));
-
-        if (particleAlpha > 10) {
-          await this.graphicsEngine.device.fillRect(
-            [particleX, particleY],
-            [1, 1],
-            [redIntensity, blueIntensity, blueIntensity, particleAlpha],
-          );
-        }
-      }
-    }
 
     // If this is the last phase and fade is complete, prepare for restart
     const fadeComplete = !this.graphicsEngine.isFadeActive() && opacity < 0.1;
