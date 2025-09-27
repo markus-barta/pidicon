@@ -436,9 +436,9 @@ class GraphicsEngineDemoScene {
     this.hue = (this.hue + 5) % 360; // Faster cycling
     const rainbowColor = this._hslToRgb(this.hue / 360, 0.9, 0.7);
 
-    // Moving rainbow text across screen
-    this.rainbowX += 1.5;
-    if (this.rainbowX > 50) this.rainbowX = -20;
+    // Moving rainbow text across screen (opposite direction of squares)
+    this.rainbowX -= 1.5;
+    if (this.rainbowX < -20) this.rainbowX = 50;
 
     // Draw rainbow background stripes for visibility
     for (let i = 0; i < 6; i++) {
@@ -520,12 +520,12 @@ class GraphicsEngineDemoScene {
   async _drawPerformanceMetrics(fps, avgFrameTime) {
     try {
       // Draw ultra-compact bottom bar: "4,9/204ms #12345"
-      // Reserve bottom 6 pixels for black bar (y=58-63) containing all stats
+      // Reserve bottom 7 pixels for black bar (y=57-63) containing all stats
 
-      // Draw black background bar at bottom (6px height, starting at y=58)
+      // Draw black background bar at bottom (7px height, starting at y=57)
       await this.graphicsEngine.device.fillRect(
-        [0, 58],
-        [64, 6],
+        [0, 57],
+        [64, 7],
         [0, 0, 0, 255],
       );
 
@@ -543,8 +543,8 @@ class GraphicsEngineDemoScene {
         msColor = [255, 255, 100]; // Yellow for 200-300ms
       else msColor = [255, 100, 100]; // Red for >300ms
 
-      let x = 0; // Moved 2px left for better spacing
-      const y = 59; // Centered in 6px bar (58-63)
+      let x = 1; // 1px to the right
+      const y = 58; // 1px up from previous 59
       const darkGray = [100, 100, 100, 255];
 
       // FPS with decimal: "4,9/"
@@ -570,7 +570,7 @@ class GraphicsEngineDemoScene {
 
       // Frame counter: " #12345" (right-aligned)
       const frameText = ` #${this.frameCount.toString().padStart(5, '0')}`;
-      const frameX = 64 - frameText.length * 4 - 1; // Right-aligned with 1px margin (moved 4px right total)
+      const frameX = 64 - frameText.length * 4; // Right-aligned, adjusted for new position
       await this.graphicsEngine.device.drawText(
         frameText,
         [frameX, y],
