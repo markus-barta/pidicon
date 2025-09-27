@@ -14,13 +14,14 @@
 const SunCalc = require('suncalc');
 
 const { drawVerticalGradientLine } = require('../lib/gradient-renderer');
+const GraphicsEngine = require('../lib/graphics-engine');
 const logger = require('../lib/logger');
-const { drawText } = require('../lib/rendering-utils');
 const {
   BaseSceneState,
   FrameCounter,
   SceneUtils,
 } = require('../lib/scene-base');
+const { AnimatedScene } = require('../lib/scene-framework');
 
 // Scene configuration - migrated from DisplayConfig
 const SCENE_CONFIG = {
@@ -195,103 +196,691 @@ const SCENE_CONFIG = {
 
 /**
  * Power Price Scene - Professional power price display with PV, battery, and weather data
- * Migrated from Node-RED POWER_PRICE_RENDERER function node
+ * Now using AnimatedScene framework with latest graphics engine features
  */
-async function render(context) {
-  // Validate context
-  if (!SceneUtils.validateContext(context, 'power_price')) {
-    return null;
+class PowerPriceScene extends AnimatedScene {
+  constructor(options = {}) {
+    super({
+      name: 'power_price',
+      frameRate: 0, // Adaptive timing for smooth performance
+      config: {
+        debug: false,
+        ...options.config,
+      },
+    });
+
+    // Graphics engine will be initialized when device is available
+    this.graphicsEngine = null;
   }
 
-  const {
-    device,
-    state, // eslint-disable-line no-unused-vars
-    payload,
-    getState,
-    setState,
-    publishOk,
-    loopDriven: _loopDriven, // eslint-disable-line no-unused-vars
-  } = context;
+  async _drawPerformanceMetrics(fps, avgFrameTime) {
+    try {
+      // Draw ultra-compact bottom bar: "4,9/204ms #12345"
+      // Reserve bottom 7 pixels for black bar (y=57-63) containing all stats
 
-  try {
-    // Get configuration from payload or use defaults
-    const config = SceneUtils.getConfig(payload, {
-      // External data sources - these would normally come from global.get()
-      powerPriceData: null,
-      currentCentPrice: null,
-      dailyPvDataActual: null,
-      pvHourlyYieldPrediction: null,
-      batteryStatus: null,
-      uviData: null,
-      localTimeData: null,
-      moonPhaseData: null,
+      // Draw black background bar at bottom (7px height, starting at y=57)
+      await this.graphicsEngine.device.fillRect(
+        [0, 57],
+        [64, 7],
+        [0, 0, 0, 255],
+      );
 
-      // Configuration options
-      enableDebug: false,
-      enableAnimation: true,
-      enableFPS: false,
-      frames: null, // null for continuous, number for limited frames
-    });
+      // Format ultra-compact display: "fps,decimal/frametime ms #framecount"
+      const fpsValue = 1000 / avgFrameTime; // Calculate actual FPS with decimals
+      const fpsInt = Math.floor(fpsValue);
+      const fpsDecimal = Math.floor((fpsValue % 1) * 10); // Always 1 decimal, never rounds up
+      const frametimeMs = Math.round(avgFrameTime);
 
-    // Initialize state if not running
-    if (!getState('isRunning')) {
-      const state = new BaseSceneState(getState, setState);
-      state.reset({
-        animationIndex: 0,
-        clockFadeAlpha: SCENE_CONFIG.CLOCK.separator.baseAlpha,
-        clockFadeDirection: 1,
-        lastRenderTime: Date.now(),
+      // Color for frametime based on performance
+      let msColor;
+      if (frametimeMs <= 200)
+        msColor = [100, 255, 100]; // Green for <=200ms
+      else if (frametimeMs <= 300)
+        msColor = [255, 255, 100]; // Yellow for 200-300ms
+      else msColor = [255, 100, 100]; // Red for >300ms
+
+      let x = 1; // 1px to the right
+      const y = 58; // Centered in 7px bar (57-63)
+      const darkGray = [100, 100, 100, 255];
+
+      // FPS with decimal: "4,9/"
+      await this.graphicsEngine.device.drawText(
+        `${fpsInt},${fpsDecimal}/`,
+        [x, y],
+        [255, 255, 255, 255],
+        'left',
+      );
+      x += 4 * 4 + 1; // "4,9/" width + 1px gap
+
+      // Frametime: "204ms"
+      const msVal = `${frametimeMs}`;
+      await this.graphicsEngine.device.drawText(
+        msVal,
+        [x, y],
+        [msColor[0], msColor[1], msColor[2], 255],
+        'left',
+      );
+      x += msVal.length * 4; // frametime width
+      await this.graphicsEngine.device.drawText('ms', [x, y], darkGray, 'left');
+      x += 2 * 4 + 2; // 'ms' width + 2px gap
+
+      // Frame counter: " #12345" (right-aligned)
+      const frameText = ` #${this.frameCount.toString().padStart(5, '0')}`;
+      const frameX = 64 - frameText.length * 4; // Right-aligned, adjusted for new position
+      await this.graphicsEngine.device.drawText(
+        frameText,
+        [frameX, y],
+        [200, 200, 200, 255],
+        'left',
+      );
+    } catch (error) {
+      logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
+    }
+  }
+
+  async renderFrame(context) {
+    // Context now includes additional framework parameters
+    const {
+      device,
+      frameCount,
+      elapsedMs,
+      loopDriven: _loopDriven, // eslint-disable-line no-unused-vars
+      ...baseContext
+    } = context;
+
+    // Extract original context parameters
+    const { payload, getState, setState } = baseContext;
+
+    // Initialize graphics engine if not already done
+    if (!this.graphicsEngine) {
+      this.graphicsEngine = new GraphicsEngine(device);
+    }
+
+    try {
+      // Get configuration from payload or use defaults
+      const config = SceneUtils.getConfig(payload, {
+        // External data sources - these would normally come from global.get()
+        powerPriceData: null,
+        currentCentPrice: null,
+        dailyPvDataActual: null,
+        pvHourlyYieldPrediction: null,
+        batteryStatus: null,
+        uviData: null,
+        localTimeData: null,
+        moonPhaseData: null,
+
+        // Configuration options
+        enableDebug: false,
+        enableAnimation: true,
+        enableFPS: false,
+        frames: null, // null for continuous, number for limited frames
       });
-      logger.ok(`🎬 [POWER_PRICE] Starting scene`);
+
+      // Initialize state if not running
+      if (!getState('isRunning')) {
+        const state = new BaseSceneState(getState, setState);
+        state.reset({
+          animationIndex: 0,
+          clockFadeAlpha: SCENE_CONFIG.CLOCK.separator.baseAlpha,
+          clockFadeDirection: 1,
+          lastRenderTime: Date.now(),
+        });
+        logger.ok(`🎬 [POWER_PRICE] Starting scene`);
+      }
+
+      // Get current time info (normally from global.get('suncalc') and time functions)
+      const timeInfo = getTimeInfo(config);
+
+      // Clear display to prevent overdrawing of semi-transparent elements
+      await device.clear();
+
+      // Apply afternoon layout shift if needed
+      applyAfternoonShift(timeInfo.isAfterNoon);
+
+      // Render all components using latest graphics engine
+      await this.renderBackground(device);
+      await this.renderGrid(device);
+      await this.renderImages(device, timeInfo);
+      await this.renderClock(device, config);
+      await this.renderBattery(device, config);
+      await this.renderPriceText(device, config);
+      await this.renderPvData(device, config, timeInfo);
+      await this.renderUviText(device, config, timeInfo);
+      await this.renderPowerPriceChart(device, config, timeInfo);
+
+      // Add performance metrics display (bottom bar)
+      await this._drawPerformanceMetrics(
+        Math.round(1000 / (elapsedMs / frameCount || 1)),
+        elapsedMs / frameCount || 0,
+      );
+
+      // Animation is now time-based, no need to track frame index
+
+      // Handle frame counting
+      const frameCounter = new FrameCounter(getState, setState);
+      const framesPushed = frameCounter.incrementPushed();
+
+      // Check if we should continue based on frame limit
+      if (!frameCounter.shouldContinue(config.frames)) {
+        logger.ok(`🏁 [POWER_PRICE] Completed after ${framesPushed} frames`);
+        return null;
+      }
+
+      // Return 0 for adaptive timing - render as soon as possible for smooth performance
+      return 0;
+    } catch (error) {
+      return SceneUtils.createErrorResponse(error, 'power_price', {
+        device: device?.host,
+        frametime: device?.getMetrics?.()?.lastFrametime || 0,
+      });
+    }
+  }
+
+  /**
+   * Render static background images using latest graphics engine
+   */
+  async renderBackground(/* device */) {
+    const images = [
+      SCENE_CONFIG.IMAGES.PRICE_BACKGROUND,
+      SCENE_CONFIG.IMAGES.PV_BACKGROUND,
+      SCENE_CONFIG.IMAGES.BATTERY,
+      SCENE_CONFIG.IMAGES.CENT_SIGN,
+      SCENE_CONFIG.IMAGES.KWH_UNIT,
+      SCENE_CONFIG.IMAGES.SUN,
+    ];
+
+    for (const image of images) {
+      if (image.path) {
+        try {
+          // Use drawImageBlended with multiply blend mode for better image compositing
+          await this.graphicsEngine.drawImageBlended(
+            image.path,
+            image.position,
+            image.dimensions,
+            image.alpha || 255,
+            'multiply', // Multiply blend mode treats black backgrounds as transparent
+          );
+        } catch (error) {
+          logger.debug(`Error rendering image ${image.path}: ${error.message}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Render background grid lines
+   */
+  async renderGrid(device) {
+    const grid = SCENE_CONFIG.CHART.POWER_PRICE.GRID;
+
+    // Draw horizontal lines with opacity gradient
+    for (let i = 0; i < grid.horizontal.count; i++) {
+      const y =
+        grid.startPos[1] +
+        i *
+          Math.floor(
+            (grid.endPos[1] - grid.startPos[1]) / (grid.horizontal.count - 1),
+          );
+      const alpha = Math.min(
+        255,
+        grid.horizontal.minAlpha +
+          Math.round(
+            (i / (grid.horizontal.count - 1)) * grid.horizontal.alphaRange,
+          ),
+      );
+      const color = [...grid.horizontal.color.slice(0, 3), alpha];
+
+      await device.drawLineRgba(
+        [grid.startPos[0] - grid.overhang, y],
+        [grid.endPos[0] + grid.overhang, y],
+        color,
+      );
     }
 
-    // Get current time info (normally from global.get('suncalc') and time functions)
+    // Draw vertical lines with opacity gradient
+    for (let i = 0; i < grid.vertical.count; i++) {
+      const x =
+        grid.startPos[0] +
+        i *
+          Math.floor(
+            (grid.endPos[0] - grid.startPos[0]) / (grid.vertical.count - 1),
+          );
+      const alpha = Math.min(
+        255,
+        grid.vertical.minAlpha +
+          Math.round(
+            (i / (grid.vertical.count - 1)) * grid.vertical.alphaRange,
+          ),
+      );
+      const color = [...grid.vertical.color.slice(0, 3), alpha];
+
+      await device.drawLineRgba(
+        [x, grid.startPos[1] - grid.overhang],
+        [x, grid.endPos[1] + grid.overhang],
+        color,
+      );
+    }
+  }
+
+  /**
+   * Render clock with blinking separator using enhanced text rendering
+   */
+  async renderClock(device, config) {
     const timeInfo = getTimeInfo(config);
+    const hour = timeInfo.hour.toString().padStart(2, '0');
+    const minute = timeInfo.minute.toString().padStart(2, '0');
 
-    // Clear display to prevent overdrawing of semi-transparent elements
-    await device.clear();
+    // Get current animation state for separator blinking
+    const currentTime = Date.now();
+    const separatorAlpha = config.enableAnimation
+      ? calculateSeparatorAlpha(currentTime)
+      : SCENE_CONFIG.CLOCK.separator.baseAlpha;
+    const separatorColor = [
+      ...SCENE_CONFIG.CLOCK.color.slice(0, 3),
+      separatorAlpha,
+    ];
 
-    // Apply afternoon layout shift if needed
-    applyAfternoonShift(timeInfo.isAfterNoon);
+    // Render clock with enhanced text effects for better visibility
+    const clockText = `${hour}:${minute}`;
 
-    // Render all components
-    await renderBackground(device);
-    await renderGrid(device);
-    await renderImages(device, timeInfo);
-    await renderClock(device, config);
-    await renderBattery(device, config);
-    await renderPriceText(device, config);
-    await renderPvData(device, config, timeInfo);
-    await renderUviText(device, config, timeInfo);
-    await renderPowerPriceChart(device, config, timeInfo);
+    await this.graphicsEngine.drawTextEnhanced(
+      clockText,
+      [
+        SCENE_CONFIG.CLOCK.positions.hour[0],
+        SCENE_CONFIG.CLOCK.positions.hour[1],
+      ],
+      SCENE_CONFIG.CLOCK.color,
+      {
+        alignment: 'left',
+        backdrop: {
+          offset: 1,
+          color: [0, 0, 0, 120], // Semi-transparent black backdrop
+        },
+        effects: {
+          shadow: SCENE_CONFIG.CLOCK.shadow.enabled,
+          shadowColor: SCENE_CONFIG.CLOCK.shadow.color,
+          shadowOffset: SCENE_CONFIG.CLOCK.shadow.offset,
+        },
+      },
+    );
 
-    // Push the rendered frame to the device
-    await device.push('power_price', publishOk);
+    // Handle blinking separator with enhanced rendering
+    if (separatorAlpha > 50) {
+      // Only show separator when bright enough
+      await this.graphicsEngine.drawTextEnhanced(
+        ':',
+        [
+          SCENE_CONFIG.CLOCK.positions.separator[0],
+          SCENE_CONFIG.CLOCK.positions.separator[1],
+        ],
+        separatorColor,
+        {
+          alignment: 'left',
+          effects: {
+            shadow: SCENE_CONFIG.CLOCK.shadow.enabled,
+            shadowColor: [
+              ...SCENE_CONFIG.CLOCK.shadow.color.slice(0, 3),
+              Math.min(separatorAlpha, SCENE_CONFIG.CLOCK.shadow.color[3]),
+            ],
+            shadowOffset: SCENE_CONFIG.CLOCK.shadow.offset,
+          },
+        },
+      );
+    }
+  }
 
-    // Render FPS counter if enabled (after push so it doesn't affect frametime)
-    const frametime = device.getMetrics?.()?.lastFrametime || 0;
-    await renderFPSCounter(device, config, frametime);
+  /**
+   * Render battery indicator with charge/discharge status
+   */
+  async renderBattery(device, config) {
+    const batteryStatus = config.batteryStatus || {};
+    const batteryCharge = batteryStatus.USOC || 0;
 
-    // Animation is now time-based, no need to track frame index
+    // Calculate battery fill
+    const batteryConfig = SCENE_CONFIG.IMAGES.BATTERY;
+    const baseX = batteryConfig.position[0];
+    const baseY = batteryConfig.position[1];
+    const fillX = baseX + batteryConfig.fillframe[0];
+    const fillY = baseY + batteryConfig.fillframe[1];
+    const fillWidth = batteryConfig.fillframe[2];
+    const fillHeight = batteryConfig.fillframe[3];
+    const totalPixels = fillWidth * fillHeight;
+    const pixelsToFill = Math.max(0, (batteryCharge / 100) * totalPixels);
+    const fullPixels = Math.floor(pixelsToFill);
+    const partialPixelAlpha = Math.max(
+      0,
+      Math.min(255, Math.floor((pixelsToFill - fullPixels) * 255)),
+    );
 
-    // Handle frame counting
-    const frameCounter = new FrameCounter(getState, setState);
-    const framesPushed = frameCounter.incrementPushed();
+    // Render battery fill
+    const fillColor = [0, 255, 0, 255]; // Green
+    let pixelCount = 0;
+    let done = false;
 
-    // Check if we should continue based on frame limit
-    if (!frameCounter.shouldContinue(config.frames)) {
-      logger.ok(`🏁 [POWER_PRICE] Completed after ${framesPushed} frames`);
-      return null;
+    for (let x = 0; x < fillWidth && !done; x++) {
+      for (let y = fillHeight - 1; y >= 0 && !done; y--) {
+        const currentX = fillX + x;
+        const currentY = fillY + y;
+
+        if (pixelCount === fullPixels) {
+          if (partialPixelAlpha > 0) {
+            const partialColor = [...fillColor.slice(0, 3), partialPixelAlpha];
+            await device.drawPixelRgba([currentX, currentY], partialColor);
+          }
+          done = true;
+          break;
+        }
+
+        if (pixelCount < fullPixels) {
+          await device.drawPixelRgba([currentX, currentY], fillColor);
+          pixelCount++;
+        } else {
+          done = true;
+          break;
+        }
+      }
     }
 
-    // Return interval based on frametime + 5ms to ensure smooth rendering
-    // If frametime is 200ms, next call will be in 205ms
-    return Math.max(50, frametime + 5); // Minimum 50ms to prevent too frequent calls
-  } catch (error) {
-    return SceneUtils.createErrorResponse(error, 'power_price', {
-      device: device?.host,
-      frametime: device?.getMetrics?.()?.lastFrametime || 0,
-    });
+    // Render charge/discharge indicator with time-based animation
+    const currentTime = Date.now();
+    // Faster pulsing for battery status (1.5 second cycle)
+    const cycleTime = 1500;
+    const progress = (currentTime % cycleTime) / cycleTime;
+    const sineProgress = Math.sin(progress * Math.PI * 2);
+    const normalizedProgress = Math.abs(sineProgress);
+
+    const fadeStartOpacity = 10;
+    const fadeMaxOpacity = 255 - fadeStartOpacity;
+    const statusImgAlpha = Math.floor(
+      fadeStartOpacity + normalizedProgress * fadeMaxOpacity,
+    );
+
+    if (batteryStatus.BatteryCharging) {
+      await device.drawImageWithAlpha(
+        SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.path,
+        SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.position,
+        SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.dimensions,
+        statusImgAlpha,
+      );
+    } else if (batteryStatus.BatteryDischarging) {
+      await device.drawImageWithAlpha(
+        SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.path,
+        SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.position,
+        SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.dimensions,
+        statusImgAlpha,
+      );
+    }
+  }
+
+  /**
+   * Render current power price text with enhanced visibility
+   */
+  async renderPriceText(device, config) {
+    const currentPrice = config.currentCentPrice || 0;
+
+    // Apply same formatting logic as original
+    let displayPrice;
+
+    if (Math.abs(currentPrice) < 0.005) {
+      displayPrice = 0.0;
+    } else if (Math.abs(currentPrice) < 10) {
+      displayPrice = Math.round(currentPrice * 10) / 10;
+    } else {
+      displayPrice = Math.round(currentPrice);
+    }
+
+    // Use enhanced text rendering with backdrop for better visibility
+    await this.graphicsEngine.drawTextEnhanced(
+      displayPrice.toString(),
+      SCENE_CONFIG.TEXTS.PRICE.position,
+      SCENE_CONFIG.TEXTS.PRICE.color,
+      {
+        alignment: 'right',
+        backdrop: {
+          offset: 1,
+          color: [0, 0, 0, 150], // Semi-transparent black backdrop
+        },
+        effects: {
+          shadow: true,
+          shadowColor: [0, 0, 0, 180],
+        },
+      },
+    );
+  }
+
+  /**
+   * Render PV data (actual and prediction)
+   */
+  async renderPvData(device, config, timeInfo) {
+    const actualData = config.dailyPvDataActual || [];
+    const predictionData = config.pvHourlyYieldPrediction || [];
+
+    // Render PV actual bars
+    if (actualData.length > 0) {
+      const pvConfig = SCENE_CONFIG.CHART.PV.ACTUAL;
+      const [baseX, startY] = pvConfig.position;
+      const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
+      const chartWidth = pvConfig.size[0];
+      const chartHeight = pvConfig.size[1];
+      const maxYieldWh = 1000 * chartHeight;
+
+      for (let hourIndex = 0; hourIndex < actualData.length; hourIndex++) {
+        const x = startX + hourIndex * 2;
+        if (x >= startX + chartWidth) break;
+
+        const value = actualData[hourIndex] || 0;
+        if (value <= 0) continue;
+
+        const scaledValue = (value / maxYieldWh) * chartHeight;
+        const totalPixels = Math.min(
+          chartHeight,
+          Math.max(1, Math.ceil(scaledValue)),
+        );
+        const fullPixels = Math.floor(scaledValue);
+        const remainder = scaledValue - fullPixels;
+
+        const lineStartY = startY;
+        const lineEndY = startY + totalPixels - 1;
+
+        // Use gradient rendering
+        let partialPixelAlpha = undefined;
+        if (remainder > 0) {
+          partialPixelAlpha = Math.max(
+            0,
+            Math.min(255, Math.floor(remainder * 255)),
+          );
+        }
+
+        try {
+          await drawVerticalGradientLine(
+            device,
+            [x, lineStartY],
+            [x, lineEndY],
+            pvConfig.colors.end,
+            pvConfig.colors.start,
+            partialPixelAlpha,
+            'start',
+          );
+        } catch (error) {
+          logger.debug(`Error drawing PV bar at x=${x}: ${error.message}`);
+        }
+      }
+    }
+
+    // Render PV prediction bars
+    if (predictionData.length > 0) {
+      const pvConfig = SCENE_CONFIG.CHART.PV.PREDICTION;
+      const [baseX, startY] = pvConfig.position;
+      const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
+      const chartWidth = pvConfig.size[0];
+      const chartHeight = pvConfig.size[1];
+      const maxPredictionWh = 1000 * chartHeight;
+
+      for (let hourIndex = 0; hourIndex < predictionData.length; hourIndex++) {
+        const x = startX + hourIndex * 2;
+        if (x >= startX + chartWidth) break;
+
+        const value = predictionData[hourIndex] || 0;
+        if (value > 0) {
+          const scaledHeight = Math.min(
+            chartHeight,
+            Math.max(0, (value / maxPredictionWh) * chartHeight),
+          );
+          const barHeight = Math.round(scaledHeight);
+
+          if (barHeight > 0) {
+            const lineStart = [x, startY + chartHeight - barHeight];
+            const lineEnd = [x, startY + chartHeight - 1];
+            await device.drawLineRgba(lineStart, lineEnd, pvConfig.color);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Render UVI text next to sun logo with enhanced visibility
+   */
+  async renderUviText(device, config, timeInfo) {
+    const uviData = config.uviData || {};
+
+    // Check if UVI data is available
+    if (
+      !uviData?.currentUvi ||
+      !Array.isArray(uviData.currentUvi) ||
+      typeof uviData.currentUvi[1] !== 'number' ||
+      typeof uviData.currentUvi[2] !== 'number'
+    ) {
+      const uviPosition = [
+        getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
+        SCENE_CONFIG.TEXTS.UVI.position[1],
+      ];
+
+      await this.graphicsEngine.drawTextEnhanced(
+        '-',
+        uviPosition,
+        [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
+        {
+          alignment: 'left',
+          backdrop: {
+            offset: 1,
+            color: [0, 0, 0, 100],
+          },
+        },
+      );
+      return;
+    }
+
+    // Get current and next hour values, rounded to integers
+    const currentUvi = Math.round(uviData.currentUvi[1]);
+    const nextUvi = Math.round(uviData.currentUvi[2]);
+
+    // Choose arrow direction based on value change
+    const arrow = nextUvi > currentUvi ? '↑' : '↓';
+
+    // Format with appropriate arrow
+    const uviText = `${currentUvi}${arrow}${nextUvi}`;
+
+    const uviPosition = [
+      getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
+      SCENE_CONFIG.TEXTS.UVI.position[1],
+    ];
+
+    await this.graphicsEngine.drawTextEnhanced(
+      uviText,
+      uviPosition,
+      [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
+      {
+        alignment: 'left',
+        backdrop: {
+          offset: 1,
+          color: [0, 0, 0, 120],
+        },
+        effects: {
+          shadow: true,
+          shadowColor: [50, 0, 105, 150],
+        },
+      },
+    );
+  }
+
+  /**
+   * Render power price chart with all the complex logic
+   */
+  async renderPowerPriceChart(device, config, timeInfo) {
+    const priceData = config.powerPriceData || {};
+    if (!priceData?.data) {
+      logger.debug('Power price data unavailable.');
+      return;
+    }
+
+    const currentDate = timeInfo.currentDate;
+    const currentHourKey = formatHourKey(currentDate);
+    const isAfterNoon = timeInfo.isAfterNoon;
+
+    let referenceHour = config.settings?.startFromCurrentHour
+      ? currentDate.getHours()
+      : isAfterNoon
+        ? 12
+        : 0;
+
+    const referenceDate = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      currentDate.getDate(),
+      referenceHour,
+    );
+    const referenceHourKey = formatHourKey(referenceDate);
+
+    // Filter and sort prices
+    const relevantPrices = filterAndSortPrices(
+      priceData.data,
+      referenceHourKey,
+      currentHourKey,
+      SCENE_CONFIG.CHART.POWER_PRICE.settings.maxHoursToDraw,
+    );
+
+    // Render the chart
+    await drawPriceChart(device, relevantPrices);
+  }
+
+  /**
+   * Render images that depend on data (like moon phase) using multiply blend
+   */
+  async renderImages(device, timeInfo) {
+    // Update moon image path based on moon phase
+    const moonPath = getMoonPhaseFilename(timeInfo.currentDate);
+    const moonConfig = SCENE_CONFIG.IMAGES.MOON;
+
+    // Update alpha based on day/night
+    const moonAlpha = timeInfo.isDaytime ? 225 : 255;
+
+    // Apply afternoon shift to moon position
+    const moonPosition = [
+      getShiftedX(moonConfig.position[0], timeInfo.isAfterNoon),
+      moonConfig.position[1],
+    ];
+
+    try {
+      // Use multiply blend mode for better image compositing (black backgrounds become transparent)
+      await this.graphicsEngine.drawImageBlended(
+        moonPath,
+        moonPosition,
+        moonConfig.dimensions,
+        moonAlpha,
+        'multiply',
+      );
+    } catch (error) {
+      logger.debug(`Error rendering moon phase: ${error.message}`);
+      // Fallback to static moon with multiply blend
+      await this.graphicsEngine.drawImageBlended(
+        'scenes/media/moon.png',
+        moonConfig.position,
+        moonConfig.dimensions,
+        moonAlpha,
+        'multiply',
+      );
+    }
   }
 }
 
@@ -367,167 +956,6 @@ function applyAfternoonShift() {
 }
 
 /**
- * Render static background images
- */
-async function renderBackground(device) {
-  const images = [
-    SCENE_CONFIG.IMAGES.PRICE_BACKGROUND,
-    SCENE_CONFIG.IMAGES.PV_BACKGROUND,
-    SCENE_CONFIG.IMAGES.BATTERY,
-    SCENE_CONFIG.IMAGES.CENT_SIGN,
-    SCENE_CONFIG.IMAGES.KWH_UNIT,
-    SCENE_CONFIG.IMAGES.SUN,
-  ];
-
-  for (const image of images) {
-    if (image.path) {
-      try {
-        await device.drawImageWithAlpha(
-          image.path,
-          image.position,
-          image.dimensions,
-          image.alpha || 255,
-        );
-      } catch (error) {
-        logger.debug(`Error rendering image ${image.path}: ${error.message}`);
-      }
-    }
-  }
-}
-
-/**
- * Render background grid lines
- */
-async function renderGrid(device) {
-  const grid = SCENE_CONFIG.CHART.POWER_PRICE.GRID;
-
-  // Draw horizontal lines with opacity gradient
-  for (let i = 0; i < grid.horizontal.count; i++) {
-    const y =
-      grid.startPos[1] +
-      i *
-        Math.floor(
-          (grid.endPos[1] - grid.startPos[1]) / (grid.horizontal.count - 1),
-        );
-    const alpha = Math.min(
-      255,
-      grid.horizontal.minAlpha +
-        Math.round(
-          (i / (grid.horizontal.count - 1)) * grid.horizontal.alphaRange,
-        ),
-    );
-    const color = [...grid.horizontal.color.slice(0, 3), alpha];
-
-    await device.drawLineRgba(
-      [grid.startPos[0] - grid.overhang, y],
-      [grid.endPos[0] + grid.overhang, y],
-      color,
-    );
-  }
-
-  // Draw vertical lines with opacity gradient
-  for (let i = 0; i < grid.vertical.count; i++) {
-    const x =
-      grid.startPos[0] +
-      i *
-        Math.floor(
-          (grid.endPos[0] - grid.startPos[0]) / (grid.vertical.count - 1),
-        );
-    const alpha = Math.min(
-      255,
-      grid.vertical.minAlpha +
-        Math.round((i / (grid.vertical.count - 1)) * grid.vertical.alphaRange),
-    );
-    const color = [...grid.vertical.color.slice(0, 3), alpha];
-
-    await device.drawLineRgba(
-      [x, grid.startPos[1] - grid.overhang],
-      [x, grid.endPos[1] + grid.overhang],
-      color,
-    );
-  }
-}
-
-/**
- * Render clock with blinking separator
- */
-async function renderClock(device, config) {
-  const timeInfo = getTimeInfo(config);
-  const hour = timeInfo.hour.toString().padStart(2, '0');
-  const minute = timeInfo.minute.toString().padStart(2, '0');
-
-  // Get current animation state for separator blinking
-  const currentTime = Date.now();
-  const separatorAlpha = config.enableAnimation
-    ? calculateSeparatorAlpha(currentTime)
-    : SCENE_CONFIG.CLOCK.separator.baseAlpha;
-  const separatorColor = [
-    ...SCENE_CONFIG.CLOCK.color.slice(0, 3),
-    separatorAlpha,
-  ];
-
-  // Render with shadow if enabled
-  if (SCENE_CONFIG.CLOCK.shadow.enabled) {
-    const shadowOffset = SCENE_CONFIG.CLOCK.shadow.offset;
-    const shadowColor = SCENE_CONFIG.CLOCK.shadow.color;
-
-    await drawText(
-      device,
-      hour,
-      [
-        SCENE_CONFIG.CLOCK.positions.hour[0],
-        SCENE_CONFIG.CLOCK.positions.hour[1] + shadowOffset,
-      ],
-      shadowColor,
-      'left',
-    );
-    await drawText(
-      device,
-      ':',
-      [
-        SCENE_CONFIG.CLOCK.positions.separator[0],
-        SCENE_CONFIG.CLOCK.positions.separator[1] + shadowOffset,
-      ],
-      [...shadowColor.slice(0, 3), Math.min(separatorAlpha, shadowColor[3])],
-      'left',
-    );
-    await drawText(
-      device,
-      minute,
-      [
-        SCENE_CONFIG.CLOCK.positions.minute[0],
-        SCENE_CONFIG.CLOCK.positions.minute[1] + shadowOffset,
-      ],
-      shadowColor,
-      'left',
-    );
-  }
-
-  // Render main clock
-  await drawText(
-    device,
-    hour,
-    SCENE_CONFIG.CLOCK.positions.hour,
-    SCENE_CONFIG.CLOCK.color,
-    'left',
-  );
-  await drawText(
-    device,
-    ':',
-    SCENE_CONFIG.CLOCK.positions.separator,
-    separatorColor,
-    'left',
-  );
-  await drawText(
-    device,
-    minute,
-    SCENE_CONFIG.CLOCK.positions.minute,
-    SCENE_CONFIG.CLOCK.color,
-    'left',
-  );
-}
-
-/**
  * Calculate separator alpha for blinking effect using time-based animation
  */
 function calculateSeparatorAlpha(currentTime) {
@@ -545,304 +973,6 @@ function calculateSeparatorAlpha(currentTime) {
 
   const alpha = minAlpha + (maxAlpha - minAlpha) * normalizedProgress;
   return Math.floor(alpha);
-}
-
-/**
- * Render battery indicator with charge/discharge status
- */
-async function renderBattery(device, config) {
-  const batteryStatus = config.batteryStatus || {};
-  const batteryCharge = batteryStatus.USOC || 0;
-
-  // Calculate battery fill
-  const batteryConfig = SCENE_CONFIG.IMAGES.BATTERY;
-  const baseX = batteryConfig.position[0];
-  const baseY = batteryConfig.position[1];
-  const fillX = baseX + batteryConfig.fillframe[0];
-  const fillY = baseY + batteryConfig.fillframe[1];
-  const fillWidth = batteryConfig.fillframe[2];
-  const fillHeight = batteryConfig.fillframe[3];
-  const totalPixels = fillWidth * fillHeight;
-  const pixelsToFill = Math.max(0, (batteryCharge / 100) * totalPixels);
-  const fullPixels = Math.floor(pixelsToFill);
-  const partialPixelAlpha = Math.max(
-    0,
-    Math.min(255, Math.floor((pixelsToFill - fullPixels) * 255)),
-  );
-
-  // Render battery fill
-  const fillColor = [0, 255, 0, 255]; // Green
-  let pixelCount = 0;
-  let done = false;
-
-  for (let x = 0; x < fillWidth && !done; x++) {
-    for (let y = fillHeight - 1; y >= 0 && !done; y--) {
-      const currentX = fillX + x;
-      const currentY = fillY + y;
-
-      if (pixelCount === fullPixels) {
-        if (partialPixelAlpha > 0) {
-          const partialColor = [...fillColor.slice(0, 3), partialPixelAlpha];
-          await device.drawPixelRgba([currentX, currentY], partialColor);
-        }
-        done = true;
-        break;
-      }
-
-      if (pixelCount < fullPixels) {
-        await device.drawPixelRgba([currentX, currentY], fillColor);
-        pixelCount++;
-      } else {
-        done = true;
-        break;
-      }
-    }
-  }
-
-  // Render charge/discharge indicator with time-based animation
-  const currentTime = Date.now();
-  // Faster pulsing for battery status (1.5 second cycle)
-  const cycleTime = 1500;
-  const progress = (currentTime % cycleTime) / cycleTime;
-  const sineProgress = Math.sin(progress * Math.PI * 2);
-  const normalizedProgress = Math.abs(sineProgress);
-
-  const fadeStartOpacity = 10;
-  const fadeMaxOpacity = 255 - fadeStartOpacity;
-  const statusImgAlpha = Math.floor(
-    fadeStartOpacity + normalizedProgress * fadeMaxOpacity,
-  );
-
-  if (batteryStatus.BatteryCharging) {
-    await device.drawImageWithAlpha(
-      SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.path,
-      SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.position,
-      SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.dimensions,
-      statusImgAlpha,
-    );
-  } else if (batteryStatus.BatteryDischarging) {
-    await device.drawImageWithAlpha(
-      SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.path,
-      SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.position,
-      SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.dimensions,
-      statusImgAlpha,
-    );
-  }
-}
-
-/**
- * Render current power price text
- */
-async function renderPriceText(device, config) {
-  const currentPrice = config.currentCentPrice || 0;
-
-  // Apply same formatting logic as original
-  let displayPrice;
-  let maxTotalDigits;
-
-  if (Math.abs(currentPrice) < 0.005) {
-    displayPrice = 0.0;
-    maxTotalDigits = 2;
-  } else if (Math.abs(currentPrice) < 10) {
-    displayPrice = Math.round(currentPrice * 10) / 10;
-    const absPrice = Math.abs(displayPrice);
-    const integerPart = Math.floor(absPrice);
-    const integerDigits = integerPart.toString().length;
-    maxTotalDigits = displayPrice === 0 ? 2 : integerDigits + 1;
-  } else {
-    displayPrice = Math.round(currentPrice);
-    maxTotalDigits = Math.floor(Math.abs(displayPrice)).toString().length;
-  }
-
-  await device.drawCustomFloatText(
-    displayPrice,
-    SCENE_CONFIG.TEXTS.PRICE.position,
-    SCENE_CONFIG.TEXTS.PRICE.color,
-    'right',
-    maxTotalDigits,
-  );
-}
-
-/**
- * Render PV data (actual and prediction)
- */
-async function renderPvData(device, config, timeInfo) {
-  const actualData = config.dailyPvDataActual || [];
-  const predictionData = config.pvHourlyYieldPrediction || [];
-
-  // Render PV actual bars
-  if (actualData.length > 0) {
-    const pvConfig = SCENE_CONFIG.CHART.PV.ACTUAL;
-    const [baseX, startY] = pvConfig.position;
-    const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
-    const chartWidth = pvConfig.size[0];
-    const chartHeight = pvConfig.size[1];
-    const maxYieldWh = 1000 * chartHeight;
-
-    for (let hourIndex = 0; hourIndex < actualData.length; hourIndex++) {
-      const x = startX + hourIndex * 2;
-      if (x >= startX + chartWidth) break;
-
-      const value = actualData[hourIndex] || 0;
-      if (value <= 0) continue;
-
-      const scaledValue = (value / maxYieldWh) * chartHeight;
-      const totalPixels = Math.min(
-        chartHeight,
-        Math.max(1, Math.ceil(scaledValue)),
-      );
-      const fullPixels = Math.floor(scaledValue);
-      const remainder = scaledValue - fullPixels;
-
-      const lineStartY = startY;
-      const lineEndY = startY + totalPixels - 1;
-
-      // Use gradient rendering
-      let partialPixelAlpha = undefined;
-      if (remainder > 0) {
-        partialPixelAlpha = Math.max(
-          0,
-          Math.min(255, Math.round(remainder * 255)),
-        );
-      }
-
-      try {
-        await drawVerticalGradientLine(
-          device,
-          [x, lineStartY],
-          [x, lineEndY],
-          pvConfig.colors.end,
-          pvConfig.colors.start,
-          partialPixelAlpha,
-          'start',
-        );
-      } catch (error) {
-        logger.debug(`Error drawing PV bar at x=${x}: ${error.message}`);
-      }
-    }
-  }
-
-  // Render PV prediction bars
-  if (predictionData.length > 0) {
-    const pvConfig = SCENE_CONFIG.CHART.PV.PREDICTION;
-    const [baseX, startY] = pvConfig.position;
-    const startX = getShiftedX(baseX, timeInfo.isAfterNoon);
-    const chartWidth = pvConfig.size[0];
-    const chartHeight = pvConfig.size[1];
-    const maxPredictionWh = 1000 * chartHeight;
-
-    for (let hourIndex = 0; hourIndex < predictionData.length; hourIndex++) {
-      const x = startX + hourIndex * 2;
-      if (x >= startX + chartWidth) break;
-
-      const value = predictionData[hourIndex] || 0;
-      if (value > 0) {
-        const scaledHeight = Math.min(
-          chartHeight,
-          Math.max(0, (value / maxPredictionWh) * chartHeight),
-        );
-        const barHeight = Math.round(scaledHeight);
-
-        if (barHeight > 0) {
-          const lineStart = [x, startY + chartHeight - barHeight];
-          const lineEnd = [x, startY + chartHeight - 1];
-          await device.drawLineRgba(lineStart, lineEnd, pvConfig.color);
-        }
-      }
-    }
-  }
-}
-
-/**
- * Render UVI text next to sun logo
- */
-async function renderUviText(device, config, timeInfo) {
-  const uviData = config.uviData || {};
-
-  // Check if UVI data is available
-  if (
-    !uviData?.currentUvi ||
-    !Array.isArray(uviData.currentUvi) ||
-    typeof uviData.currentUvi[1] !== 'number' ||
-    typeof uviData.currentUvi[2] !== 'number'
-  ) {
-    const uviPosition = [
-      getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
-      SCENE_CONFIG.TEXTS.UVI.position[1],
-    ];
-
-    await drawText(
-      device,
-      '-',
-      uviPosition,
-      [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
-      'left',
-    );
-    return;
-  }
-
-  // Get current and next hour values, rounded to integers
-  const currentUvi = Math.round(uviData.currentUvi[1]);
-  const nextUvi = Math.round(uviData.currentUvi[2]);
-
-  // Choose arrow direction based on value change
-  const arrow = nextUvi > currentUvi ? '↑' : '↓';
-
-  // Format with appropriate arrow
-  const uviText = `${currentUvi}${arrow}${nextUvi}`;
-
-  const uviPosition = [
-    getShiftedX(SCENE_CONFIG.TEXTS.UVI.position[0], timeInfo.isAfterNoon),
-    SCENE_CONFIG.TEXTS.UVI.position[1],
-  ];
-
-  await drawText(
-    device,
-    uviText,
-    uviPosition,
-    [148, 0, 211, timeInfo.isDaytime ? 200 : 128],
-    'left',
-  );
-}
-
-/**
- * Render power price chart with all the complex logic
- */
-async function renderPowerPriceChart(device, config, timeInfo) {
-  const priceData = config.powerPriceData || {};
-  if (!priceData?.data) {
-    logger.debug('Power price data unavailable.');
-    return;
-  }
-
-  const currentDate = timeInfo.currentDate;
-  const currentHourKey = formatHourKey(currentDate);
-  const isAfterNoon = timeInfo.isAfterNoon;
-
-  let referenceHour = config.settings?.startFromCurrentHour
-    ? currentDate.getHours()
-    : isAfterNoon
-      ? 12
-      : 0;
-
-  const referenceDate = new Date(
-    currentDate.getFullYear(),
-    currentDate.getMonth(),
-    currentDate.getDate(),
-    referenceHour,
-  );
-  const referenceHourKey = formatHourKey(referenceDate);
-
-  // Filter and sort prices
-  const relevantPrices = filterAndSortPrices(
-    priceData.data,
-    referenceHourKey,
-    currentHourKey,
-    SCENE_CONFIG.CHART.POWER_PRICE.settings.maxHoursToDraw,
-  );
-
-  // Render the chart
-  await drawPriceChart(device, relevantPrices);
 }
 
 /**
@@ -1235,79 +1365,14 @@ async function drawOverflowPixels(
   }
 }
 
-/**
- * Render images that depend on data (like moon phase)
- */
-async function renderImages(device, timeInfo) {
-  // Update moon image path based on moon phase
-  const moonPath = getMoonPhaseFilename(timeInfo.currentDate);
-  const moonConfig = SCENE_CONFIG.IMAGES.MOON;
+// Create and export scene instance using the new AnimatedScene framework
+const scene = new PowerPriceScene();
 
-  // Update alpha based on day/night
-  const moonAlpha = timeInfo.isDaytime ? 225 : 255;
-
-  // Apply afternoon shift to moon position
-  const moonPosition = [
-    getShiftedX(moonConfig.position[0], timeInfo.isAfterNoon),
-    moonConfig.position[1],
-  ];
-
-  try {
-    await device.drawImageWithAlpha(
-      moonPath,
-      moonPosition,
-      moonConfig.dimensions,
-      moonAlpha,
-    );
-  } catch (error) {
-    logger.debug(`Error rendering moon phase: ${error.message}`);
-    // Fallback to static moon
-    await device.drawImageWithAlpha(
-      'scenes/media/moon.png',
-      moonConfig.position,
-      moonConfig.dimensions,
-      moonAlpha,
-    );
-  }
-}
-
-/**
- * Render FPS counter at the bottom of the display
- * @param {Object} device - Pixoo device
- * @param {Object} config - Scene configuration
- * @param {number} frametime - Last frame time in ms
- */
-async function renderFPSCounter(device, config, frametime) {
-  if (!config.enableFPS) return;
-
-  // Calculate FPS from frametime (frametime is the time the last frame took)
-  const fps = frametime > 0 ? Math.round(1000 / frametime) : 0;
-
-  // Position at bottom center
-  const fpsText = `FPS:${fps}`;
-  const position = [32, 60]; // Center bottom
-  const color = [255, 255, 0, 255]; // Yellow
-
-  await drawText(device, fpsText, position, color, 'center');
-}
-
-// Scene metadata
-const name = 'power_price';
+// Export in the standard scene format
+const init = (context) => scene.init(context);
+const render = (context) => scene.render(context);
+const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
+const name = scene.name;
 
-function init() {
-  logger.debug(`🚀 [POWER_PRICE] Scene initialized`);
-}
-
-function cleanup() {
-  logger.debug(`🧹 [POWER_PRICE] Scene cleaned up`);
-}
-
-// Export scene interface
-module.exports = {
-  name,
-  render,
-  init,
-  cleanup,
-  wantsLoop,
-};
+module.exports = { name, render, init, cleanup, wantsLoop };
