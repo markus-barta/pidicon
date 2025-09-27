@@ -21,7 +21,7 @@ of truth for upcoming work and its validation status.
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                          | -                    |
 | DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)      | 2025-09-18T17:50:38Z |
 | ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)   | 2025-09-18T17:21:27Z |
-| API-201  | Unified Device API: Single drawing interface with consistent naming    | planned     | TEST-API-unified       | -                          | -                    |
+| API-201  | Unified Device API: Single drawing interface with consistent naming    | completed   | TEST-API-unified       | pass (manual test)         | 2025-09-20T17:15:00Z |
 | FRM-202  | Scene Framework: Base classes, composition, and standardized patterns  | planned     | TEST-FRM-composition   | -                          | -                    |
 | GFX-203  | Graphics Engine: Advanced rendering, animation system, resource cache  | planned     | TEST-GFX-engine        | -                          | -                    |
 | CFG-204  | Configuration Enhancements: Validation and presets                     | planned     | TEST-CFG-validation    | -                          | -                    |
