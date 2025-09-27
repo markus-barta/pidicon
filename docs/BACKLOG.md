@@ -21,6 +21,11 @@ of truth for upcoming work and its validation status.
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                          | -                    |
 | DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)      | 2025-09-18T17:50:38Z |
 | ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)   | 2025-09-18T17:21:27Z |
+| API-201  | Unified Device API: Single drawing interface with consistent naming    | planned     | TEST-API-unified       | -                          | -                    |
+| FRM-202  | Scene Framework: Base classes, composition, and standardized patterns  | planned     | TEST-FRM-composition   | -                          | -                    |
+| GFX-203  | Graphics Engine: Advanced rendering, animation system, resource cache  | planned     | TEST-GFX-engine        | -                          | -                    |
+| CFG-204  | Configuration Enhancements: Validation and presets                     | planned     | TEST-CFG-validation    | -                          | -                    |
+| TST-205  | Testing Framework: Scene unit tests, integration tests, performance    | planned     | TEST-TST-framework     | -                          | -                    |
 | CON-102  | Consistency pass: naming, contracts, return values                     | completed   | TEST-CON-contracts     | pass (audit, 259/47cabd0)  | 2025-09-19T19:05:00Z |
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
@@ -214,6 +219,134 @@ State: postponed (defer until after public v1.1 release)
 - Test Results (TEST-REL-smoke): pass (real)
   - Build: 373, Commit: 13e814d, Timestamp: 2025-09-19T20:17:00Z
   - Evidence: `SCENE_OK ... build=373 commit=13e814d` lines from `scripts/live_test_harness.js`.
+
+---
+
+### API-201: Unified Device API - Single drawing interface with consistent naming
+
+- Summary: Consolidate fragmented drawing APIs into a single, consistent interface. Replace
+  device.drawTextRgbaAligned, rendering-utils.drawText, and other variants with unified PixooCanvas API.
+- Architectural Goals:
+  - Single entry point for all drawing operations
+  - Consistent method naming (no more fillRectangleRgba vs drawRectangleRgba confusion)
+  - Type-safe parameter validation
+  - Automatic bounds checking and clipping
+  - Resource management and cleanup
+- Implementation:
+  - New PixooCanvas class wrapping device operations
+  - Method aliases and deprecation warnings for old APIs
+  - Comprehensive parameter validation
+  - Performance optimizations (batching, caching)
+- Acceptance Criteria:
+  - ZERO BREAKING CHANGES - all existing scenes work without modification
+  - New unified API provides consistent naming and better developer experience
+  - Double-check all current functionality remains intact
+  - Better error messages and validation where safe to add
+  - Performance maintained or improved
+- Risk Level: Low-Medium (backward compatible wrapper layer)
+
+### FRM-202: Scene Framework - Base classes, composition, and standardized patterns
+
+- Summary: Create a comprehensive scene framework that eliminates code duplication and provides
+  reusable patterns for common scene types.
+- Components:
+  - Abstract base classes for different scene types (StaticScene, AnimatedScene, DataScene)
+  - Scene composition system for layering and combining scenes
+  - Standardized configuration handling with schema validation
+  - Built-in state management patterns
+  - Lifecycle hooks and error recovery
+- Benefits:
+  - 80% reduction in boilerplate code per scene
+  - Consistent behavior across all scenes
+  - Easier scene development and maintenance
+  - Better error handling and debugging
+- Acceptance Criteria:
+  - Existing scenes can be migrated with minimal changes
+  - New scenes are 5x faster to develop
+  - Framework is extensible for future scene types
+  - Comprehensive documentation and examples
+
+### GFX-203: Graphics Engine - Enhanced rendering with hardware-aware animation
+
+- Summary: Implement enhanced graphics capabilities optimized for Pixoo's 4-5fps hardware limitations,
+  focusing on practical visual enhancements for 200+ smart home device/KPI/status displays.
+- Features:
+  - Hardware-aware animation system (optimized for 4-5fps, cautious status animations)
+  - Text effects (shadows, outlines, gradients) for better readability
+  - Animation easing and smooth transitions between frames (hardware-limited)
+  - Screen transitions (fade in/out only - slides too choppy at 5fps)
+  - Enhanced drawing primitives (gradients, improved text rendering)
+  - Resource caching and preloading (images, fonts)
+  - Performance monitoring and optimization
+- Technical Implementation:
+  - Frame-rate aware animation timing (respect 4-5fps hardware limits)
+  - Resource manager with caching
+  - Enhanced text rendering with effects (shadows, outlines, gradients)
+  - Fade in/out transitions optimized for low frame rates
+  - Performance profiling tools
+  - Hardware-specific optimizations
+- Acceptance Criteria:
+  - Animations optimized for 4-5fps hardware capability with status indicators
+  - Text effects improve readability for smart home device displays
+  - Fade transitions smooth at hardware limitations
+  - Memory usage not a primary concern (sufficient RAM available)
+  - No performance regressions vs current implementation
+  - Visual enhancements support 200+ device/KPI status displays
+
+### CFG-204: Configuration Enhancements - Validation and presets
+
+- Summary: Enhance the existing configuration system with basic validation and reusable presets.
+- Capabilities:
+  - Simple JSON schema validation for scene configs
+  - Scene presets and templates for common configurations
+  - Runtime configuration validation
+  - Clear error messages for invalid config
+- Implementation:
+  - Lightweight validation layer (don't overcomplicate)
+  - Preset system for common scene configurations
+  - Integration with existing MQTT/config pipeline
+- Acceptance Criteria:
+  - Configuration validation catches common errors
+  - Presets available for frequently used configurations
+  - No disruption to existing build/run pipeline
+  - Simple to use and maintain
+
+### TST-205: Testing Framework - Unit tests, integration, performance validation
+
+- Summary: Build a testing framework focused on automated validation where possible, with visual testing for rendering correctness.
+- Test Types:
+  - Unit tests for individual scene components and framework modules
+  - Integration tests for MQTT protocol and multi-device scenarios
+  - Performance benchmarks and regression detection (based on existing perf tests)
+  - Multi-device testing and isolation validation
+  - API compatibility testing for framework changes
+- Tools and Infrastructure:
+  - Test runner with scene/device mocking
+  - Performance profiling tools (extend existing)
+  - Multi-device test orchestration
+  - API compatibility checking
+  - CI/CD integration
+- Testing Limitations:
+  - Scene rendering correctness: Visual inspection by humans (automated visual regression not practical)
+  - Long-running stability tests: Manual/periodic execution
+- Acceptance Criteria:
+  - Good code coverage for framework modules (API, scene framework, graphics)
+  - Automated performance regression detection using existing test suite
+  - Multi-device scenarios properly tested
+  - Framework changes validated for API compatibility
+  - Easy to add tests for new framework components
+
+---
+
+## Implementation Priority
+
+Based on stability requirements and development workflow impact:
+
+1. **API-201** (Foundation) - Unify APIs for consistency and better developer experience
+2. **FRM-202** (Productivity) - Scene framework to reduce boilerplate and standardize patterns
+3. **GFX-203** (Visual Enhancement) - Text effects, easing, fade transitions for 200+ device displays
+4. **TST-205** (Quality) - Testing framework for automated validation and stability
+5. **CFG-204** (Polish) - Configuration enhancements (keep simple, don't disrupt pipeline)
 
 ---
 

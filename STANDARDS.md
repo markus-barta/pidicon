@@ -11,6 +11,13 @@ codebase.
 Standards are guidelines, not immutable laws. The ultimate goal is a robust and
 maintainable system. Always favor clarity, simplicity, and pragmatism.
 
+## ⏱️ Universal Timeout
+
+- **Applies to all files** (`*`).
+- **Timeout after 30 minutes** to prevent runaway operations and ensure resource efficiency.
+- **Scope**: Applies only to development/testing activities and operations triggered by Cursor/AI agents.
+- **Production Exclusion**: The real daemon, scenes, and production operations run indefinitely without timeout.
+
 ---
 
 ## 📋 Table of Contents

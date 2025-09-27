@@ -1,12 +1,12 @@
 {
-  "version": "1.0.4",
-  "deploymentId": "v1.1.0",
-  "buildNumber": 379,
+  "version": "2.0.0",
+  "deploymentId": "v2.0.0",
+  "buildNumber": 380,
   "gitCommit": "bb4df03",
   "gitCommitFull": "bb4df03d0604f4cfc4a237fbb38df0611c3a4821",
-  "gitCommitCount": 379,
+  "gitCommitCount": 380,
   "gitBranch": "main",
-  "gitTag": "v1.1.0",
+  "gitTag": "v2.0.0",
   "buildTime": "2025-09-20T16:12:41.698Z",
   "environment": "development"
 }
