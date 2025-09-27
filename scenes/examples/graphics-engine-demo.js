@@ -453,10 +453,13 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'RAINBOW',
       [Math.round(this.rainbowX + 20), 48],
-      [...rainbowColor, alpha],
+      [...rainbowColor, Math.round(alpha * 0.5)], // 50% transparent text
       {
         alignment: 'center',
-        effects: { outline: true, outlineColor: [255, 255, 255, alpha] },
+        effects: {
+          outline: true,
+          outlineColor: [255, 255, 255, Math.round(alpha * 0.9)],
+        }, // 90% opaque white outline
       },
     );
 
@@ -515,39 +518,63 @@ class GraphicsEngineDemoScene {
 
   async _drawPerformanceMetrics(fps, avgFrameTime) {
     try {
-      // Draw semi-transparent FPS/frametime overlay in top-right corner
-      const fpsText = `${fps}FPS`;
-      const timeText = `${Math.round(avgFrameTime)}ms`;
+      // Draw bottom bar like performance test: "X FPS, Y ms"
+      // Reserve bottom 7 pixels for black bar with performance info
 
-      // Background for FPS
+      // Draw black background bar at bottom
       await this.graphicsEngine.device.fillRect(
-        [52, 0],
-        [12, 6],
-        [0, 0, 0, 180],
+        [0, 57],
+        [64, 7],
+        [0, 0, 0, 255],
       );
 
-      // FPS display (semi-transparent)
+      // Format FPS with one decimal place like performance test
+      const fpsOneDecimal = Math.round(fps * 10) / 10;
+      const frametimeMs = Math.round(avgFrameTime);
+
+      // Color for frametime based on performance (green=good, yellow=ok, red=bad)
+      let msColor;
+      if (frametimeMs <= 200)
+        msColor = [100, 255, 100]; // Green for <=200ms
+      else if (frametimeMs <= 300)
+        msColor = [255, 255, 100]; // Yellow for 200-300ms
+      else msColor = [255, 100, 100]; // Red for >300ms
+
+      let x = 2;
+      const y = 57;
+      const darkGray = [100, 100, 100, 255];
+
+      // FPS numeric (white), then one pixel gap, then 'FPS'
+      const fpsVal = `${fpsOneDecimal}`;
       await this.graphicsEngine.device.drawText(
-        fpsText,
-        [53, 1],
-        [180, 180, 255, 220],
+        fpsVal,
+        [x, y],
+        [255, 255, 255, 255],
         'left',
       );
-
-      // Background for frametime
-      await this.graphicsEngine.device.fillRect(
-        [52, 7],
-        [12, 6],
-        [0, 0, 0, 180],
-      );
-
-      // Frametime display (semi-transparent)
+      x += fpsVal.length * 4 + 1; // 4px per char + 1px gap
       await this.graphicsEngine.device.drawText(
-        timeText,
-        [53, 8],
-        [255, 180, 180, 220],
+        'FPS',
+        [x, y],
+        darkGray,
         'left',
       );
+      x += 3 * 4; // 'FPS' width
+
+      // Comma and space
+      await this.graphicsEngine.device.drawText(', ', [x, y], darkGray, 'left');
+      x += 2 * 4; // ', ' width
+
+      // Frametime numeric (colored), then one pixel gap, then 'ms'
+      const msVal = `${frametimeMs}`;
+      await this.graphicsEngine.device.drawText(
+        msVal,
+        [x, y],
+        [msColor[0], msColor[1], msColor[2], 255],
+        'left',
+      );
+      x += msVal.length * 4 + 1; // value width + 1px gap
+      await this.graphicsEngine.device.drawText('ms', [x, y], darkGray, 'left');
     } catch (error) {
       logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
     }
