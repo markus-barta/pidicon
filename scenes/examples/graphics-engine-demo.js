@@ -85,6 +85,9 @@ class GraphicsEngineDemoScene {
         logger.debug(`🎨 GFX Demo basic render successful`);
       }
 
+      // Push the frame to the display!
+      await context.device.push('graphics_engine_demo', context.publishOk);
+
       return 200; // ~5fps
     } catch (error) {
       logger.error(`🎨 GFX Demo render error: ${error.message}`);
