@@ -56,6 +56,11 @@ class GraphicsEngineDemoScene {
     this.hue = 0;
     this.rainbowX = 10; // For rainbow text movement
     this.rotateAngle = 0; // For rotating text effects
+
+    // Performance tracking for FPS/frametime display
+    this.lastFrameTime = Date.now();
+    this.frameTimes = [];
+    this.fpsHistory = [];
   }
 
   _setupTextEffectsPhase() {
@@ -86,12 +91,28 @@ class GraphicsEngineDemoScene {
   }
 
   async render(context) {
+    const currentTime = Date.now();
     this.frameCount++;
+
+    // Track frame time for performance monitoring
+    const frameTime = currentTime - this.lastFrameTime;
+    this.lastFrameTime = currentTime;
+    this.frameTimes.push(frameTime);
+
+    // Keep only last 30 frame times for averaging
+    if (this.frameTimes.length > 30) {
+      this.frameTimes.shift();
+    }
+
+    // Calculate FPS
+    const avgFrameTime =
+      this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+    const fps = Math.round(1000 / avgFrameTime);
 
     // Debug: Log every 30 frames to avoid spam
     if (this.frameCount % 30 === 1) {
       logger.debug(
-        `🎨 [${context.device.host}] GFX Demo render frame ${this.frameCount}, phase ${this.demoPhase}`,
+        `🎨 [${context.device.host}] GFX Demo render frame ${this.frameCount}, phase ${this.demoPhase}, FPS: ${fps}, FrameTime: ${Math.round(avgFrameTime)}ms`,
       );
     }
 
@@ -164,10 +185,13 @@ class GraphicsEngineDemoScene {
       // Draw UI elements (performance info)
       await this._drawPerformanceInfo();
 
+      // Draw FPS/frametime display (semi-transparent overlay)
+      await this._drawPerformanceMetrics(fps, avgFrameTime);
+
       // Push frame to display
       await context.device.push('graphics_engine_demo', context.publishOk);
 
-      return 200; // ~5fps
+      return 0; // Adaptive timing - render as soon as possible (~5fps max)
     } catch (error) {
       logger.error(`🎨 GFX Demo render error: ${error.message}`);
 
@@ -489,6 +513,46 @@ class GraphicsEngineDemoScene {
     }
   }
 
+  async _drawPerformanceMetrics(fps, avgFrameTime) {
+    try {
+      // Draw semi-transparent FPS/frametime overlay in top-right corner
+      const fpsText = `${fps}FPS`;
+      const timeText = `${Math.round(avgFrameTime)}ms`;
+
+      // Background for FPS
+      await this.graphicsEngine.device.fillRect(
+        [52, 0],
+        [12, 6],
+        [0, 0, 0, 180],
+      );
+
+      // FPS display (semi-transparent)
+      await this.graphicsEngine.device.drawText(
+        fpsText,
+        [53, 1],
+        [180, 180, 255, 220],
+        'left',
+      );
+
+      // Background for frametime
+      await this.graphicsEngine.device.fillRect(
+        [52, 7],
+        [12, 6],
+        [0, 0, 0, 180],
+      );
+
+      // Frametime display (semi-transparent)
+      await this.graphicsEngine.device.drawText(
+        timeText,
+        [53, 8],
+        [255, 180, 180, 220],
+        'left',
+      );
+    } catch (error) {
+      logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
+    }
+  }
+
   async _renderImages(opacity) {
     const alpha = Math.round(255 * opacity);
 
@@ -514,19 +578,22 @@ class GraphicsEngineDemoScene {
 
     try {
       // Draw moon with shadow for depth
-      await this.graphicsEngine.device.drawImage(
+      await this.graphicsEngine.drawImageBlended(
         moonImagePath,
         [moonX + 1, moonY + 1],
         [5, 5],
         Math.round(80 * opacity), // Semi-transparent shadow
+        'normal', // Normal blend for shadow
       );
 
-      // Draw main moon image
-      await this.graphicsEngine.device.drawImage(
+      // Draw main moon image with multiply blend mode
+      // This treats black background as transparent (Photoshop multiply effect)
+      await this.graphicsEngine.drawImageBlended(
         moonImagePath,
         [moonX, moonY],
         [5, 5],
         alpha,
+        'multiply', // Multiply blend mode for moon (no black background visible)
       );
 
       // Show moon phase info with transparency
@@ -614,10 +681,11 @@ class GraphicsEngineDemoScene {
       // Centered frame counter with 50% transparency background
       const frameText = `F:${this.frameCount.toString().padStart(3, '0')}`;
 
-      // Draw 50% transparent background for readability (centered)
+      // Draw 50% transparent background for readability (adjusted sizing)
+      // Was [21, 56], [22, 8] - now [19, 56], [26, 7] to fix margins
       await this.graphicsEngine.device.fillRect(
-        [21, 56],
-        [22, 8],
+        [19, 56],
+        [26, 7],
         [0, 0, 0, 128],
       );
 
