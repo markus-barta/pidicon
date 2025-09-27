@@ -596,74 +596,78 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Animated celestial display (moon phases + sun)
-    const totalFrames = 26 + 3; // 26 moon phases + 3 sun variations
-    const currentFrame = this.frameCount % totalFrames;
+    // Separate moon and sun animations - sun moves opposite to moon
+    const moonFrame = this.frameCount % 26;
+    const moonImagePath = `scenes/media/moonphase/5x5/Moon_${moonFrame.toString().padStart(2, '0')}.png`;
 
-    let imagePath, imageSize;
-    if (currentFrame < 26) {
-      // Moon phases (0-25)
-      imagePath = `scenes/media/moonphase/5x5/Moon_${currentFrame.toString().padStart(2, '0')}.png`;
-      imageSize = [5, 5];
+    // Sun animation - cycles through 3 different sun states
+    const sunFrame = Math.floor(this.frameCount / 8) % 3; // Slower sun animation
+    let sunImagePath,
+      sunImageSize = [16, 16];
+    if (sunFrame === 0) {
+      sunImagePath = 'scenes/media/sun.png';
     } else {
-      // Sun images (26-28)
-      const sunIndex = currentFrame - 26;
-      if (sunIndex === 0) {
-        imagePath = 'scenes/media/sun.png';
-        imageSize = [16, 16]; // Assuming sun.png is larger
-      } else if (sunIndex === 1) {
-        imagePath = 'scenes/media/circle-sun.gif';
-        imageSize = [16, 16]; // Assuming circle-sun.gif is larger
-      } else {
-        imagePath = 'scenes/media/circle-sun.gif'; // Repeat for longer display
-        imageSize = [16, 16];
-      }
+      sunImagePath = 'scenes/media/circle-sun.gif'; // Animated sun
     }
 
-    // Circular celestial movement with transparency
-    this.moonAngle += 0.05; // Slow rotation
-    const celestialX = Math.round(32 + Math.cos(this.moonAngle) * 18);
-    const celestialY = Math.round(32 + Math.sin(this.moonAngle) * 12);
+    // Moon movement (clockwise)
+    this.moonAngle += 0.05;
+    const moonX = Math.round(32 + Math.cos(this.moonAngle) * 18);
+    const moonY = Math.round(32 + Math.sin(this.moonAngle) * 12);
+
+    // Sun movement (counter-clockwise, opposite direction)
+    this.sunAngle = (this.sunAngle || 0) - 0.05; // Opposite direction
+    const sunX = Math.round(32 + Math.cos(this.sunAngle) * 18);
+    const sunY = Math.round(32 + Math.sin(this.sunAngle) * 12);
 
     try {
-      // Draw celestial object with shadow for depth
+      // Draw moon with shadow
       await this.graphicsEngine.drawImageBlended(
-        imagePath,
-        [celestialX + 1, celestialY + 1],
-        imageSize,
-        Math.round(80 * opacity), // Semi-transparent shadow
-        'normal', // Normal blend for shadow
+        moonImagePath,
+        [moonX + 1, moonY + 1],
+        [5, 5],
+        Math.round(80 * opacity),
+        'normal',
       );
-
-      // Draw main celestial image with multiply blend mode
-      // This treats black background as transparent (Photoshop multiply effect)
       await this.graphicsEngine.drawImageBlended(
-        imagePath,
-        [celestialX, celestialY],
-        imageSize,
+        moonImagePath,
+        [moonX, moonY],
+        [5, 5],
         alpha,
-        'multiply', // Multiply blend mode (no black background visible)
+        'multiply',
       );
 
-      // Show celestial info with transparency
-      let infoText;
-      if (currentFrame < 26) {
-        infoText = `Moon:${currentFrame}`;
-      } else {
-        const sunIndex = currentFrame - 26;
-        const sunType = sunIndex === 0 ? 'Static' : 'Circle';
-        infoText = `${sunType} Sun`;
-      }
+      // Draw sun with shadow (opposite position)
+      await this.graphicsEngine.drawImageBlended(
+        sunImagePath,
+        [sunX + 1, sunY + 1],
+        sunImageSize,
+        Math.round(80 * opacity),
+        'normal',
+      );
+      await this.graphicsEngine.drawImageBlended(
+        sunImagePath,
+        [sunX, sunY],
+        sunImageSize,
+        alpha,
+        'multiply',
+      );
+
+      // Show celestial info
+      const moonInfo = `Moon:${moonFrame}`;
+      const sunInfo = sunFrame === 0 ? 'Static Sun' : 'Circle Sun';
+      const combinedInfo = `${moonInfo} | ${sunInfo}`;
+
       await this.graphicsEngine.device.drawText(
-        infoText,
+        combinedInfo,
         [32, 50],
         [180, 180, 255, Math.round(200 * opacity)],
         'center',
       );
     } catch {
-      // Fallback if image loading fails
+      // Fallback
       await this.graphicsEngine.device.drawText(
-        '🌙 MOON',
+        '🌙 MOON ☀️ SUN',
         [32, 32],
         [200, 200, 255, alpha],
         'center',
@@ -682,46 +686,76 @@ class GraphicsEngineDemoScene {
     }
   }
 
-  async _renderFadeOut(opacity) {
-    const alpha = Math.round(255 * opacity);
+  async _renderFadeOut(/* opacity */) {
+    // Calculate fade progress (0 to 1 over the phase duration)
+    const phaseProgress =
+      (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
+    const fadeProgress = Math.min(1, phaseProgress * 1.5); // Fade over first 2/3 of phase
 
-    // Simple, clear fade out - no complex effects that make text invisible
-    await this.graphicsEngine.drawTextEnhanced(
-      'FADE OUT',
-      [32, 16], // Clear position, not too high
-      [255, 255, 255, alpha],
-      {
-        alignment: 'center',
-        effects: {
-          shadow: true,
-          shadowColor: [0, 0, 0, Math.round(alpha * 0.8)], // Strong shadow
+    // Everything fades out based on fadeProgress
+    const alpha = Math.round(255 * (1 - fadeProgress));
+
+    if (alpha > 0) {
+      // Only draw elements while they have opacity
+      await this.graphicsEngine.drawTextEnhanced(
+        'FADE OUT',
+        [32, 16],
+        [255, 255, 255, alpha],
+        {
+          alignment: 'center',
+          effects: {
+            shadow: true,
+            shadowColor: [0, 0, 0, Math.round(alpha * 0.8)],
+          },
         },
-      },
-    );
+      );
 
-    // Clear, visible GOODBYE text throughout entire fade
-    await this.graphicsEngine.drawTextEnhanced(
-      'GOODBYE',
-      [32, 40], // Fixed position, clearly visible
-      [255, 100, 100, alpha], // Red text, full alpha throughout
-      {
-        alignment: 'center',
-        effects: {
-          shadow: true,
-          shadowColor: [100, 0, 0, Math.round(alpha * 0.6)],
-          outline: true,
-          outlineColor: [150, 50, 50, alpha],
+      // GOODBYE text that fades out
+      await this.graphicsEngine.drawTextEnhanced(
+        'GOODBYE',
+        [32, 40],
+        [255, 100, 100, alpha],
+        {
+          alignment: 'center',
+          effects: {
+            shadow: true,
+            shadowColor: [100, 0, 0, Math.round(alpha * 0.6)],
+            outline: true,
+            outlineColor: [150, 50, 50, alpha],
+          },
         },
-      },
-    );
+      );
 
-    // If this is the last phase and fade is complete, prepare for restart
-    const fadeComplete = !this.graphicsEngine.isFadeActive() && opacity < 0.1;
-    if (
-      this.frameCount - this.phaseStartFrame >= this.phaseDuration - 10 &&
-      fadeComplete
-    ) {
-      // Restart demo after fade out is complete
+      // Add some final sparkle effects that also fade
+      if (fadeProgress < 0.7) {
+        for (let i = 0; i < 5; i++) {
+          const sparkleX = Math.round(
+            32 + Math.sin(this.frameCount * 0.2 + i * 1.3) * 20,
+          );
+          const sparkleY = Math.round(
+            25 + Math.cos(this.frameCount * 0.15 + i * 0.8) * 15,
+          );
+          const sparkleAlpha = Math.round(alpha * 0.6 * (1 - fadeProgress));
+
+          if (sparkleAlpha > 10) {
+            await this.graphicsEngine.device.fillRect(
+              [sparkleX, sparkleY],
+              [2, 2],
+              [255, 255, 200, sparkleAlpha],
+            );
+          }
+        }
+      }
+    }
+
+    // Clear the screen completely when fade is done
+    if (fadeProgress >= 1) {
+      await this.graphicsEngine.device.clear();
+    }
+
+    // Check if phase is complete and restart
+    if (this.frameCount - this.phaseStartFrame >= this.phaseDuration) {
+      // Restart demo
       this.demoPhase = 0;
       this.phaseStartFrame = this.frameCount;
       this.graphicsEngine.startFadeTransition(500, 0, 1);
