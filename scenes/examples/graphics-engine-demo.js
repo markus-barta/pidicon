@@ -16,7 +16,7 @@ class GraphicsEngineDemoScene {
     this.graphicsEngine = null;
 
     // Demo state
-    this.demoPhase = 0; // 0: text effects, 1: gradients, 2: animations, 3: fade out
+    this.demoPhase = 0; // 0: text effects, 1: gradients, 2: animations, 3: images, 4: fade out
     this.phaseStartFrame = 0;
     this.phaseDuration = 60; // ~12 seconds at 5fps
 
@@ -55,6 +55,7 @@ class GraphicsEngineDemoScene {
     this.bounceSpeed = 2.0; // Faster bouncing
     this.hue = 0;
     this.rainbowX = 10; // For rainbow text movement
+    this.rotateAngle = 0; // For rotating text effects
   }
 
   _setupTextEffectsPhase() {
@@ -73,9 +74,15 @@ class GraphicsEngineDemoScene {
     this.rainbowX = 10;
   }
 
+  _setupImagesPhase() {
+    // Reset moon animation
+    this.moonPhase = 0;
+    this.moonAngle = 0;
+  }
+
   _setupFadeOutPhase() {
-    // Start fade out transition
-    this.graphicsEngine.startFadeTransition(2000, 1, 0);
+    // Start fade out transition - longer duration for better effect
+    this.graphicsEngine.startFadeTransition(3000, 1, 0);
   }
 
   async render(context) {
@@ -94,10 +101,20 @@ class GraphicsEngineDemoScene {
     // Clear screen with gradient background
     await this._drawBackground(opacity);
 
+    // Add global transparency overlay for depth
+    if (this.demoPhase !== 4) {
+      // Skip during fade out
+      await context.device.fillRect(
+        [0, 0],
+        [64, 64],
+        [0, 0, 0, Math.round(10 * opacity)],
+      );
+    }
+
     // Update demo phase
     const framesInPhase = this.frameCount - this.phaseStartFrame;
     if (framesInPhase >= this.phaseDuration) {
-      this.demoPhase = (this.demoPhase + 1) % 4;
+      this.demoPhase = (this.demoPhase + 1) % 5;
       this.phaseStartFrame = this.frameCount;
 
       // Switch configurations for each phase
@@ -112,6 +129,9 @@ class GraphicsEngineDemoScene {
           this._setupAnimationsPhase();
           break;
         case 3:
+          this._setupImagesPhase();
+          break;
+        case 4:
           this._setupFadeOutPhase();
           break;
       }
@@ -134,6 +154,9 @@ class GraphicsEngineDemoScene {
           await this._renderAnimations(opacity);
           break;
         case 3:
+          await this._renderImages(opacity);
+          break;
+        case 4:
           await this._renderFadeOut(opacity);
           break;
       }
@@ -426,6 +449,114 @@ class GraphicsEngineDemoScene {
         effects: { shadow: true },
       },
     );
+
+    // Rotating text effect - simulate rotation by positioning around center
+    this.rotateAngle += 0.1; // Slow rotation
+    const rotateRadius = 20;
+    const rotateX = Math.round(32 + Math.cos(this.rotateAngle) * rotateRadius);
+    const rotateY = Math.round(32 + Math.sin(this.rotateAngle) * rotateRadius);
+
+    await this.graphicsEngine.drawTextEnhanced(
+      'TURN',
+      [rotateX, rotateY],
+      [255, 255, 150, Math.round(alpha * 0.8)],
+      {
+        alignment: 'center',
+        effects: {
+          outline: true,
+          outlineColor: [150, 150, 0, Math.round(alpha * 0.6)],
+        },
+      },
+    );
+
+    // Add floating transparent particles for atmosphere
+    for (let i = 0; i < 5; i++) {
+      const particleX = Math.round(
+        32 + Math.sin(this.frameCount * 0.05 + i * 1.3) * 25,
+      );
+      const particleY = Math.round(
+        20 + Math.cos(this.frameCount * 0.03 + i * 0.8) * 15,
+      );
+      const particleAlpha = Math.round(
+        60 * opacity * (0.3 + Math.sin(this.frameCount * 0.1 + i) * 0.2),
+      );
+
+      await this.graphicsEngine.device.fillRect(
+        [particleX, particleY],
+        [2, 2],
+        [200, 220, 255, particleAlpha],
+      );
+    }
+  }
+
+  async _renderImages(opacity) {
+    const alpha = Math.round(255 * opacity);
+
+    // Title with transparency effect
+    await this.graphicsEngine.drawTextEnhanced(
+      'IMAGES',
+      [32, 8],
+      [255, 255, 255, alpha],
+      {
+        alignment: 'center',
+        effects: { shadow: true },
+      },
+    );
+
+    // Animated moon phase display
+    this.moonPhase = this.frameCount % 26;
+    const moonImagePath = `scenes/media/moonphase/5x5/Moon_${this.moonPhase.toString().padStart(2, '0')}.png`;
+
+    // Circular moon movement with transparency
+    this.moonAngle += 0.05; // Slow rotation
+    const moonX = Math.round(32 + Math.cos(this.moonAngle) * 18);
+    const moonY = Math.round(32 + Math.sin(this.moonAngle) * 12);
+
+    try {
+      // Draw moon with shadow for depth
+      await this.graphicsEngine.device.drawImage(
+        moonImagePath,
+        [moonX + 1, moonY + 1],
+        [5, 5],
+        Math.round(80 * opacity), // Semi-transparent shadow
+      );
+
+      // Draw main moon image
+      await this.graphicsEngine.device.drawImage(
+        moonImagePath,
+        [moonX, moonY],
+        [5, 5],
+        alpha,
+      );
+
+      // Show moon phase info with transparency
+      const phaseText = `Phase:${this.moonPhase}`;
+      await this.graphicsEngine.device.drawText(
+        phaseText,
+        [32, 50],
+        [180, 180, 255, Math.round(200 * opacity)],
+        'center',
+      );
+    } catch {
+      // Fallback if image loading fails
+      await this.graphicsEngine.device.drawText(
+        '🌙 MOON',
+        [32, 32],
+        [200, 200, 255, alpha],
+        'center',
+      );
+    }
+
+    // Add some transparent overlay effects
+    for (let i = 0; i < 3; i++) {
+      const waveX = Math.round(32 + Math.sin(this.frameCount * 0.1 + i) * 25);
+      const waveY = Math.round(20 + i * 8);
+      await this.graphicsEngine.device.fillRect(
+        [waveX, waveY],
+        [3, 2],
+        [100, 150, 255, Math.round(100 * opacity)],
+      );
+    }
   }
 
   async _renderFadeOut(opacity) {
@@ -460,9 +591,13 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // If this is the last phase, prepare for restart
-    if (this.frameCount - this.phaseStartFrame >= this.phaseDuration - 10) {
-      // Restart demo
+    // If this is the last phase and fade is complete, prepare for restart
+    const fadeComplete = !this.graphicsEngine.isFadeActive() && opacity < 0.1;
+    if (
+      this.frameCount - this.phaseStartFrame >= this.phaseDuration - 10 &&
+      fadeComplete
+    ) {
+      // Restart demo after fade out is complete
       this.demoPhase = 0;
       this.phaseStartFrame = this.frameCount;
       this.graphicsEngine.startFadeTransition(500, 0, 1);
@@ -476,22 +611,22 @@ class GraphicsEngineDemoScene {
     }
 
     try {
-      // Better positioned frame counter with background
+      // Centered frame counter with 50% transparency background
       const frameText = `F:${this.frameCount.toString().padStart(3, '0')}`;
 
-      // Draw semi-transparent background for readability
+      // Draw 50% transparent background for readability (centered)
       await this.graphicsEngine.device.fillRect(
-        [45, 56],
-        [19, 8],
-        [0, 0, 0, 150],
+        [21, 56],
+        [22, 8],
+        [0, 0, 0, 128],
       );
 
-      // Draw frame counter
+      // Draw frame counter centered
       await this.graphicsEngine.device.drawText(
         frameText,
-        [46, 57],
+        [32, 57],
         [200, 200, 200, 255],
-        'left',
+        'center',
       );
 
       if (this.frameCount % 30 === 1) {
