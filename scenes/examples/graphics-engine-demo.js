@@ -48,6 +48,34 @@ class GraphicsEngineDemoScene {
     this.frameCount = 0;
     this.demoPhase = 0;
     this.phaseStartFrame = 0;
+
+    // Animation state
+    this.bounceY = 32;
+    this.bounceDirection = 1;
+    this.bounceSpeed = 2.0; // Faster bouncing
+    this.hue = 0;
+    this.rainbowX = 10; // For rainbow text movement
+  }
+
+  _setupTextEffectsPhase() {
+    // No special setup needed
+  }
+
+  _setupGradientsPhase() {
+    // No special setup needed
+  }
+
+  _setupAnimationsPhase() {
+    // Reset animation state
+    this.bounceY = 32;
+    this.bounceDirection = 1;
+    this.hue = 0;
+    this.rainbowX = 10;
+  }
+
+  _setupFadeOutPhase() {
+    // Start fade out transition
+    this.graphicsEngine.startFadeTransition(2000, 1, 0);
   }
 
   async render(context) {
@@ -60,38 +88,76 @@ class GraphicsEngineDemoScene {
       );
     }
 
-    try {
-      // Clear screen with solid color first (test basic functionality)
-      await context.device.clear();
-      await context.device.fillRect([0, 0], [64, 64], [50, 100, 200, 255]);
+    // Update fade transition
+    const opacity = this.graphicsEngine.updateFadeTransition();
 
-      // Add simple text
-      await context.device.drawText(
-        'GFX TEST',
-        [20, 30],
-        [255, 255, 255, 255],
-        'center',
-      );
+    // Clear screen with gradient background
+    await this._drawBackground(opacity);
 
-      // Add frame counter
-      await context.device.drawText(
-        `F:${this.frameCount}`,
-        [5, 5],
-        [255, 255, 0, 255],
-        'left',
-      );
+    // Update demo phase
+    const framesInPhase = this.frameCount - this.phaseStartFrame;
+    if (framesInPhase >= this.phaseDuration) {
+      this.demoPhase = (this.demoPhase + 1) % 4;
+      this.phaseStartFrame = this.frameCount;
 
-      if (this.frameCount % 30 === 1) {
-        logger.debug(`🎨 GFX Demo basic render successful`);
+      // Switch configurations for each phase
+      switch (this.demoPhase) {
+        case 0:
+          this._setupTextEffectsPhase();
+          break;
+        case 1:
+          this._setupGradientsPhase();
+          break;
+        case 2:
+          this._setupAnimationsPhase();
+          break;
+        case 3:
+          this._setupFadeOutPhase();
+          break;
       }
 
-      // Push the frame to the display!
+      logger.debug(
+        `🎨 [${context.device.host}] GFX Demo phase ${this.demoPhase}`,
+      );
+    }
+
+    try {
+      // Render current demo phase
+      switch (this.demoPhase) {
+        case 0:
+          await this._renderTextEffects(opacity);
+          break;
+        case 1:
+          await this._renderGradients(opacity);
+          break;
+        case 2:
+          await this._renderAnimations(opacity);
+          break;
+        case 3:
+          await this._renderFadeOut(opacity);
+          break;
+      }
+
+      // Draw UI elements (performance info)
+      await this._drawPerformanceInfo();
+
+      // Push frame to display
       await context.device.push('graphics_engine_demo', context.publishOk);
 
       return 200; // ~5fps
     } catch (error) {
       logger.error(`🎨 GFX Demo render error: ${error.message}`);
-      // Return a valid delay even on error
+
+      // Fallback display
+      await context.device.clear();
+      await context.device.drawText(
+        'GFX ERROR',
+        [32, 32],
+        [255, 0, 0, 255],
+        'center',
+      );
+      await context.device.push('graphics_engine_demo', context.publishOk);
+
       return 1000;
     }
   }
@@ -134,6 +200,7 @@ class GraphicsEngineDemoScene {
   }
 
   async _renderTextEffects(opacity) {
+    // context is available from the parent render method
     const phaseProgress =
       (this.frameCount - this.phaseStartFrame) / this.phaseDuration;
     const alpha = Math.round(255 * opacity);
@@ -182,7 +249,7 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Combined effects (shadow + outline)
+    // Combined effects (shadow + outline + gradient)
     await this.graphicsEngine.drawTextEnhanced(
       'COMBO',
       [32, 44],
@@ -192,6 +259,7 @@ class GraphicsEngineDemoScene {
         effects: {
           shadow: true,
           outline: true,
+          gradient: true,
           outlineColor: [100, 0, 100, alpha],
         },
       },
@@ -230,22 +298,22 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Horizontal gradient demo (smaller area)
-    for (let x = 0; x < 32; x++) {
-      const factor = x / 31;
+    // Horizontal gradient demo (moved more left, full width)
+    for (let x = 0; x < 48; x++) {
+      const factor = x / 47;
       const r = Math.round(255 * factor);
       const g = Math.round(255 * (1 - factor));
       const b = 100;
       await this.graphicsEngine.device.fillRect(
-        [32 + x, 30],
+        [8 + x, 30],
         [1, 16],
         [r, g, b, alpha],
       );
     }
 
     await this.graphicsEngine.drawTextEnhanced(
-      'HORIZONTAL',
-      [48, 38],
+      'H-RGB',
+      [32, 38],
       [255, 255, 255, alpha],
       {
         alignment: 'center',
@@ -270,16 +338,36 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Bouncing ball animation
+    // Bouncing ball animation - faster and more visible
     this.bounceY += this.bounceSpeed * this.bounceDirection;
 
-    if (this.bounceY >= 52 || this.bounceY <= 20) {
+    if (this.bounceY >= 48 || this.bounceY <= 24) {
       this.bounceDirection *= -1;
     }
 
-    // Draw "ball" as a filled circle (using pixels)
+    // Draw "ball" as a filled circle with glow effect
     const ballX = 32;
     const ballY = Math.round(this.bounceY);
+
+    // Draw glow/trail effect (semi-transparent)
+    for (let dx = -5; dx <= 5; dx++) {
+      for (let dy = -5; dy <= 5; dy++) {
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance <= 5 && distance > 3) {
+          const x = ballX + dx;
+          const y = ballY + dy;
+          if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+            const glowAlpha = Math.round(alpha * (1 - (distance - 3) / 2));
+            await this.graphicsEngine.device.drawPixel(
+              [x, y],
+              [255, 150, 50, glowAlpha],
+            );
+          }
+        }
+      }
+    }
+
+    // Draw main ball
     for (let dx = -3; dx <= 3; dx++) {
       for (let dy = -3; dy <= 3; dy++) {
         if (dx * dx + dy * dy <= 9) {
@@ -289,20 +377,35 @@ class GraphicsEngineDemoScene {
           if (x >= 0 && x < 64 && y >= 0 && y < 64) {
             await this.graphicsEngine.device.drawPixel(
               [x, y],
-              [255, 200, 100, alpha],
+              [255, 220, 100, alpha],
             );
           }
         }
       }
     }
 
-    // Color cycling text
-    this.hue = (this.hue + 2) % 360;
-    const rainbowColor = this._hslToRgb(this.hue / 360, 0.8, 0.6);
+    // Rainbow color cycling - faster and more visible
+    this.hue = (this.hue + 5) % 360; // Faster cycling
+    const rainbowColor = this._hslToRgb(this.hue / 360, 0.9, 0.7);
+
+    // Moving rainbow text across screen
+    this.rainbowX += 1.5;
+    if (this.rainbowX > 50) this.rainbowX = -20;
+
+    // Draw rainbow background stripes for visibility
+    for (let i = 0; i < 6; i++) {
+      const stripeHue = ((this.hue + i * 60) % 360) / 360;
+      const stripeColor = this._hslToRgb(stripeHue, 0.8, 0.5);
+      await this.graphicsEngine.device.fillRect(
+        [Math.round(this.rainbowX) + i * 8, 46],
+        [6, 6],
+        [...stripeColor, alpha],
+      );
+    }
 
     await this.graphicsEngine.drawTextEnhanced(
       'RAINBOW',
-      [32, 48],
+      [Math.round(this.rainbowX + 20), 48],
       [...rainbowColor, alpha],
       {
         alignment: 'center',
@@ -310,14 +413,14 @@ class GraphicsEngineDemoScene {
       },
     );
 
-    // Easing demo - moving text
+    // Easing demo - faster moving text
     const easeProgress = this.graphicsEngine.ease(phaseProgress, 'easeInOut');
-    const easedX = 10 + easeProgress * 44;
+    const easedX = 5 + easeProgress * 54;
 
     await this.graphicsEngine.drawTextEnhanced(
-      'EASE',
+      'SMOOTH',
       [Math.round(easedX), 56],
-      [200, 255, 200, alpha],
+      [150, 255, 150, alpha],
       {
         alignment: 'center',
         effects: { shadow: true },
@@ -373,11 +476,21 @@ class GraphicsEngineDemoScene {
     }
 
     try {
-      // Small performance counter (bottom right)
+      // Better positioned frame counter with background
+      const frameText = `F:${this.frameCount.toString().padStart(3, '0')}`;
+
+      // Draw semi-transparent background for readability
+      await this.graphicsEngine.device.fillRect(
+        [45, 56],
+        [19, 8],
+        [0, 0, 0, 150],
+      );
+
+      // Draw frame counter
       await this.graphicsEngine.device.drawText(
-        `F:${this.frameCount}`,
-        [50, 58],
-        [150, 150, 150, 180],
+        frameText,
+        [46, 57],
+        [200, 200, 200, 255],
         'left',
       );
 
