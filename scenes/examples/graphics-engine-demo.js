@@ -43,22 +43,24 @@ const GFX_DEMO_CONFIG = {
     OUTLINE_POSITION: [32, 20], // "OUTLINE" text
     GRADIENT_POSITION: [32, 32], // "GRADIENT" text
     COMBO_POSITION: [32, 44], // "COMBO" text
-    TITLE_COLOR: [255, 255, 255, 255], // White
-    SHADOW_COLOR: [100, 100, 255, 255], // Blue
-    OUTLINE_COLOR: [255, 200, 100, 255], // Orange
-    GRADIENT_COLOR: [100, 200, 255, 255], // Light blue
-    COMBO_COLOR: [255, 255, 100, 255], // Yellow
+    TITLE_COLOR: [255, 255, 255], // White (alpha will be added)
+    SHADOW_COLOR: [100, 50, 0], // Brown (for outline)
+    OUTLINE_COLOR: [255, 200, 100], // Orange
+    GRADIENT_COLOR: [100, 200, 255], // Light blue
+    COMBO_COLOR: [255, 100, 255], // Magenta
   },
 
   // Gradients phase
   GRADIENTS: {
     TITLE_POSITION: [32, 8],
     VERTICAL_POSITION: [32, 20],
-    HORIZONTAL_POSITION: [8, 33], // Moved left for full width
+    HORIZONTAL_TEXT_POSITION: [32, 33], // "H-RGB" text position
+    HORIZONTAL_GRADIENT_START_X: 8, // Start position for horizontal gradient
+    HORIZONTAL_GRADIENT_Y: 30, // Y position for horizontal gradient
     HORIZONTAL_WIDTH: 48,
-    TITLE_COLOR: [255, 255, 255, 255],
-    VERTICAL_TEXT_COLOR: [255, 255, 255, 255],
-    HORIZONTAL_TEXT_COLOR: [255, 255, 255, 255],
+    TITLE_COLOR: [255, 255, 255], // White (alpha will be added)
+    VERTICAL_TEXT_COLOR: [255, 255, 255], // White (alpha will be added)
+    HORIZONTAL_TEXT_COLOR: [255, 255, 255], // White (alpha will be added)
     VERTICAL_GRADIENT: {
       START: [255, 0, 0, 255], // Red top
       END: [0, 0, 255, 255], // Blue bottom
@@ -436,9 +438,7 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'TEXT EFFECTS',
       GFX_DEMO_CONFIG.TEXT_EFFECTS.TITLE_POSITION,
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.TITLE_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.TEXT_EFFECTS.TITLE_COLOR, alpha],
       {
         alignment: 'center',
         effects: {
@@ -454,14 +454,12 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'OUTLINE',
       GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_POSITION,
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_COLOR, alpha],
       {
         alignment: 'center',
         effects: {
           outline: true,
-          outlineColor: GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR,
+          outlineColor: [...GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR, alpha],
           outlineWidth: outlineWidth,
         },
       },
@@ -471,9 +469,7 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'GRADIENT',
       GFX_DEMO_CONFIG.TEXT_EFFECTS.GRADIENT_POSITION,
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.GRADIENT_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.TEXT_EFFECTS.GRADIENT_COLOR, alpha],
       {
         alignment: 'center',
         effects: {
@@ -486,16 +482,14 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'COMBO',
       GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_POSITION,
-      GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_COLOR, alpha],
       {
         alignment: 'center',
         effects: {
           shadow: true,
           outline: true,
           gradient: true,
-          outlineColor: GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR,
+          outlineColor: [...GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR, alpha],
         },
       },
     );
@@ -508,7 +502,7 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'GRADIENTS',
       GFX_DEMO_CONFIG.GRADIENTS.TITLE_POSITION,
-      GFX_DEMO_CONFIG.GRADIENTS.TITLE_COLOR.map((c) => (c === 255 ? alpha : c)),
+      [...GFX_DEMO_CONFIG.GRADIENTS.TITLE_COLOR, alpha],
       {
         alignment: 'center',
         effects: { shadow: true },
@@ -517,12 +511,8 @@ class GraphicsEngineDemoScene {
 
     // Vertical gradient demo - using config constants
     await this.graphicsEngine.drawGradientBackground(
-      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.START.map((c) =>
-        c === 255 ? alpha : c,
-      ),
-      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.END.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.START.slice(0, 3), alpha],
+      [...GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.END.slice(0, 3), alpha],
       'vertical',
     );
 
@@ -530,16 +520,12 @@ class GraphicsEngineDemoScene {
     await this.graphicsEngine.drawTextEnhanced(
       'VERTICAL',
       GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_POSITION,
-      GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_TEXT_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      [...GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_TEXT_COLOR, alpha],
       {
         alignment: 'center',
         effects: {
           outline: true,
-          outlineColor: GFX_DEMO_CONFIG.COLORS.BLACK.map((c) =>
-            c === 255 ? alpha : c,
-          ),
+          outlineColor: [...GFX_DEMO_CONFIG.COLORS.BLACK.slice(0, 3), alpha],
         },
       },
     );
@@ -552,8 +538,8 @@ class GraphicsEngineDemoScene {
       const b = 100;
       await this.graphicsEngine.device.fillRect(
         [
-          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION[0] + x,
-          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION[1],
+          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_GRADIENT_START_X + x,
+          GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_GRADIENT_Y,
         ],
         [1, 16],
         [r, g, b, alpha],
@@ -562,10 +548,8 @@ class GraphicsEngineDemoScene {
 
     await this.graphicsEngine.drawTextEnhanced(
       'H-RGB',
-      GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_POSITION,
-      GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_TEXT_COLOR.map((c) =>
-        c === 255 ? alpha : c,
-      ),
+      GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_TEXT_POSITION,
+      [...GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_TEXT_COLOR, alpha],
       {
         alignment: 'center',
         effects: { shadow: true },
