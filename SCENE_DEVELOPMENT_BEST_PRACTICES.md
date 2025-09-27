@@ -127,9 +127,9 @@ console.log('Has init:', typeof scene.prototype?.init === 'function');
 
 ### **📁 Scene File Organization**
 
-```
+```text
 scenes/
-├── startup.js          # ✅ Auto-loaded (main)
+├── startup.js         # ✅ Auto-loaded (main)
 ├── empty.js           # ✅ Auto-loaded (main)
 ├── power_price.js     # ✅ Auto-loaded (main)
 ├── advanced_chart.js  # ✅ Auto-loaded (main)
@@ -195,4 +195,5 @@ When creating new Pixoo Daemon projects:
 
 ---
 
-**Remember**: If you create a scene and don't see "Scene registered: scene_name" in the daemon startup logs, it won't work! Always check the logs first.
+**Remember**: If you create a scene and don't see "Scene registered: scene_name" in the daemon startup logs,
+it won't work! Always check the logs first.
