@@ -182,8 +182,7 @@ class GraphicsEngineDemoScene {
           break;
       }
 
-      // Draw UI elements (performance info)
-      await this._drawPerformanceInfo();
+      // Performance info now in bottom bar
 
       // Draw FPS/frametime display (semi-transparent overlay)
       await this._drawPerformanceMetrics(fps, avgFrameTime);
@@ -518,18 +517,19 @@ class GraphicsEngineDemoScene {
 
   async _drawPerformanceMetrics(fps, avgFrameTime) {
     try {
-      // Draw compact bottom bar: "XFPS Yms" (skip comma/space for brevity)
-      // Reserve bottom 6 pixels for black bar (y=58-63) so frame counter at y=57 is visible
+      // Draw ultra-compact bottom bar: "4,9/204ms #12345"
+      // Reserve bottom 6 pixels for black bar (y=57-62) containing all stats
 
-      // Draw black background bar at bottom (6px height, starting at y=58)
+      // Draw black background bar at bottom (6px height, starting at y=57)
       await this.graphicsEngine.device.fillRect(
-        [0, 58],
+        [0, 57],
         [64, 6],
         [0, 0, 0, 255],
       );
 
-      // Format compact display (max 16 chars with 1px spacing between 3x5 chars)
-      const fpsInt = Math.round(fps);
+      // Format ultra-compact display: "fps,decimal/frametime ms #framecount"
+      const fpsInt = Math.floor(fps);
+      const fpsDecimal = Math.round((fps % 1) * 10);
       const frametimeMs = Math.round(avgFrameTime);
 
       // Color for frametime based on performance
@@ -541,27 +541,19 @@ class GraphicsEngineDemoScene {
       else msColor = [255, 100, 100]; // Red for >300ms
 
       let x = 2;
-      const y = 59; // 1px down from 58 for better centering in 6px bar
+      const y = 58; // Centered in 6px bar (57-62)
       const darkGray = [100, 100, 100, 255];
 
-      // FPS numeric (white), then 'FPS'
-      const fpsVal = `${fpsInt}`;
+      // FPS with decimal: "4,9/"
       await this.graphicsEngine.device.drawText(
-        fpsVal,
+        `${fpsInt},${fpsDecimal}/`,
         [x, y],
         [255, 255, 255, 255],
         'left',
       );
-      x += fpsVal.length * 4 + 1; // value width + 1px gap
-      await this.graphicsEngine.device.drawText(
-        'FPS',
-        [x, y],
-        darkGray,
-        'left',
-      );
-      x += 3 * 4 + 1; // 'FPS' width + 1px gap
+      x += 4 * 4 + 1; // "4,9/" width + 1px gap
 
-      // Frametime numeric (colored), then 'ms'
+      // Frametime: "204ms"
       const msVal = `${frametimeMs}`;
       await this.graphicsEngine.device.drawText(
         msVal,
@@ -569,8 +561,19 @@ class GraphicsEngineDemoScene {
         [msColor[0], msColor[1], msColor[2], 255],
         'left',
       );
-      x += msVal.length * 4 + 1; // value width + 1px gap
+      x += msVal.length * 4; // frametime width
       await this.graphicsEngine.device.drawText('ms', [x, y], darkGray, 'left');
+      x += 2 * 4 + 2; // 'ms' width + 2px gap
+
+      // Frame counter: " #12345" (right-aligned)
+      const frameText = ` #${this.frameCount.toString().padStart(5, '0')}`;
+      const frameX = 64 - frameText.length * 4 - 1; // Right-aligned with 1px margin
+      await this.graphicsEngine.device.drawText(
+        frameText,
+        [frameX, y],
+        [200, 200, 200, 255],
+        'left',
+      );
     } catch (error) {
       logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
     }
@@ -691,40 +694,6 @@ class GraphicsEngineDemoScene {
       this.demoPhase = 0;
       this.phaseStartFrame = this.frameCount;
       this.graphicsEngine.startFadeTransition(500, 0, 1);
-    }
-  }
-
-  async _drawPerformanceInfo() {
-    // Debug: Log frame push
-    if (this.frameCount % 30 === 1) {
-      logger.debug(`🎨 GFX Demo pushing frame ${this.frameCount}`);
-    }
-
-    try {
-      // Centered frame counter with 50% transparency background
-      const frameText = `F:${this.frameCount.toString().padStart(3, '0')}`;
-
-      // Draw 50% transparent background for readability (adjusted sizing)
-      // Was [21, 56], [22, 8] - now [19, 56], [26, 7] to fix margins
-      await this.graphicsEngine.device.fillRect(
-        [19, 56],
-        [26, 7],
-        [0, 0, 0, 128],
-      );
-
-      // Draw frame counter centered
-      await this.graphicsEngine.device.drawText(
-        frameText,
-        [32, 57],
-        [200, 200, 200, 255],
-        'center',
-      );
-
-      if (this.frameCount % 30 === 1) {
-        logger.debug(`🎨 GFX Demo text drawn successfully`);
-      }
-    } catch (error) {
-      logger.error(`🎨 GFX Demo performance info error: ${error.message}`);
     }
   }
 
