@@ -71,9 +71,11 @@ describe('SceneManager - Dependency Injection', () => {
 
       // Verify logger was called
       assert.ok(logs.length > 0, 'Logger should have been called');
-      assert.strictEqual(logs[0].level, 'ok', 'Should log with ok level');
+      // Find the 'ok' level log (may not be first due to debug logs)
+      const okLog = logs.find((l) => l.level === 'ok');
+      assert.ok(okLog, 'Should have an ok-level log');
       assert.ok(
-        logs[0].msg.includes('Scene registered'),
+        okLog.msg.includes('Scene registered'),
         'Should log registration',
       );
     });

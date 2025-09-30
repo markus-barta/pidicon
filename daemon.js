@@ -55,7 +55,7 @@ container.register('stateStore', ({ logger }) => {
 container.register('deploymentTracker', () => new DeploymentTracker());
 container.register(
   'sceneManager',
-  ({ logger }) => new SceneManager({ logger }),
+  ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
 );
 
 // Resolve services from container

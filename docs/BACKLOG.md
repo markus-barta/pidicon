@@ -31,7 +31,7 @@ of truth for upcoming work and its validation status.
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
 | ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | planned     | TEST-ARC-mqtt-service  | -                          | -                    |
 | ARC-302  | Implement Dependency Injection: Add DI container for testability       | completed   | TEST-ARC-di-container  | pass (43/43 tests)         | 2025-09-30T20:20:00Z |
-| ARC-303  | Consolidate State Management: Single source of truth for state         | in_progress | TEST-ARC-state-store   | pass (34/34 tests)         | 2025-09-30T21:00:00Z |
+| ARC-303  | Consolidate State Management: Single source of truth for state         | completed   | TEST-ARC-state-store   | pass (77/77 tests)         | 2025-09-30T21:05:00Z |
 | ARC-304  | Extract Command Handlers: Separate command processing logic            | planned     | TEST-ARC-cmd-handlers  | -                          | -                    |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
