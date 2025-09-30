@@ -4,7 +4,6 @@
 // - Routes each state update to the selected scene renderer
 // @author Markus Barta (mba) with assistance from Cursor AI
 
-const fs = require('fs');
 const mqtt = require('mqtt');
 const path = require('path');
 
@@ -19,6 +18,7 @@ const {
 } = require('./lib/device-adapter');
 const logger = require('./lib/logger');
 const { softReset } = require('./lib/pixoo-http');
+const { SceneRegistration } = require('./lib/scene-loader');
 const SceneManager = require('./lib/scene-manager');
 const versionInfo = require('./version.json');
 
@@ -39,40 +39,21 @@ const lastState = {}; // deviceIp -> { key, payload, sceneName }
 const deploymentTracker = new DeploymentTracker();
 const sceneManager = new SceneManager();
 
-// Load all scenes from ./scenes
-fs.readdirSync(path.join(__dirname, 'scenes')).forEach((file) => {
-  if (file.endsWith('.js')) {
-    try {
-      const sceneModule = require(path.join(__dirname, 'scenes', file));
-      const derivedName = path.basename(file, '.js');
-      const sceneName = sceneModule.name || derivedName;
-      sceneManager.registerScene(sceneName, sceneModule);
-      logger.ok(`Scene registered: ${sceneName}`);
-    } catch (error) {
-      logger.error(`Failed to load scene ${file}:`, { error: error.message });
-    }
-  }
-});
+// Load all scenes using SceneRegistration utility
+// Automatically loads from ./scenes and ./scenes/examples
+const sceneLoadResults = SceneRegistration.registerFromStructure(
+  sceneManager,
+  path.join(__dirname, 'scenes'),
+);
 
-// Also load scenes from ./scenes/examples
-const exampleScenesDir = path.join(__dirname, 'scenes', 'examples');
-if (fs.existsSync(exampleScenesDir)) {
-  fs.readdirSync(exampleScenesDir).forEach((file) => {
-    if (file.endsWith('.js')) {
-      try {
-        const sceneModule = require(path.join(exampleScenesDir, file));
-        const derivedName = path.basename(file, '.js');
-        const sceneName = sceneModule.name || derivedName;
-        sceneManager.registerScene(sceneName, sceneModule);
-        logger.ok(`Loaded example scene: ${sceneName}`);
-      } catch (error) {
-        logger.error(`Failed to load example scene ${file}:`, {
-          error: error.message,
-        });
-      }
-    }
+// Log any errors during scene loading
+if (sceneLoadResults.errors.length > 0) {
+  logger.warn(`Failed to load ${sceneLoadResults.errors.length} scene(s):`, {
+    errors: sceneLoadResults.errors,
   });
 }
+
+logger.ok(`Loaded ${sceneLoadResults.scenes.size} scene(s) successfully`);
 
 const startTs = new Date().toLocaleString('de-AT');
 logger.ok(`**************************************************`);
