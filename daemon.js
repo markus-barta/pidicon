@@ -16,6 +16,7 @@ const {
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
+const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
 const { softReset } = require('./lib/pixoo-http');
 const { SceneRegistration } = require('./lib/scene-loader');
@@ -35,9 +36,31 @@ const deviceDefaults = new Map(); // deviceIp -> default scene
 // Stores last state per device IP so we can re-render on driver switch
 const lastState = {}; // deviceIp -> { key, payload, sceneName }
 
-// Initialize deployment tracker and scene manager
-const deploymentTracker = new DeploymentTracker();
-const sceneManager = new SceneManager();
+// ============================================================================
+// DEPENDENCY INJECTION CONTAINER SETUP
+// ============================================================================
+
+/**
+ * Configure dependency injection container
+ * This enables testability and loose coupling between services
+ */
+const container = new DIContainer();
+
+// Register core services
+container.register('logger', () => logger);
+container.register('deploymentTracker', () => new DeploymentTracker());
+container.register(
+  'sceneManager',
+  ({ logger }) => new SceneManager({ logger }),
+);
+
+// Resolve services from container
+const deploymentTracker = container.resolve('deploymentTracker');
+const sceneManager = container.resolve('sceneManager');
+
+logger.ok('✅ DI Container initialized with services:', {
+  services: container.getServiceNames(),
+});
 
 // Load all scenes using SceneRegistration utility
 // Automatically loads from ./scenes and ./scenes/examples
