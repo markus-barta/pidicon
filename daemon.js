@@ -48,6 +48,10 @@ const container = new DIContainer();
 
 // Register core services
 container.register('logger', () => logger);
+container.register('stateStore', ({ logger }) => {
+  const StateStore = require('./lib/state-store');
+  return new StateStore({ logger });
+});
 container.register('deploymentTracker', () => new DeploymentTracker());
 container.register(
   'sceneManager',
@@ -55,12 +59,16 @@ container.register(
 );
 
 // Resolve services from container
+const stateStore = container.resolve('stateStore');
 const deploymentTracker = container.resolve('deploymentTracker');
 const sceneManager = container.resolve('sceneManager');
 
 logger.ok('✅ DI Container initialized with services:', {
   services: container.getServiceNames(),
 });
+
+// Log StateStore stats for observability (and to satisfy linter)
+logger.debug('StateStore initialized:', stateStore.getStats());
 
 // Load all scenes using SceneRegistration utility
 // Automatically loads from ./scenes and ./scenes/examples

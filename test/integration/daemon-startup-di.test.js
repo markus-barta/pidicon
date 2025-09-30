@@ -28,6 +28,10 @@ describe('Daemon Startup with DI', () => {
 
       // Register core services
       container.register('logger', () => mockLogger);
+      container.register('stateStore', ({ logger }) => {
+        const StateStore = require('../../lib/state-store');
+        return new StateStore({ logger });
+      });
       container.register('deploymentTracker', () => new DeploymentTracker());
       container.register(
         'sceneManager',
@@ -37,6 +41,7 @@ describe('Daemon Startup with DI', () => {
       // Verify all services registered
       const services = container.getServiceNames();
       assert.ok(services.includes('logger'));
+      assert.ok(services.includes('stateStore'));
       assert.ok(services.includes('deploymentTracker'));
       assert.ok(services.includes('sceneManager'));
     });
