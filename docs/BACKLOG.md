@@ -29,7 +29,7 @@ of truth for upcoming work and its validation status.
 | CON-102  | Consistency pass: naming, contracts, return values                     | completed   | TEST-CON-contracts     | pass (audit, 259/47cabd0)  | 2025-09-19T19:05:00Z |
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
-| ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | planned     | TEST-ARC-mqtt-service  | -                          | -                    |
+| ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | completed   | TEST-ARC-mqtt-service  | pass (89/89 tests)         | 2025-09-30T22:00:00Z |
 | ARC-302  | Implement Dependency Injection: Add DI container for testability       | completed   | TEST-ARC-di-container  | pass (43/43 tests)         | 2025-09-30T20:20:00Z |
 | ARC-303  | Consolidate State Management: Single source of truth for state         | completed   | TEST-ARC-state-store   | pass (77/77 tests)         | 2025-09-30T21:05:00Z |
 | ARC-304  | Extract Command Handlers: Separate command processing logic            | planned     | TEST-ARC-cmd-handlers  | -                          | -                    |

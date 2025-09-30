@@ -4,7 +4,6 @@
 // - Routes each state update to the selected scene renderer
 // @author Markus Barta (mba) with assistance from Cursor AI
 
-const mqtt = require('mqtt');
 const path = require('path');
 
 const { SCENE_STATE_TOPIC_BASE, SCENE_STATE_KEYS } = require('./lib/config');
@@ -18,6 +17,7 @@ const {
 } = require('./lib/device-adapter');
 const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
+const MqttService = require('./lib/mqtt-service');
 const { softReset } = require('./lib/pixoo-http');
 const { SceneRegistration } = require('./lib/scene-loader');
 const SceneManager = require('./lib/scene-manager');
@@ -26,9 +26,11 @@ const versionInfo = require('./version.json');
 // Create a logger instance
 
 // MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
-const brokerUrl = `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`;
-const mqttUser = process.env.MOSQITTO_USER_MS24;
-const mqttPass = process.env.MOSQITTO_PASS_MS24;
+const mqttConfig = {
+  brokerUrl: `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`,
+  username: process.env.MOSQITTO_USER_MS24,
+  password: process.env.MOSQITTO_PASS_MS24,
+};
 
 // Default scene per device (set via MQTT)
 const deviceDefaults = new Map(); // deviceIp -> default scene
@@ -57,11 +59,16 @@ container.register(
   'sceneManager',
   ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
 );
+container.register(
+  'mqttService',
+  ({ logger }) => new MqttService({ logger, config: mqttConfig }),
+);
 
 // Resolve services from container
 const stateStore = container.resolve('stateStore');
 const deploymentTracker = container.resolve('deploymentTracker');
 const sceneManager = container.resolve('sceneManager');
+const mqttService = container.resolve('mqttService');
 
 logger.ok('✅ DI Container initialized with services:', {
   services: container.getServiceNames(),
@@ -108,7 +115,7 @@ try {
   logger.warn('Could not check MQTT_COMMANDS.md:', { error: err.message });
 }
 
-logger.info('MQTT Broker:', { url: brokerUrl });
+logger.info('MQTT Broker:', { url: mqttConfig.brokerUrl });
 if (deviceDrivers.size > 0) {
   logger.info('Configured Devices and Drivers:');
   Array.from(deviceDrivers.entries()).forEach(([ip, driver]) => {
@@ -163,18 +170,13 @@ async function initializeDeployment() {
 logger.info('Initializing deployment...');
 initializeDeployment();
 
-const client = mqtt.connect(brokerUrl, {
-  username: mqttUser,
-  password: mqttPass,
-});
-
 // SCENE_STATE_TOPIC_BASE is provided by lib/config.js
 
 function publishMetrics(deviceIp) {
   const dev = devices.get(deviceIp);
   if (!dev) return;
   const metrics = dev.getMetrics();
-  client.publish(`pixoo/${deviceIp}/metrics`, JSON.stringify(metrics));
+  mqttService.publish(`pixoo/${deviceIp}/metrics`, metrics);
 }
 
 function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
@@ -205,54 +207,29 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   });
 
   // Publish to MQTT
-  client.publish(`pixoo/${deviceIp}/ok`, JSON.stringify(msg));
+  mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
 }
 
-// On connect, subscribe to per-device state updates
-client.on('connect', () => {
-  logger.ok('Connected to MQTT broker', { user: mqttUser });
-  client.subscribe(
-    [
-      'pixoo/+/state/upd',
-      'pixoo/+/scene/set',
-      'pixoo/+/driver/set',
-      'pixoo/+/reset/set',
-    ],
-    (err) => {
-      if (err) {
-        logger.error('MQTT subscribe error:', { error: err });
-      } else {
-        logger.ok(
-          'Subscribed to pixoo/+/state/upd, scene/set, driver/set, reset/set',
-        );
-      }
-    },
-  );
+// Register MQTT message handlers with MqttService
+mqttService.registerHandler('scene', handleSceneCommand);
+mqttService.registerHandler('driver', handleDriverCommand);
+mqttService.registerHandler('reset', handleResetCommand);
+mqttService.registerHandler('state', handleStateUpdate);
+
+// Connect to MQTT broker and subscribe to topics
+mqttService.on('connect', async () => {
+  await mqttService.subscribe([
+    'pixoo/+/state/upd',
+    'pixoo/+/scene/set',
+    'pixoo/+/driver/set',
+    'pixoo/+/reset/set',
+  ]);
 });
 
-const messageHandlers = {
-  scene: handleSceneCommand,
-  driver: handleDriverCommand,
-  reset: handleResetCommand,
-  state: handleStateUpdate,
-};
-
-client.on('message', async (topic, message) => {
-  try {
-    const payload = JSON.parse(message.toString());
-    const parts = topic.split('/'); // pixoo/<device>/<section>/<action?>
-    const deviceIp = parts[1];
-    const section = parts[2];
-
-    const handler = messageHandlers[section];
-    if (handler) {
-      await handler(deviceIp, parts[3], payload);
-    } else {
-      logger.warn(`No handler for topic section: ${section}`);
-    }
-  } catch (err) {
-    logger.error('Error parsing/handling MQTT message:', { error: err });
-  }
+// Start MQTT service
+mqttService.connect().catch((err) => {
+  logger.error('Failed to connect to MQTT broker:', { error: err.message });
+  process.exit(1);
 });
 
 async function handleSceneCommand(deviceIp, action, payload) {
@@ -264,10 +241,10 @@ async function handleSceneCommand(deviceIp, action, payload) {
     }
     deviceDefaults.set(deviceIp, name);
     logger.ok(`Default scene for ${deviceIp} → '${name}'`);
-    client.publish(
-      `pixoo/${deviceIp}/scene`,
-      JSON.stringify({ default: name, ts: Date.now() }),
-    );
+    mqttService.publish(`pixoo/${deviceIp}/scene`, {
+      default: name,
+      ts: Date.now(),
+    });
   }
 }
 
@@ -280,10 +257,10 @@ async function handleDriverCommand(deviceIp, action, payload) {
     }
     const applied = setDriverForDevice(deviceIp, drv);
     logger.ok(`Driver for ${deviceIp} set → ${applied}`);
-    client.publish(
-      `pixoo/${deviceIp}/driver`,
-      JSON.stringify({ driver: applied, ts: Date.now() }),
-    );
+    mqttService.publish(`pixoo/${deviceIp}/driver`, {
+      driver: applied,
+      ts: Date.now(),
+    });
 
     // Optional: re-render with last known state
     const prev = lastState[deviceIp];
@@ -299,14 +276,11 @@ async function handleDriverCommand(deviceIp, action, payload) {
             logger.error(`Render error for ${deviceIp}:`, {
               error: err.message,
             });
-            client.publish(
-              `pixoo/${deviceIp}/error`,
-              JSON.stringify({
-                error: err.message,
-                scene: sceneName,
-                ts: Date.now(),
-              }),
-            );
+            mqttService.publish(`pixoo/${deviceIp}/error`, {
+              error: err.message,
+              scene: sceneName,
+              ts: Date.now(),
+            });
             publishMetrics(deviceIp);
           }
         }
@@ -321,10 +295,10 @@ async function handleResetCommand(deviceIp, action) {
   if (action === 'set') {
     logger.warn(`Reset requested for ${deviceIp}`);
     const ok = await softReset(deviceIp);
-    client.publish(
-      `pixoo/${deviceIp}/reset`,
-      JSON.stringify({ ok, ts: Date.now() }),
-    );
+    mqttService.publish(`pixoo/${deviceIp}/reset`, {
+      ok,
+      ts: Date.now(),
+    });
   }
 }
 
@@ -400,9 +374,9 @@ async function handleStateUpdate(deviceIp, action, payload) {
       try {
         const prev = sceneManager.getDeviceSceneState(deviceIp);
         const genNext = ((prev.generationId || 0) + 1) | 0;
-        client.publish(
+        mqttService.publish(
           `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-          JSON.stringify({
+          {
             [SCENE_STATE_KEYS.currentScene]: prev.currentScene,
             [SCENE_STATE_KEYS.targetScene]: sceneName,
             [SCENE_STATE_KEYS.status]: 'switching',
@@ -411,7 +385,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
             [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
             [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
             [SCENE_STATE_KEYS.ts]: Date.now(),
-          }),
+          },
         );
       } catch (e) {
         logger.warn('Failed to publish switching state', {
@@ -425,9 +399,9 @@ async function handleStateUpdate(deviceIp, action, payload) {
       // Publish running state after restart
       try {
         const st = sceneManager.getDeviceSceneState(deviceIp);
-        client.publish(
+        mqttService.publish(
           `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-          JSON.stringify({
+          {
             [SCENE_STATE_KEYS.currentScene]: st.currentScene,
             [SCENE_STATE_KEYS.generationId]: st.generationId,
             [SCENE_STATE_KEYS.status]: st.status,
@@ -435,7 +409,7 @@ async function handleStateUpdate(deviceIp, action, payload) {
             [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
             [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
             [SCENE_STATE_KEYS.ts]: Date.now(),
-          }),
+          },
         );
       } catch (e) {
         logger.warn('Failed to publish device scene state', {
@@ -456,20 +430,17 @@ async function handleStateUpdate(deviceIp, action, payload) {
         error: err.message,
         scene: sceneName,
       });
-      client.publish(
-        `pixoo/${deviceIp}/error`,
-        JSON.stringify({
-          error: err.message,
-          scene: sceneName,
-          ts: Date.now(),
-        }),
-      );
+      mqttService.publish(`pixoo/${deviceIp}/error`, {
+        error: err.message,
+        scene: sceneName,
+        ts: Date.now(),
+      });
       publishMetrics(deviceIp);
     }
   }
 }
 
 // Global MQTT error logging
-client.on('error', (err) => {
-  logger.error('MQTT error:', { error: err });
+mqttService.on('error', (err) => {
+  logger.error('MQTT error:', { error: err.message });
 });
