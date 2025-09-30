@@ -30,7 +30,7 @@ of truth for upcoming work and its validation status.
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
 | ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | planned     | TEST-ARC-mqtt-service  | -                          | -                    |
-| ARC-302  | Implement Dependency Injection: Add DI container for testability       | planned     | TEST-ARC-di-container  | -                          | -                    |
+| ARC-302  | Implement Dependency Injection: Add DI container for testability       | completed   | TEST-ARC-di-container  | pass (43/43 tests)         | 2025-09-30T20:20:00Z |
 | ARC-303  | Consolidate State Management: Single source of truth for state         | planned     | TEST-ARC-state-store   | -                          | -                    |
 | ARC-304  | Extract Command Handlers: Separate command processing logic            | planned     | TEST-ARC-cmd-handlers  | -                          | -                    |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
