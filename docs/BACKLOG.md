@@ -20,7 +20,7 @@ of truth for upcoming work and its validation status.
 | TST-008  | Automation: mock-driver integration tests + manual scripts             | completed   | TEST-TST-harness       | pass (mock, 259/47cabd0)   | 2025-09-19T19:05:00Z |
 | SOAK-009 | Stability: 30–60 min soak with frequent switches                       | postponed   | TEST-SOAK-stability    | -                          | -                    |
 | DOC-010  | Documentation: dev guide, git readme and backlog hygiene               | in_progress | TEST-DOC-checklist     | pass (readme updated)      | 2025-09-18T17:50:38Z |
-| ARC-101  | Architecture audit & alignment with standards                          | in_progress | TEST-ARC-audit         | pass (review, build 348)   | 2025-09-18T17:21:27Z |
+| ARC-101  | Architecture audit & alignment with standards                          | completed   | TEST-ARC-audit         | pass (review, build 449)   | 2025-09-30T18:00:00Z |
 | API-201  | Unified Device API: Single drawing interface with consistent naming    | completed   | TEST-API-unified       | pass (manual test)         | 2025-09-20T17:15:00Z |
 | FRM-202  | Scene Framework: Base classes, composition, and standardized patterns  | completed   | TEST-FRM-composition   | pass (manual test)         | 2025-09-20T17:30:00Z |
 | GFX-203  | Graphics Engine: Advanced rendering, animation system, resource cache  | completed   | TEST-GFX-engine        | -                          | -                    |
@@ -29,6 +29,15 @@ of truth for upcoming work and its validation status.
 | CON-102  | Consistency pass: naming, contracts, return values                     | completed   | TEST-CON-contracts     | pass (audit, 259/47cabd0)  | 2025-09-19T19:05:00Z |
 | CLN-103  | Cleanup: dead code, dev overrides, unused branches                     | completed   | TEST-CLN-deadcode      | pass (review, 259/47cabd0) | 2025-09-19T19:05:00Z |
 | REL-104  | Release checklist for public v1.1: final smoke & notes                 | completed   | TEST-REL-smoke         | pass (real, 373/13e814d)   | 2025-09-19T20:17:00Z |
+| ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | planned     | TEST-ARC-mqtt-service  | -                          | -                    |
+| ARC-302  | Implement Dependency Injection: Add DI container for testability       | planned     | TEST-ARC-di-container  | -                          | -                    |
+| ARC-303  | Consolidate State Management: Single source of truth for state         | planned     | TEST-ARC-state-store   | -                          | -                    |
+| ARC-304  | Extract Command Handlers: Separate command processing logic            | planned     | TEST-ARC-cmd-handlers  | -                          | -                    |
+| ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
+| ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
+| ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
+| TST-301  | Improve Test Coverage: Achieve 80% coverage for critical modules       | planned     | TEST-TST-coverage      | -                          | -                    |
+| PERF-301 | Performance Optimizations: Profile and optimize hot paths              | proposed    | TEST-PERF-optimize     | -                          | -                    |
 
 ---
 
@@ -396,3 +405,456 @@ Based on stability requirements and development workflow impact:
 - Maintainability: All scenes follow the pure render contract; no bespoke timers.
 - Configurability: Topic base and payload keys configurable via constants/env.
 - Quality: Zero lint errors; documentation and backlog kept up to date at all times.
+
+---
+
+## Architecture Refactoring - Pro-Senior-Level Work Packages
+
+### ARC-301: Extract MQTT Service - Decouple MQTT logic from daemon.js
+
+- **Priority**: P0 (Must Have - Foundation)
+- **Effort**: 2-3 days
+- **Risk**: Low (additive change, no breaking changes)
+
+**Summary**: Extract all MQTT connection, subscription, and publishing logic from
+daemon.js into a dedicated `MqttService` class. This enables dependency injection,
+better testing, and cleaner separation of concerns.
+
+**Current Problem**:
+
+- daemon.js has 100+ lines of MQTT logic mixed with business logic
+- Cannot test daemon logic without MQTT broker
+- Hard to swap MQTT for WebSockets or other protocols
+
+**Implementation Plan**:
+
+1. Create `lib/mqtt-service.js` with `MqttService` class
+2. Extract connection management (connect, disconnect, reconnect)
+3. Extract subscription management (subscribe, unsubscribe patterns)
+4. Extract publishing (publish with retry, QoS handling)
+5. Add event emitter for decoupled message handling
+6. Update daemon.js to use MqttService
+7. Add unit tests with mock MQTT client
+
+**Acceptance Criteria**:
+
+- ✅ daemon.js reduced by 100+ lines
+- ✅ MqttService fully testable with mocks
+- ✅ All existing MQTT functionality works unchanged
+- ✅ Can configure MQTT broker URL via DI
+- ✅ Zero breaking changes to existing scenes/devices
+- ✅ Test coverage: 80%+ for MqttService
+
+**Test Plan (TEST-ARC-mqtt-service)**:
+
+- Unit tests: Connection, subscription, publishing with mocked MQTT client
+- Integration tests: Real MQTT broker with multiple devices
+- Verify all existing MQTT topics still work
+
+---
+
+### ARC-302: Implement Dependency Injection - Add DI container for testability
+
+- **Priority**: P0 (Must Have - Foundation)
+- **Effort**: 3-4 days
+- **Risk**: Medium (requires careful refactoring of constructors)
+
+**Summary**: Implement a lightweight dependency injection container to eliminate
+hard-coded `require()` calls and enable proper unit testing with mocks.
+
+**Current Problem**:
+
+- Classes use `this.logger = require('./logger')` - hard dependencies
+- Cannot mock dependencies in tests
+- Tight coupling makes refactoring risky
+- Violates Dependency Inversion Principle
+
+**Implementation Plan**:
+
+1. Add `lib/di-container.js` with lightweight DI container (Awilix-inspired)
+2. Refactor SceneManager to accept dependencies via constructor
+3. Refactor DeviceAdapter to accept dependencies via constructor
+4. Refactor all lib/\* modules to use DI
+5. Create container configuration in daemon.js
+6. Update tests to use DI for mocking
+7. Add container lifecycle management
+
+**Acceptance Criteria**:
+
+- ✅ All lib/\* modules use constructor injection
+- ✅ Zero hard-coded `require()` calls for internal dependencies
+- ✅ Tests can easily mock any dependency
+- ✅ Container supports singleton and transient lifetimes
+- ✅ Clear documentation on adding new services
+- ✅ Zero breaking changes to scene interface
+
+**Test Plan (TEST-ARC-di-container)**:
+
+- Unit tests: Container registration, resolution, lifecycle
+- Integration tests: Full daemon startup with DI
+- Verify all existing functionality works
+- Test mocking in unit tests
+
+---
+
+### ARC-303: Consolidate State Management - Single source of truth for state
+
+- **Priority**: P0 (Must Have - Foundation)
+- **Effort**: 2-3 days
+- **Risk**: Medium (affects scene state handling)
+
+**Summary**: Consolidate fragmented state management (currently in scene-manager,
+device-adapter, scene-base, and individual scenes) into a single `StateStore` service.
+
+**Current Problem**:
+
+- State stored in 4+ different places
+- `sceneStates` Map exists in both scene-manager.js AND device-adapter.js
+- Confusing for developers - where to store what?
+- Risk of state inconsistency
+
+**Implementation Plan**:
+
+1. Create `lib/state-store.js` with StateStore class
+2. Define clear state hierarchy: global → device → scene
+3. Implement state getters/setters with path syntax
+4. Add state subscription/observation capabilities
+5. Migrate scene-manager.js to use StateStore
+6. Migrate device-adapter.js to use StateStore
+7. Update scene-base.js to use StateStore
+8. Add state persistence (optional)
+
+**State Hierarchy**:
+
+```
+StateStore
+  ├── globalState (Map) - daemon-wide config
+  ├── deviceStates (Map<deviceId, DeviceState>)
+  │     └─ DeviceState { activeScene, generation, status, ... }
+  └── sceneStates (Map<sceneId::deviceId, SceneState>)
+        └─ SceneState { frameCount, isRunning, ... }
+```
+
+**Acceptance Criteria**:
+
+- ✅ Single StateStore instance manages all state
+- ✅ Clear API for reading/writing state
+- ✅ State hierarchy well-documented
+- ✅ All existing scenes work without changes
+- ✅ State subscription for reactive updates (optional)
+- ✅ Test coverage: 85%+
+
+**Test Plan (TEST-ARC-state-store)**:
+
+- Unit tests: Get, set, clear, subscribe operations
+- Integration tests: Multi-device state isolation
+- Verify scene state persistence across switches
+
+---
+
+### ARC-304: Extract Command Handlers - Separate command processing logic
+
+- **Priority**: P1 (Should Have - Quality)
+- **Effort**: 2 days
+- **Risk**: Low (refactoring existing code)
+
+**Summary**: Extract MQTT message handling from daemon.js into dedicated command
+handler classes using the Command pattern.
+
+**Current Problem**:
+
+- daemon.js has inline message handlers for scene/driver/reset commands
+- Mixed abstraction levels (parsing + business logic)
+- Hard to add new commands
+- No command validation or error handling consistency
+
+**Implementation Plan**:
+
+1. Create `lib/commands/` directory
+2. Create `CommandHandler` base class
+3. Implement `SceneCommandHandler` (handle scene switching)
+4. Implement `DriverCommandHandler` (handle driver changes)
+5. Implement `ResetCommandHandler` (handle device resets)
+6. Create `CommandRouter` to dispatch commands
+7. Add command validation and error handling
+8. Update daemon.js to use CommandRouter
+
+**Acceptance Criteria**:
+
+- ✅ Each command type has dedicated handler class
+- ✅ CommandRouter validates and dispatches commands
+- ✅ Consistent error handling across all commands
+- ✅ Easy to add new command types
+- ✅ Command handlers fully testable in isolation
+- ✅ Zero breaking changes to MQTT protocol
+
+**Test Plan (TEST-ARC-cmd-handlers)**:
+
+- Unit tests: Each command handler with mocked dependencies
+- Integration tests: Full command flow via MQTT
+- Error cases: Invalid payloads, missing fields
+
+---
+
+### ARC-305: Add Service Layer - Business logic abstraction
+
+- **Priority**: P1 (Should Have - Quality)
+- **Effort**: 3-4 days
+- **Risk**: Medium (requires careful API design)
+
+**Summary**: Add a service layer to encapsulate business logic, separating it from
+infrastructure concerns (MQTT, HTTP, filesystem).
+
+**Current Problem**:
+
+- Business logic scattered across daemon.js, scene-manager.js, device-adapter.js
+- No clear API for common operations
+- Difficult to reuse logic (e.g., scene switching from different entry points)
+
+**Implementation Plan**:
+
+1. Create `lib/services/` directory
+2. Implement `SceneService` (register, switch, render, list)
+3. Implement `DeviceService` (create, configure, getMetrics)
+4. Implement `SchedulerService` (centralized loop management)
+5. Implement `DeploymentService` (version tracking, startup)
+6. Refactor daemon.js to use services
+7. Refactor command handlers to use services
+8. Add comprehensive JSDoc for service APIs
+
+**Service Layer Structure**:
+
+```
+services/
+  ├── SceneService.js       (registerScene, switchScene, renderScene)
+  ├── DeviceService.js      (getDevice, createDevice, setDriver)
+  ├── SchedulerService.js   (startLoop, stopLoop, updateDelay)
+  └── DeploymentService.js  (getVersion, getBuildInfo)
+```
+
+**Acceptance Criteria**:
+
+- ✅ Clear service APIs for all major operations
+- ✅ Services testable in isolation (via DI)
+- ✅ daemon.js acts as thin orchestration layer
+- ✅ Services documented with usage examples
+- ✅ Zero breaking changes to scene interface
+- ✅ Test coverage: 80%+
+
+**Test Plan (TEST-ARC-service-layer)**:
+
+- Unit tests: Each service method with mocked dependencies
+- Integration tests: Service composition for complex flows
+- Verify all existing functionality works
+
+---
+
+### ARC-306: Hexagonal Architecture - Implement ports & adapters pattern
+
+- **Priority**: P2 (Nice to Have - Advanced)
+- **Effort**: 5-7 days
+- **Risk**: High (major architectural refactoring)
+
+**Summary**: Refactor to hexagonal (ports & adapters) architecture for maximum
+testability and flexibility. Business logic becomes independent of infrastructure.
+
+**Current Problem**:
+
+- Domain logic coupled to MQTT, HTTP, filesystem
+- Cannot easily add REST API or WebSocket support
+- Testing requires real infrastructure (MQTT broker, devices)
+
+**Implementation Plan**:
+
+1. Define domain models (Scene, Device, SceneState entities)
+2. Define ports (interfaces) for inbound/outbound adapters
+3. Implement core domain services (use cases)
+4. Create adapters for MQTT (inbound), Pixoo devices (outbound)
+5. Implement adapter for state persistence
+6. Add adapter registry/configuration
+7. Refactor daemon.js as composition root
+
+**Acceptance Criteria**:
+
+- ✅ Domain logic in `lib/domain/`
+- ✅ Ports defined as interfaces in `lib/ports/`
+- ✅ Adapters in `lib/adapters/`
+- ✅ Can swap MQTT for WebSockets without changing domain
+- ✅ Can add REST API without changing scene logic
+- ✅ Test coverage: 90%+ for domain logic
+
+**Test Plan (TEST-ARC-hexagonal)**:
+
+- Unit tests: Domain logic with mocked ports
+- Integration tests: Real adapters with test infrastructure
+- E2E tests: Full daemon with multiple adapter types
+
+---
+
+### ARC-307: Add Repository Pattern - Data access abstraction
+
+- **Priority**: P2 (Nice to Have - Advanced)
+- **Effort**: 2-3 days
+- **Risk**: Low (additive pattern)
+
+**Summary**: Implement repository pattern for scene and device data access,
+enabling future persistence (database, Redis, etc.).
+
+**Current Problem**:
+
+- Scenes loaded directly from filesystem
+- Device state in memory only
+- No abstraction for future database integration
+
+**Implementation Plan**:
+
+1. Create `ISceneRepository` interface
+2. Implement `FileSystemSceneRepository`
+3. Implement `InMemorySceneRepository` (for testing)
+4. Create `IDeviceRepository` interface
+5. Implement `InMemoryDeviceRepository`
+6. Add repository configuration to DI container
+7. Refactor scene-loader to use SceneRepository
+
+**Acceptance Criteria**:
+
+- ✅ Repository interfaces well-defined
+- ✅ Multiple implementations available
+- ✅ Easy to add database persistence later
+- ✅ Repositories injectable via DI
+- ✅ Test coverage: 80%+
+
+**Test Plan (TEST-ARC-repository)**:
+
+- Unit tests: Repository implementations
+- Integration tests: Swapping repositories
+- Verify all scenes load correctly
+
+---
+
+### TST-301: Improve Test Coverage - Achieve 80% coverage for critical modules
+
+- **Priority**: P1 (Should Have - Quality)
+- **Effort**: 3-5 days
+- **Risk**: Low (test-only changes)
+
+**Summary**: Systematically improve test coverage for all lib/\* modules, focusing
+on critical paths (scene-manager, device-adapter, scheduler).
+
+**Current Problem**:
+
+- Estimated ~60% coverage
+- Some critical modules lack comprehensive tests
+- No coverage reporting in CI/CD
+
+**Implementation Plan**:
+
+1. Add c8 (Istanbul) for coverage reporting
+2. Identify modules below 80% coverage
+3. Write unit tests for untested code paths
+4. Write integration tests for critical flows
+5. Add coverage gates to CI/CD
+6. Document testing best practices
+
+**Target Coverage**:
+
+- scene-manager.js: 85%+
+- device-adapter.js: 85%+
+- mqtt-utils.js: 85%+
+- scene-loader.js: 90%+
+- Other modules: 80%+
+
+**Acceptance Criteria**:
+
+- ✅ Overall coverage: 80%+
+- ✅ Critical modules: 85%+
+- ✅ Coverage report in CI/CD
+- ✅ All edge cases tested
+- ✅ Integration tests for main flows
+
+**Test Plan (TEST-TST-coverage)**:
+
+- Run coverage report: `npm run coverage`
+- Verify targets met
+- CI/CD fails if coverage drops below threshold
+
+---
+
+### PERF-301: Performance Optimizations - Profile and optimize hot paths
+
+- **Priority**: P2 (Nice to Have - Advanced)
+- **Effort**: 2-3 days
+- **Risk**: Low (optimization only)
+
+**Summary**: Profile the daemon under load, identify bottlenecks, and optimize
+hot paths for improved performance.
+
+**Current Problem**:
+
+- No systematic performance profiling
+- Unknown bottlenecks
+- Scene switch target: <200ms (may not always meet)
+
+**Implementation Plan**:
+
+1. Add performance profiling instrumentation
+2. Create load testing scripts (rapid scene switches)
+3. Profile with Node.js profiler (--prof, 0x)
+4. Identify top 10 hot paths
+5. Optimize identified bottlenecks
+6. Add performance regression tests
+7. Document performance characteristics
+
+**Potential Optimizations**:
+
+- Cache scene modules (avoid re-require)
+- Pool device connections
+- Optimize state lookups (use WeakMap)
+- Batch MQTT publishes
+- Lazy load scenes
+
+**Acceptance Criteria**:
+
+- ✅ Performance profile documented
+- ✅ Scene switch: <150ms (p95)
+- ✅ Render cycle: <50ms overhead
+- ✅ Memory usage stable over time
+- ✅ No performance regressions
+- ✅ Performance tests in CI/CD
+
+**Test Plan (TEST-PERF-optimize)**:
+
+- Load test: 1000 scene switches
+- Memory test: 24-hour stability run
+- Verify metrics within targets
+
+---
+
+## Implementation Priority Order
+
+Based on dependencies and impact:
+
+### Phase 1: Foundation (2-3 weeks)
+
+1. **ARC-302** - Dependency Injection (enables everything else)
+2. **ARC-301** - Extract MQTT Service (decouple infrastructure)
+3. **ARC-303** - Consolidate State Management (single source of truth)
+
+### Phase 2: Quality (1-2 weeks)
+
+4. **ARC-304** - Extract Command Handlers (cleaner code)
+5. **TST-301** - Improve Test Coverage (confidence for next phases)
+
+### Phase 3: Services (1-2 weeks)
+
+6. **ARC-305** - Add Service Layer (clean APIs)
+
+### Phase 4: Advanced (Optional, 2-3 weeks)
+
+7. **ARC-306** - Hexagonal Architecture (maximum flexibility)
+8. **ARC-307** - Repository Pattern (future-proof)
+9. **PERF-301** - Performance Optimizations (polish)
+
+---
+
+**Total Estimated Effort**: 6-10 weeks for Phases 1-3, 2-3 additional weeks for Phase 4
