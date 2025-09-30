@@ -115,7 +115,7 @@ comprehensive test coverage.
 
 | **Metric**     | **Before** | **After** | **Change**    |
 | -------------- | ---------- | --------- | ------------- |
-| Tests          | 77         | 89        | +12 (+15.6%)  |
+| Tests          | 77         | 96        | +19 (+24.7%)  |
 | Lint Errors    | 0          | 0         | ✅ Maintained |
 | Test Coverage  | Good       | Excellent | ⬆️ Improved   |
 | LoC (lib/)     | ~8,083     | ~9,200    | +1,117        |
