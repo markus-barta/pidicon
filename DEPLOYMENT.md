@@ -127,14 +127,83 @@ the `other-code/server basics/` directory.
 
 ---
 
-## 🛠️ Deployment Scripts
+## 🛠️ Deployment Scripts & Version Tracking
 
-The deployment process is managed by two key scripts:
+### Build Version Script
 
-- `scripts/build-version.js`: Generates `version.json` with the current build
-  number and Git commit hash.
-- `scripts/deploy-server.sh`: Executed on the server to pull the latest code and
-  restart the Docker container.
+**Script**: `scripts/build-version.js`
 
-For more details on the development standards and contribution guidelines, please
-see `STANDARDS.md`.
+Generates `version.json` with build metadata:
+
+```json
+{
+  "version": "2.0.0",
+  "buildNumber": 448,
+  "gitCommit": "90b977b",
+  "buildTime": "2025-09-30T17:42:54.675Z"
+}
+```
+
+**When it runs**:
+
+- **Locally**: Run `npm run build:version` before committing
+- **CI/CD**: Automatically during Docker build (see Dockerfile line 31)
+
+### Deployment Tracker
+
+**Module**: `lib/deployment-tracker.js`
+
+Reads `version.json` at runtime and provides version info to:
+
+- Startup scene (displays on Pixoo device)
+- MQTT state topics (`/home/pixoo/<ip>/scene/state`)
+- Daemon logs
+
+**Truth source**:
+
+1. Reads `version.json` (baked into Docker image during build)
+2. Falls back to Git commands if version.json missing
+3. Provides version metadata to all scenes
+
+### Version Truth & Alignment
+
+**Question**: Why does local `version.json` show build #448 but deployed Pixoo
+shows build #447?
+
+**Answer**: This is correct! The deployed container was built from commit #447.
+Your local repo has commit #448 (not yet deployed).
+
+```text
+📱 Deployed Pixoo Device
+   └─ Container built from commit #447
+   └─ Shows: "Build: 447"  ✅ Correct
+
+💻 Local Development
+   └─ Made 1 new commit (#448)
+   └─ version.json shows: 448  ✅ Correct
+
+🚀 After Push & Deploy
+   └─ CI/CD builds new container from commit #448
+   └─ Pixoo will show: "Build: 448"  ✅ Correct
+```
+
+**Key Points**:
+
+- `version.json` IS committed to git (provides baseline)
+- Docker build regenerates it with fresh metadata
+- Build number = git commit count (monotonically increasing)
+- Local version.json will be ahead after making commits
+
+### Server Deployment Script
+
+**Script**: `scripts/deploy-server.sh`
+
+Executed on the server to pull the latest code and restart the Docker container.
+
+---
+
+## 📚 Related Documentation
+
+- [VERSIONING.md](./VERSIONING.md) - Complete version management strategy
+- [STANDARDS.md](./STANDARDS.md) - Development standards
+- [lib/deployment-tracker.js](./lib/deployment-tracker.js) - Version tracker implementation

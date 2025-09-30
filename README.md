@@ -288,13 +288,24 @@ Each successful `push()` also emits `pixoo/<ip>/ok` with per-frame metrics.
 
 ## 📝 Changelog
 
-- v1.1
-  - Centralized scheduler and pure-render scenes
-  - Input gating for stale frames; per-device state mirrored to MQTT
-  - Performance scene improvements; animated demo with frames cap and completion
-  - Expanded docs (README, MQTT commands) and live test scripts
+See [VERSIONING.md](./VERSIONING.md) for version management strategy.
 
-Older history lives in commits and `docs/BACKLOG.md` with build/commit evidence.
+### v2.0.0 (Current - 2025-09-20)
+
+- **Complete architectural overhaul**: 5 new professional modules
+- **Zero ESLint errors**: Enterprise-grade code quality
+- **Centralized scheduler**: Pure-render scenes, input gating, per-device state machine
+- **Advanced features**: Pixel-perfect text rendering, professional error handling
+- **Observability**: MQTT state mirroring with build/version metadata
+
+### v1.1.0 (2025-09-19)
+
+- Centralized scheduler and pure-render scenes
+- Input gating for stale frames; per-device state mirrored to MQTT
+- Performance scene improvements; animated demo with frames cap and completion
+- Expanded docs (README, MQTT commands) and live test scripts
+
+Detailed history available in Git tags, commits, and `docs/BACKLOG.md`.
 
 ---
 
@@ -430,9 +441,20 @@ If issues persist, check `docs/BACKLOG.md` for known issues or create a new entr
 
 ## 🗺️ Roadmap
 
-- Public v1.1 released with centralized scheduler, pure-render scenes, and
-  improved observability.
-- Stability soak test (SOAK-009) planned for a later milestone.
+### Completed
+
+- ✅ **v2.0.0**: Complete architectural overhaul with professional code quality
+- ✅ **v1.1.0**: Centralized scheduler, pure-render scenes, improved observability
+
+### Planned
+
+- **Graphics Engine** (GFX-203): Hardware-aware animations for 4-5fps displays
+- **Configuration Validation** (CFG-204): Enhanced config validation and presets
+- **Testing Framework** (TST-205): Comprehensive test suite expansion
+
+### Deferred
+
+- **Stability Soak Test** (SOAK-009): Postponed until after current feature development
 
 See `docs/BACKLOG.md` for detailed tasks, status, and traceable test results.
 

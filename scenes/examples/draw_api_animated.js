@@ -19,7 +19,6 @@
  *
  * # Finite (fixed 200ms interval, 100 frames)
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","interval":200,"frames":100}'
- * @version 2.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */

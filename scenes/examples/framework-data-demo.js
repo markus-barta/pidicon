@@ -1,7 +1,6 @@
 /**
  * @fileoverview Framework Data Scene Demo
  * @description Demonstrates the DataScene base class with simulated sensor data
- * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */

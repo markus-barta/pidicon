@@ -1,7 +1,6 @@
 /**
  * @fileoverview Framework Animated Scene Demo
  * @description Demonstrates the AnimatedScene base class with smooth animations
- * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */

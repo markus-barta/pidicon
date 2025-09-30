@@ -1,7 +1,6 @@
 /**
  * @fileoverview Scene Template - Copy this file to create new scenes
  * @description Template for creating new Pixoo scenes with all required patterns and best practices
- * @version 1.0.0
  * @author [Your Name] ([your initials]) with assistance from Cursor AI
  * @license MIT
  *
@@ -27,7 +26,6 @@
  * - param1: Description of parameter 1 (optional)
  * - param2: Description of parameter 2 (optional)
  *
- * @version 1.0.0
  * @author [Your Name] ([your initials]) with assistance from Cursor AI
  * @license MIT
  */

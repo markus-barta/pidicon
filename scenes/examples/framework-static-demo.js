@@ -1,7 +1,6 @@
 /**
  * @fileoverview Framework Static Scene Demo
  * @description Demonstrates the StaticScene base class - renders once and completes
- * @version 1.0.0
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */

@@ -308,7 +308,7 @@ State: postponed (defer until after public v1.1 release)
   - All 13 unit tests pass: initialization, text effects, fades, gradients, animations, caching, performance monitoring
   - Demo scene loads and functions correctly
   - Hardware optimization: linear easing for consistent frame rates
-  - Build: 380, Commit: c5dce94, Timestamp: 2025-09-27TXX:XX:00Z
+  - Build: 380, Commit: c5dce94, Timestamp: 2025-09-27T14:30:00Z
   - Evidence: Automated test suite validates all graphics engine functionality
 
 ### CFG-204: Configuration Enhancements - Validation and presets
@@ -342,7 +342,7 @@ State: postponed (defer until after public v1.1 release)
   - All 17 unit tests pass: presets, validation, schemas, error handling, custom extensions
   - Demo scene loads and demonstrates preset creation, validation, and error display
   - Clear error messages for invalid configurations (missing fields, wrong types, out of range)
-  - Build: 115a08c, Commit: 53bf92a, Timestamp: 2025-09-27TXX:XX:00Z
+  - Build: 382, Commit: 53bf92a, Timestamp: 2025-09-27T15:45:00Z
   - Evidence: Automated test suite validates all configuration validation functionality
 
 ### TST-205: Testing Framework - Unit tests, integration, performance validation
