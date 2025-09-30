@@ -526,7 +526,7 @@ device-adapter, scene-base, and individual scenes) into a single `StateStore` se
 
 **State Hierarchy**:
 
-```
+```text
 StateStore
   ├── globalState (Map) - daemon-wide config
   ├── deviceStates (Map<deviceId, DeviceState>)
@@ -624,7 +624,7 @@ infrastructure concerns (MQTT, HTTP, filesystem).
 
 **Service Layer Structure**:
 
-```
+```text
 services/
   ├── SceneService.js       (registerScene, switchScene, renderScene)
   ├── DeviceService.js      (getDevice, createDevice, setDriver)
@@ -842,6 +842,8 @@ Based on dependencies and impact:
 
 ### Phase 2: Quality (1-2 weeks)
 
+<!-- markdownlint-disable MD029 -->
+
 4. **ARC-304** - Extract Command Handlers (cleaner code)
 5. **TST-301** - Improve Test Coverage (confidence for next phases)
 
@@ -854,6 +856,7 @@ Based on dependencies and impact:
 7. **ARC-306** - Hexagonal Architecture (maximum flexibility)
 8. **ARC-307** - Repository Pattern (future-proof)
 9. **PERF-301** - Performance Optimizations (polish)
+<!-- markdownlint-enable MD029 -->
 
 ---
 

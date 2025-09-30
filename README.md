@@ -51,10 +51,13 @@ visuals – all under your control with a few simple MQTT messages.
 
 ### 🏗️ **Senior-Level Architecture**
 
-- **5 New Professional Modules**: Complete consolidation with `scene-base.js`, `mqtt-utils.js`,
-  `scene-loader.js`, `device-context.js`, and `error-handler.js`
+- **Dependency Injection**: Lightweight DI container for testability and loose coupling
+- **Service-Oriented**: Dedicated services for MQTT, State Management, and Scene Management
+- **8 Professional Modules**: `scene-base.js`, `mqtt-service.js`, `state-store.js`,
+  `di-container.js`, `mqtt-utils.js`, `scene-loader.js`, `device-context.js`, `error-handler.js`
 - **Single Responsibility**: Each module has a clear, focused purpose with maximum reusability
 - **Clean Interfaces**: Professional APIs with comprehensive JSDoc documentation
+- **Fully Testable**: 89/89 unit and integration tests passing
 
 ### 🧹 **Code Quality Excellence**
 
@@ -109,6 +112,19 @@ visuals – all under your control with a few simple MQTT messages.
 
 ## 🧠 Architecture Overview
 
+### **Core Services** (Phase 1 Complete ✅)
+
+- **Dependency Injection Container**: Lightweight, testable service registration and
+  resolution with singleton/transient lifetimes
+- **MQTT Service**: Centralized connection, subscription, and message routing with
+  event-driven handlers
+- **State Store**: Single source of truth for global, per-device, and per-scene state
+  with observable changes
+- **Scene Manager**: Centralized scheduler managing scene lifecycle, registration,
+  and rendering
+
+### **Design Principles**
+
 - **Centralized Per-Device Scheduler**: A single loop per device drives all
   loop-enabled scenes. Scenes signal cadence by returning a number (ms), and
   signal completion by returning `null`.
@@ -123,7 +139,7 @@ visuals – all under your control with a few simple MQTT messages.
   restarting. Great for local development and CI.
 
 For a deeper dive into the scene interface and responsibilities, see
-`scenes/README.md` and `STANDARDS.md`.
+`scenes/README.md`, `lib/README.md`, and `STANDARDS.md`.
 
 ---
 

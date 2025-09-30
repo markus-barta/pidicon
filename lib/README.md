@@ -8,6 +8,7 @@ responsibility, following SOLID principles.
 
 The library is organized into several functional areas:
 
+- **Core Services** ⭐ NEW in v2.0.0: Dependency injection, MQTT service, state management
 - **Scene Management**: Scene lifecycle, state machine, loader, base classes
 - **Device Communication**: Device adapter, context, MQTT utilities
 - **Rendering**: Graphics engine, canvas, gradients, text rendering
@@ -17,6 +18,76 @@ The library is organized into several functional areas:
 ---
 
 ## 📦 Core Modules
+
+### Core Services ⭐ NEW in v2.0.0
+
+#### `di-container.js` (Phase 1 Complete ✅)
+
+Lightweight dependency injection container for testability and loose coupling:
+
+- Service registration with singleton/transient lifetimes
+- Constructor injection with automatic dependency resolution
+- Circular dependency detection
+- Scoped containers for testing isolation
+- Method chaining for fluent API
+
+**Benefits**: Testable services, loose coupling, easier mocking, professional
+architecture patterns.
+
+**Usage**:
+
+```javascript
+const container = new DIContainer();
+container.register('logger', () => logger);
+container.register('mqttService', ({ logger }) => new MqttService({ logger }));
+const mqtt = container.resolve('mqttService');
+```
+
+#### `mqtt-service.js` (Phase 1 Complete ✅)
+
+Centralized MQTT connection and message routing:
+
+- Connection management (connect, disconnect, reconnect)
+- Topic subscription with pattern matching
+- Message publishing with error handling
+- Event-driven message handlers
+- Testable with mock MQTT clients
+
+**Benefits**: Clean separation from business logic, fully testable, swappable
+transport layer.
+
+**Usage**:
+
+```javascript
+const mqtt = new MqttService({ logger, config });
+mqtt.registerHandler('scene', handleSceneCommand);
+await mqtt.connect();
+await mqtt.subscribe(['pixoo/+/state/upd']);
+```
+
+#### `state-store.js` (Phase 1 Complete ✅)
+
+Single source of truth for application state:
+
+- Global state (version, build metadata)
+- Per-device state (activeScene, generationId, status)
+- Per-scene state (frame counts, custom data)
+- Observable state changes via subscribers
+- Snapshot/restore capabilities
+
+**Benefits**: Centralized state management, observable changes, easier debugging,
+consistent state access.
+
+**Usage**:
+
+```javascript
+const store = new StateStore({ logger });
+store.setGlobal('version', '2.0.0');
+store.setDeviceState('192.168.1.1', 'activeScene', 'startup');
+store.subscribe('device', (path, value) => console.log(path, value));
+```
+
+---
 
 ### Scene Management
 
