@@ -9,7 +9,7 @@
 const GraphicsEngine = require('../../lib/graphics-engine');
 const logger = require('../../lib/logger');
 
-// Configuration constants - no more magic numbers!
+// Configuration constants
 const GFX_DEMO_CONFIG = {
   // Display dimensions
   DISPLAY: {
