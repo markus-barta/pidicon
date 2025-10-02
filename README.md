@@ -112,7 +112,7 @@ visuals – all under your control with a few simple MQTT messages.
 
 ## 🧠 Architecture Overview
 
-### **Core Services** (Phase 1 Complete ✅)
+### **Core Services** (Phase 1 Complete ✅, Phase 2 Complete ✅)
 
 - **Dependency Injection Container**: Lightweight, testable service registration and
   resolution with singleton/transient lifetimes
@@ -122,6 +122,12 @@ visuals – all under your control with a few simple MQTT messages.
   with observable changes
 - **Scene Manager**: Centralized scheduler managing scene lifecycle, registration,
   and rendering
+- **Command Handlers**: Clean command pattern implementation for MQTT message processing
+  - `SceneCommandHandler`: Scene switching
+  - `DriverCommandHandler`: Driver management and re-render
+  - `ResetCommandHandler`: Device reset
+  - `StateCommandHandler`: Main rendering logic
+  - `CommandRouter`: Dispatches MQTT messages to appropriate handlers
 
 ### **Design Principles**
 

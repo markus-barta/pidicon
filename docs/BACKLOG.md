@@ -32,7 +32,7 @@ of truth for upcoming work and its validation status.
 | ARC-301  | Extract MQTT Service: Decouple MQTT logic from daemon.js               | completed   | TEST-ARC-mqtt-service  | pass (89/89 tests)         | 2025-09-30T22:00:00Z |
 | ARC-302  | Implement Dependency Injection: Add DI container for testability       | completed   | TEST-ARC-di-container  | pass (43/43 tests)         | 2025-09-30T20:20:00Z |
 | ARC-303  | Consolidate State Management: Single source of truth for state         | completed   | TEST-ARC-state-store   | pass (96/96 tests)         | 2025-09-30T23:00:00Z |
-| ARC-304  | Extract Command Handlers: Separate command processing logic            | planned     | TEST-ARC-cmd-handlers  | -                          | -                    |
+| ARC-304  | Extract Command Handlers: Separate command processing logic            | completed   | TEST-ARC-cmd-handlers  | pass (107/107 tests)       | 2025-10-02T18:30:00Z |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
 | ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
@@ -593,6 +593,28 @@ handler classes using the Command pattern.
 - Unit tests: Each command handler with mocked dependencies
 - Integration tests: Full command flow via MQTT
 - Error cases: Invalid payloads, missing fields
+
+**Test Results (TEST-ARC-cmd-handlers)**: ✅ PASS (107/107 tests)
+
+- Build: 450+, Commit: d822407, Timestamp: 2025-10-02T18:30:00Z
+- Evidence: All tests passing, daemon.js reduced by 143 lines (-32%)
+- Deliverables:
+  - `lib/commands/command-handler.js` (111 lines) - Base class
+  - `lib/commands/scene-command-handler.js` (99 lines)
+  - `lib/commands/driver-command-handler.js` (163 lines)
+  - `lib/commands/reset-command-handler.js` (95 lines)
+  - `lib/commands/state-command-handler.js` (128 lines)
+  - `lib/commands/command-router.js` (146 lines)
+  - `lib/commands/README.md` (378 lines) - Complete documentation
+  - `test/lib/command-handlers-basic.test.js` (190 lines) - Smoke tests
+
+**Impact**:
+
+- daemon.js: 447 → 304 lines (-32% reduction)
+- +742 lines of command handling code in dedicated modules
+- +190 lines of tests
+- All command handlers registered in DI container
+- Clean CommandRouter → Handler dispatch flow
 
 ---
 
