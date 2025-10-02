@@ -40,8 +40,8 @@ of truth for upcoming work and its validation status.
 | REV-301  | Code quality review: magic numbers, complexity, standards              | completed   | TEST-REV-code-quality  | pass (5/5 rating)          | 2025-10-02T21:30:00Z |
 | REV-302  | Performance review: hot paths, memory, optimization opportunities      | completed   | TEST-REV-performance   | pass (4/5 rating)          | 2025-10-02T22:00:00Z |
 | DOC-301  | Documentation polish: consistency, Phase 2 reports, structure          | completed   | TEST-DOC-polish        | pass (updated)             | 2025-10-02T22:30:00Z |
-| ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
-| UI-401   | Web UI: Control panel for scene/device management                      | planned     | TEST-UI-web-panel      | -                          | -                    |
+| ARC-305  | Add Service Layer: Business logic abstraction                          | completed   | TEST-ARC-service-layer | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
+| UI-401   | Web UI: Control panel for scene/device management                      | completed   | TEST-UI-web-panel      | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
 | ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
 | TST-301  | Improve Test Coverage: Achieve 80% coverage for critical modules       | planned     | TEST-TST-coverage      | -                          | -                    |
