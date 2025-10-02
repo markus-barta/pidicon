@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixoo Control Panel</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🎨 Pixoo Control Panel</h1>
+        <div id="version-info" class="version-info">Loading...</div>
+      </header>
+
+      <main>
+        <!-- System Status -->
+        <section class="card">
+          <h2>System Status</h2>
+          <div id="system-status" class="status-grid">
+            <div class="loading">Loading system status...</div>
+          </div>
+          <button id="restart-daemon-btn" class="btn btn-warning">
+            🔄 Restart Daemon
+          </button>
+        </section>
+
+        <!-- Devices -->
+        <section class="card">
+          <h2>Devices</h2>
+          <div id="devices-list" class="device-list">
+            <div class="loading">Loading devices...</div>
+          </div>
+        </section>
+
+        <!-- Available Scenes -->
+        <section class="card">
+          <h2>Available Scenes</h2>
+          <div id="scenes-list" class="scenes-list">
+            <div class="loading">Loading scenes...</div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>Pixoo Daemon Web UI | <span id="build-info">...</span></p>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+

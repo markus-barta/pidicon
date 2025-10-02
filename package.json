@@ -17,6 +17,7 @@
     "hooks:setup": "husky init"
   },
   "dependencies": {
+    "express": "^5.1.0",
     "mqtt": "^5.9.0",
     "pngjs": "^7.0.0",
     "sharp": "^0.33.5",

@@ -4,7 +4,13 @@ const promisePlugin = require('eslint-plugin-promise');
 
 module.exports = [
   {
-    ignores: ['node_modules/', 'dist/', 'coverage/', 'other-code/'],
+    ignores: [
+      'node_modules/',
+      'dist/',
+      'coverage/',
+      'other-code/',
+      'web/public/**/*.js',
+    ],
   },
   js.configs.recommended,
   {

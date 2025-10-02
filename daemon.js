@@ -25,6 +25,9 @@ const MqttService = require('./lib/mqtt-service');
 const { softReset } = require('./lib/pixoo-http');
 const { SceneRegistration } = require('./lib/scene-loader');
 const SceneManager = require('./lib/scene-manager');
+const DeviceService = require('./lib/services/device-service');
+const SceneService = require('./lib/services/scene-service');
+const SystemService = require('./lib/services/system-service');
 const versionInfo = require('./version.json');
 
 // Create a logger instance
@@ -73,6 +76,46 @@ const stateStore = container.resolve('stateStore');
 const deploymentTracker = container.resolve('deploymentTracker');
 const sceneManager = container.resolve('sceneManager');
 const mqttService = container.resolve('mqttService');
+
+// Register services in DI container
+container.register(
+  'sceneService',
+  ({ logger, sceneManager, mqttService }) =>
+    new SceneService({
+      logger,
+      sceneManager,
+      deviceAdapter: { getContext, getDevice, deviceDrivers },
+      mqttService,
+      versionInfo,
+    }),
+);
+
+container.register(
+  'deviceService',
+  ({ logger, sceneManager }) =>
+    new DeviceService({
+      logger,
+      deviceAdapter: {
+        deviceDrivers,
+        getDriverForDevice,
+        getDevice,
+        setDriverForDevice,
+        getContext,
+      },
+      sceneManager,
+      softReset,
+    }),
+);
+
+container.register(
+  'systemService',
+  ({ logger, deploymentTracker }) =>
+    new SystemService({
+      logger,
+      versionInfo,
+      deploymentTracker,
+    }),
+);
 
 // Register command handlers in DI container
 container.register(
@@ -132,6 +175,25 @@ logger.ok('✅ DI Container initialized with services:', {
 
 // Log StateStore stats for observability (and to satisfy linter)
 logger.debug('StateStore initialized:', stateStore.getStats());
+
+// ============================================================================
+// WEB UI SERVER (OPTIONAL)
+// ============================================================================
+
+/**
+ * Start Web UI server if enabled
+ */
+const WEB_UI_ENABLED = process.env.PIXOO_WEB_UI !== 'false';
+
+if (WEB_UI_ENABLED) {
+  try {
+    const { startWebServer } = require('./web/server');
+    startWebServer(container, logger);
+  } catch (error) {
+    logger.warn('Failed to start Web UI:', { error: error.message });
+    logger.info('Web UI is optional. Daemon will continue without it.');
+  }
+}
 
 // Load all scenes using SceneRegistration utility
 // Automatically loads from ./scenes and ./scenes/examples
