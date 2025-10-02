@@ -56,4 +56,16 @@ function cleanup() {
 }
 
 const wantsLoop = false;
-module.exports = { name, init, render, cleanup, wantsLoop };
+const description =
+  'Fills the entire screen with a solid color (configurable via payload)';
+const category = 'Test';
+
+module.exports = {
+  name,
+  init,
+  render,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

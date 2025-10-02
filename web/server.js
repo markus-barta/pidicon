@@ -184,13 +184,32 @@ function startWebServer(container, logger) {
     }
   });
 
-  // GET /api/scenes - List all scenes
+  // GET /api/scenes - List all scenes with metadata
   app.get('/api/scenes', async (req, res) => {
     try {
       const scenes = await sceneService.listScenes();
       res.json({ scenes });
     } catch (error) {
       logger.error('API /api/scenes error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/devices/:ip/frametime - Get current frametime/FPS
+  app.get('/api/devices/:ip/frametime', async (req, res) => {
+    try {
+      const deviceInfo = await deviceService.getDeviceInfo(req.params.ip);
+      res.json({
+        deviceIp: req.params.ip,
+        frametime: deviceInfo.metrics.lastFrametime || 0,
+        fps: deviceInfo.metrics.lastFrametime
+          ? (1000 / deviceInfo.metrics.lastFrametime).toFixed(1)
+          : 0,
+      });
+    } catch (error) {
+      logger.error(`API /api/devices/${req.params.ip}/frametime error:`, {
+        error: error.message,
+      });
       res.status(500).json({ error: error.message });
     }
   });

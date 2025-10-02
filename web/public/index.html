@@ -33,11 +33,40 @@
           </div>
         </section>
 
-        <!-- Available Scenes -->
+        <!-- Scene Control -->
         <section class="card">
-          <h2>Available Scenes</h2>
-          <div id="scenes-list" class="scenes-list">
-            <div class="loading">Loading scenes...</div>
+          <h2>Scene Control</h2>
+          
+          <div class="scene-control">
+            <h3>Select Scene</h3>
+            <div class="scene-selector">
+              <select id="scene-dropdown" class="scene-dropdown">
+                <option value="">Loading...</option>
+              </select>
+              <div class="scene-nav-buttons">
+                <button id="prev-scene-btn" class="btn btn-sm btn-primary">← Prev</button>
+                <button id="next-scene-btn" class="btn btn-sm btn-primary">Next →</button>
+              </div>
+              <button id="switch-scene-btn" class="btn btn-sm btn-success">Switch</button>
+            </div>
+
+            <div id="scene-description" class="scene-description">
+              Select a scene to see its description
+            </div>
+
+            <div id="fps-display" class="fps-display" style="display: none;">
+              <h3>Performance</h3>
+              <div class="fps-stats">
+                <div class="fps-stat">
+                  <span class="fps-label">FPS</span>
+                  <span id="fps-value" class="fps-value">0</span>
+                </div>
+                <div class="fps-stat">
+                  <span class="fps-label">Frame Time</span>
+                  <span id="frametime-value" class="fps-value">0 ms</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </main>

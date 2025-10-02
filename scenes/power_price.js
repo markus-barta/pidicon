@@ -1374,5 +1374,16 @@ const render = (context) => scene.render(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 const name = scene.name;
+const description =
+  'Comprehensive energy dashboard - displays electricity prices, PV generation, battery status, weather, and time';
+const category = 'Energy';
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

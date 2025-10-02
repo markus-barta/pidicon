@@ -1,14 +1,20 @@
 /* eslint-env browser */
-// Pixoo Control Panel JavaScript
+// Pixoo Control Panel JavaScript - Enhanced UX
 
 // API base URL (same origin)
 const API_BASE = '/api';
+
+// Refresh intervals
+const REFRESH_INTERVAL_SLOW = 5000; // 5 seconds for general data
+const REFRESH_INTERVAL_FAST = 1000; // 1 second for FPS/frametime
 
 // State
 let devices = [];
 let scenes = [];
 let systemStatus = {};
 let selectedDevice = null;
+let currentSceneIndex = 0;
+let fpsInterval = null;
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -38,9 +44,19 @@ async function apiRequest(endpoint, options = {}) {
     return await response.json();
   } catch (err) {
     console.error('API Error:', err);
-    alert(`Error: ${err.message}`);
+    showToast(`Error: ${err.message}`, 'error');
     throw err;
   }
+}
+
+/**
+ * Show toast notification
+ * @param {string} message - Message to show
+ * @param {string} type - Type (success, error, info)
+ */
+function showToast(message, type = 'info') {
+  console.log(`[${type.toUpperCase()}] ${message}`);
+  // TODO: Add visual toast notifications
 }
 
 /**
@@ -86,7 +102,16 @@ async function loadDevices() {
   try {
     const data = await apiRequest('/devices');
     devices = data.devices;
+
+    // Auto-select first device if none selected
+    if (!selectedDevice && devices.length > 0) {
+      selectedDevice = devices[0].ip;
+    }
+
     renderDevices();
+
+    // Start FPS monitoring for animated scenes
+    updateFPSDisplay();
   } catch (err) {
     document.getElementById('devices-list').innerHTML =
       `<div class="error">Failed to load devices: ${err.message}</div>`;
@@ -100,10 +125,10 @@ async function loadScenes() {
   try {
     const data = await apiRequest('/scenes');
     scenes = data.scenes;
-    renderScenes();
+    renderSceneDropdown();
   } catch (err) {
-    document.getElementById('scenes-list').innerHTML =
-      `<div class="error">Failed to load scenes: ${err.message}</div>`;
+    document.getElementById('scene-dropdown').innerHTML =
+      '<option value="">Failed to load scenes</option>';
   }
 }
 
@@ -112,6 +137,43 @@ async function loadScenes() {
  */
 async function loadAll() {
   await Promise.all([loadSystemStatus(), loadDevices(), loadScenes()]);
+}
+
+/**
+ * Update FPS/frametime display
+ */
+async function updateFPSDisplay() {
+  if (!selectedDevice) return;
+
+  const device = devices.find((d) => d.ip === selectedDevice);
+  if (!device || !device.currentScene) return;
+
+  // Find scene to check if it's animated
+  const scene = scenes.find((s) => s.name === device.currentScene);
+  const fpsDisplay = document.getElementById('fps-display');
+
+  if (scene && scene.wantsLoop) {
+    // Show FPS display for animated scenes
+    fpsDisplay.style.display = 'block';
+
+    try {
+      const data = await apiRequest(`/devices/${selectedDevice}/frametime`);
+      const fps = parseFloat(data.fps) || 0;
+      const frametime = data.frametime || 0;
+
+      const fpsValue = document.getElementById('fps-value');
+      const frametimeValue = document.getElementById('frametime-value');
+
+      fpsValue.textContent = fps.toFixed(1);
+      fpsValue.className = fps < 3 ? 'fps-value low' : 'fps-value';
+      frametimeValue.textContent = `${frametime.toFixed(0)} ms`;
+    } catch {
+      // Silently fail - don't spam errors
+    }
+  } else {
+    // Hide FPS display for static scenes
+    fpsDisplay.style.display = 'none';
+  }
 }
 
 // ============================================================================
@@ -178,10 +240,11 @@ function renderDevices() {
  * @returns {string} HTML string
  */
 function renderDevice(device) {
+  const isSelected = device.ip === selectedDevice;
   return `
-    <div class="device-card" data-ip="${device.ip}">
+    <div class="device-card ${isSelected ? 'selected' : ''}" data-ip="${device.ip}">
       <div class="device-header">
-        <div class="device-ip">${device.ip}</div>
+        <div class="device-ip">${device.ip} ${isSelected ? '(Selected)' : ''}</div>
         <div class="device-driver">${device.driver}</div>
       </div>
       <div class="device-status">
@@ -203,17 +266,17 @@ function renderDevice(device) {
         </div>
       </div>
       <div class="device-actions">
+        <button class="btn btn-sm btn-primary" onclick="selectDevice('${device.ip}')">
+          Select
+        </button>
         <button class="btn btn-sm btn-warning" onclick="setDisplayPower('${device.ip}', false)">
-          🌙 Display OFF
+          🌙 OFF
         </button>
         <button class="btn btn-sm btn-success" onclick="setDisplayPower('${device.ip}', true)">
-          ☀️ Display ON
+          ☀️ ON
         </button>
         <button class="btn btn-sm btn-danger" onclick="resetDevice('${device.ip}')">
           🔄 Reset
-        </button>
-        <button class="btn btn-sm btn-primary" onclick="selectDeviceForScene('${device.ip}')">
-          🎨 Change Scene
         </button>
       </div>
     </div>
@@ -221,35 +284,95 @@ function renderDevice(device) {
 }
 
 /**
- * Render scenes list
+ * Render scene dropdown
  */
-function renderScenes() {
-  const scenesEl = document.getElementById('scenes-list');
+function renderSceneDropdown() {
+  const dropdown = document.getElementById('scene-dropdown');
 
   if (scenes.length === 0) {
-    scenesEl.innerHTML = '<div class="loading">No scenes available</div>';
+    dropdown.innerHTML = '<option value="">No scenes available</option>';
     return;
   }
 
-  const currentScenes = devices.map((d) => d.currentScene);
+  // Group scenes by category
+  const grouped = {};
+  scenes.forEach((scene) => {
+    const category = scene.category || 'General';
+    if (!grouped[category]) grouped[category] = [];
+    grouped[category].push(scene);
+  });
 
-  scenesEl.innerHTML = scenes
-    .map((scene) => {
-      const isActive = currentScenes.includes(scene);
-      return `
-        <div class="scene-item ${isActive ? 'scene-active' : ''}"
-onclick="switchScene('${scene}')">
-          <span class="scene-name">${scene}</span>
-          <span>${isActive ? '●' : '○'}</span>
-        </div>
-      `;
-    })
-    .join('');
+  let html = '';
+  for (const [category, categoryScenes] of Object.entries(grouped)) {
+    html += `<optgroup label="${category}">`;
+    categoryScenes.forEach((scene) => {
+      const animated = scene.wantsLoop ? ' 🎬' : '';
+      html += `<option value="${scene.name}">${scene.name}${animated}</option>`;
+    });
+    html += `</optgroup>`;
+  }
+
+  dropdown.innerHTML = html;
+
+  // Select current scene for selected device
+  if (selectedDevice) {
+    const device = devices.find((d) => d.ip === selectedDevice);
+    if (device && device.currentScene) {
+      dropdown.value = device.currentScene;
+      currentSceneIndex = scenes.findIndex(
+        (s) => s.name === device.currentScene,
+      );
+      updateSceneDescription();
+    }
+  }
+
+  // Auto-select first scene if none selected
+  if (dropdown.value === '' && scenes.length > 0) {
+    dropdown.value = scenes[0].name;
+    currentSceneIndex = 0;
+    updateSceneDescription();
+  }
+}
+
+/**
+ * Update scene description
+ */
+function updateSceneDescription() {
+  const dropdown = document.getElementById('scene-dropdown');
+  const sceneName = dropdown.value;
+  const scene = scenes.find((s) => s.name === sceneName);
+
+  const descEl = document.getElementById('scene-description');
+  if (scene) {
+    const animatedBadge = scene.wantsLoop
+      ? '<span class="scene-badge animated">Animated</span>'
+      : '<span class="scene-badge">Static</span>';
+    descEl.innerHTML = `
+      <div class="scene-info">
+        <strong>${scene.name}</strong>
+        ${animatedBadge}
+      </div>
+      <div>${scene.description}</div>
+    `;
+  } else {
+    descEl.textContent = 'Select a scene to see its description';
+  }
 }
 
 // ============================================================================
 // DEVICE ACTIONS
 // ============================================================================
+
+/**
+ * Select a device
+ * @param {string} deviceIp - Device IP
+ */
+function selectDevice(deviceIp) {
+  selectedDevice = deviceIp;
+  showToast(`Device ${deviceIp} selected`, 'success');
+  loadDevices(); // Re-render to show selection
+  renderSceneDropdown(); // Update dropdown to show current scene
+}
 
 /**
  * Set display power
@@ -263,7 +386,7 @@ async function setDisplayPower(deviceIp, on) {
       body: JSON.stringify({ on }),
     });
 
-    alert(`Display turned ${on ? 'ON' : 'OFF'} for ${deviceIp}`);
+    showToast(`Display turned ${on ? 'ON' : 'OFF'} for ${deviceIp}`, 'success');
     await loadDevices();
   } catch {
     // Error already shown by apiRequest
@@ -275,7 +398,6 @@ async function setDisplayPower(deviceIp, on) {
  * @param {string} deviceIp - Device IP
  */
 async function resetDevice(deviceIp) {
-  // eslint-disable-next-line no-restricted-globals
   if (!confirm(`Reset device ${deviceIp}?`)) {
     return;
   }
@@ -285,47 +407,76 @@ async function resetDevice(deviceIp) {
       method: 'POST',
     });
 
-    alert(`Device ${deviceIp} reset successfully`);
+    showToast(`Device ${deviceIp} reset successfully`, 'success');
     await loadDevices();
   } catch {
     // Error already shown by apiRequest
   }
 }
 
-/**
- * Select device for scene change
- * @param {string} deviceIp - Device IP
- */
-function selectDeviceForScene(deviceIp) {
-  selectedDevice = deviceIp;
-  alert(`Device ${deviceIp} selected. Now click a scene to switch.`);
-}
+// ============================================================================
+// SCENE ACTIONS
+// ============================================================================
 
 /**
- * Switch to a scene
- * @param {string} sceneName - Scene name
+ * Switch to selected scene
  */
-async function switchScene(sceneName) {
-  if (!selectedDevice && devices.length > 0) {
-    selectedDevice = devices[0].ip;
-  }
+async function switchToScene() {
+  const dropdown = document.getElementById('scene-dropdown');
+  const sceneName = dropdown.value;
 
   if (!selectedDevice) {
-    alert('No device selected. Please configure at least one device.');
+    showToast('Please select a device first', 'error');
+    return;
+  }
+
+  if (!sceneName) {
+    showToast('Please select a scene', 'error');
     return;
   }
 
   try {
+    const switchBtn = document.getElementById('switch-scene-btn');
+    switchBtn.disabled = true;
+    switchBtn.textContent = 'Switching...';
+
     await apiRequest(`/devices/${selectedDevice}/scene`, {
       method: 'POST',
       body: JSON.stringify({ scene: sceneName, clear: true }),
     });
 
-    alert(`Switched ${selectedDevice} to ${sceneName}`);
+    showToast(`Switched to ${sceneName}`, 'success');
     await loadDevices();
+
+    switchBtn.disabled = false;
+    switchBtn.textContent = 'Switch';
   } catch {
-    // Error already shown by apiRequest
+    const switchBtn = document.getElementById('switch-scene-btn');
+    switchBtn.disabled = false;
+    switchBtn.textContent = 'Switch';
   }
+}
+
+/**
+ * Navigate to previous scene
+ */
+function prevScene() {
+  if (scenes.length === 0) return;
+  currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+  const dropdown = document.getElementById('scene-dropdown');
+  dropdown.value = scenes[currentSceneIndex].name;
+  updateSceneDescription();
+}
+
+/**
+ * Navigate to next scene
+ */
+function nextScene() {
+  if (scenes.length === 0) return;
+  currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+  const dropdown = document.getElementById('scene-dropdown');
+  dropdown.value = scenes[currentSceneIndex].name;
+  updateSceneDescription();
 }
 
 // ============================================================================
@@ -336,7 +487,6 @@ async function switchScene(sceneName) {
  * Restart daemon
  */
 async function restartDaemon() {
-  // eslint-disable-next-line no-restricted-globals
   if (
     !confirm('Restart the daemon? This will disconnect the web UI temporarily.')
   ) {
@@ -348,7 +498,10 @@ async function restartDaemon() {
       method: 'POST',
     });
 
-    alert('Daemon is restarting... The page will reconnect automatically.');
+    showToast(
+      'Daemon is restarting... The page will reconnect automatically.',
+      'info',
+    );
 
     // Poll for daemon to come back
     setTimeout(() => {
@@ -370,13 +523,16 @@ async function pollForReconnect() {
     attempts++;
     try {
       await apiRequest('/status');
-      alert('Daemon reconnected!');
+      showToast('Daemon reconnected!', 'success');
       loadAll();
     } catch {
       if (attempts < MAX_ATTEMPTS) {
         setTimeout(poll, 2000);
       } else {
-        alert('Failed to reconnect. Please refresh the page manually.');
+        showToast(
+          'Failed to reconnect. Please refresh the page manually.',
+          'error',
+        );
       }
     }
   };
@@ -392,22 +548,36 @@ async function pollForReconnect() {
  * Initialize the app
  */
 async function init() {
-  // Attach global event handlers
+  // Attach event handlers
   document
     .getElementById('restart-daemon-btn')
     .addEventListener('click', restartDaemon);
+  document
+    .getElementById('switch-scene-btn')
+    .addEventListener('click', switchToScene);
+  document
+    .getElementById('prev-scene-btn')
+    .addEventListener('click', prevScene);
+  document
+    .getElementById('next-scene-btn')
+    .addEventListener('click', nextScene);
+  document
+    .getElementById('scene-dropdown')
+    .addEventListener('change', updateSceneDescription);
 
   // Make functions globally accessible for onclick handlers
+  window.selectDevice = selectDevice;
   window.setDisplayPower = setDisplayPower;
   window.resetDevice = resetDevice;
-  window.selectDeviceForScene = selectDeviceForScene;
-  window.switchScene = switchScene;
 
   // Load initial data
   await loadAll();
 
-  // Auto-refresh every 10 seconds
-  setInterval(loadAll, 10000);
+  // Auto-refresh general data every 5 seconds
+  setInterval(loadAll, REFRESH_INTERVAL_SLOW);
+
+  // Auto-refresh FPS/frametime every 1 second
+  fpsInterval = setInterval(updateFPSDisplay, REFRESH_INTERVAL_FAST);
 }
 
 // Start the app when DOM is ready

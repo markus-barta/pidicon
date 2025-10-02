@@ -37,4 +37,15 @@ function cleanup() {
 }
 
 const wantsLoop = false;
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description = 'Blank scene - clears the display to black';
+const category = 'Utility';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

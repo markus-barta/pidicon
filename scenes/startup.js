@@ -253,4 +253,16 @@ async function cleanup() {
 }
 
 const wantsLoop = false;
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  'Startup scene - displays daemon version, build number, and deployment information';
+const category = 'System';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};
