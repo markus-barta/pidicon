@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixoo Control Panel</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🎨 Pixoo Control Panel</h1>
+        <div id="version-info" class="version-info">Loading...</div>
+      </header>
+
+      <main>
+        <!-- System Status -->
+        <section class="card">
+          <h2>System Status</h2>
+          <div id="system-status" class="status-grid">
+            <div class="loading">Loading system status...</div>
+          </div>
+          <button id="restart-daemon-btn" class="btn btn-warning">
+            🔄 Restart Daemon
+          </button>
+        </section>
+
+        <!-- Devices -->
+        <section class="card">
+          <h2>Devices</h2>
+          <div id="devices-list" class="device-list">
+            <div class="loading">Loading devices...</div>
+          </div>
+        </section>
+
+        <!-- Scene Control -->
+        <section class="card">
+          <h2>Scene Control</h2>
+          
+          <div class="scene-control">
+            <h3>Select Scene</h3>
+            <div class="scene-selector">
+              <select id="scene-dropdown" class="scene-dropdown">
+                <option value="">Loading...</option>
+              </select>
+              <div class="scene-nav-buttons">
+                <button id="prev-scene-btn" class="btn btn-sm btn-primary">← Prev</button>
+                <button id="next-scene-btn" class="btn btn-sm btn-primary">Next →</button>
+              </div>
+              <button id="switch-scene-btn" class="btn btn-sm btn-success">Switch</button>
+            </div>
+
+            <div id="scene-description" class="scene-description">
+              Select a scene to see its description
+            </div>
+
+            <div id="fps-display" class="fps-display" style="display: none;">
+              <h3>Performance</h3>
+              <div class="fps-stats">
+                <div class="fps-stat">
+                  <span class="fps-label">FPS</span>
+                  <span id="fps-value" class="fps-value">0</span>
+                </div>
+                <div class="fps-stat">
+                  <span class="fps-label">Frame Time</span>
+                  <span id="frametime-value" class="fps-value">0 ms</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>Pixoo Daemon Web UI | <span id="build-info">...</span></p>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+

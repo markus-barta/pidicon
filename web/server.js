@@ -117,6 +117,11 @@ function startWebServer(container, logger) {
         return res.status(400).json({ error: 'Scene name is required' });
       }
 
+      logger.ok(`[WEB UI] Switching ${req.params.ip} to scene: ${scene}`, {
+        clear,
+        source: 'web-ui',
+      });
+
       const result = await sceneService.switchToScene(req.params.ip, scene, {
         clear,
         payload,
@@ -124,8 +129,9 @@ function startWebServer(container, logger) {
 
       res.json(result);
     } catch (error) {
-      logger.error(`API /api/devices/${req.params.ip}/scene error:`, {
+      logger.error(`[WEB UI] Failed to switch scene on ${req.params.ip}:`, {
         error: error.message,
+        scene: req.body.scene,
       });
       res.status(500).json({ error: error.message });
     }
@@ -140,11 +146,16 @@ function startWebServer(container, logger) {
         return res.status(400).json({ error: '"on" must be a boolean' });
       }
 
+      logger.ok(`[WEB UI] Display ${on ? 'ON' : 'OFF'} for ${req.params.ip}`, {
+        source: 'web-ui',
+      });
+
       const result = await deviceService.setDisplayPower(req.params.ip, on);
       res.json(result);
     } catch (error) {
-      logger.error(`API /api/devices/${req.params.ip}/display error:`, {
+      logger.error(`[WEB UI] Failed to set display on ${req.params.ip}:`, {
         error: error.message,
+        on: req.body.on,
       });
       res.status(500).json({ error: error.message });
     }
@@ -153,10 +164,14 @@ function startWebServer(container, logger) {
   // POST /api/devices/:ip/reset - Reset device
   app.post('/api/devices/:ip/reset', async (req, res) => {
     try {
+      logger.warn(`[WEB UI] Resetting device ${req.params.ip}`, {
+        source: 'web-ui',
+      });
+
       const result = await deviceService.resetDevice(req.params.ip);
       res.json(result);
     } catch (error) {
-      logger.error(`API /api/devices/${req.params.ip}/reset error:`, {
+      logger.error(`[WEB UI] Failed to reset ${req.params.ip}:`, {
         error: error.message,
       });
       res.status(500).json({ error: error.message });
@@ -174,11 +189,16 @@ function startWebServer(container, logger) {
           .json({ error: 'Driver must be "real" or "mock"' });
       }
 
+      logger.ok(`[WEB UI] Switching ${req.params.ip} to ${driver} driver`, {
+        source: 'web-ui',
+      });
+
       const result = await deviceService.switchDriver(req.params.ip, driver);
       res.json(result);
     } catch (error) {
-      logger.error(`API /api/devices/${req.params.ip}/driver error:`, {
+      logger.error(`[WEB UI] Failed to switch driver on ${req.params.ip}:`, {
         error: error.message,
+        driver: req.body.driver,
       });
       res.status(500).json({ error: error.message });
     }
@@ -217,10 +237,14 @@ function startWebServer(container, logger) {
   // POST /api/daemon/restart - Restart daemon
   app.post('/api/daemon/restart', async (req, res) => {
     try {
+      logger.warn('[WEB UI] Daemon restart requested', { source: 'web-ui' });
+
       const result = await systemService.restartDaemon();
       res.json(result);
     } catch (error) {
-      logger.error('API /api/daemon/restart error:', { error: error.message });
+      logger.error('[WEB UI] Failed to restart daemon:', {
+        error: error.message,
+      });
       res.status(500).json({ error: error.message });
     }
   });

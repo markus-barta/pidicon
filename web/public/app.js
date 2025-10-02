@@ -1,586 +1,424 @@
 /* eslint-env browser */
-// Pixoo Control Panel JavaScript - Enhanced UX
+// Pixoo Control Panel v2 - Professional & Concise
 
-// API base URL (same origin)
 const API_BASE = '/api';
+const REFRESH_SLOW = 5000; // 5s for general data
+const REFRESH_FAST = 1000; // 1s for FPS
 
-// Refresh intervals
-const REFRESH_INTERVAL_SLOW = 5000; // 5 seconds for general data
-const REFRESH_INTERVAL_FAST = 1000; // 1 second for FPS/frametime
-
-// State
 let devices = [];
 let scenes = [];
 let systemStatus = {};
-let selectedDevice = null;
-let currentSceneIndex = 0;
-let fpsInterval = null;
+let fpsIntervals = new Map();
 
 // ============================================================================
-// UTILITY FUNCTIONS
+// API & UTILITIES
 // ============================================================================
 
-/**
- * Make an API request
- * @param {string} endpoint - API endpoint
- * @param {Object} options - Fetch options
- * @returns {Promise<Object>} Response data
- */
 async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers: { 'Content-Type': 'application/json', ...options.headers },
     });
-
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'API request failed');
+      throw new Error(error.error || 'Request failed');
     }
-
     return await response.json();
   } catch (err) {
-    console.error('API Error:', err);
-    showToast(`Error: ${err.message}`, 'error');
+    console.error(`API Error [${endpoint}]:`, err);
     throw err;
   }
 }
 
-/**
- * Show toast notification
- * @param {string} message - Message to show
- * @param {string} type - Type (success, error, info)
- */
-function showToast(message, type = 'info') {
-  console.log(`[${type.toUpperCase()}] ${message}`);
-  // TODO: Add visual toast notifications
-}
-
-/**
- * Format uptime in human-readable format
- * @param {number} seconds - Uptime in seconds
- * @returns {string} Formatted uptime
- */
 function formatUptime(seconds) {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`;
-  } else if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }
 
 // ============================================================================
-// DATA FETCHING
+// DATA LOADING
 // ============================================================================
 
-/**
- * Load system status
- */
 async function loadSystemStatus() {
   try {
     systemStatus = await apiRequest('/status');
-    renderSystemStatus();
+    document.getElementById('build-number').textContent =
+      systemStatus.buildNumber;
+    document.getElementById('uptime').textContent =
+      `Up: ${formatUptime(systemStatus.uptime)}`;
+    document.getElementById('status-text').textContent = systemStatus.status;
+    document.getElementById('version-info').textContent =
+      `v${systemStatus.version} | Build #${systemStatus.buildNumber} | ${systemStatus.gitCommit}`;
   } catch (err) {
-    document.getElementById('system-status').innerHTML =
-      `<div class="error">Failed to load system status: ${err.message}</div>`;
+    console.error('Failed to load system status');
   }
 }
 
-/**
- * Load devices
- */
 async function loadDevices() {
   try {
     const data = await apiRequest('/devices');
     devices = data.devices;
-
-    // Auto-select first device if none selected
-    if (!selectedDevice && devices.length > 0) {
-      selectedDevice = devices[0].ip;
-    }
-
     renderDevices();
-
-    // Start FPS monitoring for animated scenes
-    updateFPSDisplay();
   } catch (err) {
-    document.getElementById('devices-list').innerHTML =
-      `<div class="error">Failed to load devices: ${err.message}</div>`;
+    document.getElementById('devices-grid').innerHTML =
+      '<div class="error">Failed to load devices</div>';
   }
 }
 
-/**
- * Load scenes
- */
 async function loadScenes() {
   try {
     const data = await apiRequest('/scenes');
     scenes = data.scenes;
-    renderSceneDropdown();
   } catch (err) {
-    document.getElementById('scene-dropdown').innerHTML =
-      '<option value="">Failed to load scenes</option>';
+    console.error('Failed to load scenes');
   }
 }
 
-/**
- * Load all data
- */
 async function loadAll() {
   await Promise.all([loadSystemStatus(), loadDevices(), loadScenes()]);
-}
-
-/**
- * Update FPS/frametime display
- */
-async function updateFPSDisplay() {
-  if (!selectedDevice) return;
-
-  const device = devices.find((d) => d.ip === selectedDevice);
-  if (!device || !device.currentScene) return;
-
-  // Find scene to check if it's animated
-  const scene = scenes.find((s) => s.name === device.currentScene);
-  const fpsDisplay = document.getElementById('fps-display');
-
-  if (scene && scene.wantsLoop) {
-    // Show FPS display for animated scenes
-    fpsDisplay.style.display = 'block';
-
-    try {
-      const data = await apiRequest(`/devices/${selectedDevice}/frametime`);
-      const fps = parseFloat(data.fps) || 0;
-      const frametime = data.frametime || 0;
-
-      const fpsValue = document.getElementById('fps-value');
-      const frametimeValue = document.getElementById('frametime-value');
-
-      fpsValue.textContent = fps.toFixed(1);
-      fpsValue.className = fps < 3 ? 'fps-value low' : 'fps-value';
-      frametimeValue.textContent = `${frametime.toFixed(0)} ms`;
-    } catch {
-      // Silently fail - don't spam errors
-    }
-  } else {
-    // Hide FPS display for static scenes
-    fpsDisplay.style.display = 'none';
-  }
 }
 
 // ============================================================================
 // RENDERING
 // ============================================================================
 
-/**
- * Render system status
- */
-function renderSystemStatus() {
-  const statusEl = document.getElementById('system-status');
-
-  statusEl.innerHTML = `
-    <div class="status-item">
-      <div class="status-label">Version</div>
-      <div class="status-value">${systemStatus.version}</div>
-    </div>
-    <div class="status-item">
-      <div class="status-label">Build</div>
-      <div class="status-value">#${systemStatus.buildNumber}</div>
-    </div>
-    <div class="status-item">
-      <div class="status-label">Uptime</div>
-      <div class="status-value">${formatUptime(systemStatus.uptime)}</div>
-    </div>
-    <div class="status-item">
-      <div class="status-label">Memory (RSS)</div>
-      <div class="status-value">${systemStatus.memory.rss} MB</div>
-    </div>
-    <div class="status-item">
-      <div class="status-label">Node.js</div>
-      <div class="status-value">${systemStatus.nodeVersion}</div>
-    </div>
-    <div class="status-item">
-      <div class="status-label">Status</div>
-      <div class="status-value">${systemStatus.status}</div>
-    </div>
-  `;
-
-  document.getElementById('version-info').textContent =
-    `v${systemStatus.version} | Build #${systemStatus.buildNumber} | ${systemStatus.gitCommit}`;
-
-  document.getElementById('build-info').textContent =
-    `v${systemStatus.version} | Build #${systemStatus.buildNumber}`;
-}
-
-/**
- * Render devices list
- */
 function renderDevices() {
-  const devicesEl = document.getElementById('devices-list');
-
+  const grid = document.getElementById('devices-grid');
   if (devices.length === 0) {
-    devicesEl.innerHTML = '<div class="loading">No devices configured</div>';
+    grid.innerHTML = '<div class="loading">No devices configured</div>';
     return;
   }
+  grid.innerHTML = devices.map((d) => renderDevice(d)).join('');
 
-  devicesEl.innerHTML = devices.map((device) => renderDevice(device)).join('');
+  // Re-attach event listeners
+  devices.forEach((d) => attachDeviceListeners(d.ip));
+
+  // Start FPS monitoring
+  devices.forEach((d) => {
+    if (d.currentScene) {
+      const scene = scenes.find((s) => s.name === d.currentScene);
+      if (scene && scene.wantsLoop) {
+        startFPSMonitoring(d.ip);
+      }
+    }
+  });
 }
 
-/**
- * Render a single device card
- * @param {Object} device - Device object
- * @returns {string} HTML string
- */
 function renderDevice(device) {
-  const isSelected = device.ip === selectedDevice;
+  const scene = scenes.find((s) => s.name === device.currentScene);
+  const isAnimated = scene && scene.wantsLoop;
+
   return `
-    <div class="device-card ${isSelected ? 'selected' : ''}" data-ip="${device.ip}">
+    <div class="device-card" data-ip="${device.ip}">
       <div class="device-header">
-        <div class="device-ip">${device.ip} ${isSelected ? '(Selected)' : ''}</div>
-        <div class="device-driver">${device.driver}</div>
+        <div class="device-title">
+          <span class="device-ip">${device.ip}</span>
+          <span class="device-badge">${device.driver}</span>
+        </div>
       </div>
+
       <div class="device-status">
-        <div class="device-status-item">
-          <span>Scene:</span>
-          <strong>${device.currentScene}</strong>
+        <div class="status-item">
+          <div class="status-label">Scene</div>
+          <div class="status-value">${device.currentScene}</div>
         </div>
-        <div class="device-status-item">
-          <span>Status:</span>
-          <strong>${device.status}</strong>
+        <div class="status-item">
+          <div class="status-label">Status</div>
+          <div class="status-value ${getStatusClass(device.status)}">${device.status}</div>
         </div>
-        <div class="device-status-item">
-          <span>Pushes:</span>
-          <strong>${device.metrics.pushes}</strong>
+        <div class="status-item">
+          <div class="status-label">Pushes</div>
+          <div class="status-value">${device.metrics.pushes}</div>
         </div>
-        <div class="device-status-item">
-          <span>Errors:</span>
-          <strong>${device.metrics.errors}</strong>
+        <div class="status-item">
+          <div class="status-label">Errors</div>
+          <div class="status-value ${device.metrics.errors > 0 ? 'danger' : 'success'}">
+            ${device.metrics.errors}
+          </div>
         </div>
       </div>
+
+      <div class="scene-control">
+        <div class="scene-header">
+          <span class="scene-title">Scene</span>
+          ${isAnimated ? '<span class="scene-info-badge">🎬 Animated</span>' : ''}
+        </div>
+
+        <div class="scene-selector">
+          <select class="scene-dropdown" id="scene-${device.ip}" data-device="${device.ip}">
+            ${renderSceneOptions(device.currentScene)}
+          </select>
+          <div class="scene-nav">
+            <button class="btn btn-primary btn-sm btn-icon" onclick="prevScene('${device.ip}')">←</button>
+            <button class="btn btn-primary btn-sm btn-icon" onclick="nextScene('${device.ip}')">→</button>
+            <button class="btn btn-success btn-sm" onclick="switchScene('${device.ip}')">Switch</button>
+          </div>
+        </div>
+
+        <div class="scene-description" id="desc-${device.ip}">
+          ${scene ? scene.description : 'Select a scene'}
+        </div>
+
+        ${isAnimated ? renderFPSDisplay(device.ip) : ''}
+      </div>
+
       <div class="device-actions">
-        <button class="btn btn-sm btn-primary" onclick="selectDevice('${device.ip}')">
-          Select
-        </button>
-        <button class="btn btn-sm btn-warning" onclick="setDisplayPower('${device.ip}', false)">
+        <button class="btn btn-warning btn-sm" onclick="setDisplayPower('${device.ip}', false)">
           🌙 OFF
         </button>
-        <button class="btn btn-sm btn-success" onclick="setDisplayPower('${device.ip}', true)">
+        <button class="btn btn-success btn-sm" onclick="setDisplayPower('${device.ip}', true)">
           ☀️ ON
         </button>
-        <button class="btn btn-sm btn-danger" onclick="resetDevice('${device.ip}')">
+        <button class="btn btn-danger btn-sm" onclick="resetDevice('${device.ip}')">
           🔄 Reset
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="toggleDriver('${device.ip}')">
+          🔧 ${device.driver === 'mock' ? 'Real' : 'Mock'}
         </button>
       </div>
     </div>
   `;
 }
 
-/**
- * Render scene dropdown
- */
-function renderSceneDropdown() {
-  const dropdown = document.getElementById('scene-dropdown');
-
-  if (scenes.length === 0) {
-    dropdown.innerHTML = '<option value="">No scenes available</option>';
-    return;
-  }
-
-  // Group scenes by category
+function renderSceneOptions(currentScene) {
   const grouped = {};
-  scenes.forEach((scene) => {
-    const category = scene.category || 'General';
-    if (!grouped[category]) grouped[category] = [];
-    grouped[category].push(scene);
+  scenes.forEach((s) => {
+    const cat = s.category || 'General';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(s);
   });
 
   let html = '';
-  for (const [category, categoryScenes] of Object.entries(grouped)) {
-    html += `<optgroup label="${category}">`;
-    categoryScenes.forEach((scene) => {
-      const animated = scene.wantsLoop ? ' 🎬' : '';
-      html += `<option value="${scene.name}">${scene.name}${animated}</option>`;
+  for (const [cat, sceneList] of Object.entries(grouped)) {
+    html += `<optgroup label="${cat}">`;
+    sceneList.forEach((s) => {
+      const selected = s.name === currentScene ? ' selected' : '';
+      const emoji = s.wantsLoop ? ' 🎬' : '';
+      html += `<option value="${s.name}"${selected}>${s.name}${emoji}</option>`;
     });
     html += `</optgroup>`;
   }
+  return html;
+}
 
-  dropdown.innerHTML = html;
+function renderFPSDisplay(deviceIp) {
+  return `
+    <div class="fps-display" id="fps-${deviceIp}">
+      <div class="fps-stats">
+        <div class="fps-stat">
+          <div class="fps-label">FPS</div>
+          <div class="fps-value" id="fps-value-${deviceIp}">0.0</div>
+        </div>
+        <div class="fps-stat">
+          <div class="fps-label">Frame Time</div>
+          <div class="fps-value" id="frametime-value-${deviceIp}">0 ms</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
-  // Select current scene for selected device
-  if (selectedDevice) {
-    const device = devices.find((d) => d.ip === selectedDevice);
-    if (device && device.currentScene) {
-      dropdown.value = device.currentScene;
-      currentSceneIndex = scenes.findIndex(
-        (s) => s.name === device.currentScene,
-      );
-      updateSceneDescription();
-    }
-  }
+function getStatusClass(status) {
+  if (status === 'running') return 'success';
+  if (status === 'switching') return 'warning';
+  return '';
+}
 
-  // Auto-select first scene if none selected
-  if (dropdown.value === '' && scenes.length > 0) {
-    dropdown.value = scenes[0].name;
-    currentSceneIndex = 0;
-    updateSceneDescription();
+function attachDeviceListeners(deviceIp) {
+  const dropdown = document.getElementById(`scene-${deviceIp}`);
+  if (dropdown) {
+    dropdown.addEventListener('change', () => updateSceneDescription(deviceIp));
   }
 }
 
-/**
- * Update scene description
- */
-function updateSceneDescription() {
-  const dropdown = document.getElementById('scene-dropdown');
+function updateSceneDescription(deviceIp) {
+  const dropdown = document.getElementById(`scene-${deviceIp}`);
   const sceneName = dropdown.value;
   const scene = scenes.find((s) => s.name === sceneName);
-
-  const descEl = document.getElementById('scene-description');
-  if (scene) {
-    const animatedBadge = scene.wantsLoop
-      ? '<span class="scene-badge animated">Animated</span>'
-      : '<span class="scene-badge">Static</span>';
-    descEl.innerHTML = `
-      <div class="scene-info">
-        <strong>${scene.name}</strong>
-        ${animatedBadge}
-      </div>
-      <div>${scene.description}</div>
-    `;
-  } else {
-    descEl.textContent = 'Select a scene to see its description';
+  const descEl = document.getElementById(`desc-${deviceIp}`);
+  if (descEl && scene) {
+    descEl.textContent = scene.description;
   }
 }
 
 // ============================================================================
-// DEVICE ACTIONS
+// FPS MONITORING
 // ============================================================================
 
-/**
- * Select a device
- * @param {string} deviceIp - Device IP
- */
-function selectDevice(deviceIp) {
-  selectedDevice = deviceIp;
-  showToast(`Device ${deviceIp} selected`, 'success');
-  loadDevices(); // Re-render to show selection
-  renderSceneDropdown(); // Update dropdown to show current scene
+function startFPSMonitoring(deviceIp) {
+  // Clear existing interval
+  if (fpsIntervals.has(deviceIp)) {
+    clearInterval(fpsIntervals.get(deviceIp));
+  }
+
+  // Start new interval
+  const intervalId = setInterval(() => updateFPS(deviceIp), REFRESH_FAST);
+  fpsIntervals.set(deviceIp, intervalId);
+
+  // Initial update
+  updateFPS(deviceIp);
 }
 
-/**
- * Set display power
- * @param {string} deviceIp - Device IP
- * @param {boolean} on - Turn on (true) or off (false)
- */
+function stopFPSMonitoring(deviceIp) {
+  if (fpsIntervals.has(deviceIp)) {
+    clearInterval(fpsIntervals.get(deviceIp));
+    fpsIntervals.delete(deviceIp);
+  }
+}
+
+async function updateFPS(deviceIp) {
+  try {
+    const data = await apiRequest(`/devices/${deviceIp}/frametime`);
+    const fps = parseFloat(data.fps) || 0;
+    const frametime = data.frametime || 0;
+
+    const fpsEl = document.getElementById(`fps-value-${deviceIp}`);
+    const frametimeEl = document.getElementById(`frametime-value-${deviceIp}`);
+
+    if (fpsEl) {
+      fpsEl.textContent = fps.toFixed(1);
+      fpsEl.className = fps > 0 && fps < 3 ? 'fps-value low' : 'fps-value';
+    }
+
+    if (frametimeEl) {
+      frametimeEl.textContent = `${frametime.toFixed(0)} ms`;
+    }
+  } catch {
+    // Silent fail
+  }
+}
+
+// ============================================================================
+// ACTIONS
+// ============================================================================
+
+async function switchScene(deviceIp) {
+  const dropdown = document.getElementById(`scene-${deviceIp}`);
+  const sceneName = dropdown.value;
+
+  try {
+    await apiRequest(`/devices/${deviceIp}/scene`, {
+      method: 'POST',
+      body: JSON.stringify({ scene: sceneName, clear: true }),
+    });
+    await loadDevices();
+  } catch (err) {
+    alert(`Failed to switch scene: ${err.message}`);
+  }
+}
+
+function prevScene(deviceIp) {
+  const dropdown = document.getElementById(`scene-${deviceIp}`);
+  const currentIndex = Array.from(dropdown.options).findIndex(
+    (o) => o.value === dropdown.value,
+  );
+  const newIndex =
+    (currentIndex - 1 + dropdown.options.length) % dropdown.options.length;
+  dropdown.selectedIndex = newIndex;
+  updateSceneDescription(deviceIp);
+}
+
+function nextScene(deviceIp) {
+  const dropdown = document.getElementById(`scene-${deviceIp}`);
+  const currentIndex = Array.from(dropdown.options).findIndex(
+    (o) => o.value === dropdown.value,
+  );
+  const newIndex = (currentIndex + 1) % dropdown.options.length;
+  dropdown.selectedIndex = newIndex;
+  updateSceneDescription(deviceIp);
+}
+
 async function setDisplayPower(deviceIp, on) {
   try {
     await apiRequest(`/devices/${deviceIp}/display`, {
       method: 'POST',
       body: JSON.stringify({ on }),
     });
-
-    showToast(`Display turned ${on ? 'ON' : 'OFF'} for ${deviceIp}`, 'success');
     await loadDevices();
-  } catch {
-    // Error already shown by apiRequest
+  } catch (err) {
+    alert(`Failed to set display: ${err.message}`);
   }
 }
 
-/**
- * Reset device
- * @param {string} deviceIp - Device IP
- */
 async function resetDevice(deviceIp) {
-  if (!confirm(`Reset device ${deviceIp}?`)) {
-    return;
-  }
+  if (!confirm(`Reset device ${deviceIp}?`)) return;
 
   try {
-    await apiRequest(`/devices/${deviceIp}/reset`, {
-      method: 'POST',
-    });
-
-    showToast(`Device ${deviceIp} reset successfully`, 'success');
+    await apiRequest(`/devices/${deviceIp}/reset`, { method: 'POST' });
     await loadDevices();
-  } catch {
-    // Error already shown by apiRequest
+  } catch (err) {
+    alert(`Failed to reset: ${err.message}`);
   }
 }
 
-// ============================================================================
-// SCENE ACTIONS
-// ============================================================================
-
-/**
- * Switch to selected scene
- */
-async function switchToScene() {
-  const dropdown = document.getElementById('scene-dropdown');
-  const sceneName = dropdown.value;
-
-  if (!selectedDevice) {
-    showToast('Please select a device first', 'error');
-    return;
-  }
-
-  if (!sceneName) {
-    showToast('Please select a scene', 'error');
-    return;
-  }
+async function toggleDriver(deviceIp) {
+  const device = devices.find((d) => d.ip === deviceIp);
+  const newDriver = device.driver === 'mock' ? 'real' : 'mock';
 
   try {
-    const switchBtn = document.getElementById('switch-scene-btn');
-    switchBtn.disabled = true;
-    switchBtn.textContent = 'Switching...';
-
-    await apiRequest(`/devices/${selectedDevice}/scene`, {
+    await apiRequest(`/devices/${deviceIp}/driver`, {
       method: 'POST',
-      body: JSON.stringify({ scene: sceneName, clear: true }),
+      body: JSON.stringify({ driver: newDriver }),
     });
-
-    showToast(`Switched to ${sceneName}`, 'success');
     await loadDevices();
-
-    switchBtn.disabled = false;
-    switchBtn.textContent = 'Switch';
-  } catch {
-    const switchBtn = document.getElementById('switch-scene-btn');
-    switchBtn.disabled = false;
-    switchBtn.textContent = 'Switch';
+  } catch (err) {
+    alert(`Failed to switch driver: ${err.message}`);
   }
 }
 
-/**
- * Navigate to previous scene
- */
-function prevScene() {
-  if (scenes.length === 0) return;
-  currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
-  const dropdown = document.getElementById('scene-dropdown');
-  dropdown.value = scenes[currentSceneIndex].name;
-  updateSceneDescription();
-}
-
-/**
- * Navigate to next scene
- */
-function nextScene() {
-  if (scenes.length === 0) return;
-  currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
-  const dropdown = document.getElementById('scene-dropdown');
-  dropdown.value = scenes[currentSceneIndex].name;
-  updateSceneDescription();
-}
-
-// ============================================================================
-// SYSTEM ACTIONS
-// ============================================================================
-
-/**
- * Restart daemon
- */
 async function restartDaemon() {
-  if (
-    !confirm('Restart the daemon? This will disconnect the web UI temporarily.')
-  ) {
-    return;
-  }
+  if (!confirm('Restart daemon? Web UI will reconnect automatically.')) return;
 
   try {
-    await apiRequest('/daemon/restart', {
-      method: 'POST',
-    });
-
-    showToast(
-      'Daemon is restarting... The page will reconnect automatically.',
-      'info',
-    );
-
-    // Poll for daemon to come back
-    setTimeout(() => {
-      pollForReconnect();
-    }, 5000);
-  } catch {
-    // Error already shown by apiRequest
+    await apiRequest('/daemon/restart', { method: 'POST' });
+    setTimeout(pollReconnect, 5000);
+  } catch (err) {
+    alert(`Failed to restart: ${err.message}`);
   }
 }
 
-/**
- * Poll for daemon reconnection after restart
- */
-async function pollForReconnect() {
+async function pollReconnect() {
   let attempts = 0;
-  const MAX_ATTEMPTS = 20;
-
   const poll = async () => {
     attempts++;
     try {
       await apiRequest('/status');
-      showToast('Daemon reconnected!', 'success');
+      alert('Daemon reconnected!');
       loadAll();
     } catch {
-      if (attempts < MAX_ATTEMPTS) {
-        setTimeout(poll, 2000);
-      } else {
-        showToast(
-          'Failed to reconnect. Please refresh the page manually.',
-          'error',
-        );
-      }
+      if (attempts < 20) setTimeout(poll, 2000);
+      else alert('Failed to reconnect. Refresh the page.');
     }
   };
-
   poll();
 }
 
 // ============================================================================
-// INITIALIZATION
+// INIT
 // ============================================================================
 
-/**
- * Initialize the app
- */
 async function init() {
-  // Attach event handlers
   document
     .getElementById('restart-daemon-btn')
     .addEventListener('click', restartDaemon);
-  document
-    .getElementById('switch-scene-btn')
-    .addEventListener('click', switchToScene);
-  document
-    .getElementById('prev-scene-btn')
-    .addEventListener('click', prevScene);
-  document
-    .getElementById('next-scene-btn')
-    .addEventListener('click', nextScene);
-  document
-    .getElementById('scene-dropdown')
-    .addEventListener('change', updateSceneDescription);
 
-  // Make functions globally accessible for onclick handlers
-  window.selectDevice = selectDevice;
+  // Make functions global for onclick
+  window.switchScene = switchScene;
+  window.prevScene = prevScene;
+  window.nextScene = nextScene;
   window.setDisplayPower = setDisplayPower;
   window.resetDevice = resetDevice;
+  window.toggleDriver = toggleDriver;
 
-  // Load initial data
   await loadAll();
-
-  // Auto-refresh general data every 5 seconds
-  setInterval(loadAll, REFRESH_INTERVAL_SLOW);
-
-  // Auto-refresh FPS/frametime every 1 second
-  fpsInterval = setInterval(updateFPSDisplay, REFRESH_INTERVAL_FAST);
+  setInterval(loadAll, REFRESH_SLOW);
 }
 
-// Start the app when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
