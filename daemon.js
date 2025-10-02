@@ -6,12 +6,15 @@
 
 const path = require('path');
 
-const { SCENE_STATE_TOPIC_BASE, SCENE_STATE_KEYS } = require('./lib/config');
+const CommandRouter = require('./lib/commands/command-router');
+const DriverCommandHandler = require('./lib/commands/driver-command-handler');
+const ResetCommandHandler = require('./lib/commands/reset-command-handler');
+const SceneCommandHandler = require('./lib/commands/scene-command-handler');
+const StateCommandHandler = require('./lib/commands/state-command-handler');
 const DeploymentTracker = require('./lib/deployment-tracker');
 const {
   getContext,
   setDriverForDevice,
-  getDriverForDevice,
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
@@ -69,6 +72,69 @@ const stateStore = container.resolve('stateStore');
 const deploymentTracker = container.resolve('deploymentTracker');
 const sceneManager = container.resolve('sceneManager');
 const mqttService = container.resolve('mqttService');
+
+// Register command handlers in DI container
+container.register(
+  'sceneCommandHandler',
+  ({ logger, mqttService }) =>
+    new SceneCommandHandler({
+      logger,
+      mqttService,
+      deviceDefaults,
+    }),
+);
+
+container.register(
+  'driverCommandHandler',
+  ({ logger, mqttService, sceneManager }) =>
+    new DriverCommandHandler({
+      logger,
+      mqttService,
+      setDriverForDevice,
+      lastState,
+      sceneManager,
+      getContext,
+      publishMetrics,
+    }),
+);
+
+container.register(
+  'resetCommandHandler',
+  ({ logger, mqttService }) =>
+    new ResetCommandHandler({
+      logger,
+      mqttService,
+      softReset,
+    }),
+);
+
+container.register(
+  'stateCommandHandler',
+  ({ logger, mqttService, sceneManager }) =>
+    new StateCommandHandler({
+      logger,
+      mqttService,
+      deviceDefaults,
+      lastState,
+      sceneManager,
+      getContext,
+      publishMetrics,
+    }),
+);
+
+// Create CommandRouter with all handlers
+container.register('commandRouter', ({ logger }) => {
+  const handlers = {
+    scene: container.resolve('sceneCommandHandler'),
+    driver: container.resolve('driverCommandHandler'),
+    reset: container.resolve('resetCommandHandler'),
+    state: container.resolve('stateCommandHandler'),
+  };
+
+  return new CommandRouter({ logger, handlers });
+});
+
+const commandRouter = container.resolve('commandRouter');
 
 logger.ok('✅ DI Container initialized with services:', {
   services: container.getServiceNames(),
@@ -210,11 +276,11 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
 }
 
-// Register MQTT message handlers with MqttService
-mqttService.registerHandler('scene', handleSceneCommand);
-mqttService.registerHandler('driver', handleDriverCommand);
-mqttService.registerHandler('reset', handleResetCommand);
-mqttService.registerHandler('state', handleStateUpdate);
+// Register MQTT message handler with CommandRouter
+// CommandRouter will dispatch to appropriate command handlers
+mqttService.on('message', async ({ topic, payload }) => {
+  await commandRouter.route(topic, payload);
+});
 
 // Connect to MQTT broker and subscribe to topics
 mqttService.on('connect', async () => {
@@ -231,214 +297,6 @@ mqttService.connect().catch((err) => {
   logger.error('Failed to connect to MQTT broker:', { error: err.message });
   process.exit(1);
 });
-
-async function handleSceneCommand(deviceIp, action, payload) {
-  if (action === 'set') {
-    const name = payload?.name;
-    if (!name) {
-      logger.warn(`scene/set for ${deviceIp} missing 'name'`);
-      return;
-    }
-    deviceDefaults.set(deviceIp, name);
-    logger.ok(`Default scene for ${deviceIp} → '${name}'`);
-    mqttService.publish(`pixoo/${deviceIp}/scene`, {
-      default: name,
-      ts: Date.now(),
-    });
-  }
-}
-
-async function handleDriverCommand(deviceIp, action, payload) {
-  if (action === 'set') {
-    const drv = payload?.driver;
-    if (!drv) {
-      logger.warn(`driver/set for ${deviceIp} missing 'driver'`);
-      return;
-    }
-    const applied = setDriverForDevice(deviceIp, drv);
-    logger.ok(`Driver for ${deviceIp} set → ${applied}`);
-    mqttService.publish(`pixoo/${deviceIp}/driver`, {
-      driver: applied,
-      ts: Date.now(),
-    });
-
-    // Optional: re-render with last known state
-    const prev = lastState[deviceIp];
-    if (prev && prev.payload) {
-      try {
-        const sceneName = prev.sceneName || 'empty';
-        if (sceneManager.hasScene(sceneName)) {
-          const ctx = getContext(deviceIp, sceneName, prev.payload, publishOk);
-          try {
-            await sceneManager.renderActiveScene(ctx);
-            publishMetrics(deviceIp);
-          } catch (err) {
-            logger.error(`Render error for ${deviceIp}:`, {
-              error: err.message,
-            });
-            mqttService.publish(`pixoo/${deviceIp}/error`, {
-              error: err.message,
-              scene: sceneName,
-              ts: Date.now(),
-            });
-            publishMetrics(deviceIp);
-          }
-        }
-      } catch (e) {
-        logger.warn(`Re-render after driver switch failed: ${e.message}`);
-      }
-    }
-  }
-}
-
-async function handleResetCommand(deviceIp, action) {
-  if (action === 'set') {
-    logger.warn(`Reset requested for ${deviceIp}`);
-    const ok = await softReset(deviceIp);
-    mqttService.publish(`pixoo/${deviceIp}/reset`, {
-      ok,
-      ts: Date.now(),
-    });
-  }
-}
-
-async function handleStateUpdate(deviceIp, action, payload) {
-  if (action === 'upd') {
-    const sceneName = payload.scene || deviceDefaults.get(deviceIp) || 'empty';
-    if (!sceneManager.hasScene(sceneName)) {
-      logger.warn(`No renderer found for scene: ${sceneName}`);
-      return;
-    }
-
-    // Gate legacy animation continuation frames entirely (central scheduler only)
-    if (payload && payload._isAnimationFrame === true) {
-      try {
-        const st = sceneManager.getDeviceSceneState(deviceIp);
-        const frameScene = payload.scene;
-        const frameGen = payload.generationId;
-        if (frameScene !== st.currentScene || frameGen !== st.generationId) {
-          logger.info(
-            `⚑ [GATE] Drop stale animation frame for ${frameScene} (gen ${frameGen}) on ${deviceIp}; active ${st.currentScene} (gen ${st.generationId})`,
-          );
-        } else {
-          logger.info(
-            `⚑ [GATE] Drop animation frame (loop-driven) for ${frameScene} (gen ${frameGen}) on ${deviceIp}`,
-          );
-        }
-      } catch {
-        logger.info(`[GATE] Drop animation frame (no state) on ${deviceIp}`);
-      }
-      return; // Always ignore animation frame inputs
-    }
-
-    const ts = new Date().toLocaleString('de-AT');
-    logger.info(`State update for ${deviceIp}`, {
-      scene: sceneName,
-      driver: getDriverForDevice(deviceIp),
-      timestamp: ts,
-    });
-    const ctx = getContext(deviceIp, sceneName, payload, publishOk);
-    ctx.payload = payload;
-
-    const lastScene = lastState[deviceIp]?.sceneName;
-    const lastPayload = lastState[deviceIp]?.payload;
-    const isSceneChange = !lastScene || lastScene !== sceneName;
-    const isParameterChange = lastScene === sceneName && true; // treat any new command as authoritative
-    const shouldClear = isSceneChange || payload.clear === true;
-
-    if (isParameterChange) {
-      logger.info('Parameter change detected', {
-        scene: sceneName,
-        old: lastPayload,
-        new: payload,
-      });
-    }
-
-    lastState[deviceIp] = { payload, sceneName };
-
-    if (shouldClear) {
-      const device = require('./lib/device-adapter').getDevice(deviceIp);
-      await device.clear();
-      if (lastScene && lastScene !== sceneName) {
-        logger.ok(
-          `Cleared screen on scene switch from '${lastScene}' to '${sceneName}'`,
-        );
-      } else if (payload.clear === true) {
-        logger.ok("Cleared screen as requested by 'clear' parameter");
-      }
-    }
-
-    try {
-      let success;
-      // Always adhere to command: publish switching, then restart via switchScene
-      try {
-        const prev = sceneManager.getDeviceSceneState(deviceIp);
-        const genNext = ((prev.generationId || 0) + 1) | 0;
-        mqttService.publish(
-          `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-          {
-            [SCENE_STATE_KEYS.currentScene]: prev.currentScene,
-            [SCENE_STATE_KEYS.targetScene]: sceneName,
-            [SCENE_STATE_KEYS.status]: 'switching',
-            [SCENE_STATE_KEYS.generationId]: genNext,
-            [SCENE_STATE_KEYS.version]: versionInfo.version,
-            [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
-            [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
-            [SCENE_STATE_KEYS.ts]: Date.now(),
-          },
-        );
-      } catch (e) {
-        logger.warn('Failed to publish switching state', {
-          deviceIp,
-          error: e?.message,
-        });
-      }
-
-      success = await sceneManager.switchScene(sceneName, ctx);
-
-      // Publish running state after restart
-      try {
-        const st = sceneManager.getDeviceSceneState(deviceIp);
-        mqttService.publish(
-          `${SCENE_STATE_TOPIC_BASE}/${deviceIp}/scene/state`,
-          {
-            [SCENE_STATE_KEYS.currentScene]: st.currentScene,
-            [SCENE_STATE_KEYS.generationId]: st.generationId,
-            [SCENE_STATE_KEYS.status]: st.status,
-            [SCENE_STATE_KEYS.version]: versionInfo.version,
-            [SCENE_STATE_KEYS.buildNumber]: versionInfo.buildNumber,
-            [SCENE_STATE_KEYS.gitCommit]: versionInfo.gitCommit,
-            [SCENE_STATE_KEYS.ts]: Date.now(),
-          },
-        );
-      } catch (e) {
-        logger.warn('Failed to publish device scene state', {
-          deviceIp,
-          error: e?.message,
-        });
-      }
-
-      if (!success) {
-        throw new Error(`Failed to handle scene update: ${sceneName}`);
-      }
-
-      // Rendering is handled by the central device loop; nothing to do here
-
-      publishMetrics(deviceIp);
-    } catch (err) {
-      logger.error(`Render error for ${deviceIp}:`, {
-        error: err.message,
-        scene: sceneName,
-      });
-      mqttService.publish(`pixoo/${deviceIp}/error`, {
-        error: err.message,
-        scene: sceneName,
-        ts: Date.now(),
-      });
-      publishMetrics(deviceIp);
-    }
-  }
-}
 
 // Global MQTT error logging
 mqttService.on('error', (err) => {
