@@ -135,7 +135,7 @@
 ### Updated
 
 - [x] `README.md` - Architecture section updated with Core Services
-- [x] `ARCHITECTURE_ANALYSIS.md` - Phase 1 completion status, 5-star rating
+- [x] `docs/ARCHITECTURE.md` - Phase 1 completion status, 5-star rating
 - [x] `docs/BACKLOG.md` - All Phase 1 tasks marked complete
 - [x] `lib/scene-manager.js` - JSDoc updated for StateStore integration
 

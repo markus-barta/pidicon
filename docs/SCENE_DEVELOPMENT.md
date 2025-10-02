@@ -357,7 +357,7 @@ When you get "No renderer found for scene":
 
 When creating new Pixoo Daemon projects:
 
-1. **Copy this file**: `SCENE_DEVELOPMENT_BEST_PRACTICES.md`
+1. **Copy this file**: `docs/SCENE_DEVELOPMENT.md`
 2. **Set up auto-loading**: Use the same daemon.js scene loading pattern
 3. **Document locations**: Clearly mark which directories are auto-loaded
 4. **Add validation**: Consider adding scene validation in CI/CD

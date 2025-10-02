@@ -304,7 +304,7 @@ Each successful `push()` also emits `pixoo/<ip>/ok` with per-frame metrics.
 
 ## 📝 Changelog
 
-See [VERSIONING.md](./VERSIONING.md) for version management strategy.
+See [VERSIONING.md](./docs/VERSIONING.md) for version management strategy.
 
 ### v2.0.0 (Current - 2025-09-20)
 

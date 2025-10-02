@@ -422,9 +422,9 @@ module.exports = { ... };
 ## 📚 Related Documentation
 
 - [STANDARDS.md](../STANDARDS.md) - Development standards
-- [VERSIONING.md](../VERSIONING.md) - Version management strategy
+- [VERSIONING.md](../docs/VERSIONING.md) - Version management strategy
 - [scenes/README.md](../scenes/README.md) - Scene development guide
-- [SCENE_DEVELOPMENT_BEST_PRACTICES.md](../SCENE_DEVELOPMENT_BEST_PRACTICES.md) - Best practices
+- [SCENE_DEVELOPMENT.md](../docs/SCENE_DEVELOPMENT.md) - Best practices
 
 ---
 

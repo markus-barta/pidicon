@@ -228,9 +228,15 @@ Update internal links in:
 3. ✅ Create `docs/reports/` and move phase reports
 4. ✅ Rename `ARCHITECTURE_ANALYSIS.md` → `docs/ARCHITECTURE.md`
 
-**Should Do** (Medium Value, Medium Risk): 5. ⚠️ Update all internal links (requires testing) 6. ⚠️ Remove or enhance `src/README.md`
+**Should Do** (Medium Value, Medium Risk):
 
-**Nice to Have** (Low Value, Low Risk): 7. 💡 Archive `ARC-302-PHASE1-COMPLETE.md` (redundant with PHASE1) 8. 💡 Update README.md structure to be more focused
+1. ⚠️ Update all internal links (requires testing)
+2. ⚠️ Remove or enhance `src/README.md`
+
+**Nice to Have** (Low Value, Low Risk):
+
+1. 💡 Archive `ARC-302-PHASE1-COMPLETE.md` (redundant with PHASE1)
+2. 💡 Update README.md structure to be more focused
 
 ---
 

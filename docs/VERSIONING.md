@@ -320,7 +320,7 @@ Before releasing a new version:
 - [version.json](./version.json) - Build metadata (auto-generated)
 - [scripts/build-version.js](./scripts/build-version.js) - Version generator script
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment pipeline and CI/CD
-- [STANDARDS.md](./STANDARDS.md) - Development standards and guidelines
+- [STANDARDS.md](../STANDARDS.md) - Development standards and guidelines
 
 ---
 

@@ -217,7 +217,7 @@ All documentation has been updated to reflect Phase 1 completion:
 
 - ✅ `README.md` - Updated architecture overview
 - ✅ `lib/README.md` - Added new services documentation
-- ✅ `ARCHITECTURE_ANALYSIS.md` - Updated with completion status
+- ✅ `docs/ARCHITECTURE.md` - Updated with completion status
 - ✅ `docs/BACKLOG.md` - Marked ARC-301, ARC-302, ARC-303 as complete
 - ✅ `docs/PHASE1-COMPLETE.md` - This document!
 
