@@ -6,6 +6,12 @@ rules:
     alwaysApply: true
     # Custom: timeoutMinutes: 30
     reference: "./STANDARDS.md"
+  - description: Enforce code quality standards (no magic numbers, function limits)
+    globs:
+      - "**/*.js"
+    alwaysApply: true
+    # Custom: noMagicNumbers: true, maxFunctionLines: 50, maxComplexity: 10, maxParameters: 5
+    reference: "./docs/CODE_QUALITY.md"
   - description: Enforce linting and formatting rules for JS + Markdown
     globs:
       - "**/*.js"
@@ -23,6 +29,7 @@ rules:
     globs:
       - "lib/*"
       - "scenes/*"
+      - "docs/*"
     alwaysApply: true
     # Custom: requireReadme: true
     reference: "./STANDARDS.md#documentation"
@@ -32,7 +39,7 @@ rules:
       - "scenes/**/*.js"
     alwaysApply: true
     # Custom: requireJsdoc: true
-    reference: "./STANDARDS.md#code-documentation"
+    reference: "./STANDARDS.md#documentation"
   - description: Require POSIX shebang in server scripts
     globs:
       - "scripts/**/*.sh"
@@ -41,56 +48,239 @@ rules:
     reference: "./STANDARDS.md#shell-standards"
   - description: Prefer fish shell for interactive usage; fallback to bash
     globs:
-      - "**/*.sh" # Replaced terminal:* with standard glob for shell scripts
+      - "**/*.sh"
     alwaysApply: true
     # Custom: preferredShell: fish, fallbackShell: bash, maxRetries: 3
     # Notes: AI often generates bash syntax; correct manually or convert. After 3 failed attempts, use bash or write portable script.
     reference: "./STANDARDS.md#shell-standards"
+  - description: Scene interface requirements and configuration standards
+    globs:
+      - "scenes/**/*.js"
+    alwaysApply: true
+    # Custom: requireSceneInterface: true, requireConfigConstants: true
+    reference: "./docs/SCENE_DEVELOPMENT.md"
 ---
 
 # Cursor Rules for Pixoo Daemon Development
 
-These rules enforce quality and safety for the Pixoo Daemon project, consumed by Cursor.
+These rules enforce quality and safety for the Pixoo Daemon project, consumed
+by Cursor AI.
+
+**Last Updated**: 2025-09-30
+
+---
+
+## 📋 Documentation Structure
+
+- **[STANDARDS.md](./STANDARDS.md)** - Core development standards
+- **[docs/CODE_QUALITY.md](./docs/CODE_QUALITY.md)** - ⭐ Code quality best
+  practices
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design
+- **[docs/SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md)** - Scene guide
+
+---
 
 ## Universal Timeout
 
-- Applies to all files (`*`).
-- Timeout after 30 minutes.
-- Reference: [Standards Documentation](./STANDARDS.md).
+- **Applies to**: All files (`*`)
+- **Rule**: Timeout after 30 minutes
+- **Scope**: Development/testing only (production runs indefinitely)
+- **Reference**: [STANDARDS.md](./STANDARDS.md)
+
+---
+
+## Code Quality Standards ⭐
+
+**NEW: Comprehensive code quality enforcement**
+
+- **Applies to**: JavaScript files (`**/*.js`)
+- **Rules**:
+  - **No Magic Numbers**: Use named constants (e.g., `const MAX_RETRIES = 3`)
+  - **Function Limits**: Max 50 lines, max 10 cyclomatic complexity
+  - **Parameters**: Max 5 (use options object for more)
+  - **Naming**: `SCREAMING_SNAKE_CASE` for constants, `camelCase` for
+    variables, `PascalCase` for classes
+  - **Immutability**: Use `Object.freeze()` for constants
+  - **Pure Functions**: Prefer functions without side effects
+  - **Guard Clauses**: Fail fast with early returns
+  - **Async/Await**: Always use async/await over callbacks
+- **Reference**: [docs/CODE_QUALITY.md](./docs/CODE_QUALITY.md)
+
+### Examples
+
+```javascript
+// ❌ BAD - Magic numbers
+if (user.age > 18) {
+  /* ... */
+}
+
+// ✅ GOOD - Named constant
+const ADULT_AGE_THRESHOLD = 18;
+if (user.age > ADULT_AGE_THRESHOLD) {
+  /* ... */
+}
+```
+
+---
 
 ## Formatting & Linting
 
-- Applies to JavaScript (`**/*.js`) and Markdown (`**/*.md`) files.
-- Enforce linting, max line length of 120, preferred line length of 80, and require code block languages in Markdown.
-- Reference: [Formatting Guidelines](./STANDARDS.md#formatting--commits).
+- **Applies to**: JavaScript (`**/*.js`) and Markdown (`**/*.md`)
+- **Rules**:
+  - Zero lint errors required
+  - Max line length: 120 (target 80)
+  - Markdown: Require code block languages
+- **Auto-Fix**:
+  - JS: `npm run lint:fix`
+  - MD: `npm run md:fix`
+- **Reference**: [STANDARDS.md](./STANDARDS.md#formatting--commits)
+
+---
 
 ## Git Commit Messages
 
-- Applies to `COMMIT_MSG` file.
-- Enforce Conventional Commit format (e.g., `feat:`, `fix:`).
-- Reference: [Commit Guidelines](./STANDARDS.md#commit-guidelines).
+- **Applies to**: `COMMIT_MSG`
+- **Format**: `type(scope): description`
+- **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- **Examples**:
+  - `feat(scenes): add weather display`
+  - `fix(mqtt): handle connection timeout`
+  - `docs: update code quality standards`
+- **Reference**: [STANDARDS.md](./STANDARDS.md#commit-guidelines)
 
-## Require Documentation
+---
 
-- Applies to `lib/*` and `scenes/*` directories.
-- Require a `README.md` in each critical directory.
-- Reference: [Documentation Standards](./STANDARDS.md#documentation).
+## Documentation Requirements
 
-## Require JSDoc
+- **Applies to**: `lib/*`, `scenes/*`, `docs/*`
+- **Rules**:
+  - Each directory requires `README.md`
+  - All public functions require JSDoc
+  - Author tag: `[Name] ([initials]) with assistance from [AI Tool]`
+- **Example JSDoc**:
 
-- Applies to JavaScript files in `lib/` and `scenes/` (`**/*.js`).
-- Require JSDoc comments on all exported functions.
-- Reference: [Code Documentation Standards](./STANDARDS.md#code-documentation).
+```javascript
+/**
+ * Calculates user discount based on loyalty points
+ * @param {number} points - User loyalty points
+ * @param {Object} config - Discount configuration
+ * @returns {number} Discount percentage (0-100)
+ * @author Markus Barta (mba) with assistance from Cursor AI
+ */
+function calculateDiscount(points, config) {
+  /* ... */
+}
+```
 
-## Shell Script Standards (Server)
+- **Reference**: [STANDARDS.md](./STANDARDS.md#documentation)
 
-- Applies to shell scripts in `scripts/` (`**/*.sh`).
-- Require POSIX shebang (`#!/usr/bin/env bash`).
-- Reference: [Shell Standards](./STANDARDS.md#shell-standards).
+---
 
-## Fish Shell Usage (Clients & Servers)
+## Shell Script Standards
 
-- Applies to shell scripts (`**/*.sh`).
-- Prefer `fish` shell for interactive usage; fallback to `bash` after 3 failed attempts.
-- Convert AI-generated bash syntax to fish or write portable scripts.
-- Reference: [Shell Standards](./STANDARDS.md#shell-standards).
+### Server Scripts
+
+- **Applies to**: `scripts/**/*.sh`
+- **Requirements**:
+  - Shebang: `#!/usr/bin/env bash`
+  - POSIX-compliant for NixOS server compatibility
+- **Reference**: [STANDARDS.md](./STANDARDS.md#shell-standards)
+
+### Interactive Usage
+
+- **Applies to**: All shell scripts (`**/*.sh`)
+- **Preference**: `fish` shell syntax when possible
+- **Fallback**: `bash` after 3 failed attempts or if fish adds complexity
+- **Reference**: [STANDARDS.md](./STANDARDS.md#shell-standards)
+
+---
+
+## Scene Development Standards
+
+- **Applies to**: `scenes/**/*.js`
+- **Requirements**:
+  - **Interface**: Export `name`, `render`, `wantsLoop` (required); `init`,
+    `cleanup` (recommended)
+  - **Configuration**: Use configuration objects, no magic numbers
+  - **Render Contract**: Return number (delay ms) or null (complete)
+- **Example**:
+
+```javascript
+const SCENE_CONFIG = Object.freeze({
+  DISPLAY: {
+    WIDTH: 64,
+    HEIGHT: 64,
+  },
+  TIMING: {
+    FRAME_INTERVAL_MS: 200,
+  },
+});
+
+module.exports = {
+  name: 'my-scene',
+  wantsLoop: true,
+  async render(device, context) {
+    // Use config, not magic numbers
+    device.drawText('Hello', SCENE_CONFIG.DISPLAY.WIDTH / 2, 10);
+    await device.push();
+    return SCENE_CONFIG.TIMING.FRAME_INTERVAL_MS;
+  },
+};
+```
+
+- **Reference**: [docs/SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md)
+
+---
+
+## Testing Protocol
+
+### Local Testing
+
+- **Preferred**: Use `mock` driver to avoid device conflicts
+- **Real Device**: Requires user permission
+
+### Live Server Testing
+
+1. Deploy changes (push to main)
+2. Wait for Watchtower deployment
+3. Verify build: Check `/home/pixoo/<ip>/scene/state` for matching
+   `buildNumber` and `gitCommit`
+4. Run tests if build matches
+5. Record results in `docs/BACKLOG.md` with exact build info
+
+**Reference**: [STANDARDS.md](./STANDARDS.md#testing-protocol)
+
+---
+
+## Pre-Commit Checklist
+
+Before committing, ensure:
+
+- [ ] No magic numbers (use named constants)
+- [ ] Functions < 50 lines, complexity < 10
+- [ ] All public functions have JSDoc
+- [ ] `npm run lint:fix` passes
+- [ ] `npm run md:fix` passes
+- [ ] `npm test` passes (80%+ coverage for new code)
+- [ ] Documentation updated
+
+**Reference**: [STANDARDS.md](./STANDARDS.md#developer-checklists)
+
+---
+
+## Key Principles
+
+1. **No Magic Numbers**: Extract to named constants with `Object.freeze()`
+2. **Keep Functions Small**: Max 50 lines, max 10 complexity
+3. **Fail Fast**: Guard clauses and early returns
+4. **Document Everything**: JSDoc for all public APIs
+5. **Test Thoroughly**: 80%+ coverage for new code
+
+**When in doubt**: Prefer clarity over cleverness. Write code for humans first,
+computers second.
+
+---
+
+**Status**: ✅ Active and enforced  
+**Last Updated**: 2025-09-30  
+**Version**: 2.0.0

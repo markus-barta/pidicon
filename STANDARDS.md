@@ -1,4 +1,11 @@
-# Development Guide: Professional Engineering Standards
+# Development Standards
+
+## Professional Engineering Guidelines for Pixoo Daemon
+
+**Last Updated**: 2025-09-30  
+**Status**: Active
+
+---
 
 ## 🎯 Mission Statement
 
@@ -6,235 +13,329 @@ This guide establishes the professional engineering standards for the Pixoo
 Daemon project, fostering a high-quality, maintainable, and performant
 codebase.
 
-## ⭐ Guiding Principle: Pragmatism over Dogma
+---
 
-Standards are guidelines, not immutable laws. The ultimate goal is a robust and
-maintainable system. Always favor clarity, simplicity, and pragmatism.
+## ⭐ Guiding Principle
 
-## ⏱️ Universal Timeout
+**Pragmatism over Dogma**: Standards are guidelines, not immutable laws. The
+ultimate goal is a robust and maintainable system. Always favor clarity,
+simplicity, and pragmatism.
 
-- **Applies to all files** (`*`).
-- **Timeout after 30 minutes** to prevent runaway operations and ensure resource efficiency.
-- **Scope**: Applies only to development/testing activities and operations triggered by Cursor/AI agents.
-- **Production Exclusion**: The real daemon, scenes, and production operations run indefinitely without timeout.
+---
+
+## 📋 Documentation Structure
+
+This project follows a hierarchical documentation approach:
+
+### **Quick Reference** (This File)
+
+- Project-specific rules and workflows
+- Testing protocols
+- Commit guidelines
+- Shell standards
+
+### **Detailed Guides** (docs/)
+
+- **[CODE_QUALITY.md](./docs/CODE_QUALITY.md)** - Modern best practices for
+  senior developers
+  - No magic numbers
+  - Function design (complexity, parameters, purity)
+  - Naming conventions
+  - Error handling
+  - Async/await patterns
+  - Defensive programming
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design and patterns
+- **[SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md)** - Scene development
+  guide
 
 ---
 
 ## 📋 Table of Contents
 
-- [🧹 Code & Documentation](#code--documentation)
-- [🧪 Testing & Performance](#testing--performance)
-- [🚨 Error Handling & Security](#error-handling--security)
-- [📝 Formatting & Commits](#formatting--commits)
-- [🔧 Tooling & Checklists](#tooling--checklists)
-- [🐟 Shell Standards](#shell-standards)
+- [Code Quality](#code-quality)
+- [Documentation](#documentation)
+- [Testing & Performance](#testing--performance)
+- [Error Handling & Security](#error-handling--security)
+- [Formatting & Commits](#formatting--commits)
+- [Scene Development](#scene-development)
+- [Testing Protocol](#testing-protocol)
+- [Shell Standards](#shell-standards)
+- [Developer Checklists](#developer-checklists)
 
 ---
 
-## 🧹 Code & Documentation {#code-documentation}
+## 💎 Code Quality
 
-### **Code Quality**
+### **Core Standards**
 
-- **DRY (Don't Repeat Yourself)**: Abstract repeated logic into shared
-  utilities in `/lib`. Avoid duplication.
-- **SOLID Principles**: Adhere to Single Responsibility, Open/Closed, Liskov
-  Substitution, Interface Segregation, and Dependency Inversion.
-- **Best Practices**: Use descriptive names, aim for small functions (<50
-  lines), and write comments that explain _why_, not _what_.
+- **No Magic Numbers**: Use named constants (see
+  [CODE_QUALITY.md](./docs/CODE_QUALITY.md#no-magic-numbers))
+- **DRY Principle**: Abstract repeated logic into `/lib` utilities
+- **SOLID Principles**: Follow Single Responsibility, Open/Closed, Liskov
+  Substitution, Interface Segregation, Dependency Inversion
+- **Function Limits**:
+  - Max 50 lines per function (error if exceeded)
+  - Max 5 parameters (use options object for 5+)
+  - Max cyclomatic complexity: 10
+- **Immutability**: Use `Object.freeze()` for constants, spread operators for
+  copies
+- **Pure Functions**: Prefer functions without side effects
 
-### **Documentation**
+**👉 See [docs/CODE_QUALITY.md](./docs/CODE_QUALITY.md) for comprehensive
+guidelines.**
 
-- **JSDoc**: Document all public functions and classes. Explain the _purpose_
-  and _intent_ of the code. The `@author` tag should credit both the human
-  developer and any AI assistance. The recommended format is:
-  `[Developer Name] ([developer initials]) with assistance from [AI Tool Name] ([Currently selected AI Model])`
-  (e.g., `mba (Markus Barta) with assistance from Cursor AI`).
-- **READMEs**: Every major directory (`/lib`, `/scenes`) must have a `README.md`
-  explaining its purpose and architecture.
+### **Naming Conventions**
+
+- **Constants**: `SCREAMING_SNAKE_CASE` with `Object.freeze()`
+- **Variables**: `camelCase`
+- **Functions**: `verbNoun` pattern (e.g., `getUserData`, `isValid`)
+- **Classes**: `PascalCase`
+- **Private**: Prefix with `_` (e.g., `_privateMethod`)
+- **Boolean**: `is`, `has`, `can` prefix (e.g., `isActive`, `hasPermission`)
 
 ---
 
-## 🧪 Testing & Performance {#testing--performance}
+## 📚 Documentation
+
+### **JSDoc Requirements**
+
+- **Required**: All public functions and classes in `/lib` and `/scenes`
+- **Include**: Purpose, parameters, return values, examples
+- **Author Tag**: `[Name] ([initials]) with assistance from [AI Tool]`
+  - Example: `Markus Barta (mba) with assistance from Cursor AI`
+
+### **README Requirements**
+
+- **Required**: Every major directory (`/lib`, `/scenes`, `/docs`)
+- **Content**: Purpose, architecture, usage examples
+
+---
+
+## 🧪 Testing & Performance
 
 ### **Testing Strategy**
 
-- **Philosophy**: Build confidence and prevent regressions. Prioritize tests for
-  critical paths and complex logic.
-- **Pyramid**: Use fast, isolated **Unit Tests** for the foundation,
-  **Integration Tests** to verify module interactions, and **Manual/E2E Tests**
-  for visual validation.
+- **Philosophy**: Build confidence, prevent regressions
+- **Pyramid**:
+  - **Unit Tests**: Fast, isolated (foundation)
+  - **Integration Tests**: Module interactions
+  - **E2E/Manual**: Visual validation
+- **Coverage**:
+  - Critical paths: 100%
+  - New code: 80%+
+  - Legacy: Improve gradually
 
 ### **Performance**
 
-- **Data Structures**: Use the right tool for the job (`Map`, `Set`, `Array`).
-- **Batching**: Minimize device communication overhead by batching operations.
-- **Profiling**: Identify bottlenecks with profiling tools before optimizing.
+- **Data Structures**: Use `Map` for lookups, `Set` for unique values, `Array`
+  for ordered data
+- **Batching**: Minimize device communication overhead
+- **Profiling**: Identify bottlenecks before optimizing
 
 ---
 
-## 🚨 Error Handling & Security {#error-handling--security}
+## 🚨 Error Handling & Security
 
-### **Error Handling & Logging**
+### **Error Handling**
 
-- **Fail Fast**: Validate inputs and state early. Use specific error types
-  (`ValidationError`, `DeviceError`).
-- **Structured Logging**: Use the `lib/logger.js` wrapper with appropriate
-  levels (`error`, `warn`, `ok`, `info`, `debug`) and always include a
-  metadata object for context.
+- **Fail Fast**: Validate inputs early with guard clauses
+- **Specific Errors**: Use custom error types (`ValidationError`,
+  `DeviceError`)
+- **Structured Logging**: Use `lib/logger.js` with levels (`error`, `warn`,
+  `ok`, `info`, `debug`)
+- **Actionable Messages**: Include context (what failed, why, how to fix)
 
 ### **Security**
 
-- **Input Validation**: Never trust external inputs. Validate all data from MQTT.
-- **Dependencies**: Keep dependencies updated and scan for vulnerabilities.
-- **Error Messages**: Do not leak sensitive information in external-facing
-  errors.
+- **Input Validation**: Never trust external inputs (MQTT, user input)
+- **Dependencies**: Keep updated, scan for vulnerabilities
+- **Error Messages**: Don't leak sensitive information
 
 ---
 
-## 📝 Formatting & Commits {#formatting--commits}
+## 📝 Formatting & Commits
 
-### **Markdown & Linting**
+### **Linting**
 
-- **Zero Errors Policy**: All `.md` and `.js` files must have **zero linting
-  errors**.
-- **Auto-Fixing**: Run `npm run lint:fix` and `npx markdownlint --fix .` before
-  committing.
-- **Key Rules**: Target 80-char line length (max 120), add blank lines around
-  headings/lists, and specify the language for code blocks.
+- **Zero Errors Policy**: All `.md` and `.js` files must have zero lint errors
+- **Auto-Fix**: Run `npm run lint:fix` before committing
+- **Line Length**: Target 80 chars, max 120 chars
+
+### **Markdown**
+
+- **Languages**: Always specify language for code blocks
+- **Blank Lines**: Around headings and lists
+- **Auto-Fix**: Run `npm run md:fix` before committing
 
 ### **Commit Guidelines**
 
-- **Conventional Commits**: Follow the `type(scope): description` format.
-- **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
+- **Format**: `type(scope): description`
+- **Types**:
+  - `feat`: New feature
+  - `fix`: Bug fix
+  - `docs`: Documentation
+  - `style`: Formatting (no code change)
+  - `refactor`: Code restructuring
+  - `test`: Tests
+  - `chore`: Build, deps, etc.
+- **Examples**:
+  - `feat(scenes): add weather display scene`
+  - `fix(mqtt): handle connection timeout`
+  - `docs: update deployment guide`
 
 ---
 
-## 🔧 Tooling & Checklists {#tooling--checklists}
+## 🎨 Scene Development
 
-### **Scene Development & Shell Standards**
+### **Scene Interface**
 
-- **Scene Interface**: Scenes must export `name`, `render`, and `wantsLoop`.
-  `init` and `cleanup` are recommended for consistency.
-  `render` must return a `number` delay in milliseconds for the central
-  scheduler, or a non-number (e.g., `null`) to signal completion.
-  **Always** call `await device.push()` to display changes, but minimize its
-  use as it is a time-intensive operation.
-- **Shell Scripts**: Server-side scripts **must** use `#!/usr/bin/env bash` for
-  portability. Use `fish` syntax for local development.
-- **Testing Locally**: Local testing is encouraged, but be mindful that the device
-  may also be accessed by the server or other users on the local network. Whenever
-  possible, use the "mock" driver to avoid conflicts with the physical device. If
-  testing on the real device is necessary, always obtain permission from the user
-  before proceeding.
+Scenes must export:
 
-### **Live Server Testing Protocol**
+- **Required**: `name`, `render`, `wantsLoop`
+- **Recommended**: `init`, `cleanup`
 
-- **Deploy & Confirm**: After pushing changes, ask the user to confirm when
-  Watchtower has deployed the new build and the daemon has restarted.
-- **Single Check**: Once the user confirms, perform a single check of the scene
-  state topic (default: `/home/pixoo/<ip>/scene/state`, configurable via
-  `SCENE_STATE_TOPIC_BASE`) to verify `buildNumber` and `gitCommit` match the
-  local build/commit. If they do not match, stop and notify the user.
-- **Run Tests**: If the build matches, proceed with live tests.
-- **Traceability**: Record the confirmed `buildNumber`, `gitCommit`, and
-  timestamp in the backlog test table when executing live tests. Update the
-  relevant row(s) in `docs/BACKLOG.md` with these values.
+### **Render Contract**
+
+- **Return**: Number (delay in ms) or non-number (`null`) to signal completion
+- **Device Push**: Always call `await device.push()` to display changes
+- **Minimize Pushes**: It's time-intensive, batch operations when possible
+
+### **Configuration**
+
+- **No Magic Numbers**: Use configuration objects (see
+  [SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md#configurable-constants))
+- **Example**:
+
+```javascript
+const SCENE_CONFIG = Object.freeze({
+  DISPLAY: {
+    WIDTH: 64,
+    HEIGHT: 64,
+    CENTER_X: 32,
+    CENTER_Y: 32,
+  },
+  TIMING: {
+    FRAME_INTERVAL_MS: 200,
+  },
+});
+```
+
+**👉 See [docs/SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md) for complete
+guide.**
 
 ---
 
-## ✅ Developer Checklists {#developer-checklists}
+## 🧪 Testing Protocol
+
+### **Local Testing**
+
+- **Preferred**: Use `mock` driver to avoid conflicts
+- **Real Device**: Get user permission first
+- **Command**: `node daemon.js` with appropriate driver setting
+
+### **Live Server Testing**
+
+1. **Deploy**: Push changes, wait for Watchtower to deploy
+2. **Confirm**: User confirms daemon restart
+3. **Verify Build**: Check `/home/pixoo/<ip>/scene/state` topic for matching
+   `buildNumber` and `gitCommit`
+4. **Run Tests**: If build matches, proceed
+5. **Traceability**: Record results in `docs/BACKLOG.md` with exact
+   `buildNumber`, `gitCommit`, timestamp
+
+### **Build Reference**
+
+- **Required**: Every test entry MUST include exact `buildNumber` and
+  `gitCommit`
+- **Format**: `buildNumber: 447, gitCommit: 36d0981`
+
+---
+
+## 🐟 Shell Standards
+
+### **Interactive Use**
+
+- **Preferred**: `fish` shell syntax for local development
+- **Fallback**: `bash` if `fish` adds complexity
+
+### **Scripts & Hooks**
+
+- **Required**: `#!/usr/bin/env bash` shebang
+- **Portability**: POSIX-compliant for server (NixOS) compatibility
+- **Location**: Place in `/scripts` directory
+
+---
+
+## ✅ Developer Checklists
 
 ### **Before Committing**
 
-- [ ] **Plan & Validate**: Have you planned the work and tested it locally?
-- [ ] **Quality & Docs**: Is the code clean, DRY, and well-documented? Have you
-      updated relevant READMEs?
-- [ ] **Standards & Linters**: Does it follow all project standards? Have you
-      run the linters and fixed all issues?
+- [ ] Code follows [CODE_QUALITY.md](./docs/CODE_QUALITY.md) standards
+- [ ] No magic numbers (extracted to named constants)
+- [ ] Functions < 50 lines, complexity < 10
+- [ ] All public functions have JSDoc
+- [ ] Tests written/updated (80%+ coverage for new code)
+- [ ] `npm run lint:fix` passes
+- [ ] `npm run md:fix` passes
+- [ ] `npm test` passes
+- [ ] Documentation updated (READMEs, guides)
+
+### **Code Review**
+
+- [ ] Does code solve the problem effectively?
+- [ ] Is architecture sound and code readable?
+- [ ] Are there magic numbers? (should be constants)
+- [ ] Is complexity manageable? (functions < 50 lines, complexity < 10)
+- [ ] Is testing coverage adequate?
+- [ ] Does documentation reflect changes?
 
 ### **Backlog Hygiene**
 
-- **Single Source of Truth**: The backlog in `docs/BACKLOG.md` is authoritative
-  and must be kept up to date at all times.
-- **Structure**: Maintain the summary table (ID, TODO, State, Test Name, Last
-  Test Result, Last Test Run) and detailed sections per ID.
-- **Traceability**: Update the backlog when tasks start, when tests are run, and
-  when results are known.
-- **Add New Items**: If new issues or requirements are discovered during work or
-  testing, create a new backlog ID immediately (e.g., BUG-011, GATE-012) and
-  record the context. Keep the backlog comprehensive and current.
-- **Build Reference Required**: Every test entry MUST include the exact
-  `buildNumber` (and preferably `gitCommit`) that the test ran against.
-
-#### **Code Review**
-
-- [ ] Does the code solve the problem effectively?
-- [ ] Is the architecture sound and the code readable?
-- [ ] Is testing coverage adequate and does documentation reflect the changes?
+- **Single Source of Truth**: `docs/BACKLOG.md` is authoritative
+- **Structure**: Maintain summary table (ID, TODO, State, Test Name, Result,
+  Timestamp)
+- **Traceability**: Update when tasks start, tests run, results known
+- **New Items**: Create backlog ID immediately for new issues (e.g., BUG-011)
+- **Build Reference**: Every test MUST include exact `buildNumber` and
+  `gitCommit`
 
 ---
 
-## 🎨 Rendering & Text Standards {#rendering-text-standards}
+## 📚 Related Documentation
 
-### **Text Rendering**
+### **Core Standards**
 
-- **Exact Font Metrics**: Always use `FONT_METRICS` for character dimensions, never guess or estimate
-- **Professional Function Names**: Use `drawText()` instead of pixel-perfect monikers
-- **Optional Parameters**: Make backdrop parameters truly optional with sensible defaults
-- **Consistent Naming**: Use `position` instead of `pos`, `alignment` instead of `align`
-- **Font Metric Usage**: Leverage `measureText()` for exact bounds calculation
+- **[CODE_QUALITY.md](./docs/CODE_QUALITY.md)** - ⭐ Comprehensive code quality
+  guide
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System design patterns
+- **[SCENE_DEVELOPMENT.md](./docs/SCENE_DEVELOPMENT.md)** - Scene development
+  guide
 
-#### **Text Rendering Best Practices**
+### **Operations**
 
-```javascript
-// Preferred: Professional API with optional parameters
-await drawText(
-  device,
-  'Hello',
-  [10, 20],
-  [255, 255, 255, 255],
-  'left',
-  [0, 0, 0, 128],
-  1,
-);
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Deployment pipeline & CI/CD
+- **[VERSIONING.md](./docs/VERSIONING.md)** - Version management strategy
 
-// Minimal: Just text at position
-await drawText(device, 'Hello', [10, 20], [255, 255, 255, 255]);
+### **Project Management**
 
-// With backdrop
-await drawText(
-  device,
-  'Complete',
-  [32, 32],
-  [255, 255, 255, 200],
-  'center',
-  BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
-  2,
-);
-```
-
-#### **Character Font Specifications**
-
-- **Base Characters**: Use exact pixel widths from `FONT_METRICS.CHARS`
-- **Special Characters**: Account for narrow characters (space: 2px, 'I': 3px, 'M': 5px)
-- **Font Dimensions**: Use `FONT_METRICS.LINE_HEIGHT` (7px) for consistent spacing
-- **Baseline**: Characters sit on `FONT_METRICS.BASELINE` (5px line)
-
-### **Graphics Primitives**
-
-- **Rectangle Drawing**: Use `drawRectangleRgba()` for precise bounds
-- **Line Drawing**: Use `drawLine()` for smooth anti-aliased lines
-- **Text Bounds**: Always calculate exact bounds before drawing backdrops
-- **Device Limits**: Ensure all rendering stays within 64x64 pixel bounds
+- **[BACKLOG.md](./docs/BACKLOG.md)** - Task tracking & test results
 
 ---
 
-## 🐟 Shell Standards {#shell-standards}
+## 🎓 Summary
 
-- **Command Line Usage**: For local or server-side shell commands, prefer the use
-  of `fish` shell syntax (e.g., `set -x VAR value`) whenever practical.
-  If `fish` syntax introduces unnecessary complexity or reduces clarity,
-  default to standard `bash` syntax.
-- **Scripts & Hooks**: All scripts intended for the server (NixOS) or for Git
-  hooks **must** use `#!/usr/bin/env bash` and be written in POSIX-compliant
-  shell script to ensure maximum portability.
+Write code that is **clear, maintainable, and testable**:
+
+1. **No magic numbers** - Use named constants
+2. **Keep functions small** - Max 50 lines, complexity < 10
+3. **Fail fast** - Validate early with guard clauses
+4. **Test everything** - 80%+ coverage for new code
+5. **Document well** - JSDoc for all public APIs
+
+**When in doubt**: Prefer simplicity over cleverness, and optimize for the next
+developer (probably you in 6 months).
+
+---
+
+**Status**: ✅ Active and enforced via ESLint, code review, and CI/CD  
+**Last Updated**: 2025-09-30
