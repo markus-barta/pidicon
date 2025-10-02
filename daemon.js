@@ -6,7 +6,6 @@
 
 const path = require('path');
 
-const CommandRouter = require('./lib/commands/command-router');
 const DriverCommandHandler = require('./lib/commands/driver-command-handler');
 const ResetCommandHandler = require('./lib/commands/reset-command-handler');
 const SceneCommandHandler = require('./lib/commands/scene-command-handler');
@@ -121,20 +120,6 @@ container.register(
       publishMetrics,
     }),
 );
-
-// Create CommandRouter with all handlers
-container.register('commandRouter', ({ logger }) => {
-  const handlers = {
-    scene: container.resolve('sceneCommandHandler'),
-    driver: container.resolve('driverCommandHandler'),
-    reset: container.resolve('resetCommandHandler'),
-    state: container.resolve('stateCommandHandler'),
-  };
-
-  return new CommandRouter({ logger, handlers });
-});
-
-const commandRouter = container.resolve('commandRouter');
 
 logger.ok('✅ DI Container initialized with services:', {
   services: container.getServiceNames(),
@@ -276,10 +261,26 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
 }
 
-// Register MQTT message handler with CommandRouter
-// CommandRouter will dispatch to appropriate command handlers
-mqttService.on('message', async ({ topic, payload }) => {
-  await commandRouter.route(topic, payload);
+// Register command handlers with MqttService
+// Each handler is resolved from the DI container and registered
+mqttService.registerHandler('scene', async (deviceIp, action, payload) => {
+  const handler = container.resolve('sceneCommandHandler');
+  await handler.handle(deviceIp, action, payload);
+});
+
+mqttService.registerHandler('driver', async (deviceIp, action, payload) => {
+  const handler = container.resolve('driverCommandHandler');
+  await handler.handle(deviceIp, action, payload);
+});
+
+mqttService.registerHandler('reset', async (deviceIp, action, payload) => {
+  const handler = container.resolve('resetCommandHandler');
+  await handler.handle(deviceIp, action, payload);
+});
+
+mqttService.registerHandler('state', async (deviceIp, action, payload) => {
+  const handler = container.resolve('stateCommandHandler');
+  await handler.handle(deviceIp, action, payload);
 });
 
 // Connect to MQTT broker and subscribe to topics
