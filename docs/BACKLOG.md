@@ -33,6 +33,13 @@ of truth for upcoming work and its validation status.
 | ARC-302  | Implement Dependency Injection: Add DI container for testability       | completed   | TEST-ARC-di-container  | pass (43/43 tests)         | 2025-09-30T20:20:00Z |
 | ARC-303  | Consolidate State Management: Single source of truth for state         | completed   | TEST-ARC-state-store   | pass (96/96 tests)         | 2025-09-30T23:00:00Z |
 | ARC-304  | Extract Command Handlers: Separate command processing logic            | completed   | TEST-ARC-cmd-handlers  | pass (107/107 tests)       | 2025-10-02T18:30:00Z |
+| BUG-012  | Critical: MQTT routing broken after Phase 2 refactoring                | completed   | TEST-BUG-mqtt-routing  | pass (143/143 tests)       | 2025-10-02T19:15:00Z |
+| BUG-013  | Critical: StateCommandHandler missing 100+ lines of logic              | completed   | TEST-BUG-state-handler | pass (152/152 tests)       | 2025-10-02T19:45:00Z |
+| TST-302  | Add proper integration tests for command handlers                      | completed   | TEST-TST-cmd-integ     | pass (152/152 tests)       | 2025-10-02T20:00:00Z |
+| TST-303  | Add device-adapter.js comprehensive tests                              | completed   | TEST-TST-device-adapt  | pass (36 tests)            | 2025-10-02T21:00:00Z |
+| REV-301  | Code quality review: magic numbers, complexity, standards              | completed   | TEST-REV-code-quality  | pass (5/5 rating)          | 2025-10-02T21:30:00Z |
+| REV-302  | Performance review: hot paths, memory, optimization opportunities      | completed   | TEST-REV-performance   | pass (4/5 rating)          | 2025-10-02T22:00:00Z |
+| DOC-301  | Documentation polish: consistency, Phase 2 reports, structure          | completed   | TEST-DOC-polish        | pass (updated)             | 2025-10-02T22:30:00Z |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
 | ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
