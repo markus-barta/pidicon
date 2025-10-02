@@ -41,6 +41,7 @@ of truth for upcoming work and its validation status.
 | REV-302  | Performance review: hot paths, memory, optimization opportunities      | completed   | TEST-REV-performance   | pass (4/5 rating)          | 2025-10-02T22:00:00Z |
 | DOC-301  | Documentation polish: consistency, Phase 2 reports, structure          | completed   | TEST-DOC-polish        | pass (updated)             | 2025-10-02T22:30:00Z |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | planned     | TEST-ARC-service-layer | -                          | -                    |
+| UI-401   | Web UI: Control panel for scene/device management                      | planned     | TEST-UI-web-panel      | -                          | -                    |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
 | ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
 | TST-301  | Improve Test Coverage: Achieve 80% coverage for critical modules       | planned     | TEST-TST-coverage      | -                          | -                    |
@@ -856,6 +857,197 @@ hot paths for improved performance.
 - Load test: 1000 scene switches
 - Memory test: 24-hour stability run
 - Verify metrics within targets
+
+---
+
+### UI-401: Web UI - Control panel for scene and device management
+
+- **Priority**: P1 (Should Have - User Experience)
+- **Effort**: 3-5 days (depends on ARC-305)
+- **Risk**: Low (additive feature)
+- **Dependencies**: ARC-305 (Service Layer) recommended but not required
+
+**Summary**: Add a web-based control panel for managing Pixoo devices without
+MQTT commands.
+
+**Current Problem**:
+
+- Only MQTT interface available (requires mosquitto_pub commands)
+- No visual interface for non-technical users
+- Hard to see available scenes at a glance
+- No quick way to test scenes or debug issues
+
+**Implementation Plan**:
+
+1. Create `web/` directory for web UI files
+2. Add Express.js server (minimal, lightweight)
+3. Create REST API endpoints:
+   - `GET /api/devices` - List configured devices
+   - `GET /api/scenes` - List available scenes
+   - `POST /api/devices/:ip/scene` - Switch scene
+   - `POST /api/devices/:ip/display` - Turn display on/off
+   - `POST /api/devices/:ip/reset` - Soft reset device
+   - `POST /api/daemon/restart` - Restart daemon (optional)
+4. Create simple HTML/CSS/JS frontend
+5. Add authentication (basic auth or API key)
+6. Make port configurable (default: 10829, considering availability)
+7. Add graceful shutdown handling
+
+**Web UI Features**:
+
+- **Device Management**:
+  - List all configured devices (IP, current scene, status)
+  - Turn display on/off
+  - Soft reset device
+  - View device metrics (frame rate, errors)
+
+- **Scene Control**:
+  - List all available scenes
+  - Preview scene (thumbnail/description if available)
+  - Switch to scene with one click
+  - Pass scene parameters (color, speed, etc.)
+
+- **System Control**:
+  - View daemon status (version, uptime, memory)
+  - Restart daemon (with confirmation)
+  - View recent logs (last 50 lines)
+
+- **Monitoring**:
+  - Real-time scene state via WebSocket or SSE
+  - Device metrics (frame rate, push count)
+  - Error notifications
+
+**Technology Stack**:
+
+```javascript
+// Minimal dependencies:
+- express: ^4.18.0          // Web server
+- ws: ^8.14.0               // WebSocket (optional, for real-time updates)
+// No heavy frameworks (React, Vue) - keep it simple
+```
+
+**API Design**:
+
+```javascript
+// GET /api/devices
+{
+  "devices": [
+    {
+      "ip": "192.168.1.159",
+      "currentScene": "clock",
+      "status": "running",
+      "driver": "real",
+      "metrics": { "fps": 5, "errors": 0 }
+    }
+  ]
+}
+
+// POST /api/devices/192.168.1.159/scene
+{
+  "scene": "graphics_engine_demo",
+  "clear": true
+}
+
+// Response:
+{
+  "success": true,
+  "message": "Switched to graphics_engine_demo"
+}
+```
+
+**UI Mockup** (Simple HTML/CSS):
+
+```text
+┌──────────────────────────────────────────────────┐
+│  Pixoo Control Panel                    v2.0.0  │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  Device: 192.168.1.159                          │
+│  Status: Running | Scene: clock | FPS: 5        │
+│                                                  │
+│  [Turn Off Display]  [Reset Device]             │
+│                                                  │
+├──────────────────────────────────────────────────┤
+│  Available Scenes:                              │
+│                                                  │
+│  ○ empty           [Switch]                     │
+│  ● clock           [Switch] ← Currently active  │
+│  ○ startup         [Switch]                     │
+│  ○ graphics_engine_demo [Switch]                │
+│  ○ performance-test     [Switch]                │
+│                                                  │
+├──────────────────────────────────────────────────┤
+│  Daemon Status:                                 │
+│  Version: 2.0.0 | Build: 478 | Uptime: 2h 15m  │
+│  Memory: 18MB | Tests: 162/162                  │
+│                                                  │
+│  [Restart Daemon]                               │
+└──────────────────────────────────────────────────┘
+```
+
+**Configuration**:
+
+```javascript
+// In daemon.js or config file:
+const WEB_UI_ENABLED = process.env.PIXOO_WEB_UI !== 'false';
+const WEB_UI_PORT = parseInt(process.env.PIXOO_WEB_PORT || '10829');
+const WEB_UI_AUTH = process.env.PIXOO_WEB_AUTH; // optional: "user:password"
+
+if (WEB_UI_ENABLED) {
+  const webServer = require('./web/server');
+  webServer.start(WEB_UI_PORT, container);
+}
+```
+
+**Security Considerations**:
+
+- Basic authentication (username/password)
+- API key support (for programmatic access)
+- Rate limiting (prevent abuse)
+- CORS configuration (restrict origins)
+- No sensitive data in responses (no MQTT passwords)
+
+**Acceptance Criteria**:
+
+- ✅ Web UI accessible on configurable port (default 10829)
+- ✅ Can list all devices and current scenes
+- ✅ Can switch scenes with one click
+- ✅ Can turn display on/off
+- ✅ Can reset device
+- ✅ Basic authentication (optional but recommended)
+- ✅ Mobile-responsive design
+- ✅ Zero breaking changes to existing MQTT interface
+- ✅ Graceful shutdown (doesn't block daemon)
+
+**Test Plan (TEST-UI-web-panel)**:
+
+- Manual tests: Open browser, test all buttons
+- Integration tests: HTTP API endpoints with supertest
+- Verify: MQTT interface still works (no conflicts)
+
+**Implementation Strategy**:
+
+**Option A: Without Service Layer** (Quick & Dirty)
+
+- Directly call sceneManager, deviceAdapter, etc. from HTTP handlers
+- Duplicate some logic from command handlers
+- Effort: 2-3 days
+- Technical debt: Medium (duplication)
+
+**Option B: With Service Layer** (Recommended)
+
+- First implement ARC-305 (Service Layer)
+- Then add web UI using services
+- Effort: 3-5 days total (2-3 for service layer, 1-2 for web UI)
+- Technical debt: None (clean architecture)
+
+**Recommendation**: **Option B** - Do ARC-305 first, then UI-401 becomes trivial.
+
+**Port Selection**:
+
+- Default: 10829 (user preference)
+- Fallback: Auto-select if 10829 busy
+- Environment variable: `PIXOO_WEB_PORT=10829`
 
 ---
 
