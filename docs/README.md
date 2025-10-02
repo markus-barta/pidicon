@@ -30,8 +30,17 @@
 
 ### **Reports**
 
+#### **Phase 1 Reports**
+
 - **[reports/PHASE1_COMPLETE.md](./reports/PHASE1_COMPLETE.md)** - Phase 1 completion detailed report
 - **[reports/ARCHIVE/ARC-302.md](./reports/ARCHIVE/ARC-302.md)** - Archived: ARC-302 detailed report
+
+#### **Phase 2 Reports**
+
+- **[reports/PHASE2_COMPLETE.md](./reports/PHASE2_COMPLETE.md)** - Phase 2 completion detailed report
+- **[reports/PHASE2_CODE_REVIEW.md](./reports/PHASE2_CODE_REVIEW.md)** - Code quality review (⭐⭐⭐⭐⭐ 5/5)
+- **[reports/PERFORMANCE_REVIEW.md](./reports/PERFORMANCE_REVIEW.md)** - Performance analysis (⭐⭐⭐⭐ 4/5)
+- **[reports/CRITICAL_BUGS_FIXED.md](./reports/CRITICAL_BUGS_FIXED.md)** - Incident report for BUG-012 and BUG-013
 
 ---
 
@@ -57,6 +66,7 @@ Start here:
 ### **For Project Management**
 
 - **[BACKLOG.md](./BACKLOG.md)** - Current tasks and status
+- **[reports/](./reports/)** - Phase completion reports and analysis
 
 ---
 
@@ -75,8 +85,14 @@ docs/
 ├── DOCUMENTATION_STRUCTURE.md       # Doc organization
 ├── CONSOLIDATION_SUMMARY.md         # Consolidation report
 ├── STANDARDS_UPGRADE.md             # Standards upgrade report
-└── reports/                         # Historical reports
-    ├── PHASE1_COMPLETE.md
+├── PHASE2_PLAN.md                   # Phase 2 architectural refactoring plan
+├── PHASE3_PLAN.md                   # Phase 3 quick wins plan
+└── reports/                         # Historical reports & analysis
+    ├── PHASE1_COMPLETE.md           # Phase 1: Foundation (DI, MQTT, State)
+    ├── PHASE2_COMPLETE.md           # Phase 2: Command Handlers
+    ├── PHASE2_CODE_REVIEW.md        # Code quality review (5/5)
+    ├── PERFORMANCE_REVIEW.md        # Performance analysis (4/5)
+    ├── CRITICAL_BUGS_FIXED.md       # Incident report (BUG-012, BUG-013)
     └── ARCHIVE/
         └── ARC-302.md
 ```
