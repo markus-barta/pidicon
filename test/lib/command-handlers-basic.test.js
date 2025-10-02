@@ -119,6 +119,9 @@ describe('Command Handlers - Basic Smoke Tests', () => {
         sceneManager: {},
         getContext: () => ({}),
         publishMetrics: () => {},
+        getDevice: () => ({}),
+        getDriverForDevice: () => 'mock',
+        versionInfo: { version: '1.0.0', buildNumber: 1, gitCommit: 'abc' },
       });
       assert.ok(handler);
     });
@@ -131,10 +134,21 @@ describe('Command Handlers - Basic Smoke Tests', () => {
         lastState: {},
         sceneManager: {
           hasScene: () => true,
-          render: async () => {},
+          switchScene: async () => true,
+          getDeviceSceneState: () => ({
+            currentScene: 'empty',
+            generationId: 1,
+            status: 'running',
+          }),
         },
-        getContext: () => ({ deviceIp: '192.168.1.1' }),
+        getContext: () => ({
+          deviceIp: '192.168.1.1',
+          env: { host: '192.168.1.1' },
+        }),
         publishMetrics: () => {},
+        getDevice: () => ({ clear: async () => {} }),
+        getDriverForDevice: () => 'mock',
+        versionInfo: { version: '1.0.0', buildNumber: 1, gitCommit: 'abc' },
       });
 
       // Should not throw

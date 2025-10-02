@@ -14,6 +14,8 @@ const DeploymentTracker = require('./lib/deployment-tracker');
 const {
   getContext,
   setDriverForDevice,
+  getDevice,
+  getDriverForDevice,
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
@@ -118,6 +120,9 @@ container.register(
       sceneManager,
       getContext,
       publishMetrics,
+      getDevice,
+      getDriverForDevice,
+      versionInfo,
     }),
 );
 
