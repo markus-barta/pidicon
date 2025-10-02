@@ -91,7 +91,7 @@ by Cursor AI.
 
 ## Code Quality Standards ⭐
 
-**NEW: Comprehensive code quality enforcement**
+### NEW: Comprehensive code quality enforcement
 
 - **Applies to**: JavaScript files (`**/*.js`)
 - **Rules**:
