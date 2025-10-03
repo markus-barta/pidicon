@@ -30,7 +30,10 @@
     "pngjs": "^7.0.0",
     "sharp": "^0.33.5",
     "suncalc": "^1.9.0",
-    "vite-plugin-vuetify": "^2.1.2"
+    "vite": "^5.4.0",
+    "vite-plugin-vuetify": "^2.1.2",
+    "vue": "^3.5.0",
+    "vuetify": "^3.7.0"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx}": [
@@ -43,10 +46,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
+    "@vue/test-utils": "^2.4.0",
     "eslint": "^9.5.0",
     "eslint-formatter-codeframe": "^7.32.1",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-promise": "^6.2.0",
-    "lint-staged": "^15.5.2"
+    "happy-dom": "^15.0.0",
+    "lint-staged": "^15.5.2",
+    "vitest": "^2.0.0"
   }
 }
