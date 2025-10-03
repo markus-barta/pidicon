@@ -250,6 +250,20 @@ function startWebServer(container, logger) {
   });
 
   // =========================================================================
+  // SPA FALLBACK - Serve index.html for all non-API routes
+  // =========================================================================
+
+  // Catch-all route for Vue Router (must be last!)
+  app.get('*', (req, res) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    // Serve index.html for all other routes (SPA)
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+
+  // =========================================================================
   // START SERVER
   // =========================================================================
 

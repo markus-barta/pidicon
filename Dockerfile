@@ -30,10 +30,12 @@ ENV GITHUB_REF=${GITHUB_REF}
 ENV BUILD_DATE=${BUILD_DATE}
 ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 
-# Run the build script to generate version.json
+# Build version info and Vue frontend
 RUN npm run build:version
+RUN npm run ui:build
 
 # Prune dev dependencies for a smaller final image
+# (keeps built assets in web/public/)
 RUN npm prune --production
 
 # Start via wrapper script (allows in-container restarts)

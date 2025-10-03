@@ -1,46 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pixoo Control Panel</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>" />
+    <script type="module" crossorigin src="/assets/index-gWIlNWzL.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Lgkx1yrB.css">
   </head>
   <body>
-    <div class="container">
-      <!-- Compact Header -->
-      <header>
-        <div class="header-left">
-          <h1>🎨 Pixoo Control</h1>
-          <div class="build-badge" id="build-badge">
-            Build #<span id="build-number">...</span>
-          </div>
-        </div>
-        <div class="header-right">
-          <div class="status-indicator">
-            <span class="status-dot"></span>
-            <span id="status-text">Running</span>
-          </div>
-          <div class="uptime" id="uptime">Uptime: ...</div>
-          <button id="restart-daemon-btn" class="btn btn-danger btn-sm">
-            🔄 Restart
-          </button>
-        </div>
-      </header>
-
-      <main>
-        <!-- Devices Grid -->
-        <div id="devices-grid" class="device-grid">
-          <div class="loading">Loading devices...</div>
-        </div>
-      </main>
-
-      <footer>
-        <p>Pixoo Daemon Web UI | <span id="version-info">...</span></p>
-      </footer>
-    </div>
-
-    <script src="app.js"></script>
+    <div id="app"></div>
   </body>
 </html>
 

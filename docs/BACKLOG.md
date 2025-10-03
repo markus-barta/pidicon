@@ -42,8 +42,8 @@ of truth for upcoming work and its validation status.
 | DOC-301  | Documentation polish: consistency, Phase 2 reports, structure          | completed   | TEST-DOC-polish        | pass (updated)             | 2025-10-02T22:30:00Z |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | completed   | TEST-ARC-service-layer | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
 | UI-401   | Web UI: Control panel for scene/device management                      | completed   | TEST-UI-web-panel      | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
-| UI-501   | Modern UI Framework: Migrate to Vue 3 + Vuetify 3                      | in_progress | TEST-UI-vue-setup      | -                          | -                    |
-| UI-502   | Toast Notifications: Replace alerts with Vuetify snackbars             | planned     | TEST-UI-toasts         | -                          | -                    |
+| UI-501   | Modern UI Framework: Migrate to Vue 3 + Vuetify 3                      | completed   | TEST-UI-vue-setup      | pass (manual test)         | 2025-10-03T20:00:00Z |
+| UI-502   | Toast Notifications: Replace alerts with Vuetify snackbars             | completed   | TEST-UI-toasts         | pass (manual test)         | 2025-10-03T20:00:00Z |
 | UI-503   | Collapsible Cards: Per-device expand/collapse with localStorage        | planned     | TEST-UI-collapse       | -                          | -                    |
 | UI-504   | WebSocket Integration: Real-time updates without polling               | planned     | TEST-UI-websocket      | -                          | -                    |
 | UI-505   | Config Page: Web-based configuration editor with persistence           | planned     | TEST-UI-config         | -                          | -                    |

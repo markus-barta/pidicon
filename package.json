@@ -4,6 +4,7 @@
   "main": "daemon.js",
   "scripts": {
     "start": "node daemon.js",
+    "build": "npm run build:version && npm run ui:build",
     "build:version": "node scripts/build-version.js",
     "ui:dev": "vite",
     "ui:build": "vite build",

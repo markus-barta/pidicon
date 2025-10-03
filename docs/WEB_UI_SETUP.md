@@ -255,6 +255,7 @@ curl -u admin:secretpassword http://localhost:10829/api/status
    ```
 
 3. Web UI disabled via environment variable
+
    ```bash
    # Verify
    echo $PIXOO_WEB_UI  # Should be empty or "true"
@@ -280,6 +281,7 @@ curl -u admin:secretpassword http://localhost:10829/api/status
    ```
 
 3. Is firewall blocking?
+
    ```bash
    telnet your-server-ip 10829
    ```
@@ -315,15 +317,20 @@ curl -u admin:secretpassword http://localhost:10829/api/status
 - `GET /api/devices/:ip` - Get device info
 - `GET /api/devices/:ip/metrics` - Get device metrics
 - `POST /api/devices/:ip/scene` - Switch scene
+
   ```json
   { "scene": "clock", "clear": true, "payload": {} }
   ```
+
 - `POST /api/devices/:ip/display` - Turn display on/off
+
   ```json
   { "on": true }
   ```
+
 - `POST /api/devices/:ip/reset` - Soft reset device
 - `POST /api/devices/:ip/driver` - Switch driver
+
   ```json
   { "driver": "real" }
   ```
