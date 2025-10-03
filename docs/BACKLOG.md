@@ -42,6 +42,14 @@ of truth for upcoming work and its validation status.
 | DOC-301  | Documentation polish: consistency, Phase 2 reports, structure          | completed   | TEST-DOC-polish        | pass (updated)             | 2025-10-02T22:30:00Z |
 | ARC-305  | Add Service Layer: Business logic abstraction                          | completed   | TEST-ARC-service-layer | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
 | UI-401   | Web UI: Control panel for scene/device management                      | completed   | TEST-UI-web-panel      | pass (152/152 tests)       | 2025-10-02T23:00:00Z |
+| UI-501   | Modern UI Framework: Migrate to Vue 3 + Vuetify 3                      | in_progress | TEST-UI-vue-setup      | -                          | -                    |
+| UI-502   | Toast Notifications: Replace alerts with Vuetify snackbars             | planned     | TEST-UI-toasts         | -                          | -                    |
+| UI-503   | Collapsible Cards: Per-device expand/collapse with localStorage        | planned     | TEST-UI-collapse       | -                          | -                    |
+| UI-504   | WebSocket Integration: Real-time updates without polling               | planned     | TEST-UI-websocket      | -                          | -                    |
+| UI-505   | Config Page: Web-based configuration editor with persistence           | planned     | TEST-UI-config         | -                          | -                    |
+| CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
+| CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
+| CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |
 | ARC-306  | Hexagonal Architecture: Implement ports & adapters pattern             | proposed    | TEST-ARC-hexagonal     | -                          | -                    |
 | ARC-307  | Add Repository Pattern: Data access abstraction                        | proposed    | TEST-ARC-repository    | -                          | -                    |
 | TST-301  | Improve Test Coverage: Achieve 80% coverage for critical modules       | planned     | TEST-TST-coverage      | -                          | -                    |
@@ -1082,3 +1090,811 @@ Based on dependencies and impact:
 ---
 
 **Total Estimated Effort**: 6-10 weeks for Phases 1-3, 2-3 additional weeks for Phase 4
+
+---
+
+## Modern Web UI - Vue.js + Vuetify Stack
+
+### UI-501: Modern UI Framework - Migrate to Vue 3 + Vuetify 3
+
+- **Priority**: P0 (Must Have - Foundation)
+- **Effort**: 2-3 days
+- **Risk**: Medium (complete UI rewrite)
+- **Status**: in_progress
+
+**Summary**: Replace vanilla JavaScript Web UI with Vue 3 + Vuetify 3 for modern,
+component-based architecture with built-in Material Design components.
+
+**Current Problem**:
+
+- Vanilla JS is hard to maintain and scale
+- No component reusability
+- Manual DOM manipulation
+- No built-in UI components
+- Custom CSS for everything
+
+**Implementation Plan**:
+
+1. Install dependencies:
+
+   ```bash
+   npm install vue@3 vuetify@3 @vitejs/plugin-vue vite
+   npm install --save-dev @vue/test-utils vitest
+   ```
+
+2. Set up Vite build system:
+   - Create `vite.config.js` for Vue SFC compilation
+   - Configure Vuetify plugin
+   - Set up dev server proxy to Express backend
+
+3. Create Vue app structure:
+
+   ```
+   web/
+     frontend/          # Vue source files
+       src/
+         main.js        # Vue app entry
+         App.vue        # Root component
+         components/
+           DeviceCard.vue
+           SceneSelector.vue
+           SystemStatus.vue
+         composables/
+           useApi.js
+           useWebSocket.js
+         store/
+           devices.js   # Pinia store
+           scenes.js
+     public/           # Built files (gitignored)
+     server.js         # Express backend (unchanged)
+   ```
+
+4. Create core Vue components:
+   - `DeviceCard.vue` - Collapsible device card with controls
+   - `SceneSelector.vue` - Scene dropdown with next/prev
+   - `SystemStatus.vue` - Header with build number, status
+   - `ToastNotifications.vue` - Vuetify snackbar wrapper
+
+5. Set up Pinia for state management
+6. Add Vuetify theme configuration (dark mode)
+7. Implement API composable (`useApi.js`)
+8. Update build process in `package.json`
+9. Add Dockerfile build step for Vue frontend
+
+**Technology Stack**:
+
+```json
+{
+  "vue": "^3.4.0",
+  "vuetify": "^3.5.0",
+  "pinia": "^2.1.0",
+  "vite": "^5.0.0",
+  "@vitejs/plugin-vue": "^5.0.0"
+}
+```
+
+**Acceptance Criteria**:
+
+- ✅ Vue 3 + Vuetify 3 running with hot reload
+- ✅ All existing functionality preserved
+- ✅ Component-based architecture
+- ✅ Material Design UI
+- ✅ Dark theme by default
+- ✅ Responsive grid layout
+- ✅ Zero breaking changes to backend API
+
+**Test Plan (TEST-UI-vue-setup)**:
+
+- Manual: Open browser, verify all buttons work
+- Unit tests: Vue components with @vue/test-utils
+- E2E: All existing Web UI features functional
+
+---
+
+### UI-502: Toast Notifications - Replace alerts with Vuetify snackbars
+
+- **Priority**: P0 (Must Have - UX)
+- **Effort**: 1 day
+- **Risk**: Low (Vuetify built-in)
+- **Dependencies**: UI-501
+
+**Summary**: Replace all `alert()` and `confirm()` calls with Vuetify snackbars
+for smooth, modern notifications.
+
+**Current Problem**:
+
+- `alert()` blocks UI and is jarring
+- No auto-dismiss for success messages
+- Errors not sticky (user might miss them)
+
+**Implementation Plan**:
+
+1. Create `ToastNotifications.vue` composable:
+
+   ```javascript
+   // composables/useToast.js
+   import { ref } from 'vue';
+
+   const toasts = ref([]);
+
+   export function useToast() {
+     function success(message, timeout = 3000) {
+       toasts.value.push({ type: 'success', message, timeout });
+     }
+
+     function error(message, sticky = true) {
+       toasts.value.push({
+         type: 'error',
+         message,
+         timeout: sticky ? -1 : 5000,
+       });
+     }
+
+     function warning(message, timeout = 5000) {
+       toasts.value.push({ type: 'warning', message, timeout });
+     }
+
+     return { success, error, warning, toasts };
+   }
+   ```
+
+2. Replace all `alert()` with toast notifications
+3. Add confirm dialog component (`ConfirmDialog.vue`)
+4. Configure snackbar position (top-right)
+5. Add smooth fade animations
+6. Test error stickiness (must click to dismiss)
+
+**Toast Behavior**:
+
+- **Success**: Auto-dismiss after 3s, slide in from top-right
+- **Warning**: Auto-dismiss after 5s, orange color
+- **Error**: Sticky until clicked, red color, action button
+- **Info**: Auto-dismiss after 4s, blue color
+
+**Acceptance Criteria**:
+
+- ✅ No more `alert()` or `confirm()` in code
+- ✅ Success toasts auto-dismiss after 3s
+- ✅ Error toasts sticky until clicked
+- ✅ Smooth slide animations
+- ✅ Multiple toasts stack properly
+- ✅ Mobile-friendly positioning
+
+**Test Plan (TEST-UI-toasts)**:
+
+- Manual: Trigger success, error, warning toasts
+- Verify auto-dismiss timing
+- Verify error stickiness
+- Test multiple simultaneous toasts
+
+---
+
+### UI-503: Collapsible Cards - Per-device expand/collapse with localStorage
+
+- **Priority**: P1 (Should Have - UX)
+- **Effort**: 1 day
+- **Risk**: Low (Vuetify expansion panels)
+- **Dependencies**: UI-501
+
+**Summary**: Make device cards collapsible with Vuetify expansion panels,
+mock devices collapsed by default, state persists in localStorage.
+
+**Current Problem**:
+
+- All devices always expanded
+- Mock devices take up space unnecessarily
+- No way to focus on important devices
+
+**Implementation Plan**:
+
+1. Convert `DeviceCard.vue` to use `v-expansion-panel`:
+
+   ```vue
+   <v-expansion-panels v-model="expanded">
+     <v-expansion-panel>
+       <v-expansion-panel-title>
+         <!-- Device IP, driver badge, current scene -->
+       </v-expansion-panel-title>
+       <v-expansion-panel-text>
+         <!-- Full device controls -->
+       </v-expansion-panel-text>
+     </v-expansion-panel>
+   </v-expansion-panels>
+   ```
+
+2. Create localStorage composable:
+
+   ```javascript
+   // composables/useDeviceState.js
+   export function useDeviceState() {
+     function getExpandedState(deviceIp) {
+       const state = localStorage.getItem(`device_${deviceIp}_expanded`);
+       return state !== null ? JSON.parse(state) : null;
+     }
+
+     function setExpandedState(deviceIp, expanded) {
+       localStorage.setItem(
+         `device_${deviceIp}_expanded`,
+         JSON.stringify(expanded),
+       );
+     }
+
+     return { getExpandedState, setExpandedState };
+   }
+   ```
+
+3. Initialize collapsed state:
+   - Mock devices: `expanded = false` by default
+   - Real devices: `expanded = true` by default
+   - Load from localStorage if available
+
+4. Add smooth slide animation (300ms)
+5. Show current scene in collapsed header
+6. Add expand/collapse all button (optional)
+
+**Collapsed Header Shows**:
+
+- Device IP
+- Driver badge (mock/real)
+- Current scene name
+- Status indicator (dot)
+
+**Acceptance Criteria**:
+
+- ✅ Mock devices collapsed by default
+- ✅ Real devices expanded by default
+- ✅ State persists across page reloads
+- ✅ Smooth slide animation (300ms)
+- ✅ Current scene visible in collapsed header
+- ✅ Click to toggle expand/collapse
+
+**Test Plan (TEST-UI-collapse)**:
+
+- Manual: Collapse/expand devices, reload page
+- Verify localStorage persistence
+- Test mock vs real default states
+- Verify smooth animations
+
+---
+
+### UI-504: WebSocket Integration - Real-time updates without polling
+
+- **Priority**: P1 (Should Have - Performance)
+- **Effort**: 2 days
+- **Risk**: Medium (new protocol)
+- **Dependencies**: UI-501
+
+**Summary**: Replace HTTP polling with WebSocket for real-time device/scene state updates.
+
+**Current Problem**:
+
+- Polling every 5s is inefficient
+- Delays in seeing state changes
+- Unnecessary API requests
+- Flashing during updates
+
+**Implementation Plan**:
+
+1. Add WebSocket server to Express backend:
+
+   ```javascript
+   // web/server.js
+   const WebSocket = require('ws');
+
+   const wss = new WebSocket.Server({ server: httpServer });
+
+   wss.on('connection', (ws) => {
+     // Send initial state
+     ws.send(JSON.stringify({ type: 'init', data: getAllState() }));
+
+     // Subscribe to state changes
+     const unsubscribe = stateStore.subscribe((change) => {
+       ws.send(JSON.stringify({ type: 'update', data: change }));
+     });
+
+     ws.on('close', () => unsubscribe());
+   });
+   ```
+
+2. Create WebSocket composable:
+
+   ```javascript
+   // composables/useWebSocket.js
+   export function useWebSocket() {
+     const ws = ref(null);
+     const connected = ref(false);
+
+     function connect() {
+       ws.value = new WebSocket('ws://localhost:10829/ws');
+
+       ws.value.onopen = () => {
+         connected.value = true;
+       };
+
+       ws.value.onmessage = (event) => {
+         const message = JSON.parse(event.data);
+         handleStateUpdate(message);
+       };
+
+       ws.value.onclose = () => {
+         connected.value = false;
+         setTimeout(connect, 5000); // Auto-reconnect
+       };
+     }
+
+     return { connect, connected };
+   }
+   ```
+
+3. Integrate with Pinia store:
+   - WebSocket updates trigger store mutations
+   - Store updates trigger Vue reactivity
+   - No manual polling needed
+
+4. Add connection status indicator in header
+5. Handle reconnection on disconnect
+6. Add heartbeat/ping-pong for connection health
+
+**Message Types**:
+
+- `init`: Full initial state on connection
+- `device_update`: Device state changed
+- `scene_update`: Scene switched
+- `metrics_update`: FPS/frametime update
+- `ping`/`pong`: Heartbeat
+
+**Acceptance Criteria**:
+
+- ✅ WebSocket connection established on page load
+- ✅ Real-time updates (< 100ms latency)
+- ✅ Auto-reconnect on disconnect
+- ✅ Connection status indicator
+- ✅ No more polling (except WebSocket fallback)
+- ✅ Smooth updates without flashing
+
+**Test Plan (TEST-UI-websocket)**:
+
+- Manual: Switch scenes, verify instant UI update
+- Test disconnect/reconnect behavior
+- Measure update latency
+- Verify no polling in network tab
+
+---
+
+### UI-505: Config Page - Web-based configuration editor with persistence
+
+- **Priority**: P2 (Nice to Have - Admin)
+- **Effort**: 3 days
+- **Risk**: Medium (complex validation)
+- **Dependencies**: CFG-501, CFG-502
+
+**Summary**: Add web-based configuration editor with Vuetify forms,
+save to `/data/config.json`, hot reload on save.
+
+**Current Problem**:
+
+- Configuration via environment variables only
+- Have to restart container to change config
+- No validation of config values
+- Hard to manage multiple devices
+
+**Implementation Plan**:
+
+1. Create `ConfigPage.vue` with Vuetify form components:
+
+   ```vue
+   <v-form v-model="valid">
+     <v-card>
+       <v-card-title>MQTT Settings</v-card-title>
+       <v-card-text>
+         <v-text-field
+           v-model="config.mqtt.host"
+           label="MQTT Broker Host"
+           :rules="[rules.required, rules.hostname]"
+         />
+         <v-text-field
+           v-model="config.mqtt.username"
+           label="Username"
+           :rules="[rules.required]"
+         />
+         <v-text-field
+           v-model="config.mqtt.password"
+           label="Password"
+           type="password"
+           :rules="[rules.required]"
+         />
+       </v-card-text>
+     </v-card>
+     
+     <v-card>
+       <v-card-title>Devices</v-card-title>
+       <v-card-text>
+         <v-list>
+           <v-list-item v-for="device in config.devices" :key="device.ip">
+             <v-text-field v-model="device.ip" label="IP Address" />
+             <v-select
+               v-model="device.driver"
+               :items="['real', 'mock']"
+               label="Driver"
+             />
+             <v-text-field v-model="device.alias" label="Alias (optional)" />
+             <v-btn icon @click="removeDevice(device)">
+               <v-icon>mdi-delete</v-icon>
+             </v-btn>
+           </v-list-item>
+         </v-list>
+         <v-btn @click="addDevice">Add Device</v-btn>
+       </v-card-text>
+     </v-card>
+     
+     <v-card-actions>
+       <v-btn color="primary" @click="saveConfig" :disabled="!valid">
+         Save & Apply
+       </v-btn>
+       <v-btn @click="testConfig" :disabled="!valid">
+         Test Connection
+       </v-btn>
+       <v-btn @click="resetConfig">
+         Reset to Defaults
+       </v-btn>
+     </v-card-actions>
+   </v-form>
+   ```
+
+2. Add config API endpoints (see CFG-502)
+3. Add validation rules:
+   - Required fields
+   - Valid IP addresses
+   - Valid hostnames
+   - Port ranges
+
+4. Add "Test Connection" button:
+   - Tests MQTT connection
+   - Pings devices
+   - Shows validation results
+
+5. Add "Save & Apply" button:
+   - Saves to `/data/config.json`
+   - Hot reloads daemon config
+   - Shows success/error toast
+
+6. Add import/export config (JSON download/upload)
+
+**Config Structure** (`/data/config.json`):
+
+```json
+{
+  "mqtt": {
+    "host": "miniserver24",
+    "port": 1883,
+    "username": "smarthome",
+    "password": "***"
+  },
+  "devices": [
+    {
+      "ip": "192.168.1.159",
+      "driver": "real",
+      "alias": "Living Room"
+    },
+    {
+      "ip": "192.168.1.189",
+      "driver": "mock",
+      "alias": "Test Device"
+    }
+  ],
+  "webui": {
+    "port": 10829,
+    "auth": {
+      "enabled": false,
+      "username": "admin",
+      "password": "***"
+    }
+  },
+  "scenes": {
+    "startup": "startup",
+    "default": "empty"
+  }
+}
+```
+
+**Acceptance Criteria**:
+
+- ✅ Config page accessible at `/config`
+- ✅ All config values editable
+- ✅ Validation before save
+- ✅ Test MQTT connection button
+- ✅ Save to `/data/config.json`
+- ✅ Hot reload on save (no restart)
+- ✅ Import/export config (JSON)
+- ✅ Clear error messages
+
+**Test Plan (TEST-UI-config)**:
+
+- Manual: Edit all config fields, save
+- Test validation (invalid IPs, etc.)
+- Test MQTT connection
+- Verify hot reload
+- Test import/export
+
+---
+
+### CFG-501: Config Persistence - /data volume for persistent configuration
+
+- **Priority**: P2 (Nice to Have - Admin)
+- **Effort**: 1 day
+- **Risk**: Low (Docker volume)
+
+**Summary**: Add `/data` volume mount for persistent configuration,
+merge with environment variables (env vars override).
+
+**Current Problem**:
+
+- No persistent storage
+- Config lost on container restart
+- Can't save user preferences
+
+**Implementation Plan**:
+
+1. Update Dockerfile to create `/data` directory:
+
+   ```dockerfile
+   RUN mkdir -p /data && chown -R node:node /data
+   VOLUME /data
+   ```
+
+2. Update docker-compose.yml documentation:
+
+   ```yaml
+   volumes:
+     - ./pixoo-data:/data # Persistent config and state
+   ```
+
+3. Create config loader:
+
+   ```javascript
+   // lib/config-loader.js
+   const CONFIG_PATH = '/data/config.json';
+
+   function loadConfig() {
+     // 1. Load from /data/config.json (if exists)
+     // 2. Merge with environment variables (env overrides)
+     // 3. Apply defaults for missing values
+     // 4. Validate config
+     // 5. Return merged config
+   }
+   ```
+
+4. Initialize `/data/config.json` on first run
+5. Document volume mount requirements
+6. Add migration from env vars to config file
+
+**Directory Structure**:
+
+```
+/data/
+  config.json        # Main configuration
+  ui-state.json      # UI preferences (collapsed state)
+  logs/              # Optional log persistence
+  scenes/            # User custom scenes (future)
+```
+
+**Acceptance Criteria**:
+
+- ✅ `/data` directory created in Docker image
+- ✅ Volume mount documented
+- ✅ Config persists across restarts
+- ✅ Environment variables still work (override)
+- ✅ First-run initialization
+- ✅ Migration guide for existing users
+
+**Test Plan (TEST-CFG-persist)**:
+
+- Create config, restart container
+- Verify config persisted
+- Test env var override
+- Test first-run initialization
+
+---
+
+### CFG-502: Config API - REST endpoints for config management
+
+- **Priority**: P2 (Nice to Have - Admin)
+- **Effort**: 1 day
+- **Risk**: Low (standard CRUD)
+- **Dependencies**: CFG-501
+
+**Summary**: Add REST API endpoints for reading and writing configuration.
+
+**Implementation Plan**:
+
+1. Add config endpoints to `web/server.js`:
+
+   ```javascript
+   // GET /api/config - Get current config
+   app.get('/api/config', async (req, res) => {
+     const config = await configLoader.getConfig();
+     // Mask sensitive fields (passwords)
+     res.json({ config: maskSensitive(config) });
+   });
+
+   // POST /api/config - Update config
+   app.post('/api/config', async (req, res) => {
+     const newConfig = req.body;
+
+     // Validate config
+     const errors = validateConfig(newConfig);
+     if (errors.length > 0) {
+       return res.status(400).json({ errors });
+     }
+
+     // Save config
+     await configLoader.saveConfig(newConfig);
+
+     // Hot reload
+     await reloadConfig();
+
+     res.json({ success: true, message: 'Config saved and applied' });
+   });
+
+   // POST /api/config/test - Test config (doesn't save)
+   app.post('/api/config/test', async (req, res) => {
+     const config = req.body;
+     const results = await testConfig(config);
+     res.json({ results });
+   });
+
+   // POST /api/config/reset - Reset to defaults
+   app.post('/api/config/reset', async (req, res) => {
+     await configLoader.resetToDefaults();
+     res.json({ success: true });
+   });
+   ```
+
+2. Add config validation:
+   - Schema validation (JSON schema)
+   - MQTT connection test
+   - Device ping test
+   - Port availability check
+
+3. Add sensitive field masking (passwords)
+4. Add audit logging (who changed what)
+
+**Acceptance Criteria**:
+
+- ✅ GET `/api/config` returns current config
+- ✅ POST `/api/config` saves and applies
+- ✅ POST `/api/config/test` validates without saving
+- ✅ Passwords masked in responses
+- ✅ Clear validation error messages
+- ✅ Audit log for changes
+
+**Test Plan (TEST-CFG-api)**:
+
+- Unit tests: Config endpoints with supertest
+- Test validation (invalid configs)
+- Verify hot reload after save
+- Verify password masking
+
+---
+
+### CFG-503: Config Hot Reload - Apply config changes without restart
+
+- **Priority**: P2 (Nice to Have - Admin)
+- **Effort**: 2 days
+- **Risk**: Medium (state management)
+- **Dependencies**: CFG-501, CFG-502
+
+**Summary**: Apply configuration changes at runtime without restarting the daemon.
+
+**Current Problem**:
+
+- Config changes require full restart
+- Disrupts running scenes
+- Loses connection state
+
+**Implementation Plan**:
+
+1. Create config reload manager:
+
+   ```javascript
+   // lib/config-reload.js
+   class ConfigReloadManager {
+     async reloadConfig(newConfig) {
+       // 1. Validate new config
+       // 2. Compare with current config
+       // 3. Apply changes incrementally:
+       //    - MQTT: Reconnect if broker changed
+       //    - Devices: Add/remove/update devices
+       //    - Scenes: Reload scene list
+       //    - WebUI: Update port (requires restart)
+       // 4. Emit config_changed event
+       // 5. Update MQTT state topics
+     }
+
+     async applyMqttChanges(oldMqtt, newMqtt) {
+       if (mqttChanged(oldMqtt, newMqtt)) {
+         await mqttService.disconnect();
+         await mqttService.connect(newMqtt);
+       }
+     }
+
+     async applyDeviceChanges(oldDevices, newDevices) {
+       // Add new devices
+       // Remove deleted devices
+       // Update existing devices
+     }
+   }
+   ```
+
+2. Implement incremental reload:
+   - MQTT: Disconnect and reconnect if changed
+   - Devices: Add/remove without affecting others
+   - Scenes: Reload scene list
+   - WebUI: Note that port change requires restart
+
+3. Add config change events:
+   - Emit events on config changes
+   - Services subscribe to relevant events
+   - React to changes incrementally
+
+4. Handle reload errors gracefully:
+   - Roll back to previous config on error
+   - Clear error messages
+   - Don't leave system in broken state
+
+**Reloadable vs Restart-Required**:
+
+| Setting          | Reloadable?              |
+| ---------------- | ------------------------ |
+| MQTT broker      | ✅ Yes (reconnect)       |
+| MQTT credentials | ✅ Yes (reconnect)       |
+| Device list      | ✅ Yes (add/remove)      |
+| Device drivers   | ✅ Yes (hot-swap)        |
+| Scene list       | ✅ Yes (rescan)          |
+| Web UI port      | ❌ No (restart required) |
+| Auth settings    | ❌ No (restart required) |
+
+**Acceptance Criteria**:
+
+- ✅ MQTT changes applied without restart
+- ✅ Device changes applied incrementally
+- ✅ Running scenes unaffected by reload
+- ✅ Clear indication of what requires restart
+- ✅ Roll back on reload error
+- ✅ Config change events emitted
+
+**Test Plan (TEST-CFG-hotreload)**:
+
+- Change MQTT broker, verify reconnect
+- Add/remove devices, verify updates
+- Change device driver, verify hot-swap
+- Test error handling and rollback
+
+---
+
+## Implementation Priority - Modern Web UI
+
+Based on dependencies and impact:
+
+### Phase UI-1: Foundation (3-4 days)
+
+1. **UI-501** - Vue 3 + Vuetify 3 setup
+2. **UI-502** - Toast notifications
+
+### Phase UI-2: UX Improvements (2-3 days)
+
+3. **UI-503** - Collapsible cards
+4. **UI-504** - WebSocket real-time updates
+
+### Phase UI-3: Configuration (4-5 days)
+
+5. **CFG-501** - Config persistence (/data volume)
+6. **CFG-502** - Config API endpoints
+7. **UI-505** - Config page UI
+8. **CFG-503** - Config hot reload
+
+**Total Effort**: 9-12 days
+
+---
+
+**Status**: UI-501 starting now! 🚀
