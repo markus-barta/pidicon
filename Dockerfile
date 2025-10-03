@@ -21,6 +21,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Make wrapper script executable
+RUN chmod +x start-daemon.sh
+
 # Set environment variables for version info from build args
 ENV GITHUB_SHA=${GITHUB_SHA}
 ENV GITHUB_REF=${GITHUB_REF}
@@ -33,5 +36,5 @@ RUN npm run build:version
 # Prune dev dependencies for a smaller final image
 RUN npm prune --production
 
-# Start the daemon
-CMD ["npm", "start"]
+# Start via wrapper script (allows in-container restarts)
+CMD ["./start-daemon.sh"]
