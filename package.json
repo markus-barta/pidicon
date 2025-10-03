@@ -5,6 +5,10 @@
   "scripts": {
     "start": "node daemon.js",
     "build:version": "node scripts/build-version.js",
+    "ui:dev": "vite",
+    "ui:build": "vite build",
+    "ui:preview": "vite preview",
+    "ui:test": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier -w .",
@@ -17,11 +21,15 @@
     "hooks:setup": "husky init"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "@vitejs/plugin-vue": "^5.2.4",
     "express": "^5.1.0",
     "mqtt": "^5.9.0",
+    "pinia": "^3.0.3",
     "pngjs": "^7.0.0",
     "sharp": "^0.33.5",
-    "suncalc": "^1.9.0"
+    "suncalc": "^1.9.0",
+    "vite-plugin-vuetify": "^2.1.2"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx}": [

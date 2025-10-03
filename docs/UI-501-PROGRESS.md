@@ -32,7 +32,7 @@
 
 ---
 
-## 🚧 Phase 2: Frontend Structure (NEXT)
+## ✅ Phase 2: Frontend Structure (COMPLETED)
 
 ### Directory Structure to Create
 
@@ -66,12 +66,15 @@ web/
 
 ### Tasks
 
-- [ ] Create `web/frontend/index.html`
-- [ ] Create `web/frontend/src/main.js` (Vue app bootstrap)
-- [ ] Create `web/frontend/src/App.vue` (root component)
-- [ ] Create `web/frontend/src/plugins/vuetify.js` (Vuetify config)
-- [ ] Set up Pinia store structure
-- [ ] Update `package.json` scripts for Vite
+- [x] Create `web/frontend/index.html`
+- [x] Create `web/frontend/src/main.js` (Vue app bootstrap)
+- [x] Create `web/frontend/src/App.vue` (root component)
+- [x] Create `web/frontend/src/plugins/vuetify.js` (Vuetify config)
+- [x] Set up Pinia store structure
+- [x] Update `package.json` scripts for Vite
+- [x] Create `useApi.js` composable for REST API
+- [x] Create device and scene Pinia stores
+- [x] Test Vite dev server startup
 
 ---
 

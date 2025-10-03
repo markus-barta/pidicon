@@ -10,6 +10,9 @@ module.exports = [
       'coverage/',
       'other-code/',
       'web/public/**/*.js',
+      'web/frontend/**/*.js', // Vue frontend uses ES modules
+      'web/frontend/**/*.mjs',
+      'web/frontend/**/*.vue',
     ],
   },
   js.configs.recommended,
