@@ -78,27 +78,40 @@ web/
 
 ---
 
-## ⏭️ Phase 3: Core Components (TODO)
+## ✅ Phase 3: Core Components (COMPLETED)
 
-### Components to Migrate
+### Components Created
 
-1. **SystemStatus.vue** - Header with build number, status, uptime
-2. **DeviceCard.vue** - Device card with controls (initially non-collapsible)
-3. **SceneSelector.vue** - Scene dropdown with next/prev buttons
-4. **App.vue** - Main layout with device grid
+1. **SystemStatus.vue** ✅ - Header with build number, status, uptime, restart button
+2. **DeviceCard.vue** ✅ - Full-featured device card with all controls
+3. **SceneSelector.vue** ✅ - Scene dropdown with next/prev buttons, category badges
+4. **FPSMonitor.vue** ✅ - Real-time FPS/frametime display for animated scenes
+5. **ToastNotifications.vue** ✅ - Modern toast system (auto-dismiss, sticky errors)
+6. **App.vue** ✅ - Integrated layout with all components
 
-### API Client
+### Composables Created
 
-- [ ] Create `useApi.js` composable for REST API calls
-- [ ] Error handling and loading states
-- [ ] Request cancellation support
+- [x] `useToast.js` - Toast notification management
+- [x] `useApi.js` - REST API client (Phase 2)
+- [x] Error handling and loading states
+- [x] Type-safe API methods
 
-### State Management
+### Features Implemented
 
-- [ ] Pinia store for devices
-- [ ] Pinia store for scenes
-- [ ] Pinia store for system status
-- [ ] Actions for API calls
+- [x] Scene selector dropdown (grouped by category)
+- [x] Next/Prev scene navigation buttons
+- [x] Display on/off toggle
+- [x] Reset device button
+- [x] Driver toggle (real/mock)
+- [x] Real-time FPS monitoring for animated scenes
+- [x] Toast notifications (success, error, warning, info)
+- [x] Build number badge in header
+- [x] System status with pulse animation
+- [x] Uptime display (live updating)
+- [x] Restart daemon functionality
+- [x] Responsive grid layout
+- [x] Loading states for all actions
+- [x] Confirmation dialogs for destructive actions
 
 ---
 
