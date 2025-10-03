@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Pixoo Daemon Wrapper - Stays as PID 1 and monitors/restarts Node.js process
 # This allows the daemon to restart itself without killing the Docker container
+# POSIX-compliant (works with Alpine's ash/BusyBox sh)
 
 set -e
 
@@ -52,7 +53,7 @@ while true; do
   done
   
   # If process exited naturally, check exit code
-  wait "$NODE_PID" 2>/dev/null || EXIT_CODE=$?
+  wait "$NODE_PID" || EXIT_CODE=$?
   
   if [ -f "$RESTART_MARKER" ]; then
     echo "[WRAPPER] Restart marker found, restarting..."
@@ -62,15 +63,16 @@ while true; do
   fi
   
   # If exit code is 42, it's a restart request
-  if [ "${EXIT_CODE:-0}" -eq 42 ]; then
+  EXIT_CODE=${EXIT_CODE:-0}
+  if [ "$EXIT_CODE" -eq 42 ]; then
     echo "[WRAPPER] Exit code 42 detected, restarting daemon..."
     sleep 1
     continue
   fi
   
   # Any other exit code means we should stop
-  echo "[WRAPPER] Node.js daemon exited with code ${EXIT_CODE:-0}"
+  echo "[WRAPPER] Node.js daemon exited with code $EXIT_CODE"
   echo "[WRAPPER] Stopping wrapper..."
-  exit "${EXIT_CODE:-0}"
+  exit "$EXIT_CODE"
 done
 
