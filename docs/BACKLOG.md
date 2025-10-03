@@ -1883,15 +1883,15 @@ Based on dependencies and impact:
 
 ### Phase UI-2: UX Improvements (2-3 days)
 
-3. **UI-503** - Collapsible cards
-4. **UI-504** - WebSocket real-time updates
+1. **UI-503** - Collapsible cards
+2. **UI-504** - WebSocket real-time updates
 
 ### Phase UI-3: Configuration (4-5 days)
 
-5. **CFG-501** - Config persistence (/data volume)
-6. **CFG-502** - Config API endpoints
-7. **UI-505** - Config page UI
-8. **CFG-503** - Config hot reload
+1. **CFG-501** - Config persistence (/data volume)
+2. **CFG-502** - Config API endpoints
+3. **UI-505** - Config page UI
+4. **CFG-503** - Config hot reload
 
 **Total Effort**: 9-12 days
 
