@@ -9,6 +9,7 @@ let devices = [];
 let scenes = [];
 let systemStatus = {};
 let fpsIntervals = new Map();
+let isUserInteracting = false; // Pause updates during interaction
 
 // ============================================================================
 // API & UTILITIES
@@ -62,12 +63,71 @@ async function loadSystemStatus() {
 async function loadDevices() {
   try {
     const data = await apiRequest('/devices');
-    devices = data.devices;
-    renderDevices();
+    const newDevices = data.devices;
+
+    // Skip update if user is interacting
+    if (isUserInteracting) {
+      return;
+    }
+
+    // Check if devices actually changed before re-rendering
+    if (devicesChanged(devices, newDevices)) {
+      devices = newDevices;
+      renderDevices();
+    } else {
+      // Just update values without re-rendering DOM
+      updateDeviceValues(newDevices);
+    }
   } catch (err) {
     document.getElementById('devices-grid').innerHTML =
       '<div class="error">Failed to load devices</div>';
   }
+}
+
+function devicesChanged(oldDevices, newDevices) {
+  if (oldDevices.length !== newDevices.length) return true;
+
+  // Check if any device's scene changed (triggers full re-render)
+  for (let i = 0; i < oldDevices.length; i++) {
+    const oldDev = oldDevices[i];
+    const newDev = newDevices[i];
+    if (
+      oldDev.ip !== newDev.ip ||
+      oldDev.currentScene !== newDev.currentScene
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function updateDeviceValues(newDevices) {
+  // Update only the dynamic values without touching the DOM structure
+  newDevices.forEach((device) => {
+    // Update status
+    const statusEl = document.querySelector(
+      `[data-ip="${device.ip}"] .status-value`,
+    );
+    if (statusEl && statusEl.textContent !== device.status) {
+      statusEl.textContent = device.status;
+      statusEl.className = `status-value ${getStatusClass(device.status)}`;
+    }
+
+    // Update metrics
+    const pushesEl = document.querySelector(
+      `[data-ip="${device.ip}"] .status-item:nth-child(3) .status-value`,
+    );
+    if (pushesEl) pushesEl.textContent = device.metrics.pushes;
+
+    const errorsEl = document.querySelector(
+      `[data-ip="${device.ip}"] .status-item:nth-child(4) .status-value`,
+    );
+    if (errorsEl) {
+      errorsEl.textContent = device.metrics.errors;
+      errorsEl.className = `status-value ${device.metrics.errors > 0 ? 'danger' : 'success'}`;
+    }
+  });
 }
 
 async function loadScenes() {
@@ -233,6 +293,31 @@ function attachDeviceListeners(deviceIp) {
   const dropdown = document.getElementById(`scene-${deviceIp}`);
   if (dropdown) {
     dropdown.addEventListener('change', () => updateSceneDescription(deviceIp));
+
+    // Pause updates while user is interacting with dropdown
+    dropdown.addEventListener('mousedown', () => {
+      isUserInteracting = true;
+    });
+
+    dropdown.addEventListener('blur', () => {
+      // Resume updates after a short delay
+      setTimeout(() => {
+        isUserInteracting = false;
+      }, 500);
+    });
+  }
+
+  // Also pause on button clicks
+  const card = document.querySelector(`[data-ip="${deviceIp}"]`);
+  if (card) {
+    card.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('mousedown', () => {
+        isUserInteracting = true;
+        setTimeout(() => {
+          isUserInteracting = false;
+        }, 1000);
+      });
+    });
   }
 }
 
@@ -306,6 +391,9 @@ async function switchScene(deviceIp) {
       method: 'POST',
       body: JSON.stringify({ scene: sceneName, clear: true }),
     });
+
+    // Force update after action
+    isUserInteracting = false;
     await loadDevices();
   } catch (err) {
     alert(`Failed to switch scene: ${err.message}`);
@@ -339,6 +427,9 @@ async function setDisplayPower(deviceIp, on) {
       method: 'POST',
       body: JSON.stringify({ on }),
     });
+
+    // Force update after action
+    isUserInteracting = false;
     await loadDevices();
   } catch (err) {
     alert(`Failed to set display: ${err.message}`);
@@ -350,6 +441,9 @@ async function resetDevice(deviceIp) {
 
   try {
     await apiRequest(`/devices/${deviceIp}/reset`, { method: 'POST' });
+
+    // Force update after action
+    isUserInteracting = false;
     await loadDevices();
   } catch (err) {
     alert(`Failed to reset: ${err.message}`);
@@ -365,6 +459,9 @@ async function toggleDriver(deviceIp) {
       method: 'POST',
       body: JSON.stringify({ driver: newDriver }),
     });
+
+    // Force update after action
+    isUserInteracting = false;
     await loadDevices();
   } catch (err) {
     alert(`Failed to switch driver: ${err.message}`);
