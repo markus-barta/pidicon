@@ -1,4 +1,4 @@
-# Pixoo Daemon 🧩💡
+# Pixoo Daemon 🎨✨
 
 <p align="center">
   <img src="pixxo_opener.png" alt="Pixoo Daemon" width="600">
@@ -13,482 +13,451 @@
 
 </p>
 
-Pixoo Daemon is a friendly, MQTT-driven scene renderer for the Divoom Pixoo 64.
-It listens to MQTT messages, manages scenes, and renders pixels with an upbeat
-vibe and a professional, production-ready architecture.
-
-**🚀 v2.0.0 - Stable Release**: Complete architectural overhaul with senior-level code quality,
-professional error handling, and enterprise-grade robustness. Features centralized scheduling,
-pixel-perfect text rendering, and maximum code reusability.
-
-Think: clean code, smart scheduling, rock-solid scene switching, and beautiful
-visuals – all under your control with a few simple MQTT messages.
+**MQTT-driven scene renderer for Divoom Pixoo 64** with clean architecture, smart scheduling, and beautiful visuals. Control your display with simple MQTT messages or through the built-in Web UI.
 
 ---
 
 ## ✨ Highlights
 
-- **Centralized Scheduler**: One device loop per Pixoo; scenes are pure
-  renderers that return a delay (ms) or `null` to finish.
-- **Per-Device State Machine**: Authoritative `currentScene`, `targetScene`,
-  `generationId`, and `status` mirrored to MQTT for observability.
-- **Pure-Render Contract**: Scenes do not own timers or publish MQTT. No
-  zombies, no stale frames.
-- **Input Gating**: Stale animation frames are ignored if scene/generation do
-  not match – because correctness matters.
-- **Hot-Swappable Drivers**: Switch between `real` HTTP and lightning-fast
-  `mock` drivers on the fly.
-- **Observability Built-In**: Publishes `/home/pixoo/<ip>/scene/state` with
-  build metadata for traceable runs.
-- **Advanced Renderers**: High-quality charting, gradients, and smooth
-  animation primitives.
-- **Structured Logging**: Clear, cheerful logs with context (`ok`, `info`,
-  `warn`, `error`).
+- **🌐 Web UI Control Panel** - Manage your Pixoo devices from any browser (port 10829)
+- **📡 MQTT Integration** - Full control via MQTT messages for automation
+- **🎬 Smart Scene System** - Hot-swappable scenes with automatic scheduling
+- **🔄 Self-Restarting** - In-container restart without Docker policy requirements
+- **🎨 Advanced Graphics** - Professional rendering with gradients, charts, and smooth animations
+- **🔍 Full Observability** - Real-time metrics, FPS monitoring, and deployment tracking
+- **🚀 Production Ready** - Robust error handling, comprehensive logging, and 152/152 tests passing
+- **💨 Hot-Swap Drivers** - Switch between real and mock drivers on the fly
 
 ---
 
-## 🎉 v2.0.0 Release - Major Architectural Overhaul
+## 🌐 Web UI
 
-### 🏗️ **Senior-Level Architecture**
+<p align="center">
+  <strong>Modern control panel for managing your Pixoo devices</strong>
+</p>
 
-- **Dependency Injection**: Lightweight DI container for testability and loose coupling
-- **Service-Oriented**: Dedicated services for MQTT, State Management, and Scene Management
-- **8 Professional Modules**: `scene-base.js`, `mqtt-service.js`, `state-store.js`,
-  `di-container.js`, `mqtt-utils.js`, `scene-loader.js`, `device-context.js`, `error-handler.js`
-- **Single Responsibility**: Each module has a clear, focused purpose with maximum reusability
-- **Clean Interfaces**: Professional APIs with comprehensive JSDoc documentation
-- **Fully Testable**: 89/89 unit and integration tests passing
+**Features:**
 
-### 🧹 **Code Quality Excellence**
+- 🎮 **Per-Device Control** - Independent scene selection and control for each device
+- 📊 **Real-Time Metrics** - FPS display, frame time, push counts, and error tracking
+- 🎨 **Scene Browser** - Categorized scenes with descriptions and animation indicators
+- 🔄 **Quick Actions** - Restart daemon, switch drivers, reset devices, display on/off
+- 📱 **Responsive Design** - Works on desktop, tablet, and mobile
+- 🌙 **Professional Dark Theme** - Easy on the eyes with smooth animations
 
-- **Zero ESLint Errors**: Professional code standards with strict linting rules
-- **Eliminated Duplication**: 500+ lines of duplicated code consolidated into shared utilities
-- **Consistent Patterns**: Standardized error handling, logging, and state management
-- **Production-Grade**: Enterprise-ready error recovery and observability
-
-### ⚡ **New Features**
-
-- **Pixel-Perfect Text Rendering**: Professional text rendering with configurable backdrops
-- **Centralized Scheduler**: One loop per device with generation-based input gating
-- **Professional Error Handling**: Recovery strategies and external error reporting
-- **Advanced Observability**: Complete MQTT mirroring with build/version metadata
-
-### 🔧 **Developer Experience**
-
-- **Easy Extension**: Clean module boundaries make adding new features simple
-- **Comprehensive Testing**: Built-in test utilities and mock drivers
-- **Professional Documentation**: Complete API documentation and architecture guides
-- **Maximum Reusability**: Shared utilities eliminate code duplication
-
-### 📊 **Quantified Improvements**
-
-- **1,754 lines added** (new consolidated modules)
-- **~500 lines eliminated** (duplicated code removed)
-- **~80% reduction** in state management duplication
-- **~70% reduction** in MQTT publishing duplication
-- **Zero technical debt** with professional architectural patterns
-
----
-
-## 📚 Table of Contents
-
-- [v2.0.0 Release](#-v200-release---major-architectural-overhaul)
-- [Highlights](#-highlights)
-- [Architecture Overview](#-architecture-overview)
-- [Scenes](#-scenes)
-- [Quick Start](#-quick-start)
-- [Configuration](#-configuration)
-- [MQTT Topics & Commands](#-mqtt-topics--commands)
-- [Local Development](#-local-development)
-- [Testing & Live Recipes](#-testing--live-recipes)
-- [Observability](#-observability)
-- [Changelog](#-changelog)
-- [FAQ](#-faq)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## 🧠 Architecture Overview
-
-### **Core Services** (Phase 1 Complete ✅, Phase 2 Complete ✅)
-
-- **Dependency Injection Container**: Lightweight, testable service registration and
-  resolution with singleton/transient lifetimes
-- **MQTT Service**: Centralized connection, subscription, and message routing with
-  event-driven handlers
-- **State Store**: Single source of truth for global, per-device, and per-scene state
-  with observable changes
-- **Scene Manager**: Centralized scheduler managing scene lifecycle, registration,
-  and rendering
-- **Command Handlers**: Clean command pattern implementation for MQTT message processing
-  - `SceneCommandHandler`: Scene switching
-  - `DriverCommandHandler`: Driver management and re-render
-  - `ResetCommandHandler`: Device reset
-  - `StateCommandHandler`: Main rendering logic
-  - `CommandRouter`: Dispatches MQTT messages to appropriate handlers
-
-### **Design Principles**
-
-- **Centralized Per-Device Scheduler**: A single loop per device drives all
-  loop-enabled scenes. Scenes signal cadence by returning a number (ms), and
-  signal completion by returning `null`.
-- **Per-Device State Machine**: Each device tracks `currentScene`,
-  `generationId`, and `status` (`switching` → `running`). The authoritative
-  state is available to scenes and mirrored to MQTT.
-- **Pure-Render Contract**: Scenes never own timers or publish MQTT messages
-  for "next frame". This eliminates race conditions and stale updates.
-- **Input Gating**: Messages tagged as animation frames are dropped unless they
-  match the active `(scene, generation)`. No more zombie frames.
-- **Hot Drivers**: Swap between `real` (HTTP) and `mock` drivers without
-  restarting. Great for local development and CI.
-
-For a deeper dive into the scene interface and responsibilities, see
-`scenes/README.md`, `lib/README.md`, and `STANDARDS.md`.
-
----
-
-## 🎨 Scenes
-
-Core scenes:
-
-- `startup`: Build and version info on boot.
-- `empty`: Clears the display.
-- `fill`: Solid color fill.
-- `advanced_chart`: A dynamic, well-styled chart renderer.
-
-Examples:
-
-- `draw_api`: Showcases the drawing API primitives.
-- `draw_api_animated`: Rich animation demo with FPS/ms overlay. Supports
-  optional `interval` and `frames`.
-- `performance-test`: Finite or adaptive benchmarking with beautiful
-  gradients and a centered "COMPLETE" overlay.
-
-All animated scenes declare `wantsLoop: true` and follow the pure-render
-contract by returning either a next delay or `null`.
+**Access:** `http://your-server:10829` (configurable via `PIXOO_WEB_UI_PORT`)
 
 ---
 
 ## 🚀 Quick Start
 
-Prerequisites: Node.js 18+, an MQTT broker, and a Pixoo 64 on your network.
+**Prerequisites:** Node.js 18+, MQTT broker, Pixoo 64 on your network
 
 ```bash
 git clone https://github.com/markus-barta/pixoo-daemon.git
 cd pixoo-daemon
 npm install
 
-# Set environment variables (examples below) and then start
+# Configure environment variables
+export MOSQITTO_HOST_MS24="your-mqtt-broker"
+export MOSQITTO_USER_MS24="your-username"
+export MOSQITTO_PASS_MS24="your-password"
+export PIXOO_DEVICE_TARGETS="192.168.1.159=real;192.168.1.189=mock"
+
+# Start the daemon
 npm start
 ```
 
-Send your first command (replace IP):
+**Test it out:**
 
 ```bash
+# Via MQTT
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
   -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
+
+# Or open the Web UI
+open http://localhost:10829
 ```
+
+---
+
+## 🎨 Scenes
+
+**Core Scenes:**
+
+- `startup` - Build and version info on boot
+- `empty` - Clears the display
+- `fill` - Solid color fill
+- `power_price` - Comprehensive energy dashboard with weather and time
+- `advanced_chart` - Dynamic, styled chart renderer
+
+**Example Scenes:**
+
+- `draw_api` - Drawing API showcase
+- `draw_api_animated` - Rich animation demo with FPS overlay
+- `graphics_engine_demo` - Advanced graphics engine demonstration
+- `performance-test` - Benchmarking with beautiful gradients
+
+All scenes follow a clean contract: return delay in ms for next frame, or `null` to finish.
 
 ---
 
 ## ⚙️ Configuration
 
-Environment variables (recommended to set via your shell or `.env`):
+**Environment Variables:**
 
-- `MOSQITTO_HOST_MS24` / `MOSQITTO_USER_MS24` / `MOSQITTO_PASS_MS24`:
-  MQTT connection.
-- `PIXOO_DEVICE_TARGETS`: Mapping of device IPs to drivers. Example:
-  `192.168.1.159=real;192.168.1.189=mock`.
-- `PIXOO_DEFAULT_DRIVER`: Fallback driver (`real` or `mock`).
-- `SCENE_STATE_TOPIC_BASE`: Base topic for scene state (default `/home/pixoo`).
+| Variable                 | Description                 | Example                                 |
+| ------------------------ | --------------------------- | --------------------------------------- |
+| `MOSQITTO_HOST_MS24`     | MQTT broker host            | `miniserver24`                          |
+| `MOSQITTO_USER_MS24`     | MQTT username               | `smarthome`                             |
+| `MOSQITTO_PASS_MS24`     | MQTT password               | `your-password`                         |
+| `PIXOO_DEVICE_TARGETS`   | Device IP to driver mapping | `192.168.1.159=real;192.168.1.189=mock` |
+| `PIXOO_DEFAULT_DRIVER`   | Fallback driver             | `real` or `mock`                        |
+| `PIXOO_WEB_UI`           | Enable Web UI               | `true` (default)                        |
+| `PIXOO_WEB_UI_PORT`      | Web UI port                 | `10829` (default)                       |
+| `SCENE_STATE_TOPIC_BASE` | MQTT state topic base       | `/home/pixoo`                           |
 
-Tip: During development, the mock driver is fast and conflict-free. Use the
-real driver when you want to see pixels on your device.
+**Tip:** Use `mock` driver for fast, conflict-free development. Switch to `real` when you want to see pixels on your device.
 
 ---
 
-## 📡 MQTT Topics & Commands
+## 📡 MQTT Commands
 
-The daemon listens to device-scoped commands like `pixoo/<ip>/state/upd`. It
-also publishes scene state to `/home/pixoo/<ip>/scene/state` (configurable).
+**Topic Format:** `pixoo/<ip>/state/upd`
 
-Starter commands:
+**Examples:**
 
 ```bash
 # Clear screen
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
+mosquitto_pub ... -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
 
-# Fill red
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill","color":[255,0,0,255]}'
+# Fill with red
+mosquitto_pub ... -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"fill","color":[255,0,0,255]}'
 
-# Animated demo (indefinite)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
+# Animated demo
+mosquitto_pub ... -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated"}'
 
-# Animated demo (adaptive, 64 frames)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"draw_api_animated","frames":64}'
+# Performance test (100 frames at 150ms)
+mosquitto_pub ... -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance-test","interval":150,"frames":100}'
 
-# Performance test (fixed 150ms, 100 frames)
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"performance-test","interval":150,"frames":100}'
+# Switch driver
+mosquitto_pub ... -t "pixoo/192.168.1.159/driver/set" -m 'mock'
+
+# Reset device
+mosquitto_pub ... -t "pixoo/192.168.1.159/reset" -m 'soft'
 ```
 
-For the full list, see `MQTT_COMMANDS.md`.
+See `MQTT_COMMANDS.md` for the complete reference.
 
 ---
 
-## 🧑‍💻 Local Development
+## 🏗️ Architecture
 
-- Scripts:
-  - `npm start`: run the daemon
-  - `npm run build:version`: update `version.json`
-  - `npm run lint` / `npm run lint:fix`: ESLint
-  - `npm run md:lint` / `npm run md:fix`: Markdownlint
+**v2.0.0 - Modern, Maintainable Design**
 
-- Scene interface (pure-render contract):
+### **Core Services**
+
+- **Dependency Injection** - Lightweight container for clean service management
+- **MQTT Service** - Centralized connection and message routing
+- **State Store** - Single source of truth for all state
+- **Scene Manager** - Lifecycle management and scheduling
+- **Command Handlers** - Clean pattern for MQTT message processing
+- **Service Layer** - Business logic abstraction for Web UI and MQTT
+
+### **Design Principles**
+
+- **Centralized Scheduling** - One loop per device, scenes just render
+- **Pure Render Contract** - Scenes return delay or null, no timers or MQTT
+- **Input Gating** - Stale frames automatically dropped
+- **Hot-Swappable Drivers** - Switch between real/mock without restart
+- **Full Observability** - MQTT mirroring with build metadata
+
+For detailed architecture docs, see `docs/ARCHITECTURE.md` and `lib/README.md`.
+
+---
+
+## 🧑‍💻 Development
+
+### **Scripts**
+
+```bash
+npm start              # Run the daemon
+npm run build:version  # Update version.json
+npm run lint           # Check code quality
+npm run lint:fix       # Auto-fix linting issues
+npm test               # Run test suite
+npm run md:fix         # Fix markdown formatting
+```
+
+### **Creating a Scene**
 
 ```javascript
 'use strict';
 
 module.exports = {
   name: 'my_scene',
-  wantsLoop: true, // animated scenes opt in; static scenes set false
+  description: 'My awesome scene',
+  category: 'Custom',
+  wantsLoop: true, // true for animated, false for static
+
   async init(ctx) {
-    // one-time setup
+    // One-time setup
   },
+
   async render(ctx) {
     const { device } = ctx;
-    // draw your frame...
+
+    // Draw your frame
+    device.fillRect(0, 0, 64, 64, [0, 0, 0, 255]);
+    device.drawText('Hello!', 32, 32);
     await device.push('my_scene', ctx.publishOk);
 
-    // return next delay in ms (loop-driven) or null to finish
-    return 0; // schedule next frame ASAP
+    // Return delay in ms for next frame, or null to finish
+    return 1000; // 1 second
   },
+
   async cleanup(ctx) {
-    // free resources; keep it idempotent
+    // Clean up resources
   },
 };
 ```
 
+See `scenes/template.js` for a complete starter template and `docs/SCENE_DEVELOPMENT.md` for the full guide.
+
 ---
 
-## ✅ Testing & Live Recipes
+## ✅ Testing
 
-We provide mock tests and live helpers in `scripts/`:
+**Run Tests:**
 
-- `scripts/live_test_harness.js`: quick scene cycle smoke test
-- `scripts/live_test_gate.js`: verifies stale frame gating
-- `scripts/live_test_perf_once.js`: single finite perf run
-- `scripts/live_test_perf_repeat.js`: consecutive perf runs
-- `scripts/live_test_draw_animated.js [frames]`: run animated demo; if
-  `frames >= 0` it stops and shows a centered "COMPLETE" overlay
+```bash
+npm test  # Full test suite (152 tests)
+```
 
-Use the mock driver whenever possible. When testing live, confirm the device is
-free and that the build/commit on the device matches your local before you run
-tests (see `STANDARDS.md` "Live Server Testing Protocol").
+**Live Testing Scripts:**
+
+```bash
+node scripts/live_test_harness.js      # Scene cycle smoke test
+node scripts/live_test_gate.js         # Frame gating verification
+node scripts/live_test_perf_once.js    # Performance benchmark
+```
+
+**Best Practices:**
+
+- Use `mock` driver for fast iteration
+- Test with real device only when needed
+- Check build number matches before live testing (see `STANDARDS.md`)
 
 ---
 
 ## 👀 Observability
 
-Scene state is published to:
+### **MQTT State Topics**
 
-- `${SCENE_STATE_TOPIC_BASE}/<ip>/scene/state` (default `/home/pixoo`)
+- `${SCENE_STATE_TOPIC_BASE}/<ip>/scene/state` - Full device state
+- `pixoo/<ip>/ok` - Per-frame push metrics
+- `pixoo/<ip>/metrics` - Device metrics (pushes, errors, frametime)
 
-Payload keys include `currentScene`, `targetScene`, `status`, `generationId`,
-`version`, `buildNumber`, `gitCommit`, and `ts`. You can watch these to confirm
-the right build is live before running tests.
+**State Payload:**
 
-Each successful `push()` also emits `pixoo/<ip>/ok` with per-frame metrics.
+```json
+{
+  "currentScene": "startup",
+  "status": "running",
+  "generationId": 42,
+  "version": "2.0.0",
+  "buildNumber": 495,
+  "gitCommit": "b788c8e",
+  "ts": 1696351234567
+}
+```
+
+### **Web UI Monitoring**
+
+- Real-time FPS and frametime for animated scenes
+- Push counts and error tracking
+- Device status and scene information
+- Build number and version display
+
+---
+
+## 🐳 Docker Deployment
+
+**Docker Compose:**
+
+```yaml
+pixoo-daemon:
+  image: ghcr.io/markus-barta/pixoo-daemon:latest
+  container_name: pixoo-daemon
+  network_mode: host
+  restart: unless-stopped # or 'no' - daemon can self-restart
+  ports:
+    - '10829:10829' # Web UI
+  environment:
+    - TZ=Europe/Vienna
+    - PIXOO_DEVICE_TARGETS=192.168.1.159=real;192.168.1.189=mock
+  env_file:
+    - /path/to/secrets/smarthome.env
+```
+
+**Features:**
+
+- Automatic image updates via Watchtower
+- Self-restart capability (no Docker restart policy required)
+- Web UI accessible on host network
+- Persistent configuration via environment
+
+See `docs/DEPLOYMENT.md` for complete deployment guide.
 
 ---
 
 ## 📝 Changelog
 
-See [VERSIONING.md](./docs/VERSIONING.md) for version management strategy.
+### v2.0.0 (Current)
 
-### v2.0.0 (Current - 2025-09-20)
+**🌐 Major Features:**
 
-- **Complete architectural overhaul**: 5 new professional modules
-- **Zero ESLint errors**: Enterprise-grade code quality
-- **Centralized scheduler**: Pure-render scenes, input gating, per-device state machine
-- **Advanced features**: Pixel-perfect text rendering, professional error handling
-- **Observability**: MQTT state mirroring with build/version metadata
+- Web UI control panel with per-device management
+- Self-restarting daemon (no Docker dependency)
+- Complete service layer architecture
+- Professional command pattern implementation
 
-### v1.1.0 (2025-09-19)
+**🏗️ Architecture:**
 
-- Centralized scheduler and pure-render scenes
-- Input gating for stale frames; per-device state mirrored to MQTT
-- Performance scene improvements; animated demo with frames cap and completion
-- Expanded docs (README, MQTT commands) and live test scripts
+- Dependency injection container
+- Centralized MQTT and state management
+- Clean separation of concerns
+- Comprehensive error handling
 
-Detailed history available in Git tags, commits, and `docs/BACKLOG.md`.
+**✨ Improvements:**
+
+- 152/152 tests passing
+- Zero ESLint errors
+- Full code quality standards
+- Professional documentation
+
+**📊 Metrics:**
+
+- ~2,000 lines of new functionality
+- ~500 lines of duplication eliminated
+- 80% reduction in state management duplication
+- 70% reduction in MQTT publishing duplication
+
+See `docs/VERSIONING.md` for version strategy and `docs/BACKLOG.md` for detailed history.
 
 ---
 
 ## ❓ FAQ
 
-- **Why do scenes return a number or `null`?**
-  - Returning a number (ms) tells the central scheduler when to render the next
-    frame. Returning `null` signals completion so the loop stops cleanly.
+**Q: How do I create a new scene?**  
+A: Copy `scenes/template.js`, customize it, and restart the daemon. Follow the pure-render contract.
 
-- **Can scenes manage their own timers or publish next-frame MQTT?**
-  - No. That would break the pure-render contract and reintroduce race
-    conditions. The central loop does the timing; scenes focus on pixels.
+**Q: Why return a number or null from render()?**  
+A: The number is the delay (ms) before next frame. `null` signals completion. This lets the central scheduler manage timing cleanly.
 
-- **How are stale frames avoided?**
-  - Input gating drops animation-frame messages whose `(scene, generation)` do
-    not match the active device state. Old scenes cannot affect the screen.
+**Q: Can I run multiple devices?**  
+A: Yes! Each device has its own scheduler and state machine. Fully isolated.
 
-- **Can I run multiple devices?**
-  - Yes. Each device has its own state machine and scheduler loop; devices are
-    fully isolated.
+**Q: How do I switch drivers?**  
+A: Via MQTT: `mosquitto_pub ... -t "pixoo/<ip>/driver/set" -m 'mock'`  
+Or via Web UI: Click the driver toggle button.
 
-- **How do I create a new scene?**
-  - Copy `scenes/template.js` and customize it. Follow the pure-render contract:
-    return a delay (ms) for animated scenes or `null` for static scenes.
+**Q: Why use mock driver?**  
+A: Fast, conflict-free development. No device required. Perfect for testing scene logic.
 
-- **Why is my scene not updating?**
-  - Check that you're calling `await device.push()` after drawing.
-  - Verify your scene exports the correct interface: `name`, `render`, `init`, `cleanup`, `wantsLoop`.
-  - Ensure `wantsLoop: true` for animated scenes that need regular updates.
+**Q: How do I debug issues?**  
+A: Enable debug logging: `LOG_LEVEL=debug npm start`  
+Monitor MQTT: `mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#'`  
+Use mock driver to isolate issues.
 
-- **How do I debug scene issues?**
-  - Enable debug logging: `LOG_LEVEL=debug npm start`
-  - Check MQTT messages: `mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#'`
-  - Use the mock driver for faster development: `PIXOO_DEVICE_TARGETS="192.168.1.159=mock"`
+**Q: What if scenes don't update?**  
+A: Check `await device.push()` is called, `wantsLoop: true` for animated scenes, and verify scene exports `name`, `render`, etc.
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+| Issue                     | Solution                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| **Scene not loading**     | Check logs for "Scene registered" messages. Verify exports: `name`, `render`  |
+| **MQTT not working**      | Verify environment variables. Test with: `mosquitto_pub -t 'test' -m 'hello'` |
+| **Device unreachable**    | Ping device. Check IP in `PIXOO_DEVICE_TARGETS`. Try mock driver first        |
+| **Performance issues**    | Use `LOG_LEVEL=debug` to profile. Check `cleanup()` is implemented properly   |
+| **Web UI empty**          | Hard refresh browser (Cmd+Shift+R). Check console for errors                  |
+| **Container won't start** | Check logs with: `docker logs pixoo-daemon --tail 100`                        |
 
-#### **Scene Not Loading**
-
-- **Symptoms**: Scene not appearing in logs or not responding to MQTT commands
-- **Causes**:
-  - Missing required exports (`name`, `render`)
-  - Syntax errors in scene file
-  - Incorrect file permissions
-- **Solutions**:
-  - Check logs for registration messages: `Scene registered: your_scene_name`
-  - Validate scene interface with `npm run lint`
-  - Ensure scene file ends with `.js` extension
-
-#### **MQTT Connection Issues**
-
-- **Symptoms**: No MQTT messages being processed
-- **Causes**:
-  - Incorrect broker configuration
-  - Network connectivity issues
-  - Authentication problems
-- **Solutions**:
-  - Verify environment variables: `MOSQITTO_HOST_MS24`, `MOSQITTO_USER_MS24`, `MOSQITTO_PASS_MS24`
-  - Test connection: `mosquitto_pub -h $MOSQITTO_HOST_MS24 -t 'test' -m 'hello'`
-  - Check firewall settings and port accessibility
-
-#### **Device Communication Problems**
-
-- **Symptoms**: Drawing commands not appearing on device
-- **Causes**:
-  - Device offline or unreachable
-  - Wrong IP address configured
-  - Device driver mismatch
-- **Solutions**:
-  - Ping device: `ping 192.168.1.159`
-  - Use mock driver for testing: `PIXOO_DEVICE_TARGETS="192.168.1.159=mock"`
-  - Check device is on same network and accessible
-
-#### **Performance Issues**
-
-- **Symptoms**: Slow rendering, high CPU usage, dropped frames
-- **Causes**:
-  - Complex drawing operations
-  - Inefficient scene logic
-  - Memory leaks in scene state
-- **Solutions**:
-  - Profile with `LOG_LEVEL=debug` to identify bottlenecks
-  - Use `device.clear()` sparingly - only when needed
-  - Implement proper cleanup in scene `cleanup()` function
-  - Consider using static scenes (`wantsLoop: false`) when possible
-
-#### **Stale Frame Issues**
-
-- **Symptoms**: Old scenes affecting current display after switching
-- **Causes**:
-  - Missing cleanup in scene `cleanup()` function
-  - State not properly cleared between scene switches
-- **Solutions**:
-  - Implement proper cleanup: clear timers, reset state variables
-  - Use scene state Map for consistent state management
-  - Test scene switching: `scripts/live_test_harness.js`
-
-### Debug Commands
+**Debug Commands:**
 
 ```bash
-# Check daemon logs with debug level
+# Debug logging
 LOG_LEVEL=debug npm start
 
-# Monitor all MQTT traffic
+# Monitor MQTT
 mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#' -v
 
-# Test device connectivity
-mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
-  -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"empty"}'
-
 # Check device state
-mosquitto_sub -h $MOSQITTO_HOST_MS24 -t '/home/pixoo/192.168.1.159/scene/state'
+mosquitto_sub -h $MOSQITTO_HOST_MS24 -t '/home/pixoo/+/scene/state'
 
-# Test with mock driver
-PIXOO_DEVICE_TARGETS="192.168.1.159=mock" npm start
+# Docker logs
+docker logs pixoo-daemon -f --timestamps --tail 100
 ```
-
-### Getting Help
-
-1. **Check the logs**: Always start with `LOG_LEVEL=debug` to see detailed information
-2. **Test with mock driver**: Use `PIXOO_DEVICE_TARGETS="ip=mock"` to isolate scene logic from device issues
-3. **Validate scene interface**: Ensure your scene exports all required functions
-4. **Check MQTT topics**: Verify commands are reaching the correct topics
-5. **Review scene state**: Use the scene state topic to monitor device state changes
-
-If issues persist, check `docs/BACKLOG.md` for known issues or create a new entry for tracking.
 
 ---
 
 ## 🗺️ Roadmap
 
-### Completed
+**Completed ✅**
 
-- ✅ **v2.0.0**: Complete architectural overhaul with professional code quality
-- ✅ **v1.1.0**: Centralized scheduler, pure-render scenes, improved observability
+- v2.0.0: Modern architecture with Web UI
+- Phase 1: Core services (DI, MQTT, State)
+- Phase 2: Command handlers
+- Phase 3: Service layer
 
-### Planned
+**In Progress 🚧**
 
-- **Graphics Engine** (GFX-203): Hardware-aware animations for 4-5fps displays
-- **Configuration Validation** (CFG-204): Enhanced config validation and presets
-- **Testing Framework** (TST-205): Comprehensive test suite expansion
+- Enhanced graphics engine
+- Additional scene templates
+- Extended documentation
 
-### Deferred
+**Planned 📋**
 
-- **Stability Soak Test** (SOAK-009): Postponed until after current feature development
+- Mobile-responsive Web UI improvements
+- Scene marketplace/sharing
+- Advanced animation framework
 
-See `docs/BACKLOG.md` for detailed tasks, status, and traceable test results.
+See `docs/BACKLOG.md` for detailed tasks and tracking.
 
 ---
 
 ## ❤️ Contributing
 
-We love contributions! Please open an issue or PR and follow the guidelines in
-`STANDARDS.md`. Keep commits conventional, code clean, and docs helpful.
+Contributions welcome! Please:
+
+- Follow the guidelines in `STANDARDS.md` and `docs/CODE_QUALITY.md`
+- Keep commits conventional (`feat:`, `fix:`, `docs:`)
+- Write tests for new features
+- Update documentation
+
+Open an issue or PR and let's make something great together!
+
+---
+
+## 📚 Documentation
+
+- `STANDARDS.md` - Development standards and best practices
+- `docs/CODE_QUALITY.md` - Code quality guidelines
+- `docs/ARCHITECTURE.md` - System design and patterns
+- `docs/SCENE_DEVELOPMENT.md` - Scene development guide
+- `docs/DEPLOYMENT.md` - Deployment guide
+- `docs/VERSIONING.md` - Version management strategy
+- `MQTT_COMMANDS.md` - Complete MQTT command reference
 
 ---
 
 ## 📄 License
 
 MIT License — do good things, be kind, and give credit where due.
+
+---
+
+**Made with ❤️ and lots of pixels**
