@@ -140,7 +140,11 @@ async function loadScenes() {
 }
 
 async function loadAll() {
-  await Promise.all([loadSystemStatus(), loadDevices(), loadScenes()]);
+  // Load scenes first (needed for dropdown rendering)
+  await loadScenes();
+
+  // Then load system status and devices in parallel
+  await Promise.all([loadSystemStatus(), loadDevices()]);
 }
 
 // ============================================================================
