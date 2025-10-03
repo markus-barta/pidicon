@@ -253,11 +253,16 @@ function startWebServer(container, logger) {
   // SPA FALLBACK - Serve index.html for all non-API routes
   // =========================================================================
 
-  // Catch-all route for Vue Router (must be last!)
-  app.get('*', (req, res) => {
+  // Catch-all middleware for Vue Router (must be last!)
+  // Express 5 compatibility: use middleware instead of app.get('*')
+  app.use((req, res) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    // Only handle GET requests for HTML routes
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
     // Serve index.html for all other routes (SPA)
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
