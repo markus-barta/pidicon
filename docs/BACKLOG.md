@@ -1129,7 +1129,7 @@ component-based architecture with built-in Material Design components.
 
 3. Create Vue app structure:
 
-   ```
+   ```text
    web/
      frontend/          # Vue source files
        src/
@@ -1670,7 +1670,7 @@ merge with environment variables (env vars override).
 
 **Directory Structure**:
 
-```
+```text
 /data/
   config.json        # Main configuration
   ui-state.json      # UI preferences (collapsed state)
