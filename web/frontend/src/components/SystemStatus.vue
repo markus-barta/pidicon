@@ -27,8 +27,26 @@
         >
           Daemon Active
         </v-chip>
-        <v-chip size="small" color="primary" variant="outlined">
-          v2.4.1
+        <v-chip
+          v-if="buildNumber"
+          size="small"
+          color="primary"
+          variant="outlined"
+          class="mr-2"
+        >
+          Build #{{ buildNumber }}
+        </v-chip>
+        <v-chip
+          v-if="gitCommit"
+          size="small"
+          color="grey"
+          variant="text"
+          class="mr-2"
+        >
+          {{ gitCommit.slice(0, 7) }}
+        </v-chip>
+        <v-chip size="small" color="info" variant="text">
+          {{ hostname }}
         </v-chip>
       </div>
 
@@ -68,6 +86,8 @@ const api = useApi();
 const toast = useToast();
 
 const buildNumber = ref(null);
+const gitCommit = ref(null);
+const hostname = ref('');
 const status = ref('Running');
 const startTime = ref(null);
 const uptime = ref('');
@@ -110,6 +130,8 @@ async function loadStatus() {
   try {
     const data = await api.getSystemStatus();
     buildNumber.value = data.buildNumber;
+    gitCommit.value = data.gitCommit;
+    hostname.value = `${data.platform}/${data.arch}`;
     status.value = data.status || 'Running';
 
     if (data.startTime) {
