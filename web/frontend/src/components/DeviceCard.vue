@@ -293,7 +293,9 @@ const fps = ref(0);
 const frametime = ref(0);
 const frameCount = ref(0);
 const errorCount = ref(0);
+const pushCount = ref(0);
 const startTime = ref(Date.now());
+const daemonStartTime = ref(Date.now());
 
 let metricsInterval = null;
 
@@ -333,15 +335,29 @@ const fpsDisplay = computed(() => {
 });
 
 const uptimeDisplay = computed(() => {
-  const diff = Date.now() - startTime.value;
+  // Use daemon start time from system status
+  const diff = Date.now() - daemonStartTime.value;
   const hours = Math.floor(diff / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);
   const seconds = Math.floor((diff % 60000) / 1000);
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  } else {
+    return `${seconds}s`;
+  }
 });
 
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
+});
+
+const successRate = computed(() => {
+  const total = pushCount.value + errorCount.value;
+  if (total === 0) return 100;
+  return Math.round((pushCount.value / total) * 100);
 });
 
 // Watch for external changes
@@ -380,6 +396,7 @@ async function loadMetrics() {
       frametime.value = Math.round(data.frametime || 0);
       frameCount.value = data.frameCount || 0;
       errorCount.value = data.errorCount || 0;
+      pushCount.value = data.pushCount || 0;
     }
   } catch (err) {
     console.error('Failed to load metrics:', err);
@@ -482,7 +499,19 @@ async function toggleDriver() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Initialize daemon start time from system status
+  try {
+    const systemStatus = await api.getSystemStatus();
+    if (systemStatus.startTime) {
+      daemonStartTime.value = new Date(systemStatus.startTime).getTime();
+    } else {
+      daemonStartTime.value = Date.now() - (systemStatus.uptime || 0) * 1000;
+    }
+  } catch (error) {
+    console.error('Failed to load system status for uptime:', error);
+  }
+
   loadMetrics();
   metricsInterval = setInterval(() => {
     loadMetrics();
@@ -526,12 +555,15 @@ onUnmounted(() => {
 .scene-nav-row {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .nav-button {
   flex-shrink: 0;
-  align-self: center;
-  margin-top: -4px; /* Fine-tune vertical alignment */
+  height: 56px; /* Match v-select height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .scene-description-card {
@@ -562,27 +594,27 @@ onUnmounted(() => {
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  border: 1px solid #ddd6fe;
+  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+  border: 1px solid #f3e8ff;
   color: #6d28d9;
 }
 
 .metric-card-uptime {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border: 1px solid #a7f3d0;
+  background: linear-gradient(135deg, #ffffff 0%, #d1fae5 100%);
+  border: 1px solid #d1fae5;
   color: #065f46;
 }
 
 .metric-card-frames {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #fde68a;
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+  border: 1px solid #fef3c7;
   color: #78350f;
 }
 
-.metric-card-errors {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 1px solid #fecaca;
-  color: #991b1b;
+.metric-card-success {
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 100%);
+  border: 1px solid #dbeafe;
+  color: #1e40af;
 }
 
 .metric-icon-wrapper {

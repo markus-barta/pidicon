@@ -27,30 +27,13 @@
         >
           Daemon Active
         </v-chip>
-        <v-chip
-          v-if="buildNumber"
-          size="small"
-          color="primary"
-          variant="outlined"
-          class="mr-2"
-          :href="`https://github.com/markus-barta/pixoo-daemon/commit/${gitCommit}`"
-          target="_blank"
-          link
-        >
-          <v-icon size="x-small" class="mr-1">mdi-github</v-icon>
-          Build #{{ buildNumber }}
-        </v-chip>
-        <v-chip
-          v-if="gitCommit"
-          size="small"
-          color="grey"
-          variant="text"
-          class="mr-2"
-        >
-          {{ gitCommit.slice(0, 7) }}
-        </v-chip>
-        <v-chip size="small" color="info" variant="text">
+        <v-chip size="small" color="info" variant="text" class="mr-2">
+          <v-icon size="x-small" class="mr-1">mdi-docker</v-icon>
           {{ hostname }}
+        </v-chip>
+        <v-chip size="small" color="grey" variant="text">
+          <v-icon size="x-small" class="mr-1">mdi-nodejs</v-icon>
+          {{ nodeVersion }}
         </v-chip>
       </div>
 
@@ -60,11 +43,12 @@
       <div class="d-flex align-center">
         <v-chip
           size="small"
-          prepend-icon="mdi-wifi"
+          prepend-icon="mdi-access-point-network"
           variant="text"
-          class="mr-4 text-medium-emphasis"
+          color="success"
+          class="mr-4"
         >
-          Connected
+          MQTT Connected
         </v-chip>
         <v-btn
           color="error"
@@ -92,6 +76,7 @@ const toast = useToast();
 const buildNumber = ref(null);
 const gitCommit = ref(null);
 const hostname = ref('');
+const nodeVersion = ref('Unknown');
 const status = ref('Running');
 const startTime = ref(null);
 const uptime = ref('');
@@ -135,7 +120,8 @@ async function loadStatus() {
     const data = await api.getSystemStatus();
     buildNumber.value = data.buildNumber;
     gitCommit.value = data.gitCommit;
-    hostname.value = `${data.platform}/${data.arch}`;
+    hostname.value = data.hostname || 'Unknown';
+    nodeVersion.value = data.nodeVersion || 'Unknown';
     status.value = data.status || 'Running';
 
     if (data.startTime) {

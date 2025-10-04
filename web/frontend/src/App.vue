@@ -80,6 +80,9 @@
 
     <!-- Toast Notifications -->
     <toast-notifications />
+
+    <!-- Footer -->
+    <app-footer />
   </v-app>
 </template>
 
@@ -92,6 +95,7 @@ import { useToast } from './composables/useToast';
 import SystemStatus from './components/SystemStatus.vue';
 import DeviceCard from './components/DeviceCard.vue';
 import ToastNotifications from './components/ToastNotifications.vue';
+import AppFooter from './components/AppFooter.vue';
 
 const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
