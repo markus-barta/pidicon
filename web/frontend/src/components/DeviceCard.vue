@@ -47,7 +47,7 @@
     </v-card-subtitle>
 
     <v-card-text class="pt-0">
-      <!-- Power / Mock Mode / Reset Controls -->
+      <!-- Power / Mock Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
         <div class="control-item">
           <v-icon icon="mdi-power" size="small" class="mr-2" />
@@ -84,35 +84,27 @@
         >
           Reset
         </v-btn>
-      </div>
 
-      <!-- Brightness Control -->
-      <div class="brightness-control mb-6">
-        <div class="d-flex align-center mb-2">
-          <v-icon icon="mdi-brightness-6" size="small" class="mr-2" />
-          <span class="text-body-2 font-weight-medium">Display Brightness</span>
-          <v-spacer />
-          <span class="text-caption text-medium-emphasis">
+        <v-spacer></v-spacer>
+
+        <!-- Brightness Slider (right-aligned) -->
+        <div class="brightness-slider-compact">
+          <v-icon size="small" class="mr-2">mdi-brightness-6</v-icon>
+          <v-slider
+            v-model="brightness"
+            :min="0"
+            :max="100"
+            :step="5"
+            color="primary"
+            hide-details
+            :loading="brightnessLoading"
+            @end="setBrightness"
+            style="width: 200px"
+          ></v-slider>
+          <span class="text-caption ml-2" style="width: 40px">
             {{ brightness }}%
           </span>
         </div>
-        <v-slider
-          v-model="brightness"
-          :min="0"
-          :max="100"
-          :step="5"
-          color="primary"
-          hide-details
-          :loading="brightnessLoading"
-          @end="setBrightness"
-        >
-          <template v-slot:prepend>
-            <v-icon size="small">mdi-brightness-5</v-icon>
-          </template>
-          <template v-slot:append>
-            <v-icon size="small">mdi-brightness-7</v-icon>
-          </template>
-        </v-slider>
       </div>
 
       <!-- Scene Control -->
@@ -122,15 +114,17 @@
         <!-- Scene Selector with Next/Prev (single row) -->
         <div class="d-flex align-center mb-4">
           <v-btn
-            icon="mdi-chevron-left"
-            variant="outlined"
+            icon
+            variant="text"
             size="small"
             @click="previousScene"
             :disabled="loading"
-            class="mr-2"
-          ></v-btn>
+            class="nav-button"
+          >
+            <v-icon>mdi-chevron-left</v-icon>
+          </v-btn>
 
-          <div class="flex-grow-1">
+          <div class="flex-grow-1 mx-2">
             <scene-selector
               v-model="selectedScene"
               :disabled="loading"
@@ -140,13 +134,15 @@
           </div>
 
           <v-btn
-            icon="mdi-chevron-right"
-            variant="outlined"
+            icon
+            variant="text"
             size="small"
             @click="nextScene"
             :disabled="loading"
-            class="ml-2"
-          ></v-btn>
+            class="nav-button"
+          >
+            <v-icon>mdi-chevron-right</v-icon>
+          </v-btn>
         </div>
 
         <!-- Scene Description Card -->
@@ -204,7 +200,7 @@
                 </v-icon>
               </div>
               <div class="metric-header">Performance</div>
-              <div class="metric-value">{{ fps }}</div>
+              <div class="metric-value">{{ fpsDisplay }}</div>
               <div class="metric-label">FPS</div>
               <div class="metric-sublabel">{{ frametime }}ms frame time</div>
             </div>
@@ -317,6 +313,10 @@ const lastSeen = computed(() => {
   return now.toTimeString().slice(0, 8);
 });
 
+const fpsDisplay = computed(() => {
+  return fps.value.toFixed(2);
+});
+
 const uptimeDisplay = computed(() => {
   const diff = Date.now() - startTime.value;
   const hours = Math.floor(diff / 3600000);
@@ -361,9 +361,9 @@ async function loadMetrics() {
   try {
     const data = await api.getDeviceMetrics(props.device.ip);
     if (data) {
-      fps.value = Math.round(data.fps || 0);
-      frametime.value = data.frametime ? data.frametime.toFixed(1) : '0.0';
-      frameCount.value = data.pushCount || 0;
+      fps.value = data.fps || 0;
+      frametime.value = Math.round(data.frametime || 0);
+      frameCount.value = data.frameCount || 0;
       errorCount.value = data.errorCount || 0;
     }
   } catch (err) {
@@ -432,7 +432,7 @@ async function setBrightness() {
 
 async function handleReset() {
   const confirmed = confirm(
-    `Reset device ${props.device.ip}? This will restart the scene rendering.`,
+    `Reset device ${props.device.ip}? This will briefly show the init screen.`,
   );
   if (!confirmed) return;
 
@@ -485,6 +485,7 @@ onUnmounted(() => {
 .device-card {
   border-radius: 16px !important;
   border: 1px solid #e5e7eb;
+  min-width: 800px;
 }
 
 .controls-row {
@@ -502,11 +503,13 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.brightness-control {
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+.brightness-slider-compact {
+  display: flex;
+  align-items: center;
+}
+
+.nav-button {
+  flex-shrink: 0;
 }
 
 .scene-description-card {
@@ -531,32 +534,33 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   color: white;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 1px solid #bae6fd;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-  border-color: #ddd6fe;
-  color: #5b21b6;
+  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
+  border: 1px solid #a78bfa;
+  color: #3730a3;
 }
 
 .metric-card-uptime {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-color: #bbf7d0;
-  color: #15803d;
+  background: linear-gradient(135deg, #86efac 0%, #4ade80 100%);
+  border: 1px solid #4ade80;
+  color: #14532d;
 }
 
 .metric-card-frames {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border-color: #fde68a;
-  color: #92400e;
+  background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
+  border: 1px solid #facc15;
+  color: #713f12;
 }
 
 .metric-card-errors {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-color: #fecaca;
-  color: #991b1b;
+  background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+  border: 1px solid #f87171;
+  color: #7f1d1d;
 }
 
 .metric-icon-wrapper {
@@ -575,26 +579,26 @@ onUnmounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  opacity: 0.7;
-  margin-bottom: 12px;
+  opacity: 0.8;
+  margin-bottom: 8px;
 }
 
 .metric-value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: bold;
-  line-height: 1;
-  margin-bottom: 4px;
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
 .metric-label {
   font-size: 12px;
   font-weight: 600;
   opacity: 0.8;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .metric-sublabel {
   font-size: 10px;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 </style>
