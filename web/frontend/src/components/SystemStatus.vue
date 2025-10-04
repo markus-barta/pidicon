@@ -33,7 +33,11 @@
           color="primary"
           variant="outlined"
           class="mr-2"
+          :href="`https://github.com/markus-barta/pixoo-daemon/commit/${gitCommit}`"
+          target="_blank"
+          link
         >
+          <v-icon size="x-small" class="mr-1">mdi-github</v-icon>
           Build #{{ buildNumber }}
         </v-chip>
         <v-chip

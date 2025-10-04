@@ -33,12 +33,17 @@
           >
             {{ device.status === 'running' ? 'Active' : 'Stopped' }}
           </v-chip>
-          <v-btn icon="mdi-chevron-up" variant="text" size="small"></v-btn>
+          <v-btn
+            :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+            variant="text"
+            size="small"
+            @click="isCollapsed = !isCollapsed"
+          ></v-btn>
         </div>
       </div>
     </v-card-title>
 
-    <v-card-subtitle class="pt-0 pb-4">
+    <v-card-subtitle v-if="!isCollapsed" class="pt-0 pb-4">
       <div class="d-flex align-center text-medium-emphasis">
         <v-icon size="small" class="mr-1">mdi-wifi</v-icon>
         {{ device.ip }}
@@ -46,7 +51,7 @@
       </div>
     </v-card-subtitle>
 
-    <v-card-text class="pt-0">
+    <v-card-text v-if="!isCollapsed" class="pt-0">
       <!-- Power / Mock Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
         <div class="control-item">
@@ -112,11 +117,10 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
         <!-- Scene Selector with Next/Prev (single row) -->
-        <div class="d-flex align-center mb-4">
+        <div class="scene-nav-row mb-4">
           <v-btn
             icon
             variant="text"
-            size="small"
             @click="previousScene"
             :disabled="loading"
             class="nav-button"
@@ -136,7 +140,6 @@
           <v-btn
             icon
             variant="text"
-            size="small"
             @click="nextScene"
             :disabled="loading"
             class="nav-button"
@@ -283,6 +286,7 @@ const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
+const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 
 // Metrics
 const fps = ref(0);
@@ -314,6 +318,21 @@ const lastSeen = computed(() => {
 });
 
 const fpsDisplay = computed(() => {
+  // Check if scene is static (non-looping)
+  if (!currentSceneInfo.value?.wantsLoop) {
+    return 'static';
+  }
+  
+  // If FPS is 0 or frametime is 0, show dash
+  if (fps.value === 0 || frametime.value === 0) {
+    return '-';
+  }
+  
+  // Show integer if whole number, otherwise 2 decimals
+  if (Number.isInteger(fps.value)) {
+    return fps.value.toString();
+  }
+  
   return fps.value.toFixed(2);
 });
 
@@ -508,8 +527,15 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.scene-nav-row {
+  display: flex;
+  align-items: center;
+}
+
 .nav-button {
   flex-shrink: 0;
+  align-self: center;
+  margin-top: -4px; /* Fine-tune vertical alignment */
 }
 
 .scene-description-card {
@@ -540,27 +566,27 @@ onUnmounted(() => {
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
-  border: 1px solid #a78bfa;
-  color: #3730a3;
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border: 1px solid #ddd6fe;
+  color: #6d28d9;
 }
 
 .metric-card-uptime {
-  background: linear-gradient(135deg, #86efac 0%, #4ade80 100%);
-  border: 1px solid #4ade80;
-  color: #14532d;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 1px solid #a7f3d0;
+  color: #065f46;
 }
 
 .metric-card-frames {
-  background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
-  border: 1px solid #facc15;
-  color: #713f12;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fde68a;
+  color: #78350f;
 }
 
 .metric-card-errors {
-  background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
-  border: 1px solid #f87171;
-  color: #7f1d1d;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 .metric-icon-wrapper {

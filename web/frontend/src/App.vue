@@ -68,9 +68,8 @@
             v-for="device in deviceStore.devices"
             :key="device.ip"
             cols="12"
-            sm="12"
-            md="6"
-            lg="6"
+            md="12"
+            lg="12"
             xl="6"
           >
             <device-card :device="device" @refresh="loadData" />
