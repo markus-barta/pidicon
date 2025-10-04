@@ -328,11 +328,7 @@ const fpsDisplay = computed(() => {
     return '-';
   }
   
-  // Show integer if whole number, otherwise 2 decimals
-  if (Number.isInteger(fps.value)) {
-    return fps.value.toString();
-  }
-  
+  // For animated scenes: ALWAYS show 2 decimal places (e.g., 4.24, 20.00)
   return fps.value.toFixed(2);
 });
 
