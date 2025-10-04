@@ -9,7 +9,7 @@
       <div class="text-center py-12">
         <h1
           class="text-h3 font-weight-bold mb-2"
-          style="color: #7c3aed; letter-spacing: -0.5px"
+          style="color: #8b5cf6; letter-spacing: -0.5px"
         >
           Pixoo Display Manager
         </h1>
@@ -150,7 +150,7 @@ onMounted(() => {
 
 /* Override Vuetify primary color text */
 .primary--text {
-  color: #7c3aed !important;
+  color: #8b5cf6 !important;
 }
 </style>
 

@@ -441,19 +441,19 @@ onUnmounted(() => {
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
 }
 
 .metric-card-uptime {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
 }
 
 .metric-card-frames {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
 }
 
 .metric-card-errors {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
 }
 
 .metric-header {

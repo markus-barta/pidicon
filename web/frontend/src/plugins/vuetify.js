@@ -16,14 +16,14 @@ export default createVuetify({
     themes: {
       light: {
         colors: {
-          primary: '#7C3AED', // Purple from Figma
-          secondary: '#8B5CF6',
-          accent: '#A78BFA',
-          error: '#EF4444',
-          info: '#3B82F6',
-          success: '#10B981',
-          warning: '#F59E0B',
-          background: '#F9FAFB',
+          primary: '#8B5CF6', // Softer purple
+          secondary: '#A78BFA',
+          accent: '#C4B5FD',
+          error: '#FCA5A5', // Softer red
+          info: '#93C5FD', // Softer blue
+          success: '#86EFAC', // Softer green
+          warning: '#FCD34D', // Softer yellow
+          background: '#FAFAFA',
           surface: '#FFFFFF',
         },
       },
