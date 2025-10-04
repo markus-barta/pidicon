@@ -21,7 +21,7 @@
             size="small"
             variant="flat"
           >
-            {{ device.driver === 'real' ? 'Hardware' : 'Mock' }}
+            {{ device.driver === 'real' ? 'Hardware' : 'Mock Mode' }}
           </v-chip>
         </div>
         <div class="d-flex align-center">
@@ -48,29 +48,31 @@
 
     <v-card-text class="pt-0">
       <!-- Power / Mock Mode / Reset Controls -->
-      <div class="d-flex align-center mb-6">
-        <v-icon icon="mdi-power" size="small" class="mr-2" />
-        <span class="text-body-2 font-weight-medium mr-3">Power</span>
-        <v-switch
-          v-model="displayOn"
-          color="success"
-          hide-details
-          density="compact"
-          :loading="toggleLoading"
-          @change="toggleDisplay"
-          class="mr-6"
-        ></v-switch>
+      <div class="controls-row mb-6">
+        <div class="control-item">
+          <v-icon icon="mdi-power" size="small" class="mr-2" />
+          <span class="text-body-2 font-weight-medium mr-3">Power</span>
+          <v-switch
+            v-model="displayOn"
+            color="success"
+            hide-details
+            density="compact"
+            :loading="toggleLoading"
+            @change="toggleDisplay"
+          ></v-switch>
+        </div>
 
-        <span class="text-body-2 font-weight-medium mr-3">Mock Mode</span>
-        <v-switch
-          :model-value="device.driver === 'mock'"
-          color="warning"
-          hide-details
-          density="compact"
-          :loading="driverLoading"
-          @change="toggleDriver"
-          class="mr-6"
-        ></v-switch>
+        <div class="control-item">
+          <span class="text-body-2 font-weight-medium mr-3">Mock Mode</span>
+          <v-switch
+            :model-value="device.driver === 'mock'"
+            color="warning"
+            hide-details
+            density="compact"
+            :loading="driverLoading"
+            @change="toggleDriver"
+          ></v-switch>
+        </div>
 
         <v-btn
           color="error"
@@ -84,19 +86,51 @@
         </v-btn>
       </div>
 
+      <!-- Brightness Control -->
+      <div class="brightness-control mb-6">
+        <div class="d-flex align-center mb-2">
+          <v-icon icon="mdi-brightness-6" size="small" class="mr-2" />
+          <span class="text-body-2 font-weight-medium">Display Brightness</span>
+          <v-spacer />
+          <span class="text-caption text-medium-emphasis">
+            {{ brightness }}%
+          </span>
+        </div>
+        <v-slider
+          v-model="brightness"
+          :min="0"
+          :max="100"
+          :step="5"
+          color="primary"
+          hide-details
+          :loading="brightnessLoading"
+          @end="setBrightness"
+        >
+          <template v-slot:prepend>
+            <v-icon size="small">mdi-brightness-5</v-icon>
+          </template>
+          <template v-slot:append>
+            <v-icon size="small">mdi-brightness-7</v-icon>
+          </template>
+        </v-slider>
+      </div>
+
       <!-- Scene Control -->
       <div class="scene-control-section mb-4">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
-        <div class="d-flex align-center mb-3">
+        
+        <!-- Scene Selector with Next/Prev (single row) -->
+        <div class="d-flex align-center mb-4">
           <v-btn
             icon="mdi-chevron-left"
-            variant="text"
+            variant="outlined"
             size="small"
             @click="previousScene"
             :disabled="loading"
+            class="mr-2"
           ></v-btn>
 
-          <div class="scene-selector-wrapper flex-grow-1 mx-2">
+          <div class="flex-grow-1">
             <scene-selector
               v-model="selectedScene"
               :disabled="loading"
@@ -107,38 +141,49 @@
 
           <v-btn
             icon="mdi-chevron-right"
-            variant="text"
+            variant="outlined"
             size="small"
             @click="nextScene"
             :disabled="loading"
+            class="ml-2"
           ></v-btn>
         </div>
 
-        <!-- Current Scene Description -->
+        <!-- Scene Description Card -->
         <div v-if="currentSceneInfo" class="scene-description-card pa-4">
-          <div class="d-flex align-center">
+          <div class="d-flex align-start">
             <v-icon
               :icon="currentSceneInfo.wantsLoop ? 'mdi-play-circle' : 'mdi-image'"
               :color="currentSceneInfo.wantsLoop ? 'success' : 'info'"
               size="small"
-              class="mr-2"
+              class="mr-3 mt-1"
             ></v-icon>
-            <div>
-              <div class="text-subtitle-2 font-weight-bold">
-                {{ currentSceneInfo.name }}
+            <div class="flex-grow-1">
+              <div class="d-flex align-center mb-1">
+                <span class="text-subtitle-2 font-weight-bold mr-2">
+                  {{ formatSceneName(currentSceneInfo.name) }}
+                </span>
                 <v-chip
                   v-if="currentSceneInfo.category"
                   size="x-small"
                   :color="categoryColor(currentSceneInfo.category)"
                   variant="flat"
-                  class="ml-2"
                 >
                   {{ currentSceneInfo.category }}
                 </v-chip>
+                <v-chip
+                  v-if="currentSceneInfo.wantsLoop"
+                  size="x-small"
+                  color="success"
+                  variant="tonal"
+                  class="ml-1"
+                >
+                  Animated
+                </v-chip>
               </div>
-              <div class="text-caption text-medium-emphasis">
-                {{ currentSceneInfo.description || 'No description' }}
-              </div>
+              <p class="text-body-2 text-medium-emphasis mb-0">
+                {{ currentSceneInfo.description || 'No description available for this scene.' }}
+              </p>
             </div>
           </div>
         </div>
@@ -149,29 +194,31 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">
           Performance Metrics
         </h4>
-        <v-row>
+        <v-row dense>
           <!-- Performance (FPS) -->
           <v-col cols="6" sm="6" md="3">
             <div class="metric-card metric-card-performance">
-              <div class="metric-header">
-                <v-icon icon="mdi-chart-line" size="small" class="mr-1" />
-                Performance
+              <div class="metric-icon-wrapper">
+                <v-icon size="small" class="metric-icon">
+                  mdi-chart-line-variant
+                </v-icon>
               </div>
+              <div class="metric-header">Performance</div>
               <div class="metric-value">{{ fps }}</div>
               <div class="metric-label">FPS</div>
-              <div class="metric-sublabel">
-                Frame Time {{ frametime }}ms
-              </div>
+              <div class="metric-sublabel">{{ frametime }}ms frame time</div>
             </div>
           </v-col>
 
           <!-- Uptime -->
           <v-col cols="6" sm="6" md="3">
             <div class="metric-card metric-card-uptime">
-              <div class="metric-header">
-                <v-icon icon="mdi-clock-outline" size="small" class="mr-1" />
-                Uptime
+              <div class="metric-icon-wrapper">
+                <v-icon size="small" class="metric-icon">
+                  mdi-clock-outline
+                </v-icon>
               </div>
+              <div class="metric-header">Uptime</div>
               <div class="metric-value">{{ uptimeDisplay }}</div>
               <div class="metric-sublabel">Since startup</div>
             </div>
@@ -180,10 +227,12 @@
           <!-- Frame Count -->
           <v-col cols="6" sm="6" md="3">
             <div class="metric-card metric-card-frames">
-              <div class="metric-header">
-                <v-icon icon="mdi-lightning-bolt" size="small" class="mr-1" />
-                Frame Count
+              <div class="metric-icon-wrapper">
+                <v-icon size="small" class="metric-icon">
+                  mdi-lightning-bolt
+                </v-icon>
               </div>
+              <div class="metric-header">Frame Count</div>
               <div class="metric-value">{{ frameCount }}</div>
               <div class="metric-sublabel">Total frames sent</div>
             </div>
@@ -192,10 +241,12 @@
           <!-- Errors -->
           <v-col cols="6" sm="6" md="3">
             <div class="metric-card metric-card-errors">
-              <div class="metric-header">
-                <v-icon icon="mdi-alert-circle" size="small" class="mr-1" />
-                Errors
+              <div class="metric-icon-wrapper">
+                <v-icon size="small" class="metric-icon">
+                  mdi-alert-circle
+                </v-icon>
               </div>
+              <div class="metric-header">Errors</div>
               <div class="metric-value">{{ errorCount }}</div>
               <div class="metric-sublabel">Communication errors</div>
             </div>
@@ -233,7 +284,9 @@ const loading = ref(false);
 const toggleLoading = ref(false);
 const resetLoading = ref(false);
 const driverLoading = ref(false);
+const brightnessLoading = ref(false);
 const displayOn = ref(true);
+const brightness = ref(75);
 
 // Metrics
 const fps = ref(0);
@@ -246,7 +299,6 @@ let metricsInterval = null;
 
 // Computed
 const deviceName = computed(() => {
-  // Generate friendly name from IP
   if (props.device.ip.includes('150')) return 'Office Display';
   if (props.device.ip.includes('151')) return 'Conference Room';
   return `Device ${props.device.ip.split('.').pop()}`;
@@ -287,6 +339,14 @@ watch(
   },
 );
 
+function formatSceneName(name) {
+  // Convert snake_case to Title Case
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function categoryColor(category) {
   const colors = {
     Utility: 'purple',
@@ -317,7 +377,7 @@ async function handleSceneChange(sceneName) {
   loading.value = true;
   try {
     await api.switchScene(props.device.ip, sceneName, { clear: true });
-    toast.success(`Switched to ${sceneName}`, 2000);
+    toast.success(`Switched to ${formatSceneName(sceneName)}`, 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to switch scene: ${err.message}`);
@@ -358,9 +418,21 @@ async function toggleDisplay() {
   }
 }
 
+async function setBrightness() {
+  brightnessLoading.value = true;
+  try {
+    await api.setDisplayBrightness(props.device.ip, brightness.value);
+    toast.success(`Brightness set to ${brightness.value}%`, 2000);
+  } catch (err) {
+    toast.error(`Failed to set brightness: ${err.message}`);
+  } finally {
+    brightnessLoading.value = false;
+  }
+}
+
 async function handleReset() {
   const confirmed = confirm(
-    `Reset device ${props.device.ip}? This will restart the scene.`,
+    `Reset device ${props.device.ip}? This will restart the scene rendering.`,
   );
   if (!confirmed) return;
 
@@ -415,10 +487,32 @@ onUnmounted(() => {
   border: 1px solid #e5e7eb;
 }
 
-.scene-description-card {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  background: #f9fafb;
   border-radius: 12px;
-  border: 1px solid #d1fae5;
+  border: 1px solid #e5e7eb;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+}
+
+.brightness-control {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.scene-description-card {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 12px;
+  border: 1px solid #e9d5ff;
 }
 
 .scene-control-section {
@@ -432,61 +526,75 @@ onUnmounted(() => {
 
 .metric-card {
   padding: 20px;
-  border-radius: 12px;
-  height: 140px;
+  border-radius: 16px;
+  height: 160px;
   position: relative;
   overflow: hidden;
   color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-color: #ddd6fe;
+  color: #5b21b6;
 }
 
 .metric-card-uptime {
-  background: linear-gradient(135deg, #6ee7b7 0%, #34d399 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+  color: #15803d;
 }
 
 .metric-card-frames {
-  background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+  color: #92400e;
 }
 
 .metric-card-errors {
-  background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.metric-icon-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  opacity: 0.2;
+}
+
+.metric-icon {
+  font-size: 40px !important;
 }
 
 .metric-header {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
+  letter-spacing: 0.8px;
+  opacity: 0.7;
+  margin-bottom: 12px;
 }
 
 .metric-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: bold;
   line-height: 1;
   margin-bottom: 4px;
 }
 
 .metric-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  opacity: 0.9;
+  opacity: 0.8;
+  margin-bottom: 4px;
 }
 
 .metric-sublabel {
-  font-size: 11px;
-  opacity: 0.8;
-  margin-top: 4px;
-}
-
-.scene-selector-wrapper {
-  max-width: 400px;
+  font-size: 10px;
+  opacity: 0.6;
 }
 </style>

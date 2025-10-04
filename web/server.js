@@ -161,6 +161,38 @@ function startWebServer(container, logger) {
     }
   });
 
+  // POST /api/devices/:ip/brightness - Set display brightness
+  app.post('/api/devices/:ip/brightness', async (req, res) => {
+    try {
+      const { brightness } = req.body;
+
+      if (typeof brightness !== 'number') {
+        return res
+          .status(400)
+          .json({ error: '"brightness" must be a number (0-100)' });
+      }
+
+      logger.ok(
+        `[WEB UI] Set brightness to ${brightness}% for ${req.params.ip}`,
+        {
+          source: 'web-ui',
+        },
+      );
+
+      const result = await deviceService.setDisplayBrightness(
+        req.params.ip,
+        brightness,
+      );
+      res.json(result);
+    } catch (error) {
+      logger.error(`[WEB UI] Failed to set brightness on ${req.params.ip}:`, {
+        error: error.message,
+        brightness: req.body.brightness,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // POST /api/devices/:ip/reset - Reset device
   app.post('/api/devices/:ip/reset', async (req, res) => {
     try {

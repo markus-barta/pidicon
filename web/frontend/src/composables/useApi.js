@@ -65,6 +65,13 @@ export function useApi() {
     });
   }
 
+  async function setDisplayBrightness(ip, brightness) {
+    return await request(`/devices/${ip}/brightness`, {
+      method: 'POST',
+      body: JSON.stringify({ brightness }),
+    });
+  }
+
   async function resetDevice(ip) {
     return await request(`/devices/${ip}/reset`, {
       method: 'POST',
@@ -104,6 +111,7 @@ export function useApi() {
     getDeviceMetrics,
     switchScene,
     setDisplayPower,
+    setDisplayBrightness,
     resetDevice,
     switchDriver,
     // Scene methods
