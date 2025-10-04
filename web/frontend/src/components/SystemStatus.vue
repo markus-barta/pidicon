@@ -1,58 +1,61 @@
 <template>
-  <v-app-bar color="primary" prominent>
-    <template v-slot:prepend>
-      <v-icon icon="mdi-palette" size="large" class="ml-4" />
-    </template>
+  <v-app-bar color="white" elevation="0" height="80" class="border-b">
+    <v-container fluid class="d-flex align-center px-8">
+      <!-- Left: App Icon + Title -->
+      <div class="d-flex align-center">
+        <v-avatar color="primary" size="48" class="mr-4">
+          <v-icon color="white" size="28">mdi-television</v-icon>
+        </v-avatar>
+        <div>
+          <div class="text-h6 font-weight-bold primary--text">
+            Pixoo Control Center
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            IoT Display Management
+          </div>
+        </div>
+      </div>
 
-    <v-app-bar-title> Pixoo Control Panel </v-app-bar-title>
+      <!-- Center: Status Badges -->
+      <div class="d-flex align-center ml-8">
+        <v-chip
+          size="small"
+          color="success"
+          variant="flat"
+          prepend-icon="mdi-circle"
+          class="mr-2"
+        >
+          Daemon Active
+        </v-chip>
+        <v-chip size="small" color="primary" variant="outlined">
+          v2.4.1
+        </v-chip>
+      </div>
 
-    <template v-slot:append>
-      <v-chip
-        v-if="buildNumber"
-        color="success"
-        size="small"
-        variant="flat"
-        class="mr-2"
-      >
-        <v-icon icon="mdi-package-variant" size="small" class="mr-1" />
-        Build #{{ buildNumber }}
-      </v-chip>
+      <v-spacer></v-spacer>
 
-      <v-chip
-        :color="statusColor"
-        size="small"
-        variant="flat"
-        class="mr-2"
-      >
-        <v-icon :icon="statusIcon" size="x-small" class="mr-1 pulse" />
-        {{ status }}
-      </v-chip>
-
-      <v-chip
-        v-if="uptime"
-        color="info"
-        size="small"
-        variant="tonal"
-        class="mr-2"
-      >
-        <v-icon icon="mdi-clock-outline" size="small" class="mr-1" />
-        {{ uptime }}
-      </v-chip>
-
-      <v-btn
-        icon="mdi-restart"
-        variant="flat"
-        color="warning"
-        size="small"
-        :loading="restarting"
-        @click="handleRestart"
-      >
-        <v-icon>mdi-restart</v-icon>
-        <v-tooltip activator="parent" location="bottom">
-          Restart Daemon
-        </v-tooltip>
-      </v-btn>
-    </template>
+      <!-- Right: Connection + Restart -->
+      <div class="d-flex align-center">
+        <v-chip
+          size="small"
+          prepend-icon="mdi-wifi"
+          variant="text"
+          class="mr-4 text-medium-emphasis"
+        >
+          Connected
+        </v-chip>
+        <v-btn
+          color="error"
+          variant="outlined"
+          prepend-icon="mdi-restart"
+          @click="handleRestart"
+          :loading="restarting"
+          size="small"
+        >
+          Restart
+        </v-btn>
+      </div>
+    </v-container>
   </v-app-bar>
 </template>
 

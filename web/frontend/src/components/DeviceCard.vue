@@ -1,117 +1,218 @@
 <template>
-  <v-card :elevation="device.driver === 'mock' ? 1 : 2">
-    <v-card-title class="d-flex align-center">
-      <v-icon
-        :icon="device.driver === 'real' ? 'mdi-monitor' : 'mdi-test-tube'"
-        :color="device.driver === 'real' ? 'success' : 'warning'"
-        class="mr-2"
-      />
-      <span>{{ device.ip }}</span>
-      <v-spacer />
-      <v-chip
-        :color="device.driver === 'real' ? 'success' : 'warning'"
-        size="small"
-        variant="tonal"
-      >
-        {{ device.driver }}
-      </v-chip>
+  <v-card elevation="1" class="device-card">
+    <!-- Device Header -->
+    <v-card-title class="pb-2">
+      <div class="d-flex align-center justify-space-between w-100">
+        <div class="d-flex align-center">
+          <h3 class="text-h5 font-weight-bold mr-3">
+            {{ deviceName }}
+          </h3>
+          <v-chip
+            :color="statusColor"
+            size="small"
+            variant="flat"
+            prepend-icon="mdi-circle"
+            class="mr-2"
+          >
+            {{ statusText }}
+          </v-chip>
+          <v-chip
+            :color="device.driver === 'real' ? 'info' : 'warning'"
+            size="small"
+            variant="flat"
+          >
+            {{ device.driver === 'real' ? 'Hardware' : 'Mock' }}
+          </v-chip>
+        </div>
+        <div class="d-flex align-center">
+          <v-chip
+            :color="device.status === 'running' ? 'success' : 'grey'"
+            size="small"
+            variant="flat"
+            class="mr-2"
+          >
+            {{ device.status === 'running' ? 'Active' : 'Stopped' }}
+          </v-chip>
+          <v-btn icon="mdi-chevron-up" variant="text" size="small"></v-btn>
+        </div>
+      </div>
     </v-card-title>
 
-    <v-card-subtitle>
-      <div class="d-flex align-center">
-        <v-icon icon="mdi-palette-swatch" size="small" class="mr-1" />
-        {{ device.currentScene || 'none' }}
-        <v-chip
-          v-if="device.status"
-          :color="statusColor"
-          size="x-small"
-          variant="tonal"
-          class="ml-2"
-        >
-          {{ device.status }}
-        </v-chip>
+    <v-card-subtitle class="pt-0 pb-4">
+      <div class="d-flex align-center text-medium-emphasis">
+        <v-icon size="small" class="mr-1">mdi-wifi</v-icon>
+        {{ device.ip }}
+        <span class="ml-4">Last seen: {{ lastSeen }}</span>
       </div>
     </v-card-subtitle>
 
-    <v-card-text>
-      <!-- Scene Selector -->
-      <scene-selector
-        v-model="selectedScene"
-        :disabled="loading"
-        :loading="loading"
-        @change="handleSceneChange"
-      />
+    <v-card-text class="pt-0">
+      <!-- Power / Mock Mode / Reset Controls -->
+      <div class="d-flex align-center mb-6">
+        <v-icon icon="mdi-power" size="small" class="mr-2" />
+        <span class="text-body-2 font-weight-medium mr-3">Power</span>
+        <v-switch
+          v-model="displayOn"
+          color="success"
+          hide-details
+          density="compact"
+          :loading="toggleLoading"
+          @change="toggleDisplay"
+          class="mr-6"
+        ></v-switch>
 
-      <!-- FPS Monitor (for animated scenes) -->
-      <div v-if="isAnimatedScene" class="mt-3">
-        <fps-monitor
-          :device-ip="device.ip"
-          :animated="isAnimatedScene"
-          :interval="2000"
-        />
+        <span class="text-body-2 font-weight-medium mr-3">Mock Mode</span>
+        <v-switch
+          :model-value="device.driver === 'mock'"
+          color="warning"
+          hide-details
+          density="compact"
+          :loading="driverLoading"
+          @change="toggleDriver"
+          class="mr-6"
+        ></v-switch>
+
+        <v-btn
+          color="error"
+          variant="outlined"
+          size="small"
+          prepend-icon="mdi-restart"
+          :loading="resetLoading"
+          @click="handleReset"
+        >
+          Reset
+        </v-btn>
       </div>
 
-      <!-- Device Controls -->
-      <div class="device-controls mt-4">
-        <v-btn-group divided density="comfortable">
+      <!-- Scene Control -->
+      <div class="scene-control-section mb-4">
+        <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
+        <div class="d-flex align-center mb-3">
           <v-btn
-            :color="displayOn ? 'success' : 'error'"
-            :icon="displayOn ? 'mdi-monitor' : 'mdi-monitor-off'"
-            :loading="toggleLoading"
-            @click="toggleDisplay"
-          >
-            <v-icon>{{
-              displayOn ? 'mdi-monitor' : 'mdi-monitor-off'
-            }}</v-icon>
-            <v-tooltip activator="parent" location="top">
-              {{ displayOn ? 'Turn Off' : 'Turn On' }}
-            </v-tooltip>
-          </v-btn>
+            icon="mdi-chevron-left"
+            variant="text"
+            size="small"
+            @click="previousScene"
+            :disabled="loading"
+          ></v-btn>
+
+          <div class="scene-selector-wrapper flex-grow-1 mx-2">
+            <scene-selector
+              v-model="selectedScene"
+              :disabled="loading"
+              :loading="loading"
+              @change="handleSceneChange"
+            />
+          </div>
 
           <v-btn
-            icon="mdi-refresh"
-            :loading="resetLoading"
-            @click="handleReset"
-          >
-            <v-icon>mdi-refresh</v-icon>
-            <v-tooltip activator="parent" location="top">
-              Reset Device
-            </v-tooltip>
-          </v-btn>
+            icon="mdi-chevron-right"
+            variant="text"
+            size="small"
+            @click="nextScene"
+            :disabled="loading"
+          ></v-btn>
+        </div>
 
-          <v-btn
-            :color="device.driver === 'real' ? 'success' : 'warning'"
-            :icon="
-              device.driver === 'real'
-                ? 'mdi-monitor'
-                : 'mdi-test-tube'
-            "
-            :loading="driverLoading"
-            @click="toggleDriver"
-          >
-            <v-icon>{{
-              device.driver === 'real'
-                ? 'mdi-monitor'
-                : 'mdi-test-tube'
-            }}</v-icon>
-            <v-tooltip activator="parent" location="top">
-              Switch to {{ device.driver === 'real' ? 'Mock' : 'Real' }}
-            </v-tooltip>
-          </v-btn>
-        </v-btn-group>
+        <!-- Current Scene Description -->
+        <div v-if="currentSceneInfo" class="scene-description-card pa-4">
+          <div class="d-flex align-center">
+            <v-icon
+              :icon="currentSceneInfo.wantsLoop ? 'mdi-play-circle' : 'mdi-image'"
+              :color="currentSceneInfo.wantsLoop ? 'success' : 'info'"
+              size="small"
+              class="mr-2"
+            ></v-icon>
+            <div>
+              <div class="text-subtitle-2 font-weight-bold">
+                {{ currentSceneInfo.name }}
+                <v-chip
+                  v-if="currentSceneInfo.category"
+                  size="x-small"
+                  :color="categoryColor(currentSceneInfo.category)"
+                  variant="flat"
+                  class="ml-2"
+                >
+                  {{ currentSceneInfo.category }}
+                </v-chip>
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ currentSceneInfo.description || 'No description' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Metrics -->
+      <div class="performance-metrics">
+        <h4 class="text-subtitle-1 font-weight-bold mb-3">
+          Performance Metrics
+        </h4>
+        <v-row>
+          <!-- Performance (FPS) -->
+          <v-col cols="6" sm="6" md="3">
+            <div class="metric-card metric-card-performance">
+              <div class="metric-header">
+                <v-icon icon="mdi-chart-line" size="small" class="mr-1" />
+                Performance
+              </div>
+              <div class="metric-value">{{ fps }}</div>
+              <div class="metric-label">FPS</div>
+              <div class="metric-sublabel">
+                Frame Time {{ frametime }}ms
+              </div>
+            </div>
+          </v-col>
+
+          <!-- Uptime -->
+          <v-col cols="6" sm="6" md="3">
+            <div class="metric-card metric-card-uptime">
+              <div class="metric-header">
+                <v-icon icon="mdi-clock-outline" size="small" class="mr-1" />
+                Uptime
+              </div>
+              <div class="metric-value">{{ uptimeDisplay }}</div>
+              <div class="metric-sublabel">Since startup</div>
+            </div>
+          </v-col>
+
+          <!-- Frame Count -->
+          <v-col cols="6" sm="6" md="3">
+            <div class="metric-card metric-card-frames">
+              <div class="metric-header">
+                <v-icon icon="mdi-lightning-bolt" size="small" class="mr-1" />
+                Frame Count
+              </div>
+              <div class="metric-value">{{ frameCount }}</div>
+              <div class="metric-sublabel">Total frames sent</div>
+            </div>
+          </v-col>
+
+          <!-- Errors -->
+          <v-col cols="6" sm="6" md="3">
+            <div class="metric-card metric-card-errors">
+              <div class="metric-header">
+                <v-icon icon="mdi-alert-circle" size="small" class="mr-1" />
+                Errors
+              </div>
+              <div class="metric-value">{{ errorCount }}</div>
+              <div class="metric-sublabel">Communication errors</div>
+            </div>
+          </v-col>
+        </v-row>
       </div>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
 import SceneSelector from './SceneSelector.vue';
-import FPSMonitor from './FPSMonitor.vue';
 
 const props = defineProps({
   device: {
@@ -134,7 +235,49 @@ const resetLoading = ref(false);
 const driverLoading = ref(false);
 const displayOn = ref(true);
 
-// Watch for external changes to device scene
+// Metrics
+const fps = ref(0);
+const frametime = ref(0);
+const frameCount = ref(0);
+const errorCount = ref(0);
+const startTime = ref(Date.now());
+
+let metricsInterval = null;
+
+// Computed
+const deviceName = computed(() => {
+  // Generate friendly name from IP
+  if (props.device.ip.includes('150')) return 'Office Display';
+  if (props.device.ip.includes('151')) return 'Conference Room';
+  return `Device ${props.device.ip.split('.').pop()}`;
+});
+
+const statusColor = computed(() => {
+  return props.device.driver === 'real' ? 'success' : 'warning';
+});
+
+const statusText = computed(() => {
+  return props.device.driver === 'real' ? 'Online' : 'Idle';
+});
+
+const lastSeen = computed(() => {
+  const now = new Date();
+  return now.toTimeString().slice(0, 8);
+});
+
+const uptimeDisplay = computed(() => {
+  const diff = Date.now() - startTime.value;
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+});
+
+const currentSceneInfo = computed(() => {
+  return sceneStore.getSceneByName(selectedScene.value);
+});
+
+// Watch for external changes
 watch(
   () => props.device.currentScene,
   (newScene) => {
@@ -144,18 +287,29 @@ watch(
   },
 );
 
-const statusColor = computed(() => {
-  const status = props.device.status;
-  if (status === 'running') return 'success';
-  if (status === 'switching') return 'warning';
-  if (status === 'stopping') return 'error';
-  return 'info';
-});
+function categoryColor(category) {
+  const colors = {
+    Utility: 'purple',
+    Data: 'blue',
+    Custom: 'green',
+    General: 'grey',
+  };
+  return colors[category] || 'grey';
+}
 
-const isAnimatedScene = computed(() => {
-  const scene = sceneStore.getSceneByName(selectedScene.value);
-  return scene?.wantsLoop || false;
-});
+async function loadMetrics() {
+  try {
+    const data = await api.getDeviceMetrics(props.device.ip);
+    if (data) {
+      fps.value = Math.round(data.fps || 0);
+      frametime.value = data.frametime ? data.frametime.toFixed(1) : '0.0';
+      frameCount.value = data.pushCount || 0;
+      errorCount.value = data.errorCount || 0;
+    }
+  } catch (err) {
+    console.error('Failed to load metrics:', err);
+  }
+}
 
 async function handleSceneChange(sceneName) {
   if (!sceneName || loading.value) return;
@@ -167,26 +321,38 @@ async function handleSceneChange(sceneName) {
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to switch scene: ${err.message}`);
-    // Revert selection on error
     selectedScene.value = props.device.currentScene || '';
   } finally {
     loading.value = false;
   }
 }
 
+function previousScene() {
+  const scenes = sceneStore.scenes;
+  const currentIndex = scenes.findIndex((s) => s.name === selectedScene.value);
+  if (currentIndex > 0) {
+    handleSceneChange(scenes[currentIndex - 1].name);
+  }
+}
+
+function nextScene() {
+  const scenes = sceneStore.scenes;
+  const currentIndex = scenes.findIndex((s) => s.name === selectedScene.value);
+  if (currentIndex < scenes.length - 1) {
+    handleSceneChange(scenes[currentIndex + 1].name);
+  }
+}
+
 async function toggleDisplay() {
   toggleLoading.value = true;
   try {
-    const newState = !displayOn.value;
+    const newState = displayOn.value;
     await api.setDisplayPower(props.device.ip, newState);
-    displayOn.value = newState;
-    toast.success(
-      `Display turned ${newState ? 'on' : 'off'}`,
-      2000,
-    );
+    toast.success(`Display turned ${newState ? 'on' : 'off'}`, 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to toggle display: ${err.message}`);
+    displayOn.value = !displayOn.value;
   } finally {
     toggleLoading.value = false;
   }
@@ -228,12 +394,99 @@ async function toggleDriver() {
     driverLoading.value = false;
   }
 }
+
+onMounted(() => {
+  loadMetrics();
+  metricsInterval = setInterval(() => {
+    loadMetrics();
+  }, 2000);
+});
+
+onUnmounted(() => {
+  if (metricsInterval) {
+    clearInterval(metricsInterval);
+  }
+});
 </script>
 
 <style scoped>
-.device-controls {
+.device-card {
+  border-radius: 16px !important;
+  border: 1px solid #e5e7eb;
+}
+
+.scene-description-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-radius: 12px;
+  border: 1px solid #d1fae5;
+}
+
+.scene-control-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.performance-metrics {
+  padding-top: 16px;
+}
+
+.metric-card {
+  padding: 20px;
+  border-radius: 12px;
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card-performance {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.metric-card-uptime {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.metric-card-frames {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.metric-card-errors {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.metric-header {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
   display: flex;
-  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 36px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.metric-sublabel {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.scene-selector-wrapper {
+  max-width: 400px;
 }
 </style>
-

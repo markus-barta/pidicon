@@ -4,8 +4,21 @@
     <system-status />
 
     <!-- Main Content -->
-    <v-main>
-      <v-container fluid class="pa-6">
+    <v-main class="bg-grey-lighten-4">
+      <!-- Hero Title Section -->
+      <div class="text-center py-12">
+        <h1
+          class="text-h3 font-weight-bold mb-2"
+          style="color: #7c3aed; letter-spacing: -0.5px"
+        >
+          Pixoo Display Manager
+        </h1>
+        <p class="text-h6 text-medium-emphasis">
+          Monitor and control your IoT pixel displays
+        </p>
+      </div>
+
+      <v-container fluid class="pa-8">
         <!-- Loading State -->
         <v-alert
           v-if="!dataLoaded && !error"
@@ -55,9 +68,10 @@
             v-for="device in deviceStore.devices"
             :key="device.ip"
             cols="12"
-            sm="6"
-            md="4"
-            lg="3"
+            sm="12"
+            md="6"
+            lg="6"
+            xl="6"
           >
             <device-card :device="device" @refresh="loadData" />
           </v-col>
@@ -123,6 +137,20 @@ onMounted(() => {
 /* Global app styles */
 .v-main {
   min-height: 100vh;
+}
+
+/* Custom utility classes */
+.border-b {
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.bg-grey-lighten-4 {
+  background-color: #f9fafb !important;
+}
+
+/* Override Vuetify primary color text */
+.primary--text {
+  color: #7c3aed !important;
 }
 </style>
 

@@ -12,29 +12,34 @@ export default createVuetify({
   components,
   directives,
   theme: {
-    defaultTheme: 'dark',
+    defaultTheme: 'light',
     themes: {
-      dark: {
+      light: {
         colors: {
-          primary: '#1976D2',
-          secondary: '#424242',
-          accent: '#82B1FF',
-          error: '#FF5252',
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
-          background: '#121212',
-          surface: '#1E1E1E',
+          primary: '#7C3AED', // Purple from Figma
+          secondary: '#8B5CF6',
+          accent: '#A78BFA',
+          error: '#EF4444',
+          info: '#3B82F6',
+          success: '#10B981',
+          warning: '#F59E0B',
+          background: '#F9FAFB',
+          surface: '#FFFFFF',
         },
       },
     },
   },
   defaults: {
     VCard: {
-      elevation: 2,
+      elevation: 1,
+      rounded: 'lg',
     },
     VBtn: {
       variant: 'flat',
+      rounded: 'lg',
+    },
+    VChip: {
+      rounded: 'lg',
     },
   },
 });
