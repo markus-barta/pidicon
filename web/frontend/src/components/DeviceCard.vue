@@ -257,7 +257,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import Chart from 'chart.js/auto';
 import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
 import { useApi } from '../composables/useApi';
@@ -296,6 +297,10 @@ const errorCount = ref(0);
 const pushCount = ref(0);
 const startTime = ref(Date.now());
 const daemonStartTime = ref(Date.now());
+const frametimeHistory = ref([]);
+const chartCanvas = ref(null);
+let chart = null;
+let uptimeInterval = null;
 
 let metricsInterval = null;
 
@@ -334,21 +339,22 @@ const fpsDisplay = computed(() => {
   return fps.value.toFixed(2);
 });
 
-const uptimeDisplay = computed(() => {
-  // Use daemon start time from system status
+const uptimeDisplay = ref('0s');
+
+function updateUptime() {
   const diff = Date.now() - daemonStartTime.value;
   const hours = Math.floor(diff / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);
   const seconds = Math.floor((diff % 60000) / 1000);
   
   if (hours > 0) {
-    return `${hours}h ${minutes}m`;
+    uptimeDisplay.value = `${hours}h ${minutes}m`;
   } else if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
+    uptimeDisplay.value = `${minutes}m ${seconds}s`;
   } else {
-    return `${seconds}s`;
+    uptimeDisplay.value = `${seconds}s`;
   }
-});
+}
 
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
@@ -397,10 +403,75 @@ async function loadMetrics() {
       frameCount.value = data.frameCount || 0;
       errorCount.value = data.errorCount || 0;
       pushCount.value = data.pushCount || 0;
+      
+      // Update frametime history for chart (keep last 30 data points = 1 minute at 2s intervals)
+      if (frametime.value > 0) {
+        frametimeHistory.value.push(frametime.value);
+        if (frametimeHistory.value.length > 30) {
+          frametimeHistory.value.shift();
+        }
+        updateChart();
+      }
     }
   } catch (err) {
     console.error('Failed to load metrics:', err);
   }
+}
+
+function updateChart() {
+  if (!chart || !chartCanvas.value) return;
+  
+  chart.data.labels = frametimeHistory.value.map((_, i) => '');
+  chart.data.datasets[0].data = frametimeHistory.value;
+  chart.update('none'); // No animation for smooth updates
+}
+
+function initChart() {
+  if (!chartCanvas.value) return;
+  
+  const ctx = chartCanvas.value.getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.parsed.y}ms`
+          }
+        }
+      },
+      scales: {
+        x: { display: false },
+        y: {
+          display: true,
+          position: 'right',
+          grid: { display: false },
+          ticks: {
+            maxTicksLimit: 3,
+            callback: (value) => `${value}ms`,
+            font: { size: 9 },
+            color: '#9ca3af'
+          }
+        }
+      },
+      animation: false,
+    }
+  });
 }
 
 async function handleSceneChange(sceneName) {
@@ -508,10 +579,19 @@ onMounted(async () => {
     } else {
       daemonStartTime.value = Date.now() - (systemStatus.uptime || 0) * 1000;
     }
+    updateUptime();
   } catch (error) {
     console.error('Failed to load system status for uptime:', error);
   }
 
+  // Start uptime counter (updates every second)
+  uptimeInterval = setInterval(updateUptime, 1000);
+
+  // Initialize chart (after component is mounted)
+  await nextTick();
+  initChart();
+
+  // Load metrics
   loadMetrics();
   metricsInterval = setInterval(() => {
     loadMetrics();
@@ -521,6 +601,12 @@ onMounted(async () => {
 onUnmounted(() => {
   if (metricsInterval) {
     clearInterval(metricsInterval);
+  }
+  if (uptimeInterval) {
+    clearInterval(uptimeInterval);
+  }
+  if (chart) {
+    chart.destroy();
   }
 });
 </script>
@@ -599,10 +685,16 @@ onUnmounted(() => {
   color: #78350f;
 }
 
-.metric-card-success {
-  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 100%);
-  border: 1px solid #dbeafe;
-  color: #1e40af;
+.metric-card-chart {
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+  border: 1px solid #fef3c7;
+  color: #78350f;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .metric-icon-wrapper {

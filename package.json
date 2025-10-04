@@ -24,6 +24,7 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@vitejs/plugin-vue": "^5.2.4",
+    "chart.js": "^4.5.0",
     "express": "^5.1.0",
     "mqtt": "^5.9.0",
     "pinia": "^3.0.3",
