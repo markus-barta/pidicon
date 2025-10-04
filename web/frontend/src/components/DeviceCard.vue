@@ -117,18 +117,18 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
         <!-- Scene Selector with Next/Prev (single row) -->
-        <div class="scene-nav-row mb-4">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
           <v-btn
             icon
             variant="text"
             @click="previousScene"
             :disabled="loading"
-            class="nav-button"
+            style="margin: 0; padding: 0;"
           >
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
 
-          <div class="flex-grow-1 mx-2">
+          <div style="flex: 1;">
             <scene-selector
               v-model="selectedScene"
               :disabled="loading"
@@ -142,7 +142,7 @@
             variant="text"
             @click="nextScene"
             :disabled="loading"
-            class="nav-button"
+            style="margin: 0; padding: 0;"
           >
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
@@ -552,19 +552,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.scene-nav-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-button {
-  flex-shrink: 0;
-  height: 56px; /* Match v-select height */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* Nav buttons removed - now inline styles for guaranteed centering */
 
 .scene-description-card {
   background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);

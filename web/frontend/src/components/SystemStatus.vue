@@ -1,7 +1,7 @@
 <template>
   <v-app-bar color="white" elevation="0" height="80" class="border-b">
     <v-container fluid class="d-flex align-center px-8">
-      <!-- Left: App Icon + Title -->
+      <!-- Left: Avatar + Title -->
       <div class="d-flex align-center">
         <v-avatar color="primary" size="48" class="mr-4">
           <v-icon color="white" size="28">mdi-television</v-icon>
@@ -10,31 +10,17 @@
           <div class="text-h6 font-weight-bold primary--text">
             Pixoo Control Center
           </div>
-          <div class="text-caption text-medium-emphasis">
-            IoT Display Management
+          <div class="text-caption">
+            <span style="display: inline-flex; align-items: center;">
+              <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor, marginRight: '6px' }"></span>
+              <span style="color: #6b7280;">{{ status }}</span>
+            </span>
+            <span class="mx-2" style="color: #d1d5db;">•</span>
+            <span style="color: #9ca3af;">{{ hostname }}</span>
+            <span class="mx-2" style="color: #d1d5db;">•</span>
+            <span style="color: #9ca3af;">Node {{ nodeVersion }}</span>
           </div>
         </div>
-      </div>
-
-      <!-- Center: Status Badges -->
-      <div class="d-flex align-center ml-8">
-        <v-chip
-          size="small"
-          color="success"
-          variant="flat"
-          prepend-icon="mdi-circle"
-          class="mr-2"
-        >
-          Daemon Active
-        </v-chip>
-        <v-chip size="small" color="info" variant="text" class="mr-2">
-          <v-icon size="x-small" class="mr-1">mdi-docker</v-icon>
-          {{ hostname }}
-        </v-chip>
-        <v-chip size="small" color="grey" variant="text">
-          <v-icon size="x-small" class="mr-1">mdi-nodejs</v-icon>
-          {{ nodeVersion }}
-        </v-chip>
       </div>
 
       <v-spacer></v-spacer>
@@ -43,12 +29,14 @@
       <div class="d-flex align-center">
         <v-chip
           size="small"
-          prepend-icon="mdi-access-point-network"
-          variant="text"
-          color="success"
+          variant="outlined"
           class="mr-4"
+          style="border-color: #d1d5db;"
         >
-          MQTT Connected
+          <span style="display: inline-flex; align-items: center;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; margin-right: 6px;"></span>
+            <span style="color: #6b7280;">MQTT Connected</span>
+          </span>
         </v-chip>
         <v-btn
           color="error"
@@ -77,15 +65,15 @@ const buildNumber = ref(null);
 const gitCommit = ref(null);
 const hostname = ref('');
 const nodeVersion = ref('Unknown');
-const status = ref('Running');
+const status = ref('Active');
 const startTime = ref(null);
 const uptime = ref('');
 const restarting = ref(false);
 
 const statusColor = computed(() => {
-  if (status.value === 'Running') return 'success';
-  if (status.value === 'Restarting') return 'warning';
-  return 'error';
+  if (status.value === 'Active' || status.value === 'Running') return '#10b981'; // green
+  if (status.value === 'Restarting') return '#f59e0b'; // yellow
+  return '#ef4444'; // red
 });
 
 const statusIcon = computed(() => {
