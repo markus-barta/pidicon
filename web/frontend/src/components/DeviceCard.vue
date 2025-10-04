@@ -189,66 +189,59 @@
       </div>
 
       <!-- Performance Metrics -->
-      <div class="performance-metrics">
+      <div class="metrics-section">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">
           Performance Metrics
         </h4>
         <v-row dense>
-          <!-- Performance (FPS) -->
-          <v-col cols="6" sm="6" md="3">
-            <div class="metric-card metric-card-performance">
-              <div class="metric-icon-wrapper">
-                <v-icon size="small" class="metric-icon">
-                  mdi-chart-line-variant
-                </v-icon>
-              </div>
-              <div class="metric-header">Performance</div>
-              <div class="metric-value">{{ fpsDisplay }}</div>
-              <div class="metric-label">FPS</div>
-              <div class="metric-sublabel">{{ frametime }}ms frame time</div>
-            </div>
+          <!-- Performance Card (FPS + Frametime + Frame Count) -->
+          <v-col cols="12" sm="6" md="4">
+            <v-card class="metric-card metric-card-performance" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="metric-header">Performance</div>
+                  <v-icon size="large" style="opacity: 0.15;">mdi-speedometer</v-icon>
+                </div>
+                <div class="metric-value mb-1">{{ fpsDisplay }} FPS</div>
+                <div class="text-caption" style="color: #6b7280;">
+                  {{ frametime }}ms frametime
+                </div>
+                <div class="text-caption" style="color: #9ca3af;">
+                  {{ frameCount.toLocaleString() }} frames sent
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
 
-          <!-- Uptime -->
-          <v-col cols="6" sm="6" md="3">
-            <div class="metric-card metric-card-uptime">
-              <div class="metric-icon-wrapper">
-                <v-icon size="small" class="metric-icon">
-                  mdi-clock-outline
-                </v-icon>
-              </div>
-              <div class="metric-header">Uptime</div>
-              <div class="metric-value">{{ uptimeDisplay }}</div>
-              <div class="metric-sublabel">Since startup</div>
-            </div>
+          <!-- Uptime Card -->
+          <v-col cols="12" sm="6" md="4">
+            <v-card class="metric-card metric-card-uptime" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="metric-header">Uptime</div>
+                  <v-icon size="large" style="opacity: 0.15;">mdi-clock-outline</v-icon>
+                </div>
+                <div class="metric-value mb-1">{{ uptimeDisplay }}</div>
+                <div class="text-caption" style="color: #6b7280;">
+                  Since daemon start
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
 
-          <!-- Frame Count -->
-          <v-col cols="6" sm="6" md="3">
-            <div class="metric-card metric-card-frames">
-              <div class="metric-icon-wrapper">
-                <v-icon size="small" class="metric-icon">
-                  mdi-lightning-bolt
-                </v-icon>
-              </div>
-              <div class="metric-header">Frame Count</div>
-              <div class="metric-value">{{ frameCount }}</div>
-              <div class="metric-sublabel">Total frames sent</div>
-            </div>
-          </v-col>
-
-          <!-- Errors -->
-          <v-col cols="6" sm="6" md="3">
-            <div class="metric-card metric-card-errors">
-              <div class="metric-icon-wrapper">
-                <v-icon size="small" class="metric-icon">
-                  mdi-alert-circle
-                </v-icon>
-              </div>
-              <div class="metric-header">Errors</div>
-              <div class="metric-value">{{ errorCount }}</div>
-              <div class="metric-sublabel">Communication errors</div>
-            </div>
+          <!-- Frametime Chart Card -->
+          <v-col cols="12" sm="12" md="4">
+            <v-card class="metric-card metric-card-chart" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="metric-header">Frametime History</div>
+                  <v-icon size="large" style="opacity: 0.15;">mdi-chart-line</v-icon>
+                </div>
+                <div style="height: 80px; position: relative;">
+                  <canvas ref="chartCanvas"></canvas>
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </div>
