@@ -539,36 +539,33 @@ function updateChart() {
       return;
     }
     
+    // CRITICAL FIX: Convert Vue Proxy to plain array to avoid Chart.js infinite loop
+    const plainData = Array.from(data);
+    console.log('[DEBUG] Converted to plain array:', plainData);
+    
     // Get latest color
-    const latestFrametime = data[data.length - 1];
+    const latestFrametime = plainData[plainData.length - 1];
     const color = getFrametimeColor(latestFrametime);
     console.log('[DEBUG] Latest frametime:', latestFrametime, 'color:', color);
     
-    // NUCLEAR OPTION: Recreate the entire data object to force Chart.js update
-    chartInstance.value.data = {
-      labels: data.map((_, i) => `${i}`),
-      datasets: [{
-        data: [...data],
-        borderColor: color,
-        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.05)'), // 50% less opacity
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      }]
-    };
+    // Update the dataset data directly (don't recreate the whole object)
+    if (chartInstance.value.data.datasets.length > 0) {
+      chartInstance.value.data.labels = plainData.map((_, i) => `${i}`);
+      chartInstance.value.data.datasets[0].data = plainData;
+      chartInstance.value.data.datasets[0].borderColor = color;
+      chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
+    }
     
-    console.log('[DEBUG] Chart data updated, calling update() and draw()');
+    console.log('[DEBUG] Chart data updated, calling update()');
     
     // Force complete redraw
     chartInstance.value.update('none');
-    chartInstance.value.draw();
     
     console.log('[DEBUG] Chart update completed successfully');
     
   } catch (error) {
     console.error('[DEBUG] Failed to update chart:', error, error.stack);
-    chartReady.value = false;
+    // Don't set ready=false, try to recover on next update
   }
 }
 
