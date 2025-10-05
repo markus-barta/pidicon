@@ -431,6 +431,29 @@ async function loadMetrics() {
   }
 }
 
+// Get color based on frametime (like pixoo performance scene)
+// Fast (green): < 50ms, Medium (yellow): 50-200ms, Slow (red): > 200ms
+function getFrametimeColor(frametime) {
+  if (frametime < 50) {
+    // Green to yellow gradient (fast to medium)
+    const ratio = frametime / 50;
+    const r = Math.round(34 + (234 - 34) * ratio);
+    const g = Math.round(197 + (179 - 197) * ratio);
+    const b = Math.round(94 + (0 - 94) * ratio);
+    return `rgb(${r}, ${g}, ${b})`;
+  } else if (frametime < 200) {
+    // Yellow to red gradient (medium to slow)
+    const ratio = (frametime - 50) / 150;
+    const r = 234 + Math.round((239 - 234) * ratio);
+    const g = Math.round(179 * (1 - ratio));
+    const b = 0;
+    return `rgb(${r}, ${g}, ${b})`;
+  } else {
+    // Red (very slow)
+    return 'rgb(239, 68, 68)';
+  }
+}
+
 function updateChart() {
   // Skip if chart not initialized, not ready, or card is collapsed
   if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
@@ -438,9 +461,20 @@ function updateChart() {
   }
   
   try {
-    chartInstance.value.data.labels = frametimeHistory.value.map((_, i) => '');
-    chartInstance.value.data.datasets[0].data = frametimeHistory.value;
-    chartInstance.value.update('none'); // No animation for smooth updates
+    const data = frametimeHistory.value;
+    chartInstance.value.data.labels = data.map((_, i) => `${i}`);
+    chartInstance.value.data.datasets[0].data = data;
+    
+    // Update colors based on latest frametime
+    if (data.length > 0) {
+      const latestFrametime = data[data.length - 1];
+      const color = getFrametimeColor(latestFrametime);
+      chartInstance.value.data.datasets[0].borderColor = color;
+      chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.1)');
+    }
+    
+    // Force update with active mode to ensure redraw
+    chartInstance.value.update('active');
   } catch (error) {
     console.error('Failed to update chart:', error);
     chartReady.value = false; // Mark as not ready if update fails
@@ -489,8 +523,8 @@ function initChart() {
         labels: [],
         datasets: [{
           data: [],
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderColor: '#22c55e', // Start with green
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
           borderWidth: 2,
           fill: true,
           tension: 0.4,
@@ -509,16 +543,37 @@ function initChart() {
           }
         },
         scales: {
-          x: { display: false },
+          x: { 
+            display: true, // Show x-axis for debugging
+            grid: { display: false },
+            ticks: {
+              font: { size: 9 },
+              color: '#9ca3af',
+              maxTicksLimit: 5
+            }
+          },
           y: {
             display: true,
             position: 'right',
-            grid: { display: false },
+            beginAtZero: false,
+            grid: { 
+              display: true,
+              color: 'rgba(156, 163, 175, 0.1)'
+            },
             ticks: {
-              maxTicksLimit: 3,
-              callback: (value) => `${value}ms`,
+              maxTicksLimit: 4,
+              callback: (value) => `${Math.round(value)}ms`,
               font: { size: 9 },
               color: '#9ca3af'
+            },
+            // Auto-scale based on data
+            afterDataLimits: (axis) => {
+              const minVal = axis.min || 0;
+              const maxVal = axis.max || 100;
+              const range = maxVal - minVal;
+              // Add 10% padding top and bottom
+              axis.min = Math.max(0, minVal - range * 0.1);
+              axis.max = maxVal + range * 0.1;
             }
           }
         },
