@@ -8,33 +8,69 @@
             {{ deviceName }}
           </h3>
           <v-chip
-            :color="device.driver === 'real' ? 'success' : 'grey'"
+            :color="device.driver === 'real' ? 'success' : undefined"
             size="small"
             :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            prepend-icon="mdi-circle"
+            :style="device.driver === 'real' ? {} : { borderColor: '#d1d5db' }"
             class="mr-2 status-badge"
           >
-            {{ device.driver === 'real' ? 'Online' : 'Idle' }}
+            <span style="display: inline-flex; align-items: center;">
+              <span :style="{ 
+                display: 'inline-block', 
+                width: '6px', 
+                height: '6px', 
+                borderRadius: '50%', 
+                backgroundColor: device.driver === 'real' ? '#fff' : '#10b981', 
+                marginRight: '6px' 
+              }"></span>
+              <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
+                {{ device.driver === 'real' ? 'Online' : 'Idle' }}
+              </span>
+            </span>
           </v-chip>
           <v-chip
-            :color="device.driver === 'real' ? 'info' : 'warning'"
+            :color="device.driver === 'real' ? 'info' : undefined"
             size="small"
             :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            prepend-icon="mdi-circle"
+            :style="device.driver === 'real' ? {} : { borderColor: '#d1d5db' }"
             class="status-badge"
           >
-            {{ device.driver === 'real' ? 'Hardware' : 'Mock Mode' }}
+            <span style="display: inline-flex; align-items: center;">
+              <span :style="{ 
+                display: 'inline-block', 
+                width: '6px', 
+                height: '6px', 
+                borderRadius: '50%', 
+                backgroundColor: device.driver === 'real' ? '#fff' : '#f59e0b', 
+                marginRight: '6px' 
+              }"></span>
+              <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
+                {{ device.driver === 'real' ? 'Hardware' : 'Mock Mode' }}
+              </span>
+            </span>
           </v-chip>
         </div>
         <div class="d-flex align-center">
           <v-chip
-            :color="device.status === 'running' ? 'success' : 'grey'"
+            :color="device.status === 'running' ? 'success' : undefined"
             size="small"
             :variant="device.status === 'running' ? 'flat' : 'outlined'"
-            prepend-icon="mdi-circle"
+            :style="device.status === 'running' ? {} : { borderColor: '#d1d5db' }"
             class="mr-2 status-badge"
           >
-            {{ device.status === 'running' ? 'Active' : 'Stopped' }}
+            <span style="display: inline-flex; align-items: center;">
+              <span :style="{ 
+                display: 'inline-block', 
+                width: '6px', 
+                height: '6px', 
+                borderRadius: '50%', 
+                backgroundColor: device.status === 'running' ? '#fff' : '#ef4444', 
+                marginRight: '6px' 
+              }"></span>
+              <span :style="{ color: device.status === 'running' ? '#fff' : '#6b7280' }">
+                {{ device.status === 'running' ? 'Active' : 'Stopped' }}
+              </span>
+            </span>
           </v-chip>
           <v-btn
             :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
@@ -380,6 +416,25 @@ function updateUptime() {
 }
 
 function updateSceneTime() {
+  // For static scenes, show time since loaded but don't keep incrementing
+  // (Timer will pause after first render)
+  if (!currentSceneInfo.value?.wantsLoop) {
+    const diff = Date.now() - sceneStartTime.value;
+    if (diff < 1000) {
+      sceneTimeDisplay.value = 'Just now';
+    } else {
+      const seconds = Math.floor(diff / 1000);
+      if (seconds < 60) {
+        sceneTimeDisplay.value = `${seconds}s ago`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        sceneTimeDisplay.value = `${minutes}m ago`;
+      }
+    }
+    return;
+  }
+  
+  // For animated scenes, show running time
   const diff = Date.now() - sceneStartTime.value;
   const hours = Math.floor(diff / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);

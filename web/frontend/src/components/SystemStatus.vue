@@ -33,8 +33,14 @@
           class="mr-4"
           style="border-color: #d1d5db;"
         >
+          <v-tooltip activator="parent" location="bottom">
+            <span>Connected to MQTT broker</span>
+          </v-tooltip>
           <span style="display: inline-flex; align-items: center;">
-            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; margin-right: 6px;"></span>
+            <span 
+              style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; margin-right: 6px;"
+              title="Connected to MQTT broker"
+            ></span>
             <span style="color: #6b7280;">MQTT: {{ mqttBroker }}</span>
           </span>
         </v-chip>
