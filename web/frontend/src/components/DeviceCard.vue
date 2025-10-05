@@ -8,18 +8,20 @@
             {{ deviceName }}
           </h3>
           <v-chip
-            :color="statusColor"
+            :color="device.driver === 'real' ? 'success' : 'grey'"
             size="small"
-            variant="flat"
+            :variant="device.driver === 'real' ? 'flat' : 'outlined'"
             prepend-icon="mdi-circle"
-            class="mr-2"
+            class="mr-2 status-badge"
           >
-            {{ statusText }}
+            {{ device.driver === 'real' ? 'Online' : 'Idle' }}
           </v-chip>
           <v-chip
             :color="device.driver === 'real' ? 'info' : 'warning'"
             size="small"
-            variant="flat"
+            :variant="device.driver === 'real' ? 'flat' : 'outlined'"
+            prepend-icon="mdi-circle"
+            class="status-badge"
           >
             {{ device.driver === 'real' ? 'Hardware' : 'Mock Mode' }}
           </v-chip>
@@ -28,8 +30,9 @@
           <v-chip
             :color="device.status === 'running' ? 'success' : 'grey'"
             size="small"
-            variant="flat"
-            class="mr-2"
+            :variant="device.status === 'running' ? 'flat' : 'outlined'"
+            prepend-icon="mdi-circle"
+            class="mr-2 status-badge"
           >
             {{ device.status === 'running' ? 'Active' : 'Stopped' }}
           </v-chip>
@@ -86,6 +89,7 @@
           prepend-icon="mdi-restart"
           :loading="resetLoading"
           @click="handleReset"
+          class="action-button"
         >
           Reset
         </v-btn>
@@ -162,23 +166,20 @@
                 <span class="text-subtitle-2 font-weight-bold mr-2">
                   {{ formatSceneName(currentSceneInfo.name) }}
                 </span>
-                <v-chip
+                <span
                   v-if="currentSceneInfo.category"
-                  size="x-small"
-                  :color="categoryColor(currentSceneInfo.category)"
-                  variant="flat"
+                  class="scene-tag"
+                  :style="{ '--tag-color': categoryColor(currentSceneInfo.category) }"
                 >
                   {{ currentSceneInfo.category }}
-                </v-chip>
-                <v-chip
+                </span>
+                <span
                   v-if="currentSceneInfo.wantsLoop"
-                  size="x-small"
-                  color="success"
-                  variant="tonal"
-                  class="ml-1"
+                  class="scene-tag ml-1"
+                  style="--tag-color: #10b981"
                 >
                   Animated
-                </v-chip>
+                </span>
               </div>
               <p class="text-body-2 text-medium-emphasis mb-0">
                 {{ currentSceneInfo.description || 'No description available for this scene.' }}
@@ -402,12 +403,12 @@ function formatSceneName(name) {
 
 function categoryColor(category) {
   const colors = {
-    Utility: 'purple',
-    Data: 'blue',
-    Custom: 'green',
-    General: 'grey',
+    Utility: '#a855f7',
+    Data: '#3b82f6',
+    Custom: '#10b981',
+    General: '#6b7280',
   };
-  return colors[category] || 'grey';
+  return colors[category] || '#6b7280';
 }
 
 async function loadMetrics() {
@@ -415,23 +416,24 @@ async function loadMetrics() {
     const data = await api.getDeviceMetrics(props.device.ip);
     if (data) {
       fps.value = data.fps || 0;
-      frametime.value = Math.round(data.frametime || 0);
+      const newFrametime = Math.round(data.frametime || 0);
+      frametime.value = newFrametime;
       frameCount.value = data.frameCount || 0;
       errorCount.value = data.errorCount || 0;
       pushCount.value = data.pushCount || 0;
       
-      // Update frametime history for chart (keep last 300 data points = 30 seconds at 100ms intervals)
-      if (frametime.value > 0 && !isCollapsed.value) {
-        frametimeHistory.value.push(frametime.value);
-        if (frametimeHistory.value.length > 300) {
+      // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
+      if (!isCollapsed.value) {
+        // Use a minimum value for better visualization
+        const chartValue = Math.max(1, newFrametime);
+        frametimeHistory.value.push(chartValue);
+        
+        // Keep last 60 data points (6 seconds at 100ms intervals)
+        if (frametimeHistory.value.length > 60) {
           frametimeHistory.value.shift();
         }
-        try {
-          updateChart();
-        } catch (chartErr) {
-          // Chart errors should never block metrics display
-          console.error('Chart update failed:', chartErr);
-        }
+        
+        console.log(`[Metrics] Frametime: ${newFrametime}ms, History length: ${frametimeHistory.value.length}`);
       }
     }
   } catch (err) {
@@ -497,28 +499,34 @@ function updateChart() {
   
   try {
     const data = frametimeHistory.value;
-    console.log('Updating chart with data points:', data.length, 'latest:', data[data.length - 1]);
     
-    // Completely replace the dataset to force Chart.js to redraw
-    chartInstance.value.data.labels = data.map((_, i) => `${i}`);
-    chartInstance.value.data.datasets[0].data = data.slice(); // New array reference
+    if (data.length === 0) return;
     
-    // Update colors based on latest frametime
-    if (data.length > 0) {
-      const latestFrametime = data[data.length - 1];
-      const color = getFrametimeColor(latestFrametime);
-      console.log(`Frametime ${latestFrametime}ms -> color ${color}`);
-      chartInstance.value.data.datasets[0].borderColor = color;
-      chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.1)');
-    }
+    // Get latest color
+    const latestFrametime = data[data.length - 1];
+    const color = getFrametimeColor(latestFrametime);
     
-    // Try multiple update methods to force redraw
-    chartInstance.value.update('none'); // Immediate update without animation
-    chartInstance.value.render(); // Force render
+    // NUCLEAR OPTION: Recreate the entire data object to force Chart.js update
+    chartInstance.value.data = {
+      labels: data.map((_, i) => `${i}`),
+      datasets: [{
+        data: [...data],
+        borderColor: color,
+        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.05)'), // 50% less opacity
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+      }]
+    };
+    
+    // Force complete redraw with draw() instead of render()
+    chartInstance.value.update('none');
+    chartInstance.value.draw();
     
   } catch (error) {
     console.error('Failed to update chart:', error);
-    chartReady.value = false; // Mark as not ready if update fails
+    chartReady.value = false;
   }
 }
 
@@ -930,5 +938,59 @@ onUnmounted(() => {
 .metric-sublabel {
   font-size: 10px;
   opacity: 0.7;
+}
+
+/* Status badges - consistent sizing and styling */
+.status-badge {
+  height: 24px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.status-badge :deep(.v-chip__prepend) {
+  margin-right: 4px !important;
+}
+
+/* Action buttons with hover effects */
+.action-button {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-button:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.action-button:active {
+  transform: translateY(0);
+}
+
+/* Scene tags - square tags with hole (like real tags) */
+.scene-tag {
+  position: relative;
+  display: inline-block;
+  padding: 2px 8px 2px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--tag-color, #6b7280);
+  color: white;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.scene-tag::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 </style>
