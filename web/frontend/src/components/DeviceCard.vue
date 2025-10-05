@@ -239,7 +239,12 @@
                   <v-icon size="large" style="opacity: 0.15;">mdi-chart-line</v-icon>
                 </div>
                 <div style="height: 80px; position: relative;">
-                  <canvas ref="chartCanvas"></canvas>
+                  <v-chart 
+                    v-if="chartOptions"
+                    :option="chartOptions" 
+                    autoresize 
+                    style="height: 100%; width: 100%;"
+                  />
                 </div>
               </v-card-text>
             </v-card>
@@ -252,11 +257,18 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import Chart from 'chart.js/auto';
+import VChart from 'vue-echarts';
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { LineChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent } from 'echarts/components';
 import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
+
+// Register ECharts components
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
 
 const props = defineProps({
@@ -292,10 +304,6 @@ const pushCount = ref(0);
 const startTime = ref(Date.now());
 const daemonStartTime = ref(Date.now());
 const frametimeHistory = ref([]);
-const chartCanvas = ref(null);
-const chartInstance = ref(null); // Use ref instead of let for better Vue tracking
-const chartReady = ref(false); // Track if chart is ready to use
-let isUpdatingChart = false; // Re-entrant guard to prevent update() infinite loops
 let uptimeInterval = null;
 
 let metricsInterval = null;
@@ -362,6 +370,58 @@ const successRate = computed(() => {
   return Math.round((pushCount.value / total) * 100);
 });
 
+// ECharts configuration - reactively updates when frametimeHistory changes
+const chartOptions = computed(() => {
+  if (frametimeHistory.value.length === 0) return null;
+  
+  const data = frametimeHistory.value;
+  const latestFrametime = data[data.length - 1];
+  const color = getFrametimeColor(latestFrametime);
+  
+  return {
+    grid: {
+      left: 0,
+      right: 0,
+      top: 5,
+      bottom: 0,
+      containLabel: false
+    },
+    xAxis: {
+      type: 'category',
+      show: false,
+      data: data.map((_, i) => i)
+    },
+    yAxis: {
+      type: 'value',
+      show: false,
+      min: (value) => Math.floor(value.min * 0.9),
+      max: (value) => Math.ceil(value.max * 1.1)
+    },
+    series: [
+      {
+        data: data,
+        type: 'line',
+        smooth: true,
+        symbol: 'none',
+        lineStyle: {
+          color: color,
+          width: 2
+        },
+        areaStyle: {
+          color: color.replace('rgb', 'rgba').replace(')', ', 0.05)')
+        }
+      }
+    ],
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        return `${params[0].value}ms`;
+      }
+    },
+    animation: false
+  };
+});
+
 // Watch for external changes
 watch(
   () => props.device.currentScene,
@@ -384,25 +444,9 @@ watch(
   { deep: true }
 );
 
-// Watch for card expansion to initialize chart
-watch(isCollapsed, (collapsed) => {
-  if (!collapsed && !chartInstance.value) {
-    // Wait for DOM to update and canvas to be visible
-    setTimeout(() => {
-      if (chartCanvas.value && !chartInstance.value) {
-        initChart();
-      }
-    }, 150);
-  }
-});
+// ECharts handles visibility automatically - no manual initialization needed!
 
-// TEMPORARILY DISABLED - Chart.js update() causes stack overflow with Vue Proxy
-// watch(frametimeHistory, (newHistory) => {
-//   console.log('frametimeHistory changed, length:', newHistory.length);
-//   if (chartInstance.value && chartReady.value && !isCollapsed.value) {
-//     updateChart();
-//   }
-// }, { deep: true });
+// Chart updates automatically via computed property - no watcher needed!
 
 function formatSceneName(name) {
   // Convert snake_case to Title Case
@@ -465,9 +509,7 @@ function loadMetrics() {
     console.log(`[DEBUG] SHIFT - Removed oldest value: ${removed}`);
   }
   
-  // CHART TEMPORARILY DISABLED - updateChart() causes stack overflow
-  // console.log('[DEBUG] >>> Calling updateChart <<<');
-  // updateChart();
+  // Chart updates automatically via computed property - no manual update needed!
   console.log('[DEBUG] === loadMetrics END ===\n');
 }
 
@@ -515,241 +557,7 @@ function getFrametimeColor(frametime) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-function updateChart() {
-  console.log('[DEBUG] updateChart called');
-  
-  // CRITICAL: Prevent re-entrant calls that cause stack overflow
-  if (isUpdatingChart) {
-    console.warn('[DEBUG] Already updating chart, skipping to prevent infinite loop');
-    return;
-  }
-  
-  // Check if chart needs reinitialization
-  if (!chartInstance.value && chartCanvas.value && !isCollapsed.value) {
-    console.log('[DEBUG] Chart missing but canvas available - reinitializing...');
-    initChart();
-    // Give it a moment to initialize
-    if (!chartInstance.value || !chartReady.value) {
-      console.warn('[DEBUG] Reinit failed, skipping update');
-      return;
-    }
-  }
-  
-  // Skip if chart not initialized, not ready, or card is collapsed
-  if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
-    console.warn('[DEBUG] Chart update SKIPPED:', { 
-      hasInstance: !!chartInstance.value, 
-      ready: chartReady.value, 
-      hasCanvas: !!chartCanvas.value, 
-      collapsed: isCollapsed.value 
-    });
-    return;
-  }
-  
-  // Set guard
-  isUpdatingChart = true;
-  
-  try {
-    const data = frametimeHistory.value;
-    
-    if (data.length === 0) {
-      console.warn('[DEBUG] No data to chart');
-      return;
-    }
-    
-    // CRITICAL FIX: Convert Vue Proxy to plain array - use multiple methods to ensure complete detachment
-    // Using JSON parse/stringify to completely break any proxy references
-    const plainData = JSON.parse(JSON.stringify(Array.from(data)));
-    
-    console.log('[DEBUG] Data converted - original type:', data.constructor.name, 'new type:', plainData.constructor.name, 'length:', plainData.length);
-    
-    // Get latest color
-    const latestFrametime = plainData[plainData.length - 1];
-    const color = getFrametimeColor(latestFrametime);
-    
-    console.log('[DEBUG] Frametime:', latestFrametime, 'calculated color:', color);
-    
-    // Verify chart and dataset exist
-    if (!chartInstance.value.data || !chartInstance.value.data.datasets || chartInstance.value.data.datasets.length === 0) {
-      console.error('[DEBUG] Chart data structure is corrupt, skipping update');
-      return;
-    }
-    
-    console.log('[DEBUG] About to update dataset...');
-    
-    // Update ONLY the data arrays (don't touch scales, plugins, or config)
-    const dataset = chartInstance.value.data.datasets[0];
-    dataset.data = plainData;
-    dataset.borderColor = color;
-    dataset.backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
-    
-    console.log('[DEBUG] Dataset colors set - border:', dataset.borderColor, 'background:', dataset.backgroundColor);
-    
-    console.log('[DEBUG] Dataset updated, now updating labels...');
-    
-    // Update labels - create completely new array
-    const labels = [];
-    for (let i = 0; i < plainData.length; i++) {
-      labels.push(`${i}`);
-    }
-    chartInstance.value.data.labels = labels;
-    
-    console.log('[DEBUG] Labels updated, calling update()...');
-    
-    // Now try update() with the re-entrant guard in place
-    chartInstance.value.update('none');
-    
-    console.log('[DEBUG] Chart updated successfully - points:', plainData.length, 'latest:', latestFrametime, 'color:', color);
-    
-  } catch (error) {
-    console.error('[DEBUG] Failed to update chart:', error.message, error.stack);
-    // Properly destroy the chart before clearing reference
-    if (chartInstance.value) {
-      try {
-        chartInstance.value.destroy();
-      } catch (e) {
-        console.warn('[DEBUG] Error destroying chart after update failure:', e);
-      }
-    }
-    chartReady.value = false;
-    chartInstance.value = null;
-  } finally {
-    // CRITICAL: Always clear the guard, even if there was an error
-    isUpdatingChart = false;
-  }
-}
-
-function initChart() {
-  // Defensive checks
-  if (!chartCanvas.value) {
-    console.warn('Chart canvas not available');
-    return;
-  }
-  
-  if (isCollapsed.value) {
-    console.log('Skipping chart init - card is collapsed');
-    return;
-  }
-  
-  // Check if canvas is actually visible in DOM
-  if (!chartCanvas.value.offsetParent) {
-    console.warn('Chart canvas not visible in DOM');
-    return;
-  }
-  
-  try {
-    // CRITICAL: Destroy ANY existing chart on this canvas
-    // Check Chart.js registry first
-    const existingChart = Chart.getChart(chartCanvas.value);
-    if (existingChart) {
-      console.log('[DEBUG] Found existing Chart.js instance, destroying...');
-      existingChart.destroy();
-    }
-    
-    // Also destroy our reference if it exists
-    if (chartInstance.value) {
-      try {
-        chartInstance.value.destroy();
-      } catch (destroyError) {
-        console.warn('Error destroying chart reference:', destroyError);
-      }
-    }
-    
-    // Clear state
-    chartInstance.value = null;
-    chartReady.value = false;
-    
-    const ctx = chartCanvas.value.getContext('2d');
-    if (!ctx) {
-      console.error('Failed to get canvas context');
-      return;
-    }
-    
-    chartInstance.value = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [{
-          data: [],
-          borderColor: '#22c55e', // Start with green
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        animations: {
-          colors: false,
-          x: false,
-          y: false
-        },
-        transitions: {
-          active: {
-            animation: {
-              duration: 0
-            }
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            enabled: true,
-            callbacks: {
-              label: (context) => `${context.parsed.y}ms`
-            }
-          }
-        },
-        scales: {
-          x: { 
-            display: true, // Show x-axis for debugging
-            grid: { display: false },
-            ticks: {
-              font: { size: 9 },
-              color: '#9ca3af',
-              maxTicksLimit: 5
-            }
-          },
-          y: {
-            display: true,
-            position: 'right',
-            beginAtZero: false,
-            grid: { 
-              display: true,
-              color: 'rgba(156, 163, 175, 0.1)'
-            },
-            ticks: {
-              maxTicksLimit: 4,
-              callback: (value) => `${Math.round(value)}ms`,
-              font: { size: 9 },
-              color: '#9ca3af'
-            },
-            // Auto-scale based on data
-            afterDataLimits: (axis) => {
-              const minVal = axis.min || 0;
-              const maxVal = axis.max || 100;
-              const range = maxVal - minVal;
-              // Add 10% padding top and bottom
-              axis.min = Math.max(0, minVal - range * 0.1);
-              axis.max = maxVal + range * 0.1;
-            }
-          }
-        }
-      }
-    });
-    
-    chartReady.value = true;
-    console.log('Chart initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize chart:', error);
-    chartInstance.value = null;
-    chartReady.value = false;
-  }
-}
+// Chart.js functions removed - now using ECharts with reactive computed property!
 
 async function handleSceneChange(sceneName) {
   if (!sceneName || loading.value) return;
@@ -864,15 +672,7 @@ onMounted(async () => {
   // Start uptime counter (updates every second)
   uptimeInterval = setInterval(updateUptime, 1000);
 
-  // Initialize chart only if card is not collapsed (canvas must be visible)
-  if (!isCollapsed.value) {
-    // Add small delay to ensure canvas is fully rendered in DOM
-    setTimeout(() => {
-      if (chartCanvas.value && !isCollapsed.value) {
-        initChart();
-      }
-    }, 200);
-  }
+  // ECharts initializes automatically via v-chart component - no manual init needed!
 
   // Load metrics - initial call
   console.log('[DEBUG] onMounted - Initial loadMetrics call');
@@ -895,26 +695,7 @@ onUnmounted(() => {
     clearInterval(uptimeInterval);
   }
   
-  // Destroy chart - check both reference and Chart.js registry
-  const existingChart = chartCanvas.value ? Chart.getChart(chartCanvas.value) : null;
-  if (existingChart) {
-    try {
-      existingChart.destroy();
-    } catch (e) {
-      console.warn('Error destroying chart from registry on unmount:', e);
-    }
-  }
-  
-  if (chartInstance.value) {
-    try {
-      chartInstance.value.destroy();
-    } catch (error) {
-      console.error('Error destroying chart reference on unmount:', error);
-    }
-  }
-  
-  chartInstance.value = null;
-  chartReady.value = false;
+  // ECharts cleans up automatically via v-chart component!
 });
 </script>
 
