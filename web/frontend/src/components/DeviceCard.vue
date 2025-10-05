@@ -251,7 +251,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import Chart from 'chart.js/auto';
 import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
@@ -295,6 +295,7 @@ const frametimeHistory = ref([]);
 const chartCanvas = ref(null);
 const chartInstance = ref(null); // Use ref instead of let for better Vue tracking
 const chartReady = ref(false); // Track if chart is ready to use
+let isUpdatingChart = false; // Re-entrant guard to prevent update() infinite loops
 let uptimeInterval = null;
 
 let metricsInterval = null;
@@ -519,6 +520,12 @@ function getFrametimeColor(frametime) {
 function updateChart() {
   console.log('[DEBUG] updateChart called');
   
+  // CRITICAL: Prevent re-entrant calls that cause stack overflow
+  if (isUpdatingChart) {
+    console.warn('[DEBUG] Already updating chart, skipping to prevent infinite loop');
+    return;
+  }
+  
   // Check if chart needs reinitialization
   if (!chartInstance.value && chartCanvas.value && !isCollapsed.value) {
     console.log('[DEBUG] Chart missing but canvas available - reinitializing...');
@@ -540,6 +547,9 @@ function updateChart() {
     });
     return;
   }
+  
+  // Set guard
+  isUpdatingChart = true;
   
   try {
     const data = frametimeHistory.value;
@@ -586,25 +596,15 @@ function updateChart() {
     }
     chartInstance.value.data.labels = labels;
     
-    console.log('[DEBUG] Labels updated, color:', color);
+    console.log('[DEBUG] Labels updated, calling update()...');
     
-    // Force canvas redraw using requestAnimationFrame
-    // This avoids the stack overflow in update() but ensures browser repaints
-    nextTick(() => {
-      requestAnimationFrame(() => {
-        try {
-          console.log('[DEBUG] requestAnimationFrame - forcing render');
-          chartInstance.value.render();
-        } catch (renderError) {
-          console.warn('[DEBUG] Render failed:', renderError.message);
-        }
-      });
-    });
+    // Now try update() with the re-entrant guard in place
+    chartInstance.value.update('none');
     
-    console.log('[DEBUG] Chart update queued - points:', plainData.length, 'latest:', latestFrametime, 'color:', color);
+    console.log('[DEBUG] Chart updated successfully - points:', plainData.length, 'latest:', latestFrametime, 'color:', color);
     
   } catch (error) {
-    console.error('[DEBUG] Failed to update chart:', error.message);
+    console.error('[DEBUG] Failed to update chart:', error.message, error.stack);
     // Properly destroy the chart before clearing reference
     if (chartInstance.value) {
       try {
@@ -615,6 +615,9 @@ function updateChart() {
     }
     chartReady.value = false;
     chartInstance.value = null;
+  } finally {
+    // CRITICAL: Always clear the guard, even if there was an error
+    isUpdatingChart = false;
   }
 }
 
