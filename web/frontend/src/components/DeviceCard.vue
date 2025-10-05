@@ -196,7 +196,7 @@
         </h4>
         <v-row dense>
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-col cols="12" sm="6" md="4">
+          <v-col cols="12" sm="6" md="2">
             <v-card class="metric-card metric-card-performance" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -232,7 +232,7 @@
 
           <!-- Scene Time Card -->
           <v-col cols="12" sm="6" md="2">
-            <v-card class="metric-card metric-card-scene-time" elevation="0">
+            <v-card class="metric-card metric-card-uptime" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
                   <div class="metric-header">Scene Time</div>
@@ -240,14 +240,14 @@
                 </div>
                 <div class="metric-value mb-1">{{ sceneTimeDisplay }}</div>
                 <div class="text-caption" style="color: #6b7280;">
-                  Current scene
+                  {{ currentSceneInfo?.wantsLoop ? 'Running' : 'Static' }}
                 </div>
               </v-card-text>
             </v-card>
           </v-col>
 
           <!-- Frametime Chart Card -->
-          <v-col cols="12" sm="12" md="8">
+          <v-col cols="12" sm="12" md="10">
             <v-card class="metric-card metric-card-chart" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -358,8 +358,8 @@ const fpsDisplay = computed(() => {
     return '-';
   }
   
-  // For animated scenes: ALWAYS show 2 decimal places (e.g., 4.24, 20.00)
-  return fps.value.toFixed(2);
+  // For animated scenes: Show 1 decimal place (e.g., 4.2, 20.3, 5.7)
+  return fps.value.toFixed(1);
 });
 
 const uptimeDisplay = ref('0s');
@@ -415,7 +415,7 @@ const chartOptions = computed(() => {
   return {
     grid: {
       left: 5,
-      right: 35,
+      right: 45,  // Increased from 35 for better Y-axis label spacing
       top: 5,
       bottom: 15,
       containLabel: true
@@ -425,6 +425,7 @@ const chartOptions = computed(() => {
       show: true,
       data: data.map((_, i) => i),
       axisLine: {
+        show: true,  // Show X-axis line
         lineStyle: {
           color: '#e5e7eb',
           width: 1
@@ -447,6 +448,7 @@ const chartOptions = computed(() => {
       min: (value) => Math.floor(value.min * 0.9),
       max: (value) => Math.ceil(value.max * 1.1),
       axisLine: {
+        show: true,
         lineStyle: {
           color: '#e5e7eb',
           width: 1
@@ -458,7 +460,8 @@ const chartOptions = computed(() => {
       axisLabel: {
         formatter: '{value}ms',
         fontSize: 9,
-        color: '#9ca3af'
+        color: '#9ca3af',
+        margin: 8  // Add spacing between axis and labels
       },
       splitLine: {
         lineStyle: {
