@@ -532,7 +532,6 @@ function updateChart() {
   
   try {
     const data = frametimeHistory.value;
-    console.log('[DEBUG] Chart data length:', data.length, 'data:', data);
     
     if (data.length === 0) {
       console.warn('[DEBUG] No data to chart');
@@ -541,31 +540,36 @@ function updateChart() {
     
     // CRITICAL FIX: Convert Vue Proxy to plain array to avoid Chart.js infinite loop
     const plainData = Array.from(data);
-    console.log('[DEBUG] Converted to plain array:', plainData);
     
     // Get latest color
     const latestFrametime = plainData[plainData.length - 1];
     const color = getFrametimeColor(latestFrametime);
-    console.log('[DEBUG] Latest frametime:', latestFrametime, 'color:', color);
     
-    // Update the dataset data directly (don't recreate the whole object)
-    if (chartInstance.value.data.datasets.length > 0) {
-      chartInstance.value.data.labels = plainData.map((_, i) => `${i}`);
-      chartInstance.value.data.datasets[0].data = plainData;
-      chartInstance.value.data.datasets[0].borderColor = color;
-      chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
+    // Verify chart and dataset exist
+    if (!chartInstance.value.data || !chartInstance.value.data.datasets || chartInstance.value.data.datasets.length === 0) {
+      console.error('[DEBUG] Chart data structure is corrupt, skipping update');
+      return;
     }
     
-    console.log('[DEBUG] Chart data updated, calling update()');
+    // Update ONLY the data arrays (don't touch scales, plugins, or config)
+    const dataset = chartInstance.value.data.datasets[0];
+    dataset.data = plainData;
+    dataset.borderColor = color;
+    dataset.backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
     
-    // Force complete redraw
-    chartInstance.value.update('none');
+    // Update labels
+    chartInstance.value.data.labels = plainData.map((_, i) => `${i}`);
     
-    console.log('[DEBUG] Chart update completed successfully');
+    // Trigger redraw - use 'active' mode which is more stable
+    chartInstance.value.update('active');
+    
+    console.log('[DEBUG] Chart updated successfully - points:', plainData.length, 'latest:', latestFrametime);
     
   } catch (error) {
-    console.error('[DEBUG] Failed to update chart:', error, error.stack);
-    // Don't set ready=false, try to recover on next update
+    console.error('[DEBUG] Failed to update chart:', error.message);
+    // Try to reinitialize on next expansion
+    chartReady.value = false;
+    chartInstance.value = null;
   }
 }
 
