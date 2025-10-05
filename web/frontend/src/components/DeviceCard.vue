@@ -117,13 +117,13 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
         <!-- Scene Selector with Next/Prev (single row) -->
-        <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px;">
+        <div class="scene-selector-row">
           <v-btn
             icon
             variant="text"
             @click="previousScene"
             :disabled="loading"
-            style="margin: 0; padding: 0; margin-top: 8px;"
+            class="scene-nav-btn"
           >
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
@@ -142,7 +142,7 @@
             variant="text"
             @click="nextScene"
             :disabled="loading"
-            style="margin: 0; padding: 0; margin-top: 8px;"
+            class="scene-nav-btn"
           >
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
@@ -414,57 +414,86 @@ async function loadMetrics() {
 function updateChart() {
   if (!chart || !chartCanvas.value) return;
   
-  chart.data.labels = frametimeHistory.value.map((_, i) => '');
-  chart.data.datasets[0].data = frametimeHistory.value;
-  chart.update('none'); // No animation for smooth updates
+  try {
+    chart.data.labels = frametimeHistory.value.map((_, i) => '');
+    chart.data.datasets[0].data = frametimeHistory.value;
+    chart.update('none'); // No animation for smooth updates
+  } catch (error) {
+    console.error('Failed to update chart:', error);
+    // Try to reinitialize chart on next tick if update fails
+    nextTick(() => {
+      if (chartCanvas.value && !chart) {
+        initChart();
+      }
+    });
+  }
 }
 
 function initChart() {
-  if (!chartCanvas.value) return;
+  if (!chartCanvas.value) {
+    console.warn('Chart canvas not available');
+    return;
+  }
   
-  const ctx = chartCanvas.value.getContext('2d');
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [{
-        data: [],
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.parsed.y}ms`
-          }
-        }
-      },
-      scales: {
-        x: { display: false },
-        y: {
-          display: true,
-          position: 'right',
-          grid: { display: false },
-          ticks: {
-            maxTicksLimit: 3,
-            callback: (value) => `${value}ms`,
-            font: { size: 9 },
-            color: '#9ca3af'
-          }
-        }
-      },
-      animation: false,
+  try {
+    // Destroy existing chart if it exists
+    if (chart) {
+      chart.destroy();
+      chart = null;
     }
-  });
+    
+    const ctx = chartCanvas.value.getContext('2d');
+    if (!ctx) {
+      console.error('Failed to get canvas context');
+      return;
+    }
+    
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          data: [],
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => `${context.parsed.y}ms`
+            }
+          }
+        },
+        scales: {
+          x: { display: false },
+          y: {
+            display: true,
+            position: 'right',
+            grid: { display: false },
+            ticks: {
+              maxTicksLimit: 3,
+              callback: (value) => `${value}ms`,
+              font: { size: 9 },
+              color: '#9ca3af'
+            }
+          }
+        },
+        animation: false,
+      }
+    });
+  } catch (error) {
+    console.error('Failed to initialize chart:', error);
+    chart = null;
+  }
 }
 
 async function handleSceneChange(sceneName) {
@@ -631,7 +660,20 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* Nav buttons removed - now inline styles for guaranteed centering */
+.scene-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.scene-nav-btn {
+  margin: 0 !important;
+  padding: 0 !important;
+  align-self: center;
+  /* Vuetify v-select with density="comfortable" has 56px height, buttons should align to center */
+  flex-shrink: 0;
+}
 
 .scene-description-card {
   background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);

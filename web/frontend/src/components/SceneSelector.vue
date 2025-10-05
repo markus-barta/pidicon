@@ -5,12 +5,13 @@
       :items="sceneItems"
       item-title="title"
       item-value="name"
-      label="Select Scene"
+      placeholder="Select Scene"
       density="comfortable"
       variant="outlined"
       :disabled="disabled || loading"
       :loading="loading"
       @update:model-value="handleSceneChange"
+      hide-details
     >
       <template v-slot:prepend-inner>
         <v-icon icon="mdi-palette-swatch" size="small" />
