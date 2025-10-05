@@ -371,6 +371,18 @@ watch(
   },
 );
 
+// Watch device metrics for changes (when parent refreshes)
+watch(
+  () => props.device.metrics,
+  (newMetrics) => {
+    console.log('[DEBUG] Device metrics changed:', newMetrics);
+    if (newMetrics && !isCollapsed.value) {
+      loadMetrics();
+    }
+  },
+  { deep: true }
+);
+
 // Watch for card expansion to initialize chart
 watch(isCollapsed, async (collapsed) => {
   if (!collapsed && !chartInstance.value) {
@@ -411,42 +423,42 @@ function categoryColor(category) {
   return colors[category] || '#6b7280';
 }
 
-async function loadMetrics() {
-  try {
-    const data = await api.getDeviceMetrics(props.device.ip);
-    console.log('[DEBUG] loadMetrics called, data:', data);
+function loadMetrics() {
+  // Metrics are already in props.device.metrics! No API call needed!
+  const metrics = props.device.metrics;
+  console.log('[DEBUG] loadMetrics called, device.metrics:', metrics);
+  
+  if (metrics) {
+    // Calculate FPS from frametime
+    const newFrametime = Math.round(metrics.lastFrametime || 0);
+    fps.value = newFrametime > 0 ? Math.round(1000 / newFrametime) : 0;
+    frametime.value = newFrametime;
+    frameCount.value = metrics.pushes || 0;
+    errorCount.value = metrics.errors || 0;
+    pushCount.value = metrics.pushes || 0;
     
-    if (data) {
-      fps.value = data.fps || 0;
-      const newFrametime = Math.round(data.frametime || 0);
-      frametime.value = newFrametime;
-      frameCount.value = data.frameCount || 0;
-      errorCount.value = data.errorCount || 0;
-      pushCount.value = data.pushCount || 0;
+    // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
+    if (!isCollapsed.value) {
+      // Use a minimum value for better visualization
+      const chartValue = Math.max(1, newFrametime);
       
-      // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
-      if (!isCollapsed.value) {
-        // Use a minimum value for better visualization
-        const chartValue = Math.max(1, newFrametime);
-        
-        console.log(`[DEBUG] Before push - History length: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
-        frametimeHistory.value.push(chartValue);
-        console.log(`[DEBUG] After push - History length: ${frametimeHistory.value.length}`);
-        
-        // Keep last 60 data points (6 seconds at 100ms intervals)
-        if (frametimeHistory.value.length > 60) {
-          frametimeHistory.value.shift();
-        }
-        
-        // CRITICAL: Call updateChart directly (don't rely on watcher)
-        console.log('[DEBUG] Calling updateChart directly');
-        updateChart();
-      } else {
-        console.log('[DEBUG] Skipped chart update - card is collapsed');
+      console.log(`[DEBUG] Before push - History length: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
+      frametimeHistory.value.push(chartValue);
+      console.log(`[DEBUG] After push - History length: ${frametimeHistory.value.length}`);
+      
+      // Keep last 60 data points (6 seconds at 100ms intervals)
+      if (frametimeHistory.value.length > 60) {
+        frametimeHistory.value.shift();
       }
+      
+      // CRITICAL: Call updateChart directly (don't rely on watcher)
+      console.log('[DEBUG] Calling updateChart directly');
+      updateChart();
+    } else {
+      console.log('[DEBUG] Skipped chart update - card is collapsed');
     }
-  } catch (err) {
-    console.error('Failed to load metrics:', err);
+  } else {
+    console.warn('[DEBUG] No metrics available on device object');
   }
 }
 
