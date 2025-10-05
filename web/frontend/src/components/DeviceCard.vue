@@ -215,7 +215,7 @@
           </v-col>
 
           <!-- Uptime Card -->
-          <v-col cols="12" sm="6" md="4">
+          <v-col cols="12" sm="6" md="2">
             <v-card class="metric-card metric-card-uptime" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -230,8 +230,24 @@
             </v-card>
           </v-col>
 
+          <!-- Scene Time Card -->
+          <v-col cols="12" sm="6" md="2">
+            <v-card class="metric-card metric-card-scene-time" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <div class="metric-header">Scene Time</div>
+                  <v-icon size="large" style="opacity: 0.15;">mdi-play-circle-outline</v-icon>
+                </div>
+                <div class="metric-value mb-1">{{ sceneTimeDisplay }}</div>
+                <div class="text-caption" style="color: #6b7280;">
+                  Current scene
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
           <!-- Frametime Chart Card -->
-          <v-col cols="12" sm="12" md="4">
+          <v-col cols="12" sm="12" md="8">
             <v-card class="metric-card metric-card-chart" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -304,7 +320,10 @@ const pushCount = ref(0);
 const startTime = ref(Date.now());
 const daemonStartTime = ref(Date.now());
 const frametimeHistory = ref([]);
+const sceneStartTime = ref(Date.now());
+const sceneTimeDisplay = ref('0s');
 let uptimeInterval = null;
+let sceneTimeInterval = null;
 
 let metricsInterval = null;
 
@@ -360,6 +379,21 @@ function updateUptime() {
   }
 }
 
+function updateSceneTime() {
+  const diff = Date.now() - sceneStartTime.value;
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  
+  if (hours > 0) {
+    sceneTimeDisplay.value = `${hours}h ${minutes}m`;
+  } else if (minutes > 0) {
+    sceneTimeDisplay.value = `${minutes}m ${seconds}s`;
+  } else {
+    sceneTimeDisplay.value = `${seconds}s`;
+  }
+}
+
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
 });
@@ -380,22 +414,60 @@ const chartOptions = computed(() => {
   
   return {
     grid: {
-      left: 0,
-      right: 0,
+      left: 5,
+      right: 35,
       top: 5,
-      bottom: 0,
-      containLabel: false
+      bottom: 15,
+      containLabel: true
     },
     xAxis: {
       type: 'category',
-      show: false,
-      data: data.map((_, i) => i)
+      show: true,
+      data: data.map((_, i) => i),
+      axisLine: {
+        lineStyle: {
+          color: '#e5e7eb',
+          width: 1
+        }
+      },
+      axisTick: {
+        show: false
+      },
+      axisLabel: {
+        show: false
+      },
+      splitLine: {
+        show: false
+      }
     },
     yAxis: {
       type: 'value',
-      show: false,
+      show: true,
+      position: 'right',
       min: (value) => Math.floor(value.min * 0.9),
-      max: (value) => Math.ceil(value.max * 1.1)
+      max: (value) => Math.ceil(value.max * 1.1),
+      axisLine: {
+        lineStyle: {
+          color: '#e5e7eb',
+          width: 1
+        }
+      },
+      axisTick: {
+        show: false
+      },
+      axisLabel: {
+        formatter: '{value}ms',
+        fontSize: 9,
+        color: '#9ca3af'
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#e5e7eb',
+          width: 1,
+          type: 'solid',
+          opacity: 0.3
+        }
+      }
     },
     series: [
       {
@@ -425,9 +497,14 @@ const chartOptions = computed(() => {
 // Watch for external changes
 watch(
   () => props.device.currentScene,
-  (newScene) => {
+  (newScene, oldScene) => {
     if (newScene && newScene !== selectedScene.value) {
       selectedScene.value = newScene;
+    }
+    // Reset scene timer when scene changes
+    if (newScene !== oldScene) {
+      sceneStartTime.value = Date.now();
+      updateSceneTime();
     }
   },
 );
@@ -480,11 +557,13 @@ function loadMetrics() {
     return;
   }
   
-  // Calculate FPS from frametime
-  const newFrametime = Math.round(metrics.lastFrametime || 0);
-  console.log('[DEBUG] newFrametime:', newFrametime);
+  // Calculate FPS from frametime - use raw value for accurate FPS
+  const rawFrametime = metrics.lastFrametime || 0;
+  const newFrametime = Math.round(rawFrametime);
+  console.log('[DEBUG] rawFrametime:', rawFrametime, 'rounded:', newFrametime);
   
-  fps.value = newFrametime > 0 ? Math.round((1000 / newFrametime) * 10) / 10 : 0; // Round to 1 decimal
+  // Use raw frametime for FPS calculation to get accurate decimals
+  fps.value = rawFrametime > 0 ? Math.round((1000 / rawFrametime) * 10) / 10 : 0;
   frametime.value = newFrametime;
   frameCount.value = metrics.pushes || 0;
   errorCount.value = metrics.errors || 0;
@@ -503,7 +582,7 @@ function loadMetrics() {
   frametimeHistory.value.push(chartValue);
   console.log(`[DEBUG] PUSH - History after: ${frametimeHistory.value.length}, array:`, frametimeHistory.value);
   
-  // Keep last 60 data points (30 seconds at 500ms intervals)
+  // Keep last 60 data points (12 seconds at 200ms intervals)
   if (frametimeHistory.value.length > 60) {
     const removed = frametimeHistory.value.shift();
     console.log(`[DEBUG] SHIFT - Removed oldest value: ${removed}`);
@@ -671,6 +750,10 @@ onMounted(async () => {
 
   // Start uptime counter (updates every second)
   uptimeInterval = setInterval(updateUptime, 1000);
+  
+  // Start scene time counter (updates every second)
+  sceneTimeInterval = setInterval(updateSceneTime, 1000);
+  updateSceneTime(); // Initial call
 
   // ECharts initializes automatically via v-chart component - no manual init needed!
 
@@ -678,12 +761,12 @@ onMounted(async () => {
   console.log('[DEBUG] onMounted - Initial loadMetrics call');
   loadMetrics();
   
-  // Poll every 500ms (5 times per second) for chart updates
-  console.log('[DEBUG] Starting metrics polling at 500ms intervals');
+  // Poll every 200ms (5 times per second) for faster chart updates
+  console.log('[DEBUG] Starting metrics polling at 200ms intervals');
   metricsInterval = setInterval(() => {
     console.log('[DEBUG] Interval tick - calling loadMetrics');
     loadMetrics();
-  }, 500);
+  }, 200);
   console.log('[DEBUG] Metrics interval started:', metricsInterval);
 });
 
@@ -693,6 +776,9 @@ onUnmounted(() => {
   }
   if (uptimeInterval) {
     clearInterval(uptimeInterval);
+  }
+  if (sceneTimeInterval) {
+    clearInterval(sceneTimeInterval);
   }
   
   // ECharts cleans up automatically via v-chart component!
