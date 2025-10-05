@@ -519,6 +519,17 @@ function getFrametimeColor(frametime) {
 function updateChart() {
   console.log('[DEBUG] updateChart called');
   
+  // Check if chart needs reinitialization
+  if (!chartInstance.value && chartCanvas.value && !isCollapsed.value) {
+    console.log('[DEBUG] Chart missing but canvas available - reinitializing...');
+    initChart();
+    // Give it a moment to initialize
+    if (!chartInstance.value || !chartReady.value) {
+      console.warn('[DEBUG] Reinit failed, skipping update');
+      return;
+    }
+  }
+  
   // Skip if chart not initialized, not ready, or card is collapsed
   if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
     console.warn('[DEBUG] Chart update SKIPPED:', { 
