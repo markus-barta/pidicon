@@ -431,27 +431,44 @@ async function loadMetrics() {
   }
 }
 
-// Get color based on frametime (like pixoo performance scene)
-// Fast (green): < 50ms, Medium (yellow): 50-200ms, Slow (red): > 200ms
+// Get color based on frametime (EXACT copy from pixoo performance-utils.js)
+// Color scheme: 1-500ms range with smooth gradients
 function getFrametimeColor(frametime) {
-  if (frametime < 50) {
-    // Green to yellow gradient (fast to medium)
-    const ratio = frametime / 50;
-    const r = Math.round(34 + (234 - 34) * ratio);
-    const g = Math.round(197 + (179 - 197) * ratio);
-    const b = Math.round(94 + (0 - 94) * ratio);
-    return `rgb(${r}, ${g}, ${b})`;
-  } else if (frametime < 200) {
-    // Yellow to red gradient (medium to slow)
-    const ratio = (frametime - 50) / 150;
-    const r = 234 + Math.round((239 - 234) * ratio);
-    const g = Math.round(179 * (1 - ratio));
-    const b = 0;
-    return `rgb(${r}, ${g}, ${b})`;
+  const MIN_FRAMETIME = 1;
+  const MAX_FRAMETIME = 500;
+  
+  const normalized = Math.min(MAX_FRAMETIME, Math.max(MIN_FRAMETIME, frametime));
+  const ratio = (normalized - MIN_FRAMETIME) / (MAX_FRAMETIME - MIN_FRAMETIME);
+  
+  let r, g, b;
+  
+  if (ratio < 0.25) {
+    // Blue to cyan (0-125ms) - Very fast
+    const blend = ratio * 4;
+    r = 0;
+    g = Math.round(255 * blend);
+    b = Math.round(255 * (1 - blend));
+  } else if (ratio < 0.5) {
+    // Cyan to yellow-green (125-250ms) - Fast
+    const blend = (ratio - 0.25) * 4;
+    r = Math.round(255 * blend);
+    g = 255;
+    b = 0;
+  } else if (ratio < 0.75) {
+    // Yellow to orange (250-375ms) - Medium
+    const blend = (ratio - 0.5) * 4;
+    r = 255;
+    g = Math.round(255 * (1 - blend * 0.35));
+    b = 0;
   } else {
-    // Red (very slow)
-    return 'rgb(239, 68, 68)';
+    // Orange to red (375-500ms+) - Slow
+    const blend = (ratio - 0.75) * 4;
+    r = 255;
+    g = Math.round(165 * (1 - blend));
+    b = 0;
   }
+  
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 function updateChart() {
@@ -462,8 +479,10 @@ function updateChart() {
   
   try {
     const data = frametimeHistory.value;
+    
+    // Update data
     chartInstance.value.data.labels = data.map((_, i) => `${i}`);
-    chartInstance.value.data.datasets[0].data = data;
+    chartInstance.value.data.datasets[0].data = [...data]; // Create new array to trigger reactivity
     
     // Update colors based on latest frametime
     if (data.length > 0) {
@@ -473,8 +492,15 @@ function updateChart() {
       chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.1)');
     }
     
-    // Force update with active mode to ensure redraw
-    chartInstance.value.update('active');
+    // Force immediate redraw (no animation, no transitions)
+    chartInstance.value.update('none');
+    
+    // Additional force: trigger resize to ensure canvas redraws
+    requestAnimationFrame(() => {
+      if (chartInstance.value && chartReady.value) {
+        chartInstance.value.resize();
+      }
+    });
   } catch (error) {
     console.error('Failed to update chart:', error);
     chartReady.value = false; // Mark as not ready if update fails
@@ -534,9 +560,23 @@ function initChart() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
+        animations: {
+          colors: false,
+          x: false,
+          y: false
+        },
+        transitions: {
+          active: {
+            animation: {
+              duration: 0
+            }
+          }
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
+            enabled: true,
             callbacks: {
               label: (context) => `${context.parsed.y}ms`
             }
@@ -576,8 +616,7 @@ function initChart() {
               axis.max = maxVal + range * 0.1;
             }
           }
-        },
-        animation: false,
+        }
       }
     });
     
