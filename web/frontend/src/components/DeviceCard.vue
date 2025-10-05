@@ -385,26 +385,24 @@ watch(
 );
 
 // Watch for card expansion to initialize chart
-watch(isCollapsed, async (collapsed) => {
+watch(isCollapsed, (collapsed) => {
   if (!collapsed && !chartInstance.value) {
     // Wait for DOM to update and canvas to be visible
-    await nextTick();
-    // Double-check canvas is actually rendered
     setTimeout(() => {
       if (chartCanvas.value && !chartInstance.value) {
         initChart();
       }
-    }, 100);
+    }, 150);
   }
 });
 
-// Watch frametime history for changes and update chart
-watch(frametimeHistory, (newHistory) => {
-  console.log('frametimeHistory changed, length:', newHistory.length);
-  if (chartInstance.value && chartReady.value && !isCollapsed.value) {
-    updateChart();
-  }
-}, { deep: true });
+// TEMPORARILY DISABLED - Chart.js update() causes stack overflow with Vue Proxy
+// watch(frametimeHistory, (newHistory) => {
+//   console.log('frametimeHistory changed, length:', newHistory.length);
+//   if (chartInstance.value && chartReady.value && !isCollapsed.value) {
+//     updateChart();
+//   }
+// }, { deep: true });
 
 function formatSceneName(name) {
   // Convert snake_case to Title Case
@@ -442,7 +440,7 @@ function loadMetrics() {
   const newFrametime = Math.round(metrics.lastFrametime || 0);
   console.log('[DEBUG] newFrametime:', newFrametime);
   
-  fps.value = newFrametime > 0 ? Math.round(1000 / newFrametime) : 0;
+  fps.value = newFrametime > 0 ? Math.round((1000 / newFrametime) * 10) / 10 : 0; // Round to 1 decimal
   frametime.value = newFrametime;
   frameCount.value = metrics.pushes || 0;
   errorCount.value = metrics.errors || 0;
@@ -467,9 +465,9 @@ function loadMetrics() {
     console.log(`[DEBUG] SHIFT - Removed oldest value: ${removed}`);
   }
   
-  // CRITICAL: Call updateChart directly
-  console.log('[DEBUG] >>> Calling updateChart <<<');
-  updateChart();
+  // CHART TEMPORARILY DISABLED - updateChart() causes stack overflow
+  // console.log('[DEBUG] >>> Calling updateChart <<<');
+  // updateChart();
   console.log('[DEBUG] === loadMetrics END ===\n');
 }
 
@@ -868,7 +866,6 @@ onMounted(async () => {
 
   // Initialize chart only if card is not collapsed (canvas must be visible)
   if (!isCollapsed.value) {
-    await nextTick();
     // Add small delay to ensure canvas is fully rendered in DOM
     setTimeout(() => {
       if (chartCanvas.value && !isCollapsed.value) {
