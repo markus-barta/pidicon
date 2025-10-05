@@ -117,13 +117,13 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
         <!-- Scene Selector with Next/Prev (single row) -->
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px;">
           <v-btn
             icon
             variant="text"
             @click="previousScene"
             :disabled="loading"
-            style="margin: 0; padding: 0;"
+            style="margin: 0; padding: 0; margin-top: 8px;"
           >
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
@@ -142,7 +142,7 @@
             variant="text"
             @click="nextScene"
             :disabled="loading"
-            style="margin: 0; padding: 0;"
+            style="margin: 0; padding: 0; margin-top: 8px;"
           >
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
