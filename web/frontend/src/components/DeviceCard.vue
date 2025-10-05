@@ -549,8 +549,11 @@ function updateChart() {
       return;
     }
     
-    // CRITICAL FIX: Convert Vue Proxy to plain array to avoid Chart.js infinite loop
-    const plainData = Array.from(data);
+    // CRITICAL FIX: Convert Vue Proxy to plain array - use multiple methods to ensure complete detachment
+    // Using JSON parse/stringify to completely break any proxy references
+    const plainData = JSON.parse(JSON.stringify(Array.from(data)));
+    
+    console.log('[DEBUG] Data converted - original type:', data.constructor.name, 'new type:', plainData.constructor.name, 'length:', plainData.length);
     
     // Get latest color
     const latestFrametime = plainData[plainData.length - 1];
@@ -562,17 +565,27 @@ function updateChart() {
       return;
     }
     
+    console.log('[DEBUG] About to update dataset...');
+    
     // Update ONLY the data arrays (don't touch scales, plugins, or config)
     const dataset = chartInstance.value.data.datasets[0];
     dataset.data = plainData;
     dataset.borderColor = color;
     dataset.backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
     
-    // Update labels
-    chartInstance.value.data.labels = plainData.map((_, i) => `${i}`);
+    console.log('[DEBUG] Dataset updated, now updating labels...');
     
-    // Trigger redraw - use 'active' mode which is more stable
-    chartInstance.value.update('active');
+    // Update labels - create completely new array
+    const labels = [];
+    for (let i = 0; i < plainData.length; i++) {
+      labels.push(`${i}`);
+    }
+    chartInstance.value.data.labels = labels;
+    
+    console.log('[DEBUG] Labels updated, calling chart.update()...');
+    
+    // Trigger redraw - use 'none' mode for fastest update with manual render
+    chartInstance.value.update('none');
     
     console.log('[DEBUG] Chart updated successfully - points:', plainData.length, 'latest:', latestFrametime);
     
