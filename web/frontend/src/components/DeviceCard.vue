@@ -414,6 +414,8 @@ function categoryColor(category) {
 async function loadMetrics() {
   try {
     const data = await api.getDeviceMetrics(props.device.ip);
+    console.log('[DEBUG] loadMetrics called, data:', data);
+    
     if (data) {
       fps.value = data.fps || 0;
       const newFrametime = Math.round(data.frametime || 0);
@@ -426,14 +428,21 @@ async function loadMetrics() {
       if (!isCollapsed.value) {
         // Use a minimum value for better visualization
         const chartValue = Math.max(1, newFrametime);
+        
+        console.log(`[DEBUG] Before push - History length: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
         frametimeHistory.value.push(chartValue);
+        console.log(`[DEBUG] After push - History length: ${frametimeHistory.value.length}`);
         
         // Keep last 60 data points (6 seconds at 100ms intervals)
         if (frametimeHistory.value.length > 60) {
           frametimeHistory.value.shift();
         }
         
-        console.log(`[Metrics] Frametime: ${newFrametime}ms, History length: ${frametimeHistory.value.length}`);
+        // CRITICAL: Call updateChart directly (don't rely on watcher)
+        console.log('[DEBUG] Calling updateChart directly');
+        updateChart();
+      } else {
+        console.log('[DEBUG] Skipped chart update - card is collapsed');
       }
     }
   } catch (err) {
@@ -486,9 +495,11 @@ function getFrametimeColor(frametime) {
 }
 
 function updateChart() {
+  console.log('[DEBUG] updateChart called');
+  
   // Skip if chart not initialized, not ready, or card is collapsed
   if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
-    console.log('Chart update skipped:', { 
+    console.warn('[DEBUG] Chart update SKIPPED:', { 
       hasInstance: !!chartInstance.value, 
       ready: chartReady.value, 
       hasCanvas: !!chartCanvas.value, 
@@ -499,12 +510,17 @@ function updateChart() {
   
   try {
     const data = frametimeHistory.value;
+    console.log('[DEBUG] Chart data length:', data.length, 'data:', data);
     
-    if (data.length === 0) return;
+    if (data.length === 0) {
+      console.warn('[DEBUG] No data to chart');
+      return;
+    }
     
     // Get latest color
     const latestFrametime = data[data.length - 1];
     const color = getFrametimeColor(latestFrametime);
+    console.log('[DEBUG] Latest frametime:', latestFrametime, 'color:', color);
     
     // NUCLEAR OPTION: Recreate the entire data object to force Chart.js update
     chartInstance.value.data = {
@@ -520,12 +536,16 @@ function updateChart() {
       }]
     };
     
-    // Force complete redraw with draw() instead of render()
+    console.log('[DEBUG] Chart data updated, calling update() and draw()');
+    
+    // Force complete redraw
     chartInstance.value.update('none');
     chartInstance.value.draw();
     
+    console.log('[DEBUG] Chart update completed successfully');
+    
   } catch (error) {
-    console.error('Failed to update chart:', error);
+    console.error('[DEBUG] Failed to update chart:', error, error.stack);
     chartReady.value = false;
   }
 }
@@ -777,10 +797,12 @@ onMounted(async () => {
   }
 
   // Load metrics every 100ms for smooth chart updates
+  console.log('[DEBUG] Starting metrics polling at 100ms intervals');
   loadMetrics();
   metricsInterval = setInterval(() => {
     loadMetrics();
   }, 100);
+  console.log('[DEBUG] Metrics interval started:', metricsInterval);
 });
 
 onUnmounted(() => {
