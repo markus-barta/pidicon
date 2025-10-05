@@ -424,42 +424,52 @@ function categoryColor(category) {
 }
 
 function loadMetrics() {
-  // Metrics are already in props.device.metrics! No API call needed!
-  const metrics = props.device.metrics;
-  console.log('[DEBUG] loadMetrics called, device.metrics:', metrics);
+  console.log('[DEBUG] === loadMetrics START ===');
+  console.log('[DEBUG] props.device:', props.device);
+  console.log('[DEBUG] isCollapsed:', isCollapsed.value);
   
-  if (metrics) {
-    // Calculate FPS from frametime
-    const newFrametime = Math.round(metrics.lastFrametime || 0);
-    fps.value = newFrametime > 0 ? Math.round(1000 / newFrametime) : 0;
-    frametime.value = newFrametime;
-    frameCount.value = metrics.pushes || 0;
-    errorCount.value = metrics.errors || 0;
-    pushCount.value = metrics.pushes || 0;
-    
-    // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
-    if (!isCollapsed.value) {
-      // Use a minimum value for better visualization
-      const chartValue = Math.max(1, newFrametime);
-      
-      console.log(`[DEBUG] Before push - History length: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
-      frametimeHistory.value.push(chartValue);
-      console.log(`[DEBUG] After push - History length: ${frametimeHistory.value.length}`);
-      
-      // Keep last 60 data points (6 seconds at 100ms intervals)
-      if (frametimeHistory.value.length > 60) {
-        frametimeHistory.value.shift();
-      }
-      
-      // CRITICAL: Call updateChart directly (don't rely on watcher)
-      console.log('[DEBUG] Calling updateChart directly');
-      updateChart();
-    } else {
-      console.log('[DEBUG] Skipped chart update - card is collapsed');
-    }
-  } else {
+  // Metrics are already in props.device.metrics! No API call needed!
+  const metrics = props.device?.metrics;
+  console.log('[DEBUG] metrics:', metrics);
+  
+  if (!metrics) {
     console.warn('[DEBUG] No metrics available on device object');
+    return;
   }
+  
+  // Calculate FPS from frametime
+  const newFrametime = Math.round(metrics.lastFrametime || 0);
+  console.log('[DEBUG] newFrametime:', newFrametime);
+  
+  fps.value = newFrametime > 0 ? Math.round(1000 / newFrametime) : 0;
+  frametime.value = newFrametime;
+  frameCount.value = metrics.pushes || 0;
+  errorCount.value = metrics.errors || 0;
+  pushCount.value = metrics.pushes || 0;
+  
+  // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
+  if (isCollapsed.value) {
+    console.log('[DEBUG] Card is collapsed - skipping chart');
+    return;
+  }
+  
+  // Use a minimum value for better visualization
+  const chartValue = Math.max(1, newFrametime);
+  
+  console.log(`[DEBUG] PUSH - History before: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
+  frametimeHistory.value.push(chartValue);
+  console.log(`[DEBUG] PUSH - History after: ${frametimeHistory.value.length}, array:`, frametimeHistory.value);
+  
+  // Keep last 60 data points (30 seconds at 500ms intervals)
+  if (frametimeHistory.value.length > 60) {
+    const removed = frametimeHistory.value.shift();
+    console.log(`[DEBUG] SHIFT - Removed oldest value: ${removed}`);
+  }
+  
+  // CRITICAL: Call updateChart directly
+  console.log('[DEBUG] >>> Calling updateChart <<<');
+  updateChart();
+  console.log('[DEBUG] === loadMetrics END ===\n');
 }
 
 // Get color based on frametime - using SIMPLE scheme from performance-utils.js
@@ -808,12 +818,16 @@ onMounted(async () => {
     }, 200);
   }
 
-  // Load metrics every 100ms for smooth chart updates
-  console.log('[DEBUG] Starting metrics polling at 100ms intervals');
+  // Load metrics - initial call
+  console.log('[DEBUG] onMounted - Initial loadMetrics call');
   loadMetrics();
+  
+  // Poll every 500ms (5 times per second) for chart updates
+  console.log('[DEBUG] Starting metrics polling at 500ms intervals');
   metricsInterval = setInterval(() => {
+    console.log('[DEBUG] Interval tick - calling loadMetrics');
     loadMetrics();
-  }, 100);
+  }, 500);
   console.log('[DEBUG] Metrics interval started:', metricsInterval);
 });
 
