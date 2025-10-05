@@ -104,7 +104,7 @@
             :min="0"
             :max="100"
             :step="5"
-            color="primary"
+            color="grey-darken-1"
             hide-details
             :loading="brightnessLoading"
             @end="setBrightness"
