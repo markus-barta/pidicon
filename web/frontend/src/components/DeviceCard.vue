@@ -559,6 +559,8 @@ function updateChart() {
     const latestFrametime = plainData[plainData.length - 1];
     const color = getFrametimeColor(latestFrametime);
     
+    console.log('[DEBUG] Frametime:', latestFrametime, 'calculated color:', color);
+    
     // Verify chart and dataset exist
     if (!chartInstance.value.data || !chartInstance.value.data.datasets || chartInstance.value.data.datasets.length === 0) {
       console.error('[DEBUG] Chart data structure is corrupt, skipping update');
@@ -573,6 +575,8 @@ function updateChart() {
     dataset.borderColor = color;
     dataset.backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.05)');
     
+    console.log('[DEBUG] Dataset colors set - border:', dataset.borderColor, 'background:', dataset.backgroundColor);
+    
     console.log('[DEBUG] Dataset updated, now updating labels...');
     
     // Update labels - create completely new array
@@ -582,22 +586,22 @@ function updateChart() {
     }
     chartInstance.value.data.labels = labels;
     
-    console.log('[DEBUG] Labels updated, triggering render...');
+    console.log('[DEBUG] Labels updated, color:', color);
     
-    // EXPERIMENTAL: Skip update() and just render directly to avoid stack overflow
-    // Chart.js should auto-detect data changes and redraw
-    try {
-      // Just mark the chart as dirty without full update
-      if (chartInstance.value.render && typeof chartInstance.value.render === 'function') {
-        chartInstance.value.render();
-      }
-    } catch (renderError) {
-      console.warn('[DEBUG] Direct render failed, trying update:', renderError.message);
-      // Fallback to update if render fails
-      chartInstance.value.update('none');
-    }
+    // Force canvas redraw using requestAnimationFrame
+    // This avoids the stack overflow in update() but ensures browser repaints
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        try {
+          console.log('[DEBUG] requestAnimationFrame - forcing render');
+          chartInstance.value.render();
+        } catch (renderError) {
+          console.warn('[DEBUG] Render failed:', renderError.message);
+        }
+      });
+    });
     
-    console.log('[DEBUG] Chart rendered successfully - points:', plainData.length, 'latest:', latestFrametime);
+    console.log('[DEBUG] Chart update queued - points:', plainData.length, 'latest:', latestFrametime, 'color:', color);
     
   } catch (error) {
     console.error('[DEBUG] Failed to update chart:', error.message);
