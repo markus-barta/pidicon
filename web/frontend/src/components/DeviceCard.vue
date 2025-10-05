@@ -369,13 +369,14 @@ watch(
   },
 );
 
-// Watch for card expansion to initialize chart
-watch(isCollapsed, async (collapsed) => {
-  if (!collapsed && !chart) {
-    await nextTick();
-    initChart();
-  }
-});
+// TEMPORARILY DISABLED: Watch for card expansion to initialize chart
+// TODO: Re-enable once chart initialization issue is resolved
+// watch(isCollapsed, async (collapsed) => {
+//   if (!collapsed && !chart) {
+//     await nextTick();
+//     initChart();
+//   }
+// });
 
 function formatSceneName(name) {
   // Convert snake_case to Title Case
@@ -406,12 +407,17 @@ async function loadMetrics() {
       pushCount.value = data.pushCount || 0;
       
       // Update frametime history for chart (keep last 30 data points = 1 minute at 2s intervals)
-      if (frametime.value > 0) {
+      if (frametime.value > 0 && !isCollapsed.value) {
         frametimeHistory.value.push(frametime.value);
         if (frametimeHistory.value.length > 30) {
           frametimeHistory.value.shift();
         }
-        updateChart();
+        try {
+          updateChart();
+        } catch (chartErr) {
+          // Chart errors should never block metrics display
+          console.error('Chart update failed:', chartErr);
+        }
       }
     }
   } catch (err) {
@@ -612,11 +618,12 @@ onMounted(async () => {
   // Start uptime counter (updates every second)
   uptimeInterval = setInterval(updateUptime, 1000);
 
-  // Initialize chart only if card is not collapsed (canvas must be visible)
-  if (!isCollapsed.value) {
-    await nextTick();
-    initChart();
-  }
+  // TEMPORARILY DISABLED: Initialize chart only if card is not collapsed (canvas must be visible)
+  // TODO: Re-enable once chart initialization issue is resolved
+  // if (!isCollapsed.value) {
+  //   await nextTick();
+  //   initChart();
+  // }
 
   // Load metrics
   loadMetrics();
