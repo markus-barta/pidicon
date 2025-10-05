@@ -35,7 +35,7 @@
         >
           <span style="display: inline-flex; align-items: center;">
             <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; margin-right: 6px;"></span>
-            <span style="color: #6b7280;">MQTT Connected</span>
+            <span style="color: #6b7280;">MQTT: {{ mqttBroker }}</span>
           </span>
         </v-chip>
         <v-btn
@@ -65,6 +65,7 @@ const buildNumber = ref(null);
 const gitCommit = ref(null);
 const hostname = ref('');
 const nodeVersion = ref('Unknown');
+const mqttBroker = ref('localhost');
 const status = ref('Active');
 const startTime = ref(null);
 const uptime = ref('');
@@ -110,6 +111,7 @@ async function loadStatus() {
     gitCommit.value = data.gitCommit;
     hostname.value = data.hostname || 'Unknown';
     nodeVersion.value = data.nodeVersion || 'Unknown';
+    mqttBroker.value = data.mqttBroker || 'localhost';
     status.value = data.status || 'Running';
 
     if (data.startTime) {

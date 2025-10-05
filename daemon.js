@@ -114,6 +114,7 @@ container.register(
       logger,
       versionInfo,
       deploymentTracker,
+      mqttConfig,
     }),
 );
 
