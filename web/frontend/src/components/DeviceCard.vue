@@ -292,7 +292,8 @@ const startTime = ref(Date.now());
 const daemonStartTime = ref(Date.now());
 const frametimeHistory = ref([]);
 const chartCanvas = ref(null);
-let chart = null;
+const chartInstance = ref(null); // Use ref instead of let for better Vue tracking
+const chartReady = ref(false); // Track if chart is ready to use
 let uptimeInterval = null;
 
 let metricsInterval = null;
@@ -369,14 +370,19 @@ watch(
   },
 );
 
-// TEMPORARILY DISABLED: Watch for card expansion to initialize chart
-// TODO: Re-enable once chart initialization issue is resolved
-// watch(isCollapsed, async (collapsed) => {
-//   if (!collapsed && !chart) {
-//     await nextTick();
-//     initChart();
-//   }
-// });
+// Watch for card expansion to initialize chart
+watch(isCollapsed, async (collapsed) => {
+  if (!collapsed && !chartInstance.value) {
+    // Wait for DOM to update and canvas to be visible
+    await nextTick();
+    // Double-check canvas is actually rendered
+    setTimeout(() => {
+      if (chartCanvas.value && !chartInstance.value) {
+        initChart();
+      }
+    }, 100);
+  }
+});
 
 function formatSceneName(name) {
   // Convert snake_case to Title Case
@@ -426,29 +432,49 @@ async function loadMetrics() {
 }
 
 function updateChart() {
-  // Skip if chart not initialized or card is collapsed
-  if (!chart || !chartCanvas.value || isCollapsed.value) return;
+  // Skip if chart not initialized, not ready, or card is collapsed
+  if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
+    return;
+  }
   
   try {
-    chart.data.labels = frametimeHistory.value.map((_, i) => '');
-    chart.data.datasets[0].data = frametimeHistory.value;
-    chart.update('none'); // No animation for smooth updates
+    chartInstance.value.data.labels = frametimeHistory.value.map((_, i) => '');
+    chartInstance.value.data.datasets[0].data = frametimeHistory.value;
+    chartInstance.value.update('none'); // No animation for smooth updates
   } catch (error) {
     console.error('Failed to update chart:', error);
+    chartReady.value = false; // Mark as not ready if update fails
   }
 }
 
 function initChart() {
+  // Defensive checks
   if (!chartCanvas.value) {
     console.warn('Chart canvas not available');
     return;
   }
   
+  if (isCollapsed.value) {
+    console.log('Skipping chart init - card is collapsed');
+    return;
+  }
+  
+  // Check if canvas is actually visible in DOM
+  if (!chartCanvas.value.offsetParent) {
+    console.warn('Chart canvas not visible in DOM');
+    return;
+  }
+  
   try {
     // Destroy existing chart if it exists
-    if (chart) {
-      chart.destroy();
-      chart = null;
+    if (chartInstance.value) {
+      try {
+        chartInstance.value.destroy();
+      } catch (destroyError) {
+        console.warn('Error destroying old chart:', destroyError);
+      }
+      chartInstance.value = null;
+      chartReady.value = false;
     }
     
     const ctx = chartCanvas.value.getContext('2d');
@@ -457,7 +483,7 @@ function initChart() {
       return;
     }
     
-    chart = new Chart(ctx, {
+    chartInstance.value = new Chart(ctx, {
       type: 'line',
       data: {
         labels: [],
@@ -499,9 +525,13 @@ function initChart() {
         animation: false,
       }
     });
+    
+    chartReady.value = true;
+    console.log('Chart initialized successfully');
   } catch (error) {
     console.error('Failed to initialize chart:', error);
-    chart = null;
+    chartInstance.value = null;
+    chartReady.value = false;
   }
 }
 
@@ -618,12 +648,16 @@ onMounted(async () => {
   // Start uptime counter (updates every second)
   uptimeInterval = setInterval(updateUptime, 1000);
 
-  // TEMPORARILY DISABLED: Initialize chart only if card is not collapsed (canvas must be visible)
-  // TODO: Re-enable once chart initialization issue is resolved
-  // if (!isCollapsed.value) {
-  //   await nextTick();
-  //   initChart();
-  // }
+  // Initialize chart only if card is not collapsed (canvas must be visible)
+  if (!isCollapsed.value) {
+    await nextTick();
+    // Add small delay to ensure canvas is fully rendered in DOM
+    setTimeout(() => {
+      if (chartCanvas.value && !isCollapsed.value) {
+        initChart();
+      }
+    }, 200);
+  }
 
   // Load metrics
   loadMetrics();
@@ -639,8 +673,14 @@ onUnmounted(() => {
   if (uptimeInterval) {
     clearInterval(uptimeInterval);
   }
-  if (chart) {
-    chart.destroy();
+  if (chartInstance.value) {
+    try {
+      chartInstance.value.destroy();
+      chartInstance.value = null;
+      chartReady.value = false;
+    } catch (error) {
+      console.error('Error destroying chart on unmount:', error);
+    }
   }
 });
 </script>
