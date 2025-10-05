@@ -578,7 +578,14 @@ function updateChart() {
     
   } catch (error) {
     console.error('[DEBUG] Failed to update chart:', error.message);
-    // Try to reinitialize on next expansion
+    // Properly destroy the chart before clearing reference
+    if (chartInstance.value) {
+      try {
+        chartInstance.value.destroy();
+      } catch (e) {
+        console.warn('[DEBUG] Error destroying chart after update failure:', e);
+      }
+    }
     chartReady.value = false;
     chartInstance.value = null;
   }
@@ -603,16 +610,26 @@ function initChart() {
   }
   
   try {
-    // Destroy existing chart if it exists
+    // CRITICAL: Destroy ANY existing chart on this canvas
+    // Check Chart.js registry first
+    const existingChart = Chart.getChart(chartCanvas.value);
+    if (existingChart) {
+      console.log('[DEBUG] Found existing Chart.js instance, destroying...');
+      existingChart.destroy();
+    }
+    
+    // Also destroy our reference if it exists
     if (chartInstance.value) {
       try {
         chartInstance.value.destroy();
       } catch (destroyError) {
-        console.warn('Error destroying old chart:', destroyError);
+        console.warn('Error destroying chart reference:', destroyError);
       }
-      chartInstance.value = null;
-      chartReady.value = false;
     }
+    
+    // Clear state
+    chartInstance.value = null;
+    chartReady.value = false;
     
     const ctx = chartCanvas.value.getContext('2d');
     if (!ctx) {
@@ -850,15 +867,27 @@ onUnmounted(() => {
   if (uptimeInterval) {
     clearInterval(uptimeInterval);
   }
+  
+  // Destroy chart - check both reference and Chart.js registry
+  const existingChart = chartCanvas.value ? Chart.getChart(chartCanvas.value) : null;
+  if (existingChart) {
+    try {
+      existingChart.destroy();
+    } catch (e) {
+      console.warn('Error destroying chart from registry on unmount:', e);
+    }
+  }
+  
   if (chartInstance.value) {
     try {
       chartInstance.value.destroy();
-      chartInstance.value = null;
-      chartReady.value = false;
     } catch (error) {
-      console.error('Error destroying chart on unmount:', error);
+      console.error('Error destroying chart reference on unmount:', error);
     }
   }
+  
+  chartInstance.value = null;
+  chartReady.value = false;
 });
 </script>
 
