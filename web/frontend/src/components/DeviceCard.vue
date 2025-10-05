@@ -369,6 +369,14 @@ watch(
   },
 );
 
+// Watch for card expansion to initialize chart
+watch(isCollapsed, async (collapsed) => {
+  if (!collapsed && !chart) {
+    await nextTick();
+    initChart();
+  }
+});
+
 function formatSceneName(name) {
   // Convert snake_case to Title Case
   return name
@@ -412,7 +420,8 @@ async function loadMetrics() {
 }
 
 function updateChart() {
-  if (!chart || !chartCanvas.value) return;
+  // Skip if chart not initialized or card is collapsed
+  if (!chart || !chartCanvas.value || isCollapsed.value) return;
   
   try {
     chart.data.labels = frametimeHistory.value.map((_, i) => '');
@@ -420,12 +429,6 @@ function updateChart() {
     chart.update('none'); // No animation for smooth updates
   } catch (error) {
     console.error('Failed to update chart:', error);
-    // Try to reinitialize chart on next tick if update fails
-    nextTick(() => {
-      if (chartCanvas.value && !chart) {
-        initChart();
-      }
-    });
   }
 }
 
@@ -609,9 +612,11 @@ onMounted(async () => {
   // Start uptime counter (updates every second)
   uptimeInterval = setInterval(updateUptime, 1000);
 
-  // Initialize chart (after component is mounted)
-  await nextTick();
-  initChart();
+  // Initialize chart only if card is not collapsed (canvas must be visible)
+  if (!isCollapsed.value) {
+    await nextTick();
+    initChart();
+  }
 
   // Load metrics
   loadMetrics();
