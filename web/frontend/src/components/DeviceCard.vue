@@ -582,12 +582,22 @@ function updateChart() {
     }
     chartInstance.value.data.labels = labels;
     
-    console.log('[DEBUG] Labels updated, calling chart.update()...');
+    console.log('[DEBUG] Labels updated, triggering render...');
     
-    // Trigger redraw - use 'none' mode for fastest update with manual render
-    chartInstance.value.update('none');
+    // EXPERIMENTAL: Skip update() and just render directly to avoid stack overflow
+    // Chart.js should auto-detect data changes and redraw
+    try {
+      // Just mark the chart as dirty without full update
+      if (chartInstance.value.render && typeof chartInstance.value.render === 'function') {
+        chartInstance.value.render();
+      }
+    } catch (renderError) {
+      console.warn('[DEBUG] Direct render failed, trying update:', renderError.message);
+      // Fallback to update if render fails
+      chartInstance.value.update('none');
+    }
     
-    console.log('[DEBUG] Chart updated successfully - points:', plainData.length, 'latest:', latestFrametime);
+    console.log('[DEBUG] Chart rendered successfully - points:', plainData.length, 'latest:', latestFrametime);
     
   } catch (error) {
     console.error('[DEBUG] Failed to update chart:', error.message);
