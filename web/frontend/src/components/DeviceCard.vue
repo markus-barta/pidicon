@@ -384,6 +384,14 @@ watch(isCollapsed, async (collapsed) => {
   }
 });
 
+// Watch frametime history for changes and update chart
+watch(frametimeHistory, (newHistory) => {
+  console.log('frametimeHistory changed, length:', newHistory.length);
+  if (chartInstance.value && chartReady.value && !isCollapsed.value) {
+    updateChart();
+  }
+}, { deep: true });
+
 function formatSceneName(name) {
   // Convert snake_case to Title Case
   return name
@@ -412,10 +420,10 @@ async function loadMetrics() {
       errorCount.value = data.errorCount || 0;
       pushCount.value = data.pushCount || 0;
       
-      // Update frametime history for chart (keep last 30 data points = 1 minute at 2s intervals)
+      // Update frametime history for chart (keep last 300 data points = 30 seconds at 100ms intervals)
       if (frametime.value > 0 && !isCollapsed.value) {
         frametimeHistory.value.push(frametime.value);
-        if (frametimeHistory.value.length > 30) {
+        if (frametimeHistory.value.length > 300) {
           frametimeHistory.value.shift();
         }
         try {
@@ -431,40 +439,44 @@ async function loadMetrics() {
   }
 }
 
-// Get color based on frametime (EXACT copy from pixoo performance-utils.js)
-// Color scheme: 1-500ms range with smooth gradients
+// Get color based on frametime - using SIMPLE scheme from performance-utils.js
+// This matches the visual appearance better
 function getFrametimeColor(frametime) {
   const MIN_FRAMETIME = 1;
   const MAX_FRAMETIME = 500;
   
-  const normalized = Math.min(MAX_FRAMETIME, Math.max(MIN_FRAMETIME, frametime));
-  const ratio = (normalized - MIN_FRAMETIME) / (MAX_FRAMETIME - MIN_FRAMETIME);
+  const ratio = (frametime - MIN_FRAMETIME) / (MAX_FRAMETIME - MIN_FRAMETIME);
   
   let r, g, b;
   
-  if (ratio < 0.25) {
-    // Blue to cyan (0-125ms) - Very fast
-    const blend = ratio * 4;
+  if (ratio <= 0.2) {
+    // Blue to blue-green (0-100ms) - Very fast
     r = 0;
-    g = Math.round(255 * blend);
-    b = Math.round(255 * (1 - blend));
-  } else if (ratio < 0.5) {
-    // Cyan to yellow-green (125-250ms) - Fast
-    const blend = (ratio - 0.25) * 4;
-    r = Math.round(255 * blend);
+    g = Math.round(255 * (ratio / 0.2));
+    b = Math.round(255 * ratio);
+  } else if (ratio <= 0.4) {
+    // Blue-green to green (100-200ms) - Fast  ← 200ms is HERE!
+    const subRatio = (ratio - 0.2) / 0.2;
+    r = 0;
     g = 255;
-    b = 0;
-  } else if (ratio < 0.75) {
-    // Yellow to orange (250-375ms) - Medium
-    const blend = (ratio - 0.5) * 4;
+    b = Math.round(128 + 127 * subRatio);
+  } else if (ratio <= 0.6) {
+    // Green to yellow-green (200-300ms) - Medium
+    const subRatio = (ratio - 0.4) / 0.2;
+    r = Math.round(255 * subRatio);
+    g = 255;
+    b = Math.round(255 * (1 - subRatio));
+  } else if (ratio <= 0.8) {
+    // Yellow to orange (300-400ms) - Slow
+    const subRatio = (ratio - 0.6) / 0.2;
     r = 255;
-    g = Math.round(255 * (1 - blend * 0.35));
+    g = Math.round(255 * (1 - subRatio));
     b = 0;
   } else {
-    // Orange to red (375-500ms+) - Slow
-    const blend = (ratio - 0.75) * 4;
+    // Orange to red (400-500ms+) - Very slow
+    const subRatio = Math.min(1, (ratio - 0.8) / 0.2);
     r = 255;
-    g = Math.round(165 * (1 - blend));
+    g = Math.round(128 * (1 - subRatio));
     b = 0;
   }
   
@@ -474,33 +486,36 @@ function getFrametimeColor(frametime) {
 function updateChart() {
   // Skip if chart not initialized, not ready, or card is collapsed
   if (!chartInstance.value || !chartReady.value || !chartCanvas.value || isCollapsed.value) {
+    console.log('Chart update skipped:', { 
+      hasInstance: !!chartInstance.value, 
+      ready: chartReady.value, 
+      hasCanvas: !!chartCanvas.value, 
+      collapsed: isCollapsed.value 
+    });
     return;
   }
   
   try {
     const data = frametimeHistory.value;
+    console.log('Updating chart with data points:', data.length, 'latest:', data[data.length - 1]);
     
-    // Update data
+    // Completely replace the dataset to force Chart.js to redraw
     chartInstance.value.data.labels = data.map((_, i) => `${i}`);
-    chartInstance.value.data.datasets[0].data = [...data]; // Create new array to trigger reactivity
+    chartInstance.value.data.datasets[0].data = data.slice(); // New array reference
     
     // Update colors based on latest frametime
     if (data.length > 0) {
       const latestFrametime = data[data.length - 1];
       const color = getFrametimeColor(latestFrametime);
+      console.log(`Frametime ${latestFrametime}ms -> color ${color}`);
       chartInstance.value.data.datasets[0].borderColor = color;
       chartInstance.value.data.datasets[0].backgroundColor = color.replace('rgb', 'rgba').replace(')', ', 0.1)');
     }
     
-    // Force immediate redraw (no animation, no transitions)
-    chartInstance.value.update('none');
+    // Try multiple update methods to force redraw
+    chartInstance.value.update('none'); // Immediate update without animation
+    chartInstance.value.render(); // Force render
     
-    // Additional force: trigger resize to ensure canvas redraws
-    requestAnimationFrame(() => {
-      if (chartInstance.value && chartReady.value) {
-        chartInstance.value.resize();
-      }
-    });
   } catch (error) {
     console.error('Failed to update chart:', error);
     chartReady.value = false; // Mark as not ready if update fails
@@ -753,11 +768,11 @@ onMounted(async () => {
     }, 200);
   }
 
-  // Load metrics
+  // Load metrics every 100ms for smooth chart updates
   loadMetrics();
   metricsInterval = setInterval(() => {
     loadMetrics();
-  }, 2000);
+  }, 100);
 });
 
 onUnmounted(() => {
