@@ -628,12 +628,22 @@ watch(
 watch(
   () => props.device.sceneState,
   (newState) => {
+    console.log('[DEBUG] sceneState watch triggered:', newState);
     if (newState?.testCompleted || newState?.isRunning === false) {
-      console.log('[DEBUG] Scene completed/stopped - stopping timer');
+      console.log('[DEBUG] Scene completed/stopped - stopping ALL timers');
+      
+      // Stop scene time counter
       if (sceneTimeInterval) {
         clearInterval(sceneTimeInterval);
         sceneTimeInterval = null;
       }
+      
+      // Stop metrics/chart polling
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+      }
+      
       updateSceneTime(); // Final update to show "Complete" or "Stopped"
     }
   },
