@@ -281,6 +281,36 @@ computers second.
 
 ---
 
+---
+
+## Communication and Feedback
+
+### Build and Deployment References
+
+When mentioning Watchtower deployment or that changes will be deployed, **ALWAYS** include both:
+
+1. The git commit hash (short form, 7 characters)
+2. The expected build number
+
+**Example:**
+
+> "Pushed to main in commit `f8cbaad` (Build #554). Watchtower will deploy it shortly! 🚀"
+
+**NOT:**
+
+> "Watchtower will deploy it shortly!"
+
+**How to get the build number:**
+
+- The build number equals the git commit count: `git rev-list --count HEAD`
+- Run this command after pushing to get the exact build number
+- Note: `version.json` is only updated during Docker builds, not on local commits
+
+**Rationale:** This helps the user quickly identify which build to expect on the server
+and correlate it with the deployment logs and Web UI build information.
+
+---
+
 **Status**: ✅ Active and enforced  
-**Last Updated**: 2025-09-30  
+**Last Updated**: 2025-10-08  
 **Version**: 2.0.0
