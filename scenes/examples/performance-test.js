@@ -602,6 +602,7 @@ async function handleTestCompletion(context, metrics, chartRenderer) {
   const framesRendered = getState?.('framesRendered') || 0;
 
   setState('isRunning', false);
+  setState('testCompleted', true);
   const duration = now - (getState?.('startTime') || now);
   logger.ok(
     `✅ [PERF V3] Test completed: ${framesRendered} frames in ${duration}ms (avg: ${Math.round(metrics.avgFrametime)}ms)`,
