@@ -722,8 +722,8 @@ function loadMetrics() {
   frametimeHistory.value.push(chartValue);
   console.log(`[DEBUG] PUSH - History after: ${frametimeHistory.value.length}, array:`, frametimeHistory.value);
   
-  // Keep last 60 data points (12 seconds at 200ms intervals)
-  if (frametimeHistory.value.length > 60) {
+  // Keep last 300 data points (60 seconds / 1 minute at 200ms intervals)
+  if (frametimeHistory.value.length > 300) {
     const removed = frametimeHistory.value.shift();
     console.log(`[DEBUG] SHIFT - Removed oldest value: ${removed}`);
   }
