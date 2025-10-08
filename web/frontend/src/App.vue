@@ -131,8 +131,8 @@ async function loadData() {
 
 onMounted(() => {
   loadData();
-  // Poll for updates every 5 seconds
-  setInterval(loadData, 5000);
+  // Poll for updates every 200ms for smooth chart updates
+  setInterval(loadData, 200);
 });
 </script>
 

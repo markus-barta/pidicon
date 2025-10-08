@@ -624,6 +624,22 @@ watch(
   { deep: true }
 );
 
+// Watch for scene completion to stop timer immediately (UI-506)
+watch(
+  () => props.device.sceneState,
+  (newState) => {
+    if (newState?.testCompleted || newState?.isRunning === false) {
+      console.log('[DEBUG] Scene completed/stopped - stopping timer');
+      if (sceneTimeInterval) {
+        clearInterval(sceneTimeInterval);
+        sceneTimeInterval = null;
+      }
+      updateSceneTime(); // Final update to show "Complete" or "Stopped"
+    }
+  },
+  { deep: true }
+);
+
 // ECharts handles visibility automatically - no manual initialization needed!
 
 // Chart updates automatically via computed property - no watcher needed!
