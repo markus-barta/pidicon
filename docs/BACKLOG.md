@@ -50,7 +50,7 @@ of truth for upcoming work and its validation status.
 | UI-506   | Scene Time: Stop timer when scene completes (testCompleted)            | completed   | TEST-UI-scene-timer    | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-507   | Chart Updates: Faster polling for smoother chart visualization         | completed   | TEST-UI-chart-poll     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-508   | State Sync: Detect actual Pixoo state on UI connect/refresh            | completed   | TEST-UI-state-sync     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
-| UI-509   | Scene Metadata Viewer: Display scene payload/config when selected      | in_progress | TEST-UI-metadata       | -                          | -                    |
+| UI-509   | Scene Metadata Viewer: Display scene payload/config when selected      | completed   | TEST-UI-metadata       | pass (manual, build 565)   | 2025-10-08T21:00:00Z |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |
