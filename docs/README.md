@@ -17,30 +17,41 @@
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment pipeline, Docker, and CI/CD workflows
 - **[VERSIONING.md](./VERSIONING.md)** - Version management strategy and build numbering
 
+### **Configuration & Setup**
+
+- **[CONFIG_AND_PERSISTENCE.md](./CONFIG_AND_PERSISTENCE.md)** - Configuration management and persistence strategy
+- **[WEB_UI_SETUP.md](./WEB_UI_SETUP.md)** - Web UI development and setup guide
+- **[WEB_UI_DOCKER_COMPOSE.md](./WEB_UI_DOCKER_COMPOSE.md)** - Docker Compose setup for web UI
+
 ### **Project Management**
 
 - **[BACKLOG.md](./BACKLOG.md)** - Task tracking, test results, and traceability
-- **[PHASE1_CHECKLIST.md](./PHASE1_CHECKLIST.md)** - Phase 1 completion verification
 
-### **Meta Documentation**
+### **Reports** (Archived Completion Documents)
 
-- **[DOCUMENTATION_STRUCTURE.md](./DOCUMENTATION_STRUCTURE.md)** - Documentation organization and consolidation plan
-- **[CONSOLIDATION_SUMMARY.md](./CONSOLIDATION_SUMMARY.md)** - Documentation consolidation execution report
-- **[STANDARDS_UPGRADE.md](./STANDARDS_UPGRADE.md)** - Standards upgrade to senior-level practices
+#### **Phase Completion Reports**
 
-### **Reports**
+- **[reports/PHASE1_COMPLETE.md](./reports/PHASE1_COMPLETE.md)** - Phase 1: DI, MQTT Service, State Management
+- **[reports/PHASE2_COMPLETE.md](./reports/PHASE2_COMPLETE.md)** - Phase 2: Command Handlers
+- **[reports/PHASE3_COMPLETE.md](./reports/PHASE3_COMPLETE.md)** - Phase 3: Test Coverage & Polish
 
-#### **Phase 1 Reports**
+#### **Code Quality Reports**
 
-- **[reports/PHASE1_COMPLETE.md](./reports/PHASE1_COMPLETE.md)** - Phase 1 completion detailed report
-- **[reports/ARCHIVE/ARC-302.md](./reports/ARCHIVE/ARC-302.md)** - Archived: ARC-302 detailed report
-
-#### **Phase 2 Reports**
-
-- **[reports/PHASE2_COMPLETE.md](./reports/PHASE2_COMPLETE.md)** - Phase 2 completion detailed report
 - **[reports/PHASE2_CODE_REVIEW.md](./reports/PHASE2_CODE_REVIEW.md)** - Code quality review (⭐⭐⭐⭐⭐ 5/5)
 - **[reports/PERFORMANCE_REVIEW.md](./reports/PERFORMANCE_REVIEW.md)** - Performance analysis (⭐⭐⭐⭐ 4/5)
 - **[reports/CRITICAL_BUGS_FIXED.md](./reports/CRITICAL_BUGS_FIXED.md)** - Incident report for BUG-012 and BUG-013
+
+#### **Archived Progress Trackers** (Completed)
+
+- **[reports/\[DONE\]\_PHASE1_CHECKLIST.md](./reports/[DONE]_PHASE1_CHECKLIST.md)** - Phase 1 checklist (archived)
+- **[reports/\[DONE\]\_PHASE2_PLAN.md](./reports/[DONE]_PHASE2_PLAN.md)** - Phase 2 plan (archived)
+- **[reports/\[DONE\]\_PHASE3_PLAN.md](./reports/[DONE]_PHASE3_PLAN.md)** - Phase 3 plan (archived)
+- **[reports/\[DONE\]\_UI-501-PROGRESS.md](./reports/[DONE]_UI-501-PROGRESS.md)** - Vue 3 migration tracker (archived)
+- **[reports/\[DONE\]\_VUE_MIGRATION_ANALYSIS.md](./reports/[DONE]_VUE_MIGRATION_ANALYSIS.md)** - Vue migration analysis (archived)
+- **[reports/\[DONE\]\_CODEBASE_AUDIT.md](./reports/[DONE]_CODEBASE_AUDIT.md)** - Initial codebase audit (archived)
+- **[reports/\[DONE\]\_CONSOLIDATION_SUMMARY.md](./reports/[DONE]_CONSOLIDATION_SUMMARY.md)** - Docs consolidation (archived)
+- **[reports/\[DONE\]\_DOCUMENTATION_STRUCTURE.md](./reports/[DONE]_DOCUMENTATION_STRUCTURE.md)** - Docs structure plan (archived)
+- **[reports/\[DONE\]\_STANDARDS_UPGRADE.md](./reports/[DONE]_STANDARDS_UPGRADE.md)** - Standards upgrade (archived)
 
 ---
 
@@ -75,26 +86,25 @@ Start here:
 ```text
 docs/
 ├── README.md                        # This file
-├── ARCHITECTURE.md                  # System design
-├── CODE_QUALITY.md                  # ⭐ Best practices
-├── SCENE_DEVELOPMENT.md             # Scene guide
-├── DEPLOYMENT.md                    # Ops guide
+├── ARCHITECTURE.md                  # System design & architecture
+├── CODE_QUALITY.md                  # ⭐ Code quality standards
+├── SCENE_DEVELOPMENT.md             # Scene development guide
+├── DEPLOYMENT.md                    # Deployment & ops guide
 ├── VERSIONING.md                    # Version strategy
-├── BACKLOG.md                       # Task tracking
-├── PHASE1_CHECKLIST.md              # Phase 1 verification
-├── DOCUMENTATION_STRUCTURE.md       # Doc organization
-├── CONSOLIDATION_SUMMARY.md         # Consolidation report
-├── STANDARDS_UPGRADE.md             # Standards upgrade report
-├── PHASE2_PLAN.md                   # Phase 2 architectural refactoring plan
-├── PHASE3_PLAN.md                   # Phase 3 quick wins plan
-└── reports/                         # Historical reports & analysis
-    ├── PHASE1_COMPLETE.md           # Phase 1: Foundation (DI, MQTT, State)
-    ├── PHASE2_COMPLETE.md           # Phase 2: Command Handlers
-    ├── PHASE2_CODE_REVIEW.md        # Code quality review (5/5)
-    ├── PERFORMANCE_REVIEW.md        # Performance analysis (4/5)
-    ├── CRITICAL_BUGS_FIXED.md       # Incident report (BUG-012, BUG-013)
+├── CONFIG_AND_PERSISTENCE.md        # Configuration management
+├── WEB_UI_SETUP.md                  # Web UI dev setup
+├── WEB_UI_DOCKER_COMPOSE.md         # Docker Compose setup
+├── BACKLOG.md                       # Task tracking & status
+└── reports/                         # Archived completion docs
+    ├── PHASE1_COMPLETE.md           # Phase 1 report
+    ├── PHASE2_COMPLETE.md           # Phase 2 report
+    ├── PHASE3_COMPLETE.md           # Phase 3 report
+    ├── PHASE2_CODE_REVIEW.md        # Code quality (5/5)
+    ├── PERFORMANCE_REVIEW.md        # Performance (4/5)
+    ├── CRITICAL_BUGS_FIXED.md       # Bug reports
+    ├── [DONE]_*.md                  # Archived progress trackers
     └── ARCHIVE/
-        └── ARC-302.md
+        └── ARC-302.md               # Historical artifacts
 ```
 
 ---
@@ -163,4 +173,5 @@ All documentation in this directory follows:
 ---
 
 **Status**: ✅ Complete and current  
-**Last Updated**: 2025-09-30
+**Last Updated**: 2025-10-08  
+**Last Cleanup**: 2025-10-08 - Archived 9 completed progress/checklist documents to reports/
