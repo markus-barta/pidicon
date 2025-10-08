@@ -1,2 +1,53 @@
 #!/usr/bin/env sh
 npx lint-staged || exit 1
+
+# Validate .cursorrules YAML structure (non-invasive, detection-only)
+if [ -f ".cursorrules" ]; then
+  if command -v node >/dev/null 2>&1; then
+    node <<'EOF'
+const fs = require("fs");
+const yaml = (() => {
+  try { return require("yaml"); } catch (e) { return null; }
+})();
+
+function fail(msg) {
+  console.error("[.cursorrules] " + msg);
+  process.exit(1);
+}
+
+try {
+  const raw = fs.readFileSync(".cursorrules", "utf8");
+  if (!yaml) {
+    console.warn("[.cursorrules] Skipping YAML validation (yaml module not installed).");
+    process.exit(0);
+  }
+  const doc = yaml.parse(raw);
+  if (!doc || typeof doc !== "object") fail("YAML parsed to empty/invalid object.");
+  if (!Array.isArray(doc.rules) || doc.rules.length === 0) {
+    fail("Missing or empty 'rules' array.");
+  }
+  for (const [i, rule] of doc.rules.entries()) {
+    if (!rule.description) fail(`Rule[${i}] missing 'description'.`);
+    if (!Array.isArray(rule.globs) || rule.globs.length === 0) {
+      fail(`Rule[${i}] missing non-empty 'globs'.`);
+    }
+    if (typeof rule.alwaysApply !== "boolean") {
+      fail(`Rule[${i}] missing boolean 'alwaysApply'.`);
+    }
+    // config is optional but recommended
+  }
+  process.exit(0);
+} catch (e) {
+  console.error(e.message || e);
+  process.exit(1);
+}
+EOF
+    if [ $? -ne 0 ]; then
+      echo "Pre-commit aborted: .cursorrules validation failed."
+      echo "Tip: ensure rules use structured keys (config) rather than comments."
+      exit 1
+    fi
+  else
+    echo "[.cursorrules] Node not available; skipping YAML validation."
+  fi
+fi

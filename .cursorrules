@@ -1,0 +1,100 @@
+---
+version: 2.0.0
+lastUpdated: 2025-10-08
+scope: pixoo-daemon
+
+rules:
+  - description: Timeout after 30 minutes
+    globs:
+      - "*"
+    alwaysApply: true
+    config:
+      timeoutMinutes: 30
+    reference: "./STANDARDS.md"
+
+  - description: Enforce code quality standards (no magic numbers, function limits)
+    globs:
+      - "**/*.js"
+    alwaysApply: true
+    config:
+      noMagicNumbers: true
+      maxFunctionLines: 50
+      maxComplexity: 10
+      maxParameters: 5
+    reference: "./docs/CODE_QUALITY.md"
+
+  - description: Enforce linting and formatting rules for JS + Markdown
+    globs:
+      - "**/*.js"
+      - "**/*.md"
+    alwaysApply: true
+    config:
+      lint: true
+      maxLineLength: 120
+      preferredLineLength: 80
+      requireCodeBlockLanguage: true
+    reference: "./STANDARDS.md#formatting--commits"
+
+  - description: Enforce Conventional Commit format
+    globs:
+      - "COMMIT_MSG"
+    alwaysApply: true
+    config:
+      commitConvention: conventional
+    reference: "./STANDARDS.md#commit-guidelines"
+
+  - description: Require README.md in all critical directories
+    globs:
+      - "lib/*"
+      - "scenes/*"
+      - "docs/*"
+    alwaysApply: true
+    config:
+      requireReadme: true
+    reference: "./STANDARDS.md#documentation"
+
+  - description: Require JSDoc on all exported functions
+    globs:
+      - "lib/**/*.js"
+      - "scenes/**/*.js"
+    alwaysApply: true
+    config:
+      requireJsdoc: true
+    reference: "./STANDARDS.md#documentation"
+
+  - description: Require POSIX shebang in server scripts
+    globs:
+      - "scripts/**/*.sh"
+    alwaysApply: true
+    config:
+      requireShebang: "#!/usr/bin/env bash"
+    reference: "./STANDARDS.md#shell-standards"
+
+  - description: Prefer fish shell for interactive usage; fallback to bash
+    globs:
+      - "**/*.sh"
+    alwaysApply: true
+    config:
+      preferredShell: fish
+      fallbackShell: bash
+      maxRetries: 3
+    reference: "./STANDARDS.md#shell-standards"
+
+  - description: Scene interface requirements and configuration standards
+    globs:
+      - "scenes/**/*.js"
+    alwaysApply: true
+    config:
+      requireSceneInterface: true
+      requireConfigConstants: true
+    reference: "./docs/SCENE_DEVELOPMENT.md"
+
+  - description: Always include build number with git hash when mentioning deployment
+    globs:
+      - "*"
+    alwaysApply: true
+    config:
+      requireBuildNumber: true
+      buildNumberCommand: "git rev-list --count HEAD"
+    reference: "./STANDARDS.md#deployment-references"
+
