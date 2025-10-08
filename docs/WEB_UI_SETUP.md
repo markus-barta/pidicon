@@ -41,28 +41,68 @@ The Web UI will be available at: `http://localhost:10829`
 
 ### **5. Docker Compose Configuration**
 
-For Docker deployments, add these environment variables to your `pixoo-daemon` service in `docker-compose.yml`:
+For Docker deployments, choose one of the following networking modes:
+
+#### **Option A: Bridge Networking** (Standard)
+
+Use standard Docker networking with port mapping:
 
 ```yaml
 pixoo-daemon:
   image: ghcr.io/markus-barta/pixoo-daemon:latest
   container_name: pixoo-daemon
-  network_mode: host # Uses host networking (recommended)
-  restart: no
+  restart: unless-stopped
+  ports:
+    - '10829:10829' # Web UI port
   environment:
     - TZ=Europe/Vienna
-    - PIXOO_DEVICE_TARGETS=192.168.1.189=mock;192.168.1.159=mock
-    - PIXOO_WEB_PORT=10829 # Optional: Custom port (default: 10829)
-    - PIXOO_WEB_AUTH=admin:yourpassword # Optional: Authentication
+    - PIXOO_DEVICE_TARGETS=192.168.1.189=real;192.168.1.159=real
+    - PIXOO_WEB_PORT=10829
+    - PIXOO_WEB_AUTH=admin:yourpassword # Optional
   volumes:
-    - ./mounts/nodered/pixoo-media:/pixoo-media
-    - ./mounts/shared/tmp:/shared-tmp
+    - ./pixoo-media:/pixoo-media
+    - ./shared-tmp:/shared-tmp
+  env_file:
+    - /home/mba/secrets/smarthome.env
+  networks:
+    - your-network
+  labels:
+    - 'com.centurylinklabs.watchtower.enable=true'
+
+networks:
+  your-network:
+    external: true
+```
+
+**Pros:** Standard Docker networking, better isolation  
+**Cons:** Requires explicit port mapping
+
+#### **Option B: Host Networking** (Simpler)
+
+Container uses host's network stack directly:
+
+```yaml
+pixoo-daemon:
+  image: ghcr.io/markus-barta/pixoo-daemon:latest
+  container_name: pixoo-daemon
+  network_mode: host
+  restart: unless-stopped
+  environment:
+    - TZ=Europe/Vienna
+    - PIXOO_DEVICE_TARGETS=192.168.1.189=real;192.168.1.159=real
+    - PIXOO_WEB_PORT=10829
+    - PIXOO_WEB_AUTH=admin:yourpassword # Optional
+  volumes:
+    - ./pixoo-media:/pixoo-media
+    - ./shared-tmp:/shared-tmp
   env_file:
     - /home/mba/secrets/smarthome.env
   labels:
     - 'com.centurylinklabs.watchtower.enable=true'
-    - 'com.centurylinklabs.watchtower.scope=pixoo'
 ```
+
+**Pros:** No port mapping needed, simpler config  
+**Cons:** Less network isolation
 
 **Deploy Changes:**
 
@@ -92,11 +132,7 @@ http://localhost:10829
 http://your-server-ip:10829
 ```
 
-### **Docker Host Networking**
-
-If using `network_mode: host` (recommended), the Web UI is accessible directly on the host port.
-
-**Note**: If you have a firewall, make sure port 10829 is open.
+**Note**: If you have a firewall, make sure port 10829 is open (applies to both bridge and host networking).
 
 ### **With Authentication**
 
@@ -153,7 +189,7 @@ iptables -A INPUT -p tcp --dport 10829 -s 127.0.0.1 -j ACCEPT
 iptables -A INPUT -p tcp --dport 10829 -j DROP
 ```
 
-For network access with `network_mode: host`:
+For network access only (local network):
 
 ```bash
 # Allow from local network only
@@ -222,9 +258,22 @@ curl -u admin:secretpassword http://localhost:10829/api/status
 
 ## ❓ FAQ
 
-### **Q: Do I need to expose port 10829 in docker-compose.yml?**
+### **Q: Do I need host networking (`network_mode: host`)?**
 
-**A**: No! When using `network_mode: host`, the container binds directly to the host's port 10829. Port mapping (`ports:` section) is only needed for bridge networking.
+**A**: No! Both bridge networking (with port mapping) and host networking work fine. Use:
+
+- **Bridge networking** for better isolation (standard Docker approach)
+- **Host networking** for simpler config (no port mapping needed)
+
+### **Q: Do I need to expose port 10829?**
+
+**A**: Only if using bridge networking. Add `ports: ["10829:10829"]` to your docker-compose.yml.
+With host networking, the port is automatically available.
+
+### **Q: Can the daemon reach Pixoo devices with bridge networking?**
+
+**A**: Yes! The daemon makes **outbound** HTTP connections to Pixoo devices on your local network.
+Bridge networking handles this fine - no special configuration needed.
 
 ### **Q: Can I use a different port?**
 
@@ -236,7 +285,8 @@ curl -u admin:secretpassword http://localhost:10829/api/status
 
 ### **Q: Is the Web UI secure?**
 
-**A**: By default, no authentication is enabled. Set `PIXOO_WEB_AUTH=username:password` for basic authentication. For production with external access, use a reverse proxy with HTTPS.
+**A**: By default, no authentication is enabled. Set `PIXOO_WEB_AUTH=username:password` for basic
+authentication. For production with external access, use a reverse proxy with HTTPS.
 
 ---
 
@@ -341,10 +391,18 @@ curl http://localhost:10829/api/status
 3. **Docker networking issues**
 
    ```bash
-   # Check if using host networking
+   # Check networking mode
    docker inspect pixoo-daemon | grep -A 5 -B 5 NetworkMode
 
-   # Should show: "NetworkMode": "host"
+   # Bridge networking: "NetworkMode": "bridge" (requires port mapping)
+   # Host networking: "NetworkMode": "host" (no port mapping needed)
+   ```
+
+   If using bridge networking, verify port is mapped:
+
+   ```bash
+   docker port pixoo-daemon
+   # Should show: 10829/tcp -> 0.0.0.0:10829
    ```
 
 4. **Firewall blocking**
