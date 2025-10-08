@@ -48,6 +48,7 @@ const GFX_DEMO_CONFIG = {
     OUTLINE_COLOR: [255, 200, 100], // Orange
     GRADIENT_COLOR: [100, 200, 255], // Light blue
     COMBO_COLOR: [255, 100, 255], // Magenta
+    COMBO_OUTLINE_COLOR: [60, 20, 100], // Dark purple for combo outline
   },
 
   // Gradients phase
@@ -450,7 +451,7 @@ class GraphicsEngineDemoScene {
     );
 
     // Outlined text (animated) - using config constants
-    const outlineWidth = Math.floor(phaseProgress * 2) + 1;
+    const outlineWidth = Math.floor(phaseProgress * 3);
     await this.graphicsEngine.drawTextEnhanced(
       'OUTLINE',
       GFX_DEMO_CONFIG.TEXT_EFFECTS.OUTLINE_POSITION,
@@ -489,7 +490,10 @@ class GraphicsEngineDemoScene {
           shadow: true,
           outline: true,
           gradient: true,
-          outlineColor: [...GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR, alpha],
+          outlineColor: [
+            ...GFX_DEMO_CONFIG.TEXT_EFFECTS.COMBO_OUTLINE_COLOR,
+            alpha,
+          ],
         },
       },
     );
@@ -882,12 +886,11 @@ class GraphicsEngineDemoScene {
         'multiply',
       );
 
-      // Show celestial info
+      // Show info
       const moonInfo = `Moon:${moonFrame}`;
-      const combinedInfo = `${moonInfo} | Static Sun`;
 
       await this.graphicsEngine.device.drawText(
-        combinedInfo,
+        moonInfo,
         [32, 50],
         [180, 180, 255, Math.round(200 * opacity)],
         'center',
