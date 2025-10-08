@@ -20,8 +20,7 @@
 ### **Configuration & Setup**
 
 - **[CONFIG_AND_PERSISTENCE.md](./CONFIG_AND_PERSISTENCE.md)** - Configuration management and persistence strategy
-- **[WEB_UI_SETUP.md](./WEB_UI_SETUP.md)** - Web UI development and setup guide
-- **[WEB_UI_DOCKER_COMPOSE.md](./WEB_UI_DOCKER_COMPOSE.md)** - Docker Compose setup for web UI
+- **[WEB_UI_SETUP.md](./WEB_UI_SETUP.md)** - Complete Web UI setup guide (includes Docker)
 
 ### **Project Management**
 
@@ -52,6 +51,7 @@
 - **[reports/\[DONE\]\_CONSOLIDATION_SUMMARY.md](./reports/[DONE]_CONSOLIDATION_SUMMARY.md)** - Docs consolidation (archived)
 - **[reports/\[DONE\]\_DOCUMENTATION_STRUCTURE.md](./reports/[DONE]_DOCUMENTATION_STRUCTURE.md)** - Docs structure plan (archived)
 - **[reports/\[DONE\]\_STANDARDS_UPGRADE.md](./reports/[DONE]_STANDARDS_UPGRADE.md)** - Standards upgrade (archived)
+- **[reports/\[DONE\]\_WEB_UI_DOCKER_COMPOSE.md](./reports/[DONE]_WEB_UI_DOCKER_COMPOSE.md)** - Docker Compose setup (merged into WEB_UI_SETUP.md)
 
 ---
 
@@ -92,8 +92,7 @@ docs/
 ├── DEPLOYMENT.md                    # Deployment & ops guide
 ├── VERSIONING.md                    # Version strategy
 ├── CONFIG_AND_PERSISTENCE.md        # Configuration management
-├── WEB_UI_SETUP.md                  # Web UI dev setup
-├── WEB_UI_DOCKER_COMPOSE.md         # Docker Compose setup
+├── WEB_UI_SETUP.md                  # Complete Web UI setup
 ├── BACKLOG.md                       # Task tracking & status
 └── reports/                         # Archived completion docs
     ├── PHASE1_COMPLETE.md           # Phase 1 report
