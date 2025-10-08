@@ -276,7 +276,7 @@
                 </div>
                 <div class="metric-value mb-1">{{ sceneTimeDisplay }}</div>
                 <div class="text-caption" style="color: #6b7280;">
-                  {{ currentSceneInfo?.wantsLoop ? 'Running' : 'Static' }}
+                  {{ sceneStatusText }}
                 </div>
               </v-card-text>
             </v-card>
@@ -416,6 +416,27 @@ function updateUptime() {
 }
 
 function updateSceneTime() {
+  // Check if scene is completed
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) {
+    sceneTimeDisplay.value = 'Complete';
+    if (sceneTimeInterval) {
+      clearInterval(sceneTimeInterval);
+      sceneTimeInterval = null;
+    }
+    return;
+  }
+  
+  // Check if scene is not running (stopped)
+  if (sceneState?.isRunning === false && !currentSceneInfo.value?.wantsLoop) {
+    sceneTimeDisplay.value = 'Stopped';
+    if (sceneTimeInterval) {
+      clearInterval(sceneTimeInterval);
+      sceneTimeInterval = null;
+    }
+    return;
+  }
+  
   // For static scenes, show time since loaded but don't keep incrementing
   // (Timer will pause after first render)
   if (!currentSceneInfo.value?.wantsLoop) {
@@ -451,6 +472,17 @@ function updateSceneTime() {
 
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
+});
+
+const sceneStatusText = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) {
+    return 'Complete';
+  }
+  if (sceneState?.isRunning === false) {
+    return 'Stopped';
+  }
+  return currentSceneInfo.value?.wantsLoop ? 'Running' : 'Static';
 });
 
 const successRate = computed(() => {
@@ -563,6 +595,19 @@ watch(
     if (newScene !== oldScene) {
       sceneStartTime.value = Date.now();
       updateSceneTime();
+      
+      // Restart metrics polling if it was stopped
+      if (!metricsInterval) {
+        console.log('[DEBUG] Scene changed - restarting metrics polling');
+        metricsInterval = setInterval(() => {
+          loadMetrics();
+        }, 200);
+      }
+      
+      // Restart scene time interval if it was stopped
+      if (!sceneTimeInterval) {
+        sceneTimeInterval = setInterval(updateSceneTime, 1000);
+      }
     }
   },
 );
@@ -605,6 +650,17 @@ function loadMetrics() {
   console.log('[DEBUG] === loadMetrics START ===');
   console.log('[DEBUG] props.device:', props.device);
   console.log('[DEBUG] isCollapsed:', isCollapsed.value);
+  
+  // Check if scene is completed or not running
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted || sceneState?.isRunning === false) {
+    console.log('[DEBUG] Scene completed or not running - stopping metrics polling');
+    if (metricsInterval) {
+      clearInterval(metricsInterval);
+      metricsInterval = null;
+    }
+    return;
+  }
   
   // Metrics are already in props.device.metrics! No API call needed!
   const metrics = props.device?.metrics;
