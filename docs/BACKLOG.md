@@ -47,6 +47,9 @@ of truth for upcoming work and its validation status.
 | UI-503   | Collapsible Cards: Per-device expand/collapse with localStorage        | planned     | TEST-UI-collapse       | -                          | -                    |
 | UI-504   | WebSocket Integration: Real-time updates without polling               | planned     | TEST-UI-websocket      | -                          | -                    |
 | UI-505   | Config Page: Web-based configuration editor with persistence           | planned     | TEST-UI-config         | -                          | -                    |
+| UI-506   | Scene Time: Stop timer when scene completes (testCompleted)            | planned     | TEST-UI-scene-timer    | -                          | -                    |
+| UI-507   | Chart Updates: Faster polling for smoother chart visualization         | planned     | TEST-UI-chart-poll     | -                          | -                    |
+| UI-508   | State Sync: Detect actual Pixoo state on UI connect/refresh            | planned     | TEST-UI-state-sync     | -                          | -                    |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |
@@ -1615,6 +1618,250 @@ save to `/data/config.json`, hot reload on save.
 - Test MQTT connection
 - Verify hot reload
 - Test import/export
+
+---
+
+### UI-506: Scene Time - Stop timer when scene completes (testCompleted)
+
+- **Priority**: P1 (Should Have - Bug Fix)
+- **Effort**: 2-4 hours
+- **Risk**: Low
+
+**Problem**:
+
+Scene time counter in Web UI continues ticking even after a scene like `performance-test.js`
+shows "COMPLETE" and stops rendering. The scene timer should stop when `testCompleted` is true.
+
+**Root Cause**:
+
+1. `App.vue` polls `/api/devices` every 5 seconds
+2. `DeviceCard.vue` has `sceneTimeInterval` that updates every 1 second
+3. `updateSceneTime()` checks `props.device.sceneState?.testCompleted` to stop the timer
+4. **Race condition**: Scene time updates every 1s, but device state only updates every 5s
+5. Result: Timer keeps ticking for up to 5 seconds after scene completes
+
+**Solution Options**:
+
+**Option A: React to prop changes** (Recommended)
+
+Add a watcher on `props.device.sceneState` to immediately stop timer when `testCompleted` changes:
+
+```javascript
+watch(
+  () => props.device.sceneState,
+  (newState) => {
+    if (newState?.testCompleted || newState?.isRunning === false) {
+      if (sceneTimeInterval) {
+        clearInterval(sceneTimeInterval);
+        sceneTimeInterval = null;
+      }
+      updateSceneTime(); // Final update
+    }
+  },
+  { deep: true },
+);
+```
+
+**Option B: Faster polling** (addresses UI-507)
+
+Reduce App.vue polling from 5s to 1s or less, so state updates faster.
+
+**Acceptance Criteria**:
+
+- [ ] Scene timer stops within 1s of scene completing
+- [ ] Scene timer shows "Complete" status
+- [ ] Timer doesn't resume after stopping
+- [ ] Works for both `testCompleted` and `isRunning: false` states
+
+**Test Plan** (TEST-UI-scene-timer):
+
+1. Start performance-test scene (100 frames)
+2. Watch scene time counter while scene runs
+3. When Pixoo shows "COMPLETE", verify:
+   - Timer stops within 1 second
+   - Display shows "Complete"
+   - Timer doesn't tick anymore
+4. Repeat with static scenes (wantsLoop: false)
+
+---
+
+### UI-507: Chart Updates - Faster polling for smoother chart visualization
+
+- **Priority**: P1 (Should Have - UX)
+- **Effort**: 1-2 hours
+- **Risk**: Low
+
+**Problem**:
+
+Frametime chart shows exact 5-second steps, even though:
+
+- `DeviceCard.vue` polls every 200ms (`metricsInterval`)
+- Performance-test shows per-frame variations on Pixoo screen
+- Chart should show smooth, continuous updates
+
+**Root Cause**:
+
+`App.vue` polls `/api/devices` every **5 seconds**, which updates `props.device.metrics`:
+
+```javascript
+// App.vue line 135
+setInterval(loadData, 5000); // ← Device data only updates every 5s!
+```
+
+`DeviceCard.vue` polls every 200ms but reads from `props.device.metrics`, which is only updated
+every 5s from the parent. Result: Chart appears to update quickly but data is stale.
+
+**Solution**:
+
+**Option A: Faster App polling** (Quick fix)
+
+```javascript
+// App.vue
+setInterval(loadData, 1000); // Update every 1s instead of 5s
+```
+
+**Pros**: Simple, works immediately  
+**Cons**: More API calls (1 req/s vs 1 req/5s), not ideal for many devices
+
+**Option B: Per-device metrics polling** (Better)
+
+Let each `DeviceCard` poll its own device metrics independently:
+
+```javascript
+// DeviceCard.vue
+async function loadMetrics() {
+  const response = await api.getDeviceInfo(props.device.ip);
+  // Update local metrics without waiting for App.vue
+}
+```
+
+**Pros**: Smooth updates, scalable  
+**Cons**: Multiple API calls per device
+
+**Option C: WebSocket** (Best long-term - see UI-504)
+
+Push metrics from backend when they change, no polling needed.
+
+**Recommendation**: Implement Option A now (1-2 hours), plan Option C for UI-504.
+
+**Acceptance Criteria**:
+
+- [ ] Chart updates show smooth transitions (no 5s steps)
+- [ ] Per-frame variations visible in chart
+- [ ] Chart reflects actual scene frametime changes
+- [ ] No performance degradation
+
+**Test Plan** (TEST-UI-chart-poll):
+
+1. Start performance-test scene
+2. Watch frametime chart in Web UI
+3. Compare chart with Pixoo screen values
+4. Verify:
+   - Chart shows per-frame variations (not flat 5s steps)
+   - Chart updates smoothly every 1s or less
+   - Values match Pixoo screen metrics
+
+---
+
+### UI-508: State Sync - Detect actual Pixoo state on UI connect/refresh
+
+- **Priority**: P2 (Nice to Have - UX)
+- **Effort**: 4-6 hours
+- **Risk**: Medium
+
+**Problem**:
+
+When closing and reopening Web UI (or refreshing page), some UI states are "wrong":
+
+- Scene selector shows last selected scene, not actual running scene
+- Brightness slider shows default, not actual brightness
+- Display toggle shows wrong state
+- No way to detect actual Pixoo device state
+
+**Root Cause**:
+
+1. **No state persistence**: Vue stores don't persist across page reloads
+2. **No state query**: Backend doesn't track current brightness/display state
+3. **MQTT-driven state**: Backend knows scene state (via MQTT), but not device hardware state
+
+**Challenges**:
+
+- Pixoo devices don't expose a "get current state" API
+- Brightness/display state are write-only (no read API)
+- Scene state is known (via scene manager), but hardware state is not
+- Would need to track last-set values in backend
+
+**Solution Options**:
+
+**Option A: Scene state sync** (Quick win)
+
+Already works! On UI load, `/api/devices` returns `currentScene` from scene manager.
+Just need to ensure Vue stores sync with API response on mount.
+
+```javascript
+// store/scenes.js
+onMounted(() => {
+  const devices = await api.getDevices();
+  devices.forEach(device => {
+    // Sync local state with server state
+    deviceStore.setCurrentScene(device.ip, device.currentScene);
+  });
+});
+```
+
+**Option B: Backend state tracking** (Medium effort)
+
+Track last-set brightness/display state in backend:
+
+```javascript
+// lib/services/device-service.js
+const deviceHardwareState = new Map(); // ip -> { brightness, displayOn }
+
+async setDisplayPower(ip, on) {
+  await device.setDisplayPower(on);
+  deviceHardwareState.set(ip, { ...state, displayOn: on });
+}
+
+async getDeviceInfo(ip) {
+  return {
+    ...deviceInfo,
+    hardware: deviceHardwareState.get(ip) || { brightness: 100, displayOn: true }
+  };
+}
+```
+
+**Option C: Query Pixoo device** (Experimental)
+
+Research if Pixoo API has undocumented state query endpoints. If found, query device on
+UI connect to get actual hardware state.
+
+**Option D: WebSocket + State Events** (UI-504)
+
+Broadcast state changes via WebSocket. All UI clients stay synced automatically.
+
+**Recommendation**: Implement Option A now (scene sync), Option B for brightness/display,
+plan Option D for UI-504.
+
+**Acceptance Criteria**:
+
+- [ ] On UI load, scene selector shows actual running scene
+- [ ] On UI refresh, display toggle reflects last-set state
+- [ ] Brightness slider shows last-set value (if tracked)
+- [ ] Multiple UI clients show consistent state
+
+**Test Plan** (TEST-UI-state-sync):
+
+1. Open Web UI, switch to `clock` scene
+2. Close Web UI completely
+3. Reopen Web UI
+4. Verify:
+   - Scene selector shows `clock` (not `startup`)
+   - Display toggle reflects actual state
+   - Brightness slider shows correct value (if implemented)
+5. Open Web UI in two browser tabs
+6. Change scene in tab 1
+7. Refresh tab 2
+8. Verify: Tab 2 shows updated scene
 
 ---
 
