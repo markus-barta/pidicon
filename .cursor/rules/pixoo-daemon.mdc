@@ -97,4 +97,43 @@ rules:
       requireBuildNumber: true
       buildNumberCommand: "git rev-list --count HEAD"
     reference: "./STANDARDS.md#deployment-references"
+---
 
+# Cursor Rules for Pixoo Daemon
+
+**Official Location**: `.cursor/rules/pixoo-daemon.mdc`  
+**Format**: YAML frontmatter + Markdown documentation  
+**Created by**: Cursor UI (New → Rule)
+
+## Why This Location?
+
+Cursor's UI creates rules in `.cursor/rules/*.mdc` when you use:
+**New → Rule** in the Cursor interface.
+
+This is the **official** Cursor rules location. Do NOT use `.cursorrules` at project root.
+
+## Rule Structure
+
+Each rule in the frontmatter has:
+- `description` - What the rule enforces
+- `globs` - File patterns it applies to
+- `alwaysApply` - Boolean, typically true for project rules
+- `config` - Structured enforcement parameters (NOT comments!)
+- `reference` - Link to detailed documentation
+
+## Documentation References
+
+Detailed standards are maintained separately:
+- [STANDARDS.md](../../STANDARDS.md) - Core development standards
+- [docs/CODE_QUALITY.md](../../docs/CODE_QUALITY.md) - Code quality guidelines
+- [docs/SCENE_DEVELOPMENT.md](../../docs/SCENE_DEVELOPMENT.md) - Scene development guide
+
+## Validation
+
+Pre-commit hook validates this file's YAML structure automatically.
+See `.husky/pre-commit` for validation logic.
+
+---
+
+**Last Updated**: 2025-10-08  
+**Version**: 2.0.0

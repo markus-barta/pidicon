@@ -1,53 +1,78 @@
 #!/usr/bin/env sh
 npx lint-staged || exit 1
 
-# Validate .cursorrules YAML structure (non-invasive, detection-only)
-if [ -f ".cursorrules" ]; then
+# Validate .cursor/rules/*.mdc YAML structure (non-invasive, detection-only)
+# Official Cursor location: .cursor/rules/ (created by Cursor UI: New → Rule)
+if [ -d ".cursor/rules" ]; then
   if command -v node >/dev/null 2>&1; then
     node <<'EOF'
 const fs = require("fs");
+const path = require("path");
 const yaml = (() => {
   try { return require("yaml"); } catch (e) { return null; }
 })();
 
-function fail(msg) {
-  console.error("[.cursorrules] " + msg);
+function fail(file, msg) {
+  console.error(`[${file}] ${msg}`);
   process.exit(1);
 }
 
 try {
-  const raw = fs.readFileSync(".cursorrules", "utf8");
   if (!yaml) {
-    console.warn("[.cursorrules] Skipping YAML validation (yaml module not installed).");
+    console.warn("[.cursor/rules] Skipping YAML validation (yaml module not installed).");
     process.exit(0);
   }
-  const doc = yaml.parse(raw);
-  if (!doc || typeof doc !== "object") fail("YAML parsed to empty/invalid object.");
-  if (!Array.isArray(doc.rules) || doc.rules.length === 0) {
-    fail("Missing or empty 'rules' array.");
+
+  const rulesDir = ".cursor/rules";
+  const files = fs.readdirSync(rulesDir).filter(f => f.endsWith(".mdc"));
+  
+  if (files.length === 0) {
+    console.warn("[.cursor/rules] No .mdc rule files found.");
+    process.exit(0);
   }
-  for (const [i, rule] of doc.rules.entries()) {
-    if (!rule.description) fail(`Rule[${i}] missing 'description'.`);
-    if (!Array.isArray(rule.globs) || rule.globs.length === 0) {
-      fail(`Rule[${i}] missing non-empty 'globs'.`);
+
+  for (const file of files) {
+    const filePath = path.join(rulesDir, file);
+    const raw = fs.readFileSync(filePath, "utf8");
+    
+    // Extract YAML frontmatter (between --- delimiters)
+    const match = raw.match(/^---\n([\s\S]*?)\n---/);
+    if (!match) {
+      fail(file, "Missing YAML frontmatter (--- ... ---)");
     }
-    if (typeof rule.alwaysApply !== "boolean") {
-      fail(`Rule[${i}] missing boolean 'alwaysApply'.`);
+    
+    const doc = yaml.parse(match[1]);
+    if (!doc || typeof doc !== "object") {
+      fail(file, "YAML frontmatter parsed to empty/invalid object");
     }
-    // config is optional but recommended
+    
+    // If it has a rules array, validate each rule
+    if (doc.rules && Array.isArray(doc.rules)) {
+      for (const [i, rule] of doc.rules.entries()) {
+        if (!rule.description) fail(file, `Rule[${i}] missing 'description'`);
+        if (!Array.isArray(rule.globs) || rule.globs.length === 0) {
+          fail(file, `Rule[${i}] missing non-empty 'globs'`);
+        }
+        if (typeof rule.alwaysApply !== "boolean") {
+          fail(file, `Rule[${i}] missing boolean 'alwaysApply'`);
+        }
+      }
+    }
   }
+  
+  console.log(`[.cursor/rules] ✓ Validated ${files.length} rule file(s)`);
   process.exit(0);
 } catch (e) {
-  console.error(e.message || e);
+  console.error("[.cursor/rules]", e.message || e);
   process.exit(1);
 }
 EOF
     if [ $? -ne 0 ]; then
-      echo "Pre-commit aborted: .cursorrules validation failed."
+      echo "Pre-commit aborted: .cursor/rules validation failed."
       echo "Tip: ensure rules use structured keys (config) rather than comments."
       exit 1
     fi
   else
-    echo "[.cursorrules] Node not available; skipping YAML validation."
+    echo "[.cursor/rules] Node not available; skipping YAML validation."
   fi
 fi

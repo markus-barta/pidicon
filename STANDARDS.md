@@ -2,7 +2,7 @@
 
 ## Professional Engineering Guidelines for Pixoo Daemon
 
-**Last Updated**: 2025-09-30  
+**Last Updated**: 2025-10-08  
 **Status**: Active
 
 ---
@@ -322,6 +322,60 @@ guide.**
 
 ---
 
+## 🤖 Cursor AI Rules
+
+### Official Location
+
+**✅ USE**: `.cursor/rules/*.mdc` (YAML frontmatter + Markdown)  
+**❌ NEVER**: `.cursorrules` at project root
+
+### Why This Matters
+
+Cursor's built-in UI creates rules in `.cursor/rules/` when you use:
+
+```
+Menu → New → Rule
+```
+
+This is the **official** Cursor location. Trust what the UI creates!
+
+### Current Rules File
+
+- **`.cursor/rules/pixoo-daemon.mdc`** - Main project rules (10 rules)
+
+### Validation
+
+Pre-commit hook validates `.cursor/rules/*.mdc` structure automatically.
+
+See `.cursor/rules/README.md` for detailed documentation.
+
+---
+
+## 📦 Deployment References
+
+When mentioning Watchtower deployment or build releases in commit messages,
+documentation, or communication, **ALWAYS** include:
+
+1. Git commit hash (short form, 7 characters)
+2. Build number (= git commit count)
+
+**Example**:
+
+```
+Pushed to main in commit `abc1234` (Build #560). Watchtower will deploy shortly!
+```
+
+**How to get build number**:
+
+```bash
+git rev-list --count HEAD
+```
+
+This helps track which build to expect on the server and correlates with
+deployment logs and Web UI build information.
+
+---
+
 ## 🎓 Summary
 
 Write code that is **clear, maintainable, and testable**:
@@ -338,4 +392,4 @@ developer (probably you in 6 months).
 ---
 
 **Status**: ✅ Active and enforced via ESLint, code review, and CI/CD  
-**Last Updated**: 2025-09-30
+**Last Updated**: 2025-10-08
