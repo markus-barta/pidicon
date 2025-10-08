@@ -220,6 +220,19 @@
               <p class="text-body-2 text-medium-emphasis mb-0">
                 {{ currentSceneInfo.description || 'No description available for this scene.' }}
               </p>
+
+              <!-- Scene Metadata/Payload Viewer -->
+              <v-expansion-panels v-if="selectedSceneMetadata" class="mt-3" variant="accordion">
+                <v-expansion-panel>
+                  <v-expansion-panel-title class="text-caption">
+                    <v-icon class="mr-2" size="small">mdi-code-json</v-icon>
+                    <span class="font-weight-medium">Scene Configuration</span>
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <SceneMetadataViewer :metadata="selectedSceneMetadata" />
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
             </div>
           </div>
         </div>
@@ -322,6 +335,7 @@ import { useToast } from '../composables/useToast';
 // Register ECharts components
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
+import SceneMetadataViewer from './SceneMetadataViewer.vue';
 
 const props = defineProps({
   device: {
@@ -472,6 +486,24 @@ function updateSceneTime() {
 
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
+});
+
+// Get scene metadata/payload for the selected scene
+const selectedSceneMetadata = computed(() => {
+  if (!selectedScene.value || !props.device) return null;
+  
+  // For the currently active scene, check if there's payload in the device state
+  // This would be set when switching scenes via MQTT with payload
+  const devicePayload = props.device?.payload;
+  
+  // If the selected scene is the active scene and has payload, use it
+  if (selectedScene.value === props.device.currentScene && devicePayload && Object.keys(devicePayload).length > 0) {
+    return devicePayload;
+  }
+  
+  // Otherwise, show scene's default config/metadata if available
+  const sceneInfo = sceneStore.getSceneByName(selectedScene.value);
+  return sceneInfo?.config || sceneInfo?.metadata || null;
 });
 
 const sceneStatusText = computed(() => {

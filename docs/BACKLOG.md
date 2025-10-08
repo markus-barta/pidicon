@@ -50,6 +50,7 @@ of truth for upcoming work and its validation status.
 | UI-506   | Scene Time: Stop timer when scene completes (testCompleted)            | completed   | TEST-UI-scene-timer    | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-507   | Chart Updates: Faster polling for smoother chart visualization         | completed   | TEST-UI-chart-poll     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-508   | State Sync: Detect actual Pixoo state on UI connect/refresh            | completed   | TEST-UI-state-sync     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
+| UI-509   | Scene Metadata Viewer: Display scene payload/config when selected      | in_progress | TEST-UI-metadata       | -                          | -                    |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |
@@ -1862,6 +1863,217 @@ plan Option D for UI-504.
 6. Change scene in tab 1
 7. Refresh tab 2
 8. Verify: Tab 2 shows updated scene
+
+---
+
+### UI-509: Scene Metadata Viewer - Display scene payload/config when selected
+
+- **Priority**: P2 (Nice to Have - UX)
+- **Effort**: 2-3 hours
+- **Risk**: Low
+
+**Problem**:
+
+Users can't see what parameters/payload a scene is using when they select it. For data-driven
+scenes like `power_price`, `advanced_chart`, or `performance-test`, the payload contains
+important configuration that determines scene behavior.
+
+**Use Cases**:
+
+1. **Inspection**: See what parameters are currently active
+2. **Debugging**: Understand why scene behaves a certain way
+3. **Documentation**: Self-documenting API (payload shows available options)
+4. **Future editing**: Foundation for UI-510 (editable params)
+
+**Example Payloads**:
+
+```javascript
+// Simple scene (performance-test)
+{
+  frames: 100,
+  interval: null  // adaptive mode
+}
+
+// Complex scene (power_price)
+{
+  apiKey: "***",
+  region: "NO1",
+  currency: "NOK",
+  refreshInterval: 300000,
+  priceData: [
+    { hour: 0, price: 0.45 },
+    { hour: 1, price: 0.42 },
+    // ... 22 more entries
+  ]
+}
+
+// Data scene (advanced_chart)
+{
+  title: "Temperature",
+  data: [18.5, 19.2, 20.1, ...],
+  min: 15,
+  max: 25,
+  unit: "°C"
+}
+```
+
+**Implementation Plan**:
+
+1. **Add collapsible metadata section below scene description** in `DeviceCard.vue`:
+
+```vue
+<v-expansion-panels v-if="selectedSceneMetadata" class="mt-2">
+  <v-expansion-panel>
+    <v-expansion-panel-title>
+      <v-icon class="mr-2">mdi-code-json</v-icon>
+      Scene Configuration
+    </v-expansion-panel-title>
+    <v-expansion-panel-content>
+      <SceneMetadataViewer :metadata="selectedSceneMetadata" />
+    </v-expansion-panel-content>
+  </v-expansion-panel>
+</v-expansion-panels>
+```
+
+2. **Create `SceneMetadataViewer.vue` component**:
+
+Smart rendering based on payload complexity:
+
+```vue
+<template>
+  <div class="metadata-viewer">
+    <!-- Simple key-value pairs -->
+    <v-simple-table v-if="isSimple" dense>
+      <tbody>
+        <tr v-for="(value, key) in metadata" :key="key">
+          <td class="font-weight-medium">{{ formatKey(key) }}</td>
+          <td class="text-right">
+            <v-chip v-if="typeof value === 'boolean'" small>
+              {{ value }}
+            </v-chip>
+            <code v-else-if="isNumeric(value)">{{ value }}</code>
+            <span v-else>{{ value }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </v-simple-table>
+
+    <!-- Complex nested data -->
+    <v-card v-else variant="outlined" class="pa-3">
+      <pre class="metadata-json">{{ formatJSON(metadata) }}</pre>
+    </v-card>
+  </div>
+</template>
+
+<script setup>
+const props = defineProps({
+  metadata: Object,
+});
+
+// Simple if flat object with < 10 keys and no nested objects/arrays
+const isSimple = computed(() => {
+  const keys = Object.keys(props.metadata || {});
+  if (keys.length > 10) return false;
+  return keys.every((key) => {
+    const val = props.metadata[key];
+    return typeof val !== 'object' || val === null;
+  });
+});
+
+function formatKey(key) {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
+function formatJSON(obj) {
+  return JSON.stringify(obj, null, 2);
+}
+
+function isNumeric(val) {
+  return typeof val === 'number';
+}
+</script>
+
+<style scoped>
+.metadata-json {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #2c3e50;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  max-height: 400px;
+}
+
+.metadata-viewer {
+  max-width: 100%;
+}
+</style>
+```
+
+3. **Get metadata from scene store**:
+
+```javascript
+const selectedSceneMetadata = computed(() => {
+  if (!selectedScene.value) return null;
+  const sceneInfo = sceneStore.scenes.find(
+    (s) => s.name === selectedScene.value,
+  );
+  return sceneInfo?.payload || sceneInfo?.config || null;
+});
+```
+
+4. **Handle sensitive data**:
+
+```javascript
+function maskSensitive(metadata) {
+  const masked = { ...metadata };
+  const sensitiveKeys = ['apiKey', 'password', 'secret', 'token'];
+
+  for (const key of Object.keys(masked)) {
+    if (sensitiveKeys.some((s) => key.toLowerCase().includes(s))) {
+      masked[key] = '***';
+    }
+  }
+
+  return masked;
+}
+```
+
+**Acceptance Criteria**:
+
+- [ ] Metadata section appears below scene description when scene has payload/config
+- [ ] Simple key-value pairs shown as table (< 10 keys, no nesting)
+- [ ] Complex data shown as formatted JSON
+- [ ] Sensitive fields (apiKey, password) masked with `***`
+- [ ] Collapsible to save space
+- [ ] Responsive layout (works on mobile)
+- [ ] Numbers/booleans displayed with appropriate formatting
+- [ ] Large payloads (e.g., power_price with 24 hours) scroll-able
+
+**Test Plan** (TEST-UI-metadata):
+
+1. Select `performance-test` scene
+   - Verify simple table shows: frames, interval
+2. Select `power_price` scene (if running)
+   - Verify JSON view shows full payload
+   - Verify apiKey is masked
+   - Verify priceData array is visible and scroll-able
+3. Select `startup` scene (no payload)
+   - Verify metadata section doesn't appear
+4. Test responsive layout on mobile
+5. Test collapse/expand functionality
+
+**Future Enhancements** (UI-510):
+
+- Editable fields with inline editing
+- Form validation
+- Apply changes without scene restart
+- Presets/templates for common configs
 
 ---
 
