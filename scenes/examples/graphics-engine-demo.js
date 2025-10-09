@@ -1037,4 +1037,22 @@ const init = (context) => scene.init(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  metadata: {
+    phases: ['Text Effects', 'Gradients', 'Animations', 'Images', 'Fade Out'],
+    phaseDuration: 60, // frames per phase (~12s at 5fps)
+    features: [
+      'Text rendering with shadows and outlines',
+      'Vertical and horizontal gradients',
+      'Bounce animations and rainbow effects',
+      'Image loading and display',
+    ],
+    description:
+      'Demonstrates graphics engine capabilities with smooth transitions',
+  },
+};

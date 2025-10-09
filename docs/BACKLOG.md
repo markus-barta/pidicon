@@ -1935,7 +1935,7 @@ important configuration that determines scene behavior.
 </v-expansion-panels>
 ```
 
-2. **Create `SceneMetadataViewer.vue` component**:
+1. **Create `SceneMetadataViewer.vue` component**:
 
 Smart rendering based on payload complexity:
 
@@ -2015,7 +2015,7 @@ function isNumeric(val) {
 </style>
 ```
 
-3. **Get metadata from scene store**:
+1. **Get metadata from scene store**:
 
 ```javascript
 const selectedSceneMetadata = computed(() => {
@@ -2027,7 +2027,7 @@ const selectedSceneMetadata = computed(() => {
 });
 ```
 
-4. **Handle sensitive data**:
+1. **Handle sensitive data**:
 
 ```javascript
 function maskSensitive(metadata) {

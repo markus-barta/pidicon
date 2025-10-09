@@ -658,4 +658,9 @@ module.exports = {
   cleanup,
   render,
   wantsLoop: true,
+  metadata: {
+    frames: DEFAULT_FRAMES,
+    interval: null, // null = adaptive mode, number = fixed interval in ms
+    description: 'Performance benchmark with adaptive or fixed interval modes',
+  },
 };
