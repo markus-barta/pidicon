@@ -1,10 +1,7 @@
 node_modules/
 .env
-
-# Vite build output (Vue frontend)
 web/public/
 web/frontend/dist/
-
-# Legacy code and configuration files
 legacy-code/
 other-code/
+
