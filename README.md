@@ -7,9 +7,8 @@
 <p align="center">
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pixoo-daemon)
-[![Version](https://img.shields.io/badge/version-v2.0.0-blue)](#-observability)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-[![Release](https://img.shields.io/badge/release-stable-green)](https://github.com/markus-barta/pixoo-daemon/releases/tag/v2.0.0)
+[![Release](https://img.shields.io/badge/release-stable-green)](https://github.com/markus-barta/pixoo-daemon)
 
 </p>
 
@@ -22,7 +21,7 @@
 - **🌐 Web UI Control Panel** - Manage your Pixoo devices from any browser (port 10829)
 - **📡 MQTT Integration** - Full control via MQTT messages for automation
 - **🎬 Smart Scene System** - Hot-swappable scenes with automatic scheduling
-- **🔄 Self-Restarting** - In-container restart without Docker policy requirements
+- **🔄 Self-Restarting** - In-container restart with clean Docker networking
 - **🎨 Advanced Graphics** - Professional rendering with gradients, charts, and smooth animations
 - **🔍 Full Observability** - Real-time metrics, FPS monitoring, and deployment tracking
 - **🚀 Production Ready** - Robust error handling, comprehensive logging, and 152/152 tests passing
@@ -102,9 +101,10 @@ open http://localhost:10829
 
 **Core Scenes:**
 
-- `startup` - Build and version info on boot
+- `startup` - Live build info with real-time date/time updates
+- `startup-static` - Static build info display (one-time render)
 - `empty` - Clears the display
-- `fill` - Solid color fill
+- `fill` - Solid color fill with random color support
 - `power_price` - Comprehensive energy dashboard with weather and time
 - `advanced_chart` - Dynamic, styled chart renderer
 
@@ -164,13 +164,11 @@ mosquitto_pub ... -t "pixoo/192.168.1.159/driver/set" -m 'mock'
 mosquitto_pub ... -t "pixoo/192.168.1.159/reset" -m 'soft'
 ```
 
-See `MQTT_COMMANDS.md` for the complete reference.
+See [MQTT_COMMANDS.md](MQTT_COMMANDS.md) for the complete reference.
 
 ---
 
 ## 🏗️ Architecture
-
-**v2.0.0 - Modern, Maintainable Design**
 
 ### **Core Services**
 
@@ -189,7 +187,7 @@ See `MQTT_COMMANDS.md` for the complete reference.
 - **Hot-Swappable Drivers** - Switch between real/mock without restart
 - **Full Observability** - MQTT mirroring with build metadata
 
-For detailed architecture docs, see `docs/ARCHITECTURE.md` and `lib/README.md`.
+For detailed architecture docs, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [lib/README.md](lib/README.md).
 
 ---
 
@@ -239,7 +237,7 @@ module.exports = {
 };
 ```
 
-See `scenes/template.js` for a complete starter template and `docs/SCENE_DEVELOPMENT.md` for the full guide.
+See `scenes/template.js` for a complete starter template and [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) for the full guide.
 
 ---
 
@@ -263,7 +261,7 @@ node scripts/live_test_perf_once.js    # Performance benchmark
 
 - Use `mock` driver for fast iteration
 - Test with real device only when needed
-- Check build number matches before live testing (see `STANDARDS.md`)
+- Check build number matches before live testing (see [STANDARDS.md](STANDARDS.md))
 
 ---
 
@@ -306,7 +304,6 @@ node scripts/live_test_perf_once.js    # Performance benchmark
 pixoo-daemon:
   image: ghcr.io/markus-barta/pixoo-daemon:latest
   container_name: pixoo-daemon
-  network_mode: host
   restart: unless-stopped # or 'no' - daemon can self-restart
   ports:
     - '10829:10829' # Web UI
@@ -321,61 +318,11 @@ pixoo-daemon:
 
 - Automatic image updates via Watchtower
 - Self-restart capability (no Docker restart policy required)
-- Web UI accessible on host network
+- Web UI accessible on standard ports
+- Clean container networking (no host networking required)
 - Persistent configuration via environment
 
-See `docs/DEPLOYMENT.md` for complete deployment guide.
-
----
-
-## 📝 Changelog
-
-### v2.0.0 (Current)
-
-**🌐 Major Features:**
-
-- **Vue 3 + Vuetify 3 Web UI** - Modern Material Design control panel
-- **Toast Notification System** - Non-blocking success/error messages
-- **Component-Based Architecture** - Reusable Vue SFCs
-- Self-restarting daemon (no Docker dependency)
-- Complete service layer architecture
-- Professional command pattern implementation
-
-**🎨 Web UI Stack:**
-
-- Vue 3 with Composition API
-- Vuetify 3 Material Design components
-- Pinia state management
-- Vite build system (~2.7s builds)
-- Production-ready Docker integration
-
-**🏗️ Architecture:**
-
-- Dependency injection container
-- Centralized MQTT and state management
-- Clean separation of concerns
-- Comprehensive error handling
-- RESTful API for frontend communication
-
-**✨ Improvements:**
-
-- 152/152 tests passing
-- Zero ESLint errors
-- Full code quality standards
-- Professional documentation
-- 22 new Vue files (~2,500 LOC)
-- 6 reusable Vue components
-- 100% feature parity with enhanced UX
-
-**📊 Metrics:**
-
-- ~4,500 lines of new functionality (including Vue UI)
-- ~500 lines of duplication eliminated
-- 80% reduction in state management duplication
-- 70% reduction in MQTT publishing duplication
-- Production build: 805KB CSS, 564KB JS (gzipped)
-
-See `docs/VERSIONING.md` for version strategy and `docs/BACKLOG.md` for detailed history.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment guide.
 
 ---
 
@@ -436,36 +383,11 @@ docker logs pixoo-daemon -f --timestamps --tail 100
 
 ---
 
-## 🗺️ Roadmap
-
-**Completed ✅**
-
-- v2.0.0: Modern architecture with Web UI
-- Phase 1: Core services (DI, MQTT, State)
-- Phase 2: Command handlers
-- Phase 3: Service layer
-
-**In Progress 🚧**
-
-- Enhanced graphics engine
-- Additional scene templates
-- Extended documentation
-
-**Planned 📋**
-
-- Mobile-responsive Web UI improvements
-- Scene marketplace/sharing
-- Advanced animation framework
-
-See `docs/BACKLOG.md` for detailed tasks and tracking.
-
----
-
 ## ❤️ Contributing
 
 Contributions welcome! Please:
 
-- Follow the guidelines in `STANDARDS.md` and `docs/CODE_QUALITY.md`
+- Follow the guidelines in [STANDARDS.md](STANDARDS.md) and [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md)
 - Keep commits conventional (`feat:`, `fix:`, `docs:`)
 - Write tests for new features
 - Update documentation
@@ -476,13 +398,13 @@ Open an issue or PR and let's make something great together!
 
 ## 📚 Documentation
 
-- `STANDARDS.md` - Development standards and best practices
-- `docs/CODE_QUALITY.md` - Code quality guidelines
-- `docs/ARCHITECTURE.md` - System design and patterns
-- `docs/SCENE_DEVELOPMENT.md` - Scene development guide
-- `docs/DEPLOYMENT.md` - Deployment guide
-- `docs/VERSIONING.md` - Version management strategy
-- `MQTT_COMMANDS.md` - Complete MQTT command reference
+- [STANDARDS.md](STANDARDS.md) - Development standards and best practices
+- [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) - Code quality guidelines
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and patterns
+- [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) - Scene development guide
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
+- [docs/VERSIONING.md](docs/VERSIONING.md) - Version management strategy
+- [MQTT_COMMANDS.md](MQTT_COMMANDS.md) - Complete MQTT command reference
 
 ---
 
