@@ -164,6 +164,7 @@
             @click="previousScene"
             :disabled="loading"
             class="scene-nav-btn"
+            title="Previous scene"
           >
             <v-icon>mdi-chevron-left</v-icon>
           </v-btn>
@@ -178,11 +179,24 @@
           </div>
 
           <v-btn
+            icon="mdi-restart"
+            variant="tonal"
+            color="primary"
+            size="small"
+            @click="handleSceneRestart"
+            :disabled="!selectedScene || loading"
+            :loading="loading"
+            class="scene-nav-btn ml-2"
+            title="Restart current scene"
+          />
+
+          <v-btn
             icon
             variant="text"
             @click="nextScene"
             :disabled="loading"
             class="scene-nav-btn"
+            title="Next scene"
           >
             <v-icon>mdi-chevron-right</v-icon>
           </v-btn>
@@ -202,6 +216,16 @@
                 <span class="text-subtitle-2 font-weight-bold mr-2">
                   {{ formatSceneName(currentSceneInfo.name) }}
                 </span>
+                <!-- Scene State Indicator (UI-510) -->
+                <v-chip
+                  :color="sceneStateColor"
+                  size="small"
+                  variant="flat"
+                  class="mr-2"
+                >
+                  <v-icon start size="x-small">{{ sceneStateIcon }}</v-icon>
+                  {{ sceneStateLabel }}
+                </v-chip>
                 <span
                   v-if="currentSceneInfo.category"
                   class="scene-tag"
@@ -517,6 +541,39 @@ const sceneStatusText = computed(() => {
   return currentSceneInfo.value?.wantsLoop ? 'Running' : 'Static';
 });
 
+// Scene state display (UI-510)
+const sceneStateLabel = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) return 'Complete';
+  if (sceneState?.isRunning === false) return 'Stopped';
+  if (!currentSceneInfo.value?.wantsLoop) return 'Static';
+  return 'Looping';
+});
+
+const sceneStateColor = computed(() => {
+  const label = sceneStateLabel.value;
+  const colors = {
+    Starting: 'blue',
+    Looping: 'green',
+    Stopped: 'grey',
+    Complete: 'success',
+    Static: 'info',
+  };
+  return colors[label] || 'grey';
+});
+
+const sceneStateIcon = computed(() => {
+  const label = sceneStateLabel.value;
+  const icons = {
+    Starting: 'mdi-play-circle-outline',
+    Looping: 'mdi-sync',
+    Stopped: 'mdi-stop-circle',
+    Complete: 'mdi-check-circle',
+    Static: 'mdi-image',
+  };
+  return icons[label] || 'mdi-help-circle';
+});
+
 const successRate = computed(() => {
   const total = pushCount.value + errorCount.value;
   if (total === 0) return 100;
@@ -821,6 +878,23 @@ async function handleSceneChange(sceneName) {
   } catch (err) {
     toast.error(`Failed to switch scene: ${err.message}`);
     selectedScene.value = props.device.currentScene || '';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Restart current scene (UI-511)
+async function handleSceneRestart() {
+  if (!selectedScene.value || loading.value) return;
+
+  loading.value = true;
+  try {
+    // Resend the same scene to backend (triggers cleanup + init + render)
+    await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
+    toast.success(`Restarted ${formatSceneName(selectedScene.value)}`, 2000);
+    emit('refresh');
+  } catch (err) {
+    toast.error(`Failed to restart scene: ${err.message}`);
   } finally {
     loading.value = false;
   }

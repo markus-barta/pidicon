@@ -51,6 +51,9 @@ of truth for upcoming work and its validation status.
 | UI-507   | Chart Updates: Faster polling for smoother chart visualization         | completed   | TEST-UI-chart-poll     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-508   | State Sync: Detect actual Pixoo state on UI connect/refresh            | completed   | TEST-UI-state-sync     | pass (manual, build 547)   | 2025-10-08T20:00:00Z |
 | UI-509   | Scene Metadata Viewer: Display scene payload/config when selected      | completed   | TEST-UI-metadata       | pass (manual, build 565)   | 2025-10-08T21:00:00Z |
+| UI-510   | Scene State Display: Show start/loop/stop state as visual indicator    | in_progress | TEST-UI-scene-state    | -                          | -                    |
+| UI-511   | Scene Restart Button: Add button to restart/reactivate current scene   | in_progress | TEST-UI-scene-restart  | -                          | -                    |
+| SCN-101  | Fill Scene Random Color: Default to random color when no param given   | in_progress | TEST-SCN-fill-random   | -                          | -                    |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |
@@ -2068,12 +2071,274 @@ function maskSensitive(metadata) {
 4. Test responsive layout on mobile
 5. Test collapse/expand functionality
 
-**Future Enhancements** (UI-510):
+**Future Enhancements** (Editable Params):
 
 - Editable fields with inline editing
 - Form validation
 - Apply changes without scene restart
 - Presets/templates for common configs
+
+---
+
+### UI-510: Scene State Display - Show start/loop/stop state as visual indicator
+
+- **Priority**: P2 (Nice to Have - UX)
+- **Effort**: 1-2 hours
+- **Risk**: Low
+
+**Problem**:
+
+Users can't easily see the lifecycle state of a scene (starting, looping, stopped/complete).
+The only indication is in the scene time text ("Running", "Stopped", "Complete"), which is subtle.
+
+**Use Cases**:
+
+1. **Quick status check**: At a glance, see if scene is active/looping/stopped
+2. **Debug aid**: Understand scene lifecycle without reading logs
+3. **Visual feedback**: Clearer indication of scene state changes
+
+**Implementation Plan**:
+
+Add a visual state indicator next to the scene name/description:
+
+```vue
+<v-chip :color="sceneStateColor" size="small" variant="flat" class="ml-2">
+  <v-icon start size="x-small">{{ sceneStateIcon }}</v-icon>
+  {{ sceneStateLabel }}
+</v-chip>
+```
+
+**State Mapping**:
+
+| State    | Label    | Icon                    | Color   |
+| -------- | -------- | ----------------------- | ------- |
+| Starting | Starting | mdi-play-circle-outline | blue    |
+| Looping  | Looping  | mdi-sync                | green   |
+| Stopped  | Stopped  | mdi-stop-circle         | grey    |
+| Complete | Complete | mdi-check-circle        | success |
+| Static   | Static   | mdi-image               | info    |
+
+**Computed Logic**:
+
+```javascript
+const sceneStateLabel = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) return 'Complete';
+  if (sceneState?.isRunning === false) return 'Stopped';
+  if (!currentSceneInfo.value?.wantsLoop) return 'Static';
+  return 'Looping';
+});
+
+const sceneStateColor = computed(() => {
+  const label = sceneStateLabel.value;
+  const colors = {
+    Starting: 'blue',
+    Looping: 'green',
+    Stopped: 'grey',
+    Complete: 'success',
+    Static: 'info',
+  };
+  return colors[label] || 'grey';
+});
+
+const sceneStateIcon = computed(() => {
+  const label = sceneStateLabel.value;
+  const icons = {
+    Starting: 'mdi-play-circle-outline',
+    Looping: 'mdi-sync',
+    Stopped: 'mdi-stop-circle',
+    Complete: 'mdi-check-circle',
+    Static: 'mdi-image',
+  };
+  return icons[label] || 'mdi-help-circle';
+});
+```
+
+**Acceptance Criteria**:
+
+- [ ] State chip appears next to scene name
+- [ ] Color and icon change based on scene state
+- [ ] Updates in real-time when scene state changes
+- [ ] Matches scene time text logic (consistent states)
+- [ ] Small and unobtrusive design
+
+**Test Plan** (TEST-UI-scene-state):
+
+1. Start `performance-test` scene (100 frames)
+   - Verify chip shows "Looping" (green, sync icon)
+2. Wait for scene to complete
+   - Verify chip changes to "Complete" (success, check icon)
+3. Switch to `startup` scene (static)
+   - Verify chip shows "Static" (info, image icon)
+4. Test with stopped scene
+   - Verify chip shows "Stopped" (grey, stop icon)
+
+---
+
+### UI-511: Scene Restart Button - Add button to restart/reactivate current scene
+
+- **Priority**: P2 (Nice to Have - UX)
+- **Effort**: 1 hour
+- **Risk**: Low
+
+**Problem**:
+
+Users can't easily restart the current scene. They have to:
+
+1. Select a different scene in dropdown
+2. Select the original scene again
+
+This is cumbersome for iterative testing (e.g., rerunning `performance-test`).
+
+**Use Cases**:
+
+1. **Quick restart**: Rerun performance tests without dropdown changes
+2. **Scene reset**: Reset animated scene to initial state
+3. **Debugging**: Test scene init/cleanup lifecycle
+
+**Implementation Plan**:
+
+Add a restart button next to the scene selector:
+
+```vue
+<div class="scene-selector-row">
+  <scene-selector
+    v-model="selectedScene"
+    :disabled="loading"
+    :loading="loading"
+    @change="handleSceneChange"
+  />
+  <v-btn
+    icon="mdi-restart"
+    size="small"
+    variant="tonal"
+    color="primary"
+    :disabled="!selectedScene || loading"
+    :loading="loading"
+    @click="handleSceneRestart"
+    title="Restart current scene"
+  />
+  <v-btn icon="mdi-chevron-left" ... />
+  <v-btn icon="mdi-chevron-right" ... />
+</div>
+```
+
+**Handler Logic**:
+
+```javascript
+async function handleSceneRestart() {
+  if (!selectedScene.value || loading.value) return;
+
+  loading.value = true;
+  try {
+    // Resend the same scene to backend (triggers cleanup + init + render)
+    await api.switchScene(props.device.ip, selectedScene.value, {
+      clear: true,
+    });
+    toast.success(`Restarted ${formatSceneName(selectedScene.value)}`, 2000);
+    emit('refresh');
+  } catch (err) {
+    toast.error(`Failed to restart scene: ${err.message}`);
+  } finally {
+    loading.value = false;
+  }
+}
+```
+
+**Acceptance Criteria**:
+
+- [ ] Restart button appears between selector and nav arrows
+- [ ] Disabled when no scene selected or loading
+- [ ] Clicking restarts current scene (cleanup → init → render)
+- [ ] Shows toast notification on success/error
+- [ ] Maintains selected scene in dropdown
+- [ ] Icon and tooltip are clear (mdi-restart, "Restart current scene")
+
+**Test Plan** (TEST-UI-scene-restart):
+
+1. Select `performance-test` scene
+2. Wait 2 seconds
+3. Click restart button
+   - Verify scene restarts from frame 0
+   - Verify toast shows "Restarted Performance Test"
+4. Select `startup` scene (static)
+5. Click restart button
+   - Verify scene re-renders
+6. Test with no scene selected
+   - Verify button is disabled
+
+---
+
+### SCN-101: Fill Scene Random Color - Default to random color when no param given
+
+- **Priority**: P2 (Nice to Have - Scene Feature)
+- **Effort**: 15 minutes
+- **Risk**: Low
+
+**Problem**:
+
+The `fill` scene currently defaults to black when no color parameter is provided.
+This is boring and not very useful for testing/demo purposes.
+
+**User Request**:
+
+> "i'd like the fill scene to have a param. in fact i remember the color being a param.
+> if no param is provided the scene shall select a random color."
+
+**Current Behavior**:
+
+```javascript
+const defaultColor = [0, 0, 0, 255]; // Black
+let color = payload?.color || getState?.('color') || defaultColor;
+```
+
+**Desired Behavior**:
+
+```javascript
+// Generate random color if no parameter provided
+function getRandomColor() {
+  return [
+    Math.floor(Math.random() * 256), // R
+    Math.floor(Math.random() * 256), // G
+    Math.floor(Math.random() * 256), // B
+    255, // A (fully opaque)
+  ];
+}
+
+const defaultColor = getRandomColor();
+let color = payload?.color || getState?.('color') || defaultColor;
+```
+
+**Metadata Addition**:
+
+```javascript
+module.exports = {
+  // ...
+  metadata: {
+    color: [255, 0, 0, 255], // Example: red
+    description: 'If not provided, a random color is generated',
+  },
+};
+```
+
+**Acceptance Criteria**:
+
+- [ ] Fill scene uses random color when no `color` parameter provided
+- [ ] Random color includes R, G, B in range 0-255
+- [ ] Alpha always set to 255 (fully opaque)
+- [ ] Metadata shows example color parameter
+- [ ] MQTT payload still overrides with custom color
+
+**Test Plan** (TEST-SCN-fill-random):
+
+1. Switch to `fill` scene without parameters
+   - Verify screen fills with random color (not black)
+2. Switch to `fill` again
+   - Verify different random color is used
+3. Send MQTT with custom color: `{"scene":"fill","color":[255,0,0,255]}`
+   - Verify screen fills with red (parameter overrides random)
+4. Check metadata in UI
+   - Verify example color is shown
 
 ---
 

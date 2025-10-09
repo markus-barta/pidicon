@@ -14,6 +14,19 @@ const { isValidColor } = require('../lib/performance-utils');
 
 const name = 'fill';
 
+/**
+ * Generate a random color with full opacity
+ * @returns {number[]} RGBA color array [R, G, B, A]
+ */
+function getRandomColor() {
+  return [
+    Math.floor(Math.random() * 256), // R (0-255)
+    Math.floor(Math.random() * 256), // G (0-255)
+    Math.floor(Math.random() * 256), // B (0-255)
+    255, // A (fully opaque)
+  ];
+}
+
 function init() {
   logger.debug(`🚀 [FILL] Scene initialized`);
 }
@@ -21,8 +34,8 @@ function init() {
 async function render(context) {
   const { device, publishOk, payload, getState } = context;
 
-  // Get color from MQTT payload or scene state
-  const defaultColor = [0, 0, 0, 255]; // Black
+  // Get color from MQTT payload, scene state, or generate random
+  const defaultColor = getRandomColor();
   let color = payload?.color || getState?.('color') || defaultColor;
 
   // Validate color format using shared utility
@@ -68,4 +81,9 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  metadata: {
+    color: [255, 0, 0, 255], // Example: red [R, G, B, A]
+    description:
+      'Specify RGBA color array. If not provided, a random color is generated.',
+  },
 };
