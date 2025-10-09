@@ -1,4 +1,6 @@
-# Pixoo Daemon 🎨✨
+# Pixoo Daemon
+
+🎨✨
 
 <p align="center">
   <img src="pixxo_opener.png" alt="Pixoo Daemon" width="600">
