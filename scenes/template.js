@@ -1,6 +1,6 @@
 /**
  * @fileoverview Scene Template - Copy this file to create new scenes
- * @description Template for creating new Pixoo scenes with all required patterns and best practices
+ * @description Template for creating new Pixoo scenes with all required patterns and best practices. Copy this file to start building your own scenes with proper error handling, logging, and structure.
  * @author [Your Name] ([your initials]) with assistance from Cursor AI
  * @license MIT
  *

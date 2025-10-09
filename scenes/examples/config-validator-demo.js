@@ -313,4 +313,16 @@ const init = (context) => scene.init(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  'Demonstrates configuration presets and validation using ConfigValidator. Shows how to use presets, validation, and error handling for scene configurations. Tests various config scenarios including valid/invalid parameters and preset loading.';
+const category = 'Development';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

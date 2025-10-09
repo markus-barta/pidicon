@@ -1375,7 +1375,7 @@ const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 const name = scene.name;
 const description =
-  'Comprehensive energy dashboard - displays electricity prices, PV generation, battery status, weather, and time';
+  'Professional energy dashboard displaying real-time electricity pricing, photovoltaic generation, battery status, UV weather data, and animated digital clock. Shows 24-hour price forecast, current PV yield, battery charge/discharge status, and weather conditions. Optimized for 64x64 display with smooth animations and comprehensive data visualization.';
 const category = 'Energy';
 
 module.exports = {

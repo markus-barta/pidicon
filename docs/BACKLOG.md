@@ -58,6 +58,10 @@ of truth for upcoming work and its validation status.
 | UI-512   | Vue Confirm Dialog: Replace browser confirm() with Vue dialogs         | completed   | TEST-UI-vue-confirm    | pass (manual, build 570)   | 2025-10-08T23:00:00Z |
 | UI-513   | Chart Update Optimization: Only update chart when frames are sent      | completed   | TEST-UI-chart-opt      | pass (manual, build 570)   | 2025-10-08T23:00:00Z |
 | UI-514   | Metadata Description Fix: Prevent truncation of description field      | completed   | TEST-UI-metadata-desc  | pass (manual, build 570)   | 2025-10-08T23:00:00Z |
+| UI-515   | Chart Full Width: Make frametime chart span entire card width          | in_progress | TEST-UI-chart-width    | -                          | -                    |
+| UI-516   | Metrics Layout: Make perf/uptime/scenetime cards span 1/3 width each   | in_progress | TEST-UI-metrics-layout | -                          | -                    |
+| UI-517   | Badge Alignment: Move scene badges to right, keep state badge left     | in_progress | TEST-UI-badge-align    | -                          | -                    |
+| UI-518   | Scene Descriptions: Update ALL scene descriptions for comprehensive UI | in_progress | TEST-UI-scene-desc     | -                          | -                    |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |

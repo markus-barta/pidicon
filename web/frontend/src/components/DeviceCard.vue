@@ -212,34 +212,39 @@
               class="mr-3 mt-1"
             ></v-icon>
             <div class="flex-grow-1">
-              <div class="d-flex align-center mb-1">
-                <span class="text-subtitle-2 font-weight-bold mr-2">
-                  {{ formatSceneName(currentSceneInfo.name) }}
-                </span>
-                <!-- Scene State Indicator (UI-510) -->
-                <v-chip
-                  :color="sceneStateColor"
-                  size="small"
-                  variant="flat"
-                  class="mr-2"
-                >
-                  <v-icon start size="x-small">{{ sceneStateIcon }}</v-icon>
-                  {{ sceneStateLabel }}
-                </v-chip>
-                <span
-                  v-if="currentSceneInfo.category"
-                  class="scene-tag"
-                  :style="{ '--tag-color': categoryColor(currentSceneInfo.category) }"
-                >
-                  {{ currentSceneInfo.category }}
-                </span>
-                <span
-                  v-if="currentSceneInfo.wantsLoop"
-                  class="scene-tag ml-1"
-                  style="--tag-color: #10b981"
-                >
-                  Animated
-                </span>
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="d-flex align-center">
+                  <span class="text-subtitle-2 font-weight-bold mr-2">
+                    {{ formatSceneName(currentSceneInfo.name) }}
+                  </span>
+                  <!-- Scene State Indicator (UI-510) - stays on left -->
+                  <v-chip
+                    :color="sceneStateColor"
+                    size="small"
+                    variant="flat"
+                  >
+                    <v-icon start size="x-small">{{ sceneStateIcon }}</v-icon>
+                    {{ sceneStateLabel }}
+                  </v-chip>
+                </div>
+
+                <!-- Scene badges moved to right -->
+                <div class="d-flex align-center">
+                  <span
+                    v-if="currentSceneInfo.category"
+                    class="scene-tag"
+                    :style="{ '--tag-color': categoryColor(currentSceneInfo.category) }"
+                  >
+                    {{ currentSceneInfo.category }}
+                  </span>
+                  <span
+                    v-if="currentSceneInfo.wantsLoop"
+                    class="scene-tag ml-1"
+                    style="--tag-color: #10b981"
+                  >
+                    Animated
+                  </span>
+                </div>
               </div>
               <p class="text-body-2 text-medium-emphasis mb-0">
                 {{ currentSceneInfo.description || 'No description available for this scene.' }}
@@ -269,7 +274,7 @@
         </h4>
         <v-row dense>
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" md="4">
             <v-card class="metric-card metric-card-performance" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -288,7 +293,7 @@
           </v-col>
 
           <!-- Uptime Card -->
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" md="4">
             <v-card class="metric-card metric-card-uptime" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -304,7 +309,7 @@
           </v-col>
 
           <!-- Scene Time Card -->
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" md="4">
             <v-card class="metric-card metric-card-uptime" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -318,9 +323,11 @@
               </v-card-text>
             </v-card>
           </v-col>
+        </v-row>
 
-          <!-- Frametime Chart Card -->
-          <v-col cols="12" sm="12" md="10">
+        <!-- Frametime Chart Card (Full Width) -->
+        <v-row dense class="mt-4">
+          <v-col cols="12">
             <v-card class="metric-card metric-card-chart" elevation="0">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">

@@ -254,7 +254,7 @@ async function cleanup() {
 
 const wantsLoop = false;
 const description =
-  'Startup scene - displays daemon version, build number, and deployment information';
+  'Displays build information, device IP, and network status on startup. Shows current daemon version, git commit hash, QR code for easy mobile access, and system status indicators. Perfect for verifying device connectivity and software version after restart.';
 const category = 'System';
 
 module.exports = {

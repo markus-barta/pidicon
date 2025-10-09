@@ -1053,6 +1053,6 @@ module.exports = {
       'Image loading and display',
     ],
     description:
-      'Demonstrates graphics engine capabilities with smooth transitions',
+      'Comprehensive graphics engine demonstration showcasing advanced rendering techniques. Features text effects with shadows and outlines, gradient backgrounds, smooth bounce animations, rainbow color effects, and image loading. Cycles through 5 distinct phases every 12 seconds, demonstrating the full capabilities of the graphics engine, animation system, and resource management.',
   },
 };

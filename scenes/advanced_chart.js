@@ -150,4 +150,16 @@ async function cleanup() {
 }
 
 const wantsLoop = false;
-module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
+const description =
+  'Advanced charting scene with customizable data visualization. Supports power pricing, temperature monitoring, and random data demos. Features dynamic scaling, configurable update intervals, and professional styling. Accepts MQTT payloads for real-time data updates and mode switching. Perfect for displaying time-series data with smooth animations and clear visual hierarchy.';
+const category = 'Data';
+
+module.exports = {
+  name: SCENE_NAME,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

@@ -109,4 +109,16 @@ const render = (context) => scene.render(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  'Demonstrates the AnimatedScene base class with smooth animations, frame counting, and completion handling. Shows proper state management and lifecycle methods for animated scenes.';
+const category = 'Framework';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

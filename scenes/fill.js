@@ -70,7 +70,7 @@ function cleanup() {
 
 const wantsLoop = false;
 const description =
-  'Fills the entire screen with a solid color (configurable via payload)';
+  'Fills the entire 64x64 screen with a single solid color. Accepts RGBA color parameter via MQTT payload (e.g., [255,0,0,255] for red). If no color specified, generates a random vibrant color each time. Perfect for testing color accuracy, brightness settings, or creating custom colored backgrounds.';
 const category = 'Test';
 
 module.exports = {

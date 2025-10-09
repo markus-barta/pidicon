@@ -672,7 +672,19 @@ async function drawFinalOverlay(device, t) {
 // Opt-in to central loop
 const wantsLoop = true;
 
-module.exports = { name: SCENE_NAME, render, init, cleanup, wantsLoop };
+const description =
+  'Animated demonstration of advanced drawing techniques with real-time performance monitoring. Features moving shapes, particle systems, sweeping lines, and smooth animations. Displays live FPS and frametime metrics with color-coded performance indicators. Perfect for testing animation smoothness and rendering performance.';
+const category = 'Development';
+
+module.exports = {
+  name: SCENE_NAME,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};
 
 // --- Completion overlay (pixel-perfect backdrop) ---
 async function renderCompletion(device, publishOk) {

@@ -190,4 +190,16 @@ const render = (context) => scene.render(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  'Demonstrates the DataScene base class with simulated sensor data and configurable refresh intervals. Shows how to handle dynamic data updates and state management in data-driven scenes.';
+const category = 'Framework';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

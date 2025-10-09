@@ -65,4 +65,16 @@ const render = (context) => scene.render(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = false;
 
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  "Demonstrates the StaticScene base class - renders once and completes. Shows the simplest scene pattern for static content that doesn't need animation or updates.";
+const category = 'Framework';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};

@@ -661,6 +661,7 @@ module.exports = {
   metadata: {
     frames: DEFAULT_FRAMES,
     interval: null, // null = adaptive mode, number = fixed interval in ms
-    description: 'Performance benchmark with adaptive or fixed interval modes',
+    description:
+      'Advanced performance benchmarking scene with configurable frame counts and timing modes. Measures FPS, frametime, and frame delivery accuracy. Supports both adaptive (automatic timing) and fixed-interval modes. Displays real-time metrics, progress bars, and completion status. Perfect for testing display performance, latency, and rendering stability.',
   },
 };

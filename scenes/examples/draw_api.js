@@ -285,4 +285,16 @@ async function cleanup() {
 }
 
 const wantsLoop = false;
-module.exports = { name, render, init, cleanup, wantsLoop };
+const description =
+  'Comprehensive demonstration of the Pixoo drawing API capabilities. Tests all major functions including rectangles, lines, text rendering, pixel manipulation, gradients, and alpha blending. Perfect for developers testing API functionality and debugging display issues.';
+const category = 'Development';
+
+module.exports = {
+  name,
+  render,
+  init,
+  cleanup,
+  wantsLoop,
+  description,
+  category,
+};
