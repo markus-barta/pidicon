@@ -4,14 +4,16 @@
     <v-table v-if="isSimple" density="compact">
       <tbody>
         <tr v-for="(value, key) in maskedMetadata" :key="key">
-          <td class="font-weight-medium text-caption">{{ formatKey(key) }}</td>
-          <td class="text-right">
+          <td class="font-weight-medium text-caption" style="vertical-align: top;">{{ formatKey(key) }}</td>
+          <td class="text-right" style="text-align: left;">
             <v-chip v-if="typeof value === 'boolean'" size="small" :color="value ? 'success' : 'error'">
               {{ value }}
             </v-chip>
             <code v-else-if="isNumeric(value)" class="metric-value">{{ value }}</code>
             <code v-else-if="value === null" class="text-grey">null</code>
-            <span v-else class="text-body-2">{{ truncate(String(value), 50) }}</span>
+            <!-- Don't truncate description field - let it wrap -->
+            <span v-else-if="key === 'description'" class="text-body-2" style="white-space: normal; display: block;">{{ value }}</span>
+            <span v-else class="text-body-2">{{ truncate(String(value), 80) }}</span>
           </td>
         </tr>
       </tbody>

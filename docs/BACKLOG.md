@@ -54,6 +54,10 @@ of truth for upcoming work and its validation status.
 | UI-510   | Scene State Display: Show start/loop/stop state as visual indicator    | completed   | TEST-UI-scene-state    | pass (manual, build 568)   | 2025-10-08T22:00:00Z |
 | UI-511   | Scene Restart Button: Add button to restart/reactivate current scene   | completed   | TEST-UI-scene-restart  | pass (manual, build 568)   | 2025-10-08T22:00:00Z |
 | SCN-101  | Fill Scene Random Color: Default to random color when no param given   | completed   | TEST-SCN-fill-random   | pass (manual, build 568)   | 2025-10-08T22:00:00Z |
+| SCN-102  | Power Price Scene Metadata: Add metadata export to power_price scene   | in_progress | TEST-SCN-pp-metadata   | -                          | -                    |
+| UI-512   | Vue Confirm Dialog: Replace browser confirm() with Vue dialogs         | in_progress | TEST-UI-vue-confirm    | -                          | -                    |
+| UI-513   | Chart Update Optimization: Only update chart when frames are sent      | in_progress | TEST-UI-chart-opt      | -                          | -                    |
+| UI-514   | Metadata Description Fix: Prevent truncation of description field      | in_progress | TEST-UI-metadata-desc  | -                          | -                    |
 | CFG-501  | Config Persistence: /data volume for persistent configuration          | planned     | TEST-CFG-persist       | -                          | -                    |
 | CFG-502  | Config API: REST endpoints for config management                       | planned     | TEST-CFG-api           | -                          | -                    |
 | CFG-503  | Config Hot Reload: Apply config changes without restart                | planned     | TEST-CFG-hotreload     | -                          | -                    |

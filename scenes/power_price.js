@@ -1386,4 +1386,27 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  metadata: {
+    powerPriceData: {
+      data: {
+        '2025-01-20-12': { currentCentPrice: 25.5 },
+        // ... 24 hours of pricing data
+      },
+    },
+    currentCentPrice: 24.7,
+    dailyPvDataActual: [800, 1200, 1600, 2000, 2400], // Wh per hour
+    pvHourlyYieldPrediction: [900, 1300, 1700, 2100, 2500],
+    batteryStatus: {
+      USOC: 75, // Battery charge %
+      BatteryCharging: false,
+      BatteryDischarging: true,
+    },
+    uviData: {
+      currentUvi: [null, 6.5, 7.2], // UV index forecast
+    },
+    enableAnimation: true,
+    enableFPS: false,
+    description:
+      'Comprehensive electricity pricing dashboard with PV generation, battery status, weather data, and animated clock',
+  },
 };

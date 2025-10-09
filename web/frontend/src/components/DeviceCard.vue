@@ -342,6 +342,9 @@
       </div>
     </v-card-text>
   </v-card>
+
+  <!-- Confirm Dialog (UI-512) -->
+  <confirm-dialog ref="confirmDialog" />
 </template>
 
 <script setup>
@@ -360,6 +363,7 @@ import { useToast } from '../composables/useToast';
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
 import SceneMetadataViewer from './SceneMetadataViewer.vue';
+import ConfirmDialog from './ConfirmDialog.vue';
 
 const props = defineProps({
   device: {
@@ -384,6 +388,7 @@ const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
+const confirmDialog = ref(null); // Ref to ConfirmDialog component
 
 // Metrics
 const fps = ref(0);
@@ -394,6 +399,7 @@ const pushCount = ref(0);
 const startTime = ref(Date.now());
 const daemonStartTime = ref(Date.now());
 const frametimeHistory = ref([]);
+const lastFrameCount = ref(0); // Track last frame count for chart optimization (UI-513)
 const sceneStartTime = ref(Date.now());
 const sceneTimeDisplay = ref('0s');
 let uptimeInterval = null;
@@ -794,22 +800,33 @@ function loadMetrics() {
   // Use raw frametime for FPS calculation to get accurate decimals
   fps.value = rawFrametime > 0 ? Math.round((1000 / rawFrametime) * 10) / 10 : 0;
   frametime.value = newFrametime;
-  frameCount.value = metrics.pushes || 0;
+  const newFrameCount = metrics.pushes || 0;
+  frameCount.value = newFrameCount;
   errorCount.value = metrics.errors || 0;
   pushCount.value = metrics.pushes || 0;
   
-  // ALWAYS push to history for timeline continuity (even if value repeats or is 0)
+  // Only update chart when frames are actually sent (UI-513)
+  // This prevents static scenes from polluting the chart with duplicate values
   if (isCollapsed.value) {
     console.log('[DEBUG] Card is collapsed - skipping chart');
     return;
   }
   
-  // Use a minimum value for better visualization
+  // Check if a new frame was actually sent
+  const frameCountChanged = newFrameCount !== lastFrameCount.value;
+  if (!frameCountChanged) {
+    console.log(`[DEBUG] No new frame sent (count: ${newFrameCount}) - skipping chart update`);
+    console.log('[DEBUG] === loadMetrics END (no chart update) ===\n');
+    return;
+  }
+  
+  // Frame was sent - update chart
+  lastFrameCount.value = newFrameCount;
   const chartValue = Math.max(1, newFrametime);
   
-  console.log(`[DEBUG] PUSH - History before: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
+  console.log(`[DEBUG] NEW FRAME - History before: ${frametimeHistory.value.length}, pushing: ${chartValue}`);
   frametimeHistory.value.push(chartValue);
-  console.log(`[DEBUG] PUSH - History after: ${frametimeHistory.value.length}, array:`, frametimeHistory.value);
+  console.log(`[DEBUG] NEW FRAME - History after: ${frametimeHistory.value.length}, array:`, frametimeHistory.value);
   
   // Keep last 300 data points (60 seconds / 1 minute at 200ms intervals)
   if (frametimeHistory.value.length > 300) {
@@ -818,7 +835,7 @@ function loadMetrics() {
   }
   
   // Chart updates automatically via computed property - no manual update needed!
-  console.log('[DEBUG] === loadMetrics END ===\n');
+  console.log('[DEBUG] === loadMetrics END (chart updated) ===\n');
 }
 
 // Get color based on frametime - using SIMPLE scheme from performance-utils.js
@@ -944,9 +961,17 @@ async function setBrightness() {
 }
 
 async function handleReset() {
-  const confirmed = confirm(
-    `Reset device ${props.device.ip}? This will briefly show the init screen.`,
-  );
+  // Use Vue confirm dialog instead of browser confirm (UI-512)
+  const confirmed = await confirmDialog.value?.show({
+    title: 'Reset Device',
+    message: `This will restart the device (${props.device.ip}) and reconnect it to WiFi. The Pixoo will briefly show the initialization screen during the restart process.`,
+    confirmText: 'Reset Device',
+    cancelText: 'Cancel',
+    confirmColor: 'warning',
+    icon: 'mdi-restart-alert',
+    iconColor: 'warning'
+  });
+
   if (!confirmed) return;
 
   resetLoading.value = true;
@@ -963,9 +988,18 @@ async function handleReset() {
 
 async function toggleDriver() {
   const newDriver = props.device.driver === 'real' ? 'mock' : 'real';
-  const confirmed = confirm(
-    `Switch ${props.device.ip} to ${newDriver} driver?`,
-  );
+
+  // Use Vue confirm dialog instead of browser confirm (UI-512)
+  const confirmed = await confirmDialog.value?.show({
+    title: 'Switch Driver',
+    message: `Switch device ${props.device.ip} to ${newDriver} driver?`,
+    confirmText: `Switch to ${newDriver}`,
+    cancelText: 'Cancel',
+    confirmColor: 'primary',
+    icon: 'mdi-swap-horizontal',
+    iconColor: 'primary'
+  });
+
   if (!confirmed) return;
 
   driverLoading.value = true;
