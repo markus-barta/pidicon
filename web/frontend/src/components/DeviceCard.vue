@@ -8,10 +8,10 @@
             {{ deviceName }}
           </h3>
           <v-chip
-            :color="device.driver === 'real' ? 'success' : undefined"
+            :color="device.driver === 'real' ? 'success-darken-2' : undefined"
             size="small"
             :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            :style="device.driver === 'real' ? {} : { borderColor: '#d1d5db' }"
+            :style="device.driver === 'real' ? { backgroundColor: '#0f5132 !important' } : { borderColor: '#d1d5db' }"
             class="mr-2 status-badge"
           >
             <span style="display: inline-flex; align-items: center;">
@@ -29,10 +29,10 @@
             </span>
           </v-chip>
           <v-chip
-            :color="device.driver === 'real' ? 'info' : undefined"
+            :color="device.driver === 'real' ? 'info-darken-2' : undefined"
             size="small"
             :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            :style="device.driver === 'real' ? {} : { borderColor: '#d1d5db' }"
+            :style="device.driver === 'real' ? { backgroundColor: '#0c4a6e !important' } : { borderColor: '#d1d5db' }"
             class="status-badge"
           >
             <span style="display: inline-flex; align-items: center;">
@@ -120,7 +120,7 @@
 
         <v-btn
           color="error"
-          variant="outlined"
+          variant="flat"
           size="small"
           prepend-icon="mdi-restart"
           :loading="resetLoading"
@@ -160,7 +160,8 @@
         <div class="scene-selector-row">
           <v-btn
             icon
-            variant="text"
+            variant="tonal"
+            color="grey-lighten-1"
             @click="previousScene"
             :disabled="loading"
             class="scene-nav-btn"
@@ -180,8 +181,8 @@
 
           <v-btn
             icon="mdi-restart"
-            variant="tonal"
-            color="primary"
+            variant="flat"
+            color="error"
             size="small"
             @click="handleSceneRestart"
             :disabled="!selectedScene || loading"
@@ -192,7 +193,8 @@
 
           <v-btn
             icon
-            variant="text"
+            variant="tonal"
+            color="grey-lighten-1"
             @click="nextScene"
             :disabled="loading"
             class="scene-nav-btn"
@@ -246,7 +248,7 @@
                   </span>
                 </div>
               </div>
-              <p class="text-body-2 text-medium-emphasis mb-0">
+              <p class="text-body-2" style="color: #6b7280;" mb-0>
                 {{ currentSceneInfo.description || 'No description available for this scene.' }}
               </p>
 
@@ -275,17 +277,17 @@
         <v-row dense>
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
           <v-col cols="12" md="4">
-            <v-card class="metric-card metric-card-performance" elevation="0">
+            <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header">Performance</div>
-                  <v-icon size="large" style="opacity: 0.15;">mdi-speedometer</v-icon>
+                  <div class="metric-header" style="color: #6366f1;">Performance</div>
+                  <v-icon size="large" style="opacity: 0.3; color: #6366f1;">mdi-speedometer</v-icon>
                 </div>
-                <div class="metric-value mb-1">{{ fpsDisplay }} FPS</div>
-                <div class="text-caption" style="color: #6b7280;">
+                <div class="metric-value mb-1" style="color: #1e293b;">{{ fpsDisplay }} FPS</div>
+                <div class="text-caption" style="color: #64748b;">
                   {{ frametime }}ms frametime
                 </div>
-                <div class="text-caption" style="color: #9ca3af;">
+                <div class="text-caption" style="color: #94a3b8;">
                   {{ frameCount.toLocaleString() }} frames sent
                 </div>
               </v-card-text>
@@ -294,14 +296,14 @@
 
           <!-- Uptime Card -->
           <v-col cols="12" md="4">
-            <v-card class="metric-card metric-card-uptime" elevation="0">
+            <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header">Uptime</div>
-                  <v-icon size="large" style="opacity: 0.15;">mdi-clock-outline</v-icon>
+                  <div class="metric-header" style="color: #059669;">Uptime</div>
+                  <v-icon size="large" style="opacity: 0.3; color: #059669;">mdi-clock-outline</v-icon>
                 </div>
-                <div class="metric-value mb-1">{{ uptimeDisplay }}</div>
-                <div class="text-caption" style="color: #6b7280;">
+                <div class="metric-value mb-1" style="color: #1e293b;">{{ uptimeDisplay }}</div>
+                <div class="text-caption" style="color: #64748b;">
                   Since daemon start
                 </div>
               </v-card-text>
@@ -310,14 +312,14 @@
 
           <!-- Scene Time Card -->
           <v-col cols="12" md="4">
-            <v-card class="metric-card metric-card-uptime" elevation="0">
+            <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header">Scene Time</div>
-                  <v-icon size="large" style="opacity: 0.15;">mdi-play-circle-outline</v-icon>
+                  <div class="metric-header" style="color: #7c3aed;">Scene Time</div>
+                  <v-icon size="large" style="opacity: 0.3; color: #7c3aed;">mdi-play-circle-outline</v-icon>
                 </div>
-                <div class="metric-value mb-1">{{ sceneTimeDisplay }}</div>
-                <div class="text-caption" style="color: #6b7280;">
+                <div class="metric-value mb-1" style="color: #1e293b;">{{ sceneTimeDisplay }}</div>
+                <div class="text-caption" style="color: #64748b;">
                   {{ sceneStatusText }}
                 </div>
               </v-card-text>

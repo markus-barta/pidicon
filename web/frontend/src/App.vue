@@ -5,19 +5,6 @@
 
     <!-- Main Content -->
     <v-main class="bg-grey-lighten-4">
-      <!-- Hero Title Section -->
-      <div class="text-center py-6">
-        <h1
-          class="text-h4 font-weight-medium mb-1"
-          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px"
-        >
-          Pixoo Display Manager
-        </h1>
-        <p class="text-body-1 text-medium-emphasis">
-          Monitor and control your IoT pixel displays
-        </p>
-      </div>
-
       <v-container fluid class="pa-8">
         <!-- Loading State -->
         <v-alert
