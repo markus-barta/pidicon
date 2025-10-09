@@ -1,15 +1,15 @@
 /**
- * @fileoverview Startup Scene (Looping)
- * @description Looping version of the startup scene that displays current build
- * information and real-time date/time updates every second. Shows daemon version,
- * git commit hash, and live clock for continuous status monitoring.
+ * @fileoverview Startup Static Scene
+ * @description Static version of the startup scene that shows build information
+ * and deployment details without updating. Displays build number, git commit,
+ * and deployment status as a one-time render.
  * @mqtt
- * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
+ * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup-static"}'
  * @author Markus Barta (mba) with assistance from Cursor AI
  * @license MIT
  */
 
-const name = 'startup';
+const name = 'startup-static';
 const logger = require('../lib/logger');
 const { validateSceneContext } = require('../lib/performance-utils');
 
@@ -46,23 +46,19 @@ async function render(ctx) {
 
   const { device, state } = ctx;
 
-  // Only log debug information on first render
-  if (!state.get('initialized')) {
-    logDebugInfo(state);
-    state.set('initialized', true);
-  }
+  // Log debug information
+  logDebugInfo(state);
 
   // Build version information
   const versionInfo = buildVersionInfo(state);
 
-  // Clear screen and draw startup information with current time
+  // Clear screen and draw startup information
   await drawStartupInfo(device, versionInfo);
 
   // Push the startup frame to the device
   await device.push(name, ctx.publishOk);
 
-  // Continue looping every second
-  return 1000;
+  logger.info(`[STARTUP] Deployment ${versionInfo.deploymentId} displayed`);
 }
 
 function logDebugInfo(state) {
@@ -154,7 +150,7 @@ function buildVersionInfo(state) {
 }
 
 async function drawStartupInfo(device, versionInfo) {
-  const { buildNumber, gitCommit } = versionInfo;
+  const { buildNumber, gitCommit, buildTime, daemonStart } = versionInfo;
 
   // Clear screen with dark background
   await device.fillRectangleRgba([0, 0], [64, 64], COLORS.BACKGROUND);
@@ -189,7 +185,7 @@ async function drawStartupInfo(device, versionInfo) {
   const STATUS_Y = LAYOUT.STATUS_Y;
 
   // Color constants for easy changing
-  const STATUS_TEXT = 'LIVE';
+  const STATUS_TEXT = 'READY';
 
   // Font is 3x5, so height is 5px
   const statusFontHeight = LAYOUT.STATUS_FONT_HEIGHT;
@@ -227,20 +223,25 @@ async function drawStartupInfo(device, versionInfo) {
   // );
 
   // Footer section (48px - 64px)
-  // Current date
-  const now = new Date();
-  const currentDate = now.toISOString().split('T')[0];
+  // Build date (robust parsing)
   await device.drawTextRgbaAligned(
-    currentDate,
+    `${(function () {
+      try {
+        const s = String(buildTime || '');
+        const m = s.match(/\d{4}-\d{2}-\d{2}/);
+        return m ? m[0] : new Date(s).toISOString().split('T')[0];
+      } catch {
+        return new Date().toISOString().split('T')[0];
+      }
+    })()}`,
     [32, LAYOUT.FOOTER_DATE_Y],
     COLORS.FOOTER_TEXT,
     'center',
   );
 
-  // Current time (24h format)
-  const currentTime = now.toLocaleTimeString('de-AT', { hour12: false });
+  // Start time
   await device.drawTextRgbaAligned(
-    currentTime,
+    `${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
     [32, LAYOUT.FOOTER_TIME_Y],
     COLORS.FOOTER_TEXT,
     'center',
@@ -251,9 +252,9 @@ async function cleanup() {
   logger.info(`[STARTUP] Scene cleaned up`);
 }
 
-const wantsLoop = true;
+const wantsLoop = false;
 const description =
-  'Live startup scene with real-time updates every second. Displays build information, daemon version, git commit hash, and continuously updating current date and time. Perfect for monitoring system status and showing the device is actively running.';
+  'Static startup scene displaying build information and deployment details. Shows daemon version, git commit hash, and deployment status without updating. Perfect for static deployment verification where time updates are not needed.';
 const category = 'System';
 
 module.exports = {
