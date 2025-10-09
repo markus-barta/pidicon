@@ -24,6 +24,9 @@ COPY . .
 # Make wrapper script executable
 RUN chmod +x start-daemon.sh
 
+# Ensure node is in PATH for the wrapper script
+ENV PATH="/usr/local/bin:$PATH"
+
 # Set environment variables for version info from build args
 ENV GITHUB_SHA=${GITHUB_SHA}
 ENV GITHUB_REF=${GITHUB_REF}

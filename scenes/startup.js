@@ -61,8 +61,8 @@ async function render(ctx) {
   // Push the startup frame to the device
   await device.push(name, ctx.publishOk);
 
-  // Continue looping every second
-  return 1000;
+  // Continue looping 4x per second
+  return 250;
 }
 
 function logDebugInfo(state) {
