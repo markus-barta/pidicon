@@ -156,20 +156,8 @@
       <div class="scene-control-section mb-4">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
-        <!-- Scene Selector with Next/Prev (single row) -->
+        <!-- Scene Selector with controls on right -->
         <div class="scene-selector-row">
-          <v-btn
-            icon
-            variant="tonal"
-            color="grey-lighten-1"
-            @click="previousScene"
-            :disabled="loading"
-            class="scene-nav-btn"
-            title="Previous scene"
-          >
-            <v-icon>mdi-chevron-left</v-icon>
-          </v-btn>
-
           <div style="flex: 1;">
             <scene-selector
               v-model="selectedScene"
@@ -180,6 +168,19 @@
           </div>
 
           <v-btn
+            icon
+            variant="tonal"
+            color="grey-lighten-1"
+            size="small"
+            @click="previousScene"
+            :disabled="loading"
+            class="scene-nav-btn ml-2"
+            title="Previous scene"
+          >
+            <v-icon>mdi-chevron-left</v-icon>
+          </v-btn>
+
+          <v-btn
             icon="mdi-restart"
             variant="flat"
             color="error"
@@ -187,7 +188,7 @@
             @click="handleSceneRestart"
             :disabled="!selectedScene || loading"
             :loading="loading"
-            class="scene-nav-btn ml-2"
+            class="scene-nav-btn ml-1"
             title="Restart current scene"
           />
 
@@ -195,9 +196,10 @@
             icon
             variant="tonal"
             color="grey-lighten-1"
+            size="small"
             @click="nextScene"
             :disabled="loading"
-            class="scene-nav-btn"
+            class="scene-nav-btn ml-1"
             title="Next scene"
           >
             <v-icon>mdi-chevron-right</v-icon>
@@ -276,7 +278,7 @@
         </h4>
         <v-row dense>
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-col cols="12" lg="4" style="min-width: 250px;">
+          <v-col cols="12" xl="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -295,7 +297,7 @@
           </v-col>
 
           <!-- Uptime Card -->
-          <v-col cols="12" lg="4" style="min-width: 250px;">
+          <v-col cols="12" xl="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -311,7 +313,7 @@
           </v-col>
 
           <!-- Scene Time Card -->
-          <v-col cols="12" lg="4" style="min-width: 250px;">
+          <v-col cols="12" xl="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -396,6 +398,7 @@ const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
+const previousBrightness = ref(75); // Store brightness before power off
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 
@@ -946,8 +949,23 @@ async function toggleDisplay() {
   toggleLoading.value = true;
   try {
     const newState = displayOn.value;
+    
+    if (!newState) {
+      // Power OFF: Store current brightness, set to 0, switch to empty scene
+      previousBrightness.value = brightness.value;
+      brightness.value = 0;
+      await api.setDisplayBrightness(props.device.ip, 0);
+      await api.switchScene(props.device.ip, 'empty', { clear: true });
+      toast.success('Display powered off', 2000);
+    } else {
+      // Power ON: Restore brightness, switch to startup scene
+      brightness.value = previousBrightness.value || 75;
+      await api.setDisplayBrightness(props.device.ip, brightness.value);
+      await api.switchScene(props.device.ip, 'startup', { clear: true });
+      toast.success('Display powered on', 2000);
+    }
+    
     await api.setDisplayPower(props.device.ip, newState);
-    toast.success(`Display turned ${newState ? 'on' : 'off'}`, 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to toggle display: ${err.message}`);
@@ -985,7 +1003,17 @@ async function handleReset() {
 
   resetLoading.value = true;
   try {
+    // Switch to empty scene first for visual feedback
+    await api.switchScene(props.device.ip, 'empty', { clear: true });
+    await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause
+    
+    // Perform the reset
     await api.resetDevice(props.device.ip);
+    
+    // Wait a bit, then switch to startup scene
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await api.switchScene(props.device.ip, 'startup', { clear: true });
+    
     toast.success('Device reset successfully', 2000);
     emit('refresh');
   } catch (err) {

@@ -57,12 +57,16 @@
       </div>
     </v-container>
   </v-app-bar>
+  
+  <!-- Confirm Dialog -->
+  <confirm-dialog ref="confirmDialog" />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
+import ConfirmDialog from './ConfirmDialog.vue';
 
 const api = useApi();
 const toast = useToast();
@@ -76,6 +80,7 @@ const status = ref('Active');
 const startTime = ref(null);
 const uptime = ref('');
 const restarting = ref(false);
+const confirmDialog = ref(null); // Ref to ConfirmDialog component
 
 const statusColor = computed(() => {
   if (status.value === 'Active' || status.value === 'Running') return '#10b981'; // green
@@ -134,9 +139,16 @@ async function loadStatus() {
 }
 
 async function handleRestart() {
-  const confirmed = confirm(
-    'Are you sure you want to restart the daemon? This will briefly interrupt all displays.',
-  );
+  // Use Vue confirm dialog instead of browser confirm
+  const confirmed = await confirmDialog.value?.show({
+    title: 'Restart Daemon',
+    message: 'This will restart the Pixoo daemon process. All displays will briefly show the startup scene during the restart.',
+    confirmText: 'Restart Daemon',
+    cancelText: 'Cancel',
+    confirmColor: 'warning',
+    icon: 'mdi-restart',
+    iconColor: 'warning'
+  });
 
   if (!confirmed) return;
 
