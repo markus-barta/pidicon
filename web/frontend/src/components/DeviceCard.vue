@@ -276,7 +276,7 @@
         </h4>
         <v-row dense>
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-col cols="12" md="4">
+          <v-col cols="12" lg="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -295,7 +295,7 @@
           </v-col>
 
           <!-- Uptime Card -->
-          <v-col cols="12" md="4">
+          <v-col cols="12" lg="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
@@ -311,7 +311,7 @@
           </v-col>
 
           <!-- Scene Time Card -->
-          <v-col cols="12" md="4">
+          <v-col cols="12" lg="4" style="min-width: 250px;">
             <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
               <v-card-text class="pa-4">
                 <div class="d-flex align-center justify-space-between mb-2">
