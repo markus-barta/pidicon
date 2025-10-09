@@ -70,7 +70,7 @@ async function render(ctx) {
   // Return delay to get exactly 1-second ticks
   // If render took 50ms, we wait 950ms to render again
   // This compensates for frame rendering time and ensures second-sharp updates
-  const targetInterval = 1001; // 1 second
+  const targetInterval = 1000; // 1 second
   const nextDelay = Math.max(0, targetInterval - renderTime);
 
   return nextDelay;
