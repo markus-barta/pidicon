@@ -46,6 +46,9 @@ async function render(ctx) {
 
   const { device, state } = ctx;
 
+  // Track render start time for precise 1-second ticks
+  const renderStartTime = Date.now();
+
   // Only log debug information on first render
   if (!state.get('initialized')) {
     logDebugInfo(state);
@@ -61,8 +64,16 @@ async function render(ctx) {
   // Push the startup frame to the device
   await device.push(name, ctx.publishOk);
 
-  // Continue looping 4x per second
-  return 250;
+  // Calculate how long this render took
+  const renderTime = Date.now() - renderStartTime;
+
+  // Return delay to get exactly 1-second ticks
+  // If render took 50ms, we wait 950ms to render again
+  // This compensates for frame rendering time and ensures second-sharp updates
+  const targetInterval = 1000; // 1 second
+  const nextDelay = Math.max(0, targetInterval - renderTime);
+
+  return nextDelay;
 }
 
 function logDebugInfo(state) {
