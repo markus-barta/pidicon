@@ -276,58 +276,52 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">
           Performance Metrics
         </h4>
-        <v-row dense>
+        <div class="metrics-grid">
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-col cols="12" xl="4" style="min-width: 250px;">
-            <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
-              <v-card-text class="pa-4">
-                <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header" style="color: #6366f1;">Performance</div>
-                  <v-icon size="large" style="opacity: 0.3; color: #6366f1;">mdi-speedometer</v-icon>
-                </div>
-                <div class="metric-value mb-1" style="color: #1e293b;">{{ fpsDisplay }} FPS</div>
-                <div class="text-caption" style="color: #64748b;">
-                  {{ frametime }}ms frametime
-                </div>
-                <div class="text-caption" style="color: #94a3b8;">
-                  {{ frameCount.toLocaleString() }} frames sent
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
+          <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="metric-header" style="color: #6366f1;">Performance</div>
+                <v-icon size="large" style="opacity: 0.3; color: #6366f1;">mdi-speedometer</v-icon>
+              </div>
+              <div class="metric-value mb-1" style="color: #1e293b;">{{ fpsDisplay }} FPS</div>
+              <div class="text-caption" style="color: #64748b;">
+                {{ frametime }}ms frametime
+              </div>
+              <div class="text-caption" style="color: #94a3b8;">
+                {{ frameCount.toLocaleString() }} frames sent
+              </div>
+            </v-card-text>
+          </v-card>
 
           <!-- Uptime Card -->
-          <v-col cols="12" xl="4" style="min-width: 250px;">
-            <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
-              <v-card-text class="pa-4">
-                <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header" style="color: #059669;">Uptime</div>
-                  <v-icon size="large" style="opacity: 0.3; color: #059669;">mdi-clock-outline</v-icon>
-                </div>
-                <div class="metric-value mb-1" style="color: #1e293b;">{{ uptimeDisplay }}</div>
-                <div class="text-caption" style="color: #64748b;">
-                  Since daemon start
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
+          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="metric-header" style="color: #059669;">Uptime</div>
+                <v-icon size="large" style="opacity: 0.3; color: #059669;">mdi-clock-outline</v-icon>
+              </div>
+              <div class="metric-value mb-1" style="color: #1e293b;">{{ uptimeDisplay }}</div>
+              <div class="text-caption" style="color: #64748b;">
+                Since daemon start
+              </div>
+            </v-card-text>
+          </v-card>
 
           <!-- Scene Time Card -->
-          <v-col cols="12" xl="4" style="min-width: 250px;">
-            <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
-              <v-card-text class="pa-4">
-                <div class="d-flex align-center justify-space-between mb-2">
-                  <div class="metric-header" style="color: #7c3aed;">Scene Time</div>
-                  <v-icon size="large" style="opacity: 0.3; color: #7c3aed;">mdi-play-circle-outline</v-icon>
-                </div>
-                <div class="metric-value mb-1" style="color: #1e293b;">{{ sceneTimeDisplay }}</div>
-                <div class="text-caption" style="color: #64748b;">
-                  {{ sceneStatusText }}
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-2">
+                <div class="metric-header" style="color: #7c3aed;">Scene Time</div>
+                <v-icon size="large" style="opacity: 0.3; color: #7c3aed;">mdi-play-circle-outline</v-icon>
+              </div>
+              <div class="metric-value mb-1" style="color: #1e293b;">{{ sceneTimeDisplay }}</div>
+              <div class="text-caption" style="color: #64748b;">
+                {{ sceneStatusText }}
+              </div>
+            </v-card-text>
+          </v-card>
+        </div>
 
         <!-- Frametime Chart Card (Full Width) -->
         <v-row dense class="mt-4">
@@ -1292,5 +1286,19 @@ onUnmounted(() => {
   background-color: white;
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Metrics Grid - Force 3 columns that stay inline */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Stack to single column only when viewport is too narrow */
+@media (max-width: 799px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
