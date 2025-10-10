@@ -46,13 +46,13 @@
         </v-chip>
         <v-btn
           color="error"
-          variant="outlined"
+          variant="tonal"
           prepend-icon="mdi-restart"
           @click="handleRestart"
           :loading="restarting"
           size="small"
         >
-          Restart
+          Restart Daemon
         </v-btn>
       </div>
     </v-container>

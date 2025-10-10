@@ -51,27 +51,6 @@
           </v-chip>
         </div>
         <div class="d-flex align-center">
-          <v-chip
-            :color="device.status === 'running' ? 'success' : undefined"
-            size="small"
-            :variant="device.status === 'running' ? 'flat' : 'outlined'"
-            :style="device.status === 'running' ? {} : { borderColor: '#d1d5db' }"
-            class="mr-2 status-badge"
-          >
-            <span style="display: inline-flex; align-items: center;">
-              <span :style="{ 
-                display: 'inline-block', 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
-                backgroundColor: device.status === 'running' ? '#fff' : '#ef4444', 
-                marginRight: '6px' 
-              }"></span>
-              <span :style="{ color: device.status === 'running' ? '#fff' : '#6b7280' }">
-                {{ device.status === 'running' ? 'Active' : 'Stopped' }}
-              </span>
-            </span>
-          </v-chip>
           <v-btn
             :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
             variant="text"
@@ -120,14 +99,14 @@
 
         <v-btn
           color="error"
-          variant="flat"
+          variant="tonal"
           size="small"
           prepend-icon="mdi-restart"
           :loading="resetLoading"
           @click="handleReset"
           class="action-button"
         >
-          Reset
+          Reset Pixoo
         </v-btn>
 
         <v-spacer></v-spacer>
@@ -181,8 +160,8 @@
           </v-btn>
 
           <v-btn
-            icon="mdi-restart"
-            variant="flat"
+            prepend-icon="mdi-restart"
+            variant="tonal"
             color="error"
             size="small"
             @click="handleSceneRestart"
@@ -190,7 +169,9 @@
             :loading="loading"
             class="scene-nav-btn ml-1"
             title="Restart current scene"
-          />
+          >
+            Restart Scene
+          </v-btn>
 
           <v-btn
             icon
@@ -278,11 +259,11 @@
         </h4>
         <div class="metrics-grid">
           <!-- Performance Card (FPS + Frametime + Frame Count) -->
-          <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #6366f1;">
+          <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #3b82f6;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #6366f1;">Performance</div>
-                <v-icon size="large" style="opacity: 0.3; color: #6366f1;">mdi-speedometer</v-icon>
+                <div class="metric-header" style="color: #3b82f6;">Performance</div>
+                <v-icon size="large" style="opacity: 0.2; color: #3b82f6;">mdi-speedometer</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ fpsDisplay }} FPS</div>
               <div class="text-caption" style="color: #64748b;">
@@ -295,11 +276,11 @@
           </v-card>
 
           <!-- Uptime Card -->
-          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #059669;">
+          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #10b981;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #059669;">Uptime</div>
-                <v-icon size="large" style="opacity: 0.3; color: #059669;">mdi-clock-outline</v-icon>
+                <div class="metric-header" style="color: #10b981;">Uptime</div>
+                <v-icon size="large" style="opacity: 0.2; color: #10b981;">mdi-clock-outline</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ uptimeDisplay }}</div>
               <div class="text-caption" style="color: #64748b;">
@@ -309,11 +290,11 @@
           </v-card>
 
           <!-- Scene Time Card -->
-          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #7c3aed;">
+          <v-card class="metric-card metric-card-scene" elevation="0" style="border-left: 4px solid #8b5cf6;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #7c3aed;">Scene Time</div>
-                <v-icon size="large" style="opacity: 0.3; color: #7c3aed;">mdi-play-circle-outline</v-icon>
+                <div class="metric-header" style="color: #8b5cf6;">Scene Time</div>
+                <v-icon size="large" style="opacity: 0.2; color: #8b5cf6;">mdi-play-circle-outline</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ sceneTimeDisplay }}</div>
               <div class="text-caption" style="color: #64748b;">
@@ -323,8 +304,8 @@
           </v-card>
         </div>
 
-        <!-- Frametime Chart Card (Full Width) -->
-        <v-row dense class="mt-4">
+        <!-- Frametime Chart Card (Full Width) - Hidden in mock mode -->
+        <v-row v-if="device.driver !== 'mock'" dense class="mt-4">
           <v-col cols="12">
             <v-card class="metric-card metric-card-chart" elevation="0">
               <v-card-text class="pa-4">
@@ -1166,15 +1147,18 @@ onUnmounted(() => {
 }
 
 .metric-card-performance {
-  background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
-  border: 1px solid #f3e8ff;
-  color: #6d28d9;
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
 }
 
 .metric-card-uptime {
   background: linear-gradient(135deg, #ffffff 0%, #d1fae5 100%);
-  border: 1px solid #d1fae5;
-  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.metric-card-scene {
+  background: linear-gradient(135deg, #ffffff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe;
 }
 
 .metric-card-frames {
@@ -1288,17 +1272,11 @@ onUnmounted(() => {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
-/* Metrics Grid - Force 3 columns that stay inline */
+/* Metrics Grid - Force 3 columns that NEVER stack */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-}
-
-/* Stack to single column only when viewport is too narrow */
-@media (max-width: 799px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
+  /* No media query - cards stay horizontal at all window sizes */
 }
 </style>
