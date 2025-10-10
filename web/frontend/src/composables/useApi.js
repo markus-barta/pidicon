@@ -58,6 +58,24 @@ export function useApi() {
     });
   }
 
+  async function pauseScene(ip) {
+    return await request(`/devices/${ip}/scene/pause`, {
+      method: 'POST',
+    });
+  }
+
+  async function resumeScene(ip) {
+    return await request(`/devices/${ip}/scene/resume`, {
+      method: 'POST',
+    });
+  }
+
+  async function stopScene(ip) {
+    return await request(`/devices/${ip}/scene/stop`, {
+      method: 'POST',
+    });
+  }
+
   async function setDisplayPower(ip, on) {
     return await request(`/devices/${ip}/display`, {
       method: 'POST',
@@ -110,6 +128,9 @@ export function useApi() {
     getDeviceInfo,
     getDeviceMetrics,
     switchScene,
+    pauseScene,
+    resumeScene,
+    stopScene,
     setDisplayPower,
     setDisplayBrightness,
     resetDevice,

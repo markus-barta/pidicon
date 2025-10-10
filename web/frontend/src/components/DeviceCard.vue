@@ -135,56 +135,83 @@
       <div class="scene-control-section mb-4">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
-        <!-- Scene Selector with controls on right -->
-        <div class="scene-selector-row">
-          <div style="flex: 1;">
-            <scene-selector
-              v-model="selectedScene"
-              :disabled="loading"
-              :loading="loading"
-              @change="handleSceneChange"
-            />
-          </div>
-
-          <v-btn
-            icon
-            variant="tonal"
-            color="grey-lighten-1"
-            size="small"
-            @click="previousScene"
+        <!-- Scene Selector -->
+        <div class="mb-3">
+          <scene-selector
+            v-model="selectedScene"
             :disabled="loading"
-            class="scene-nav-btn ml-2"
-            title="Previous scene"
-          >
-            <v-icon>mdi-chevron-left</v-icon>
-          </v-btn>
-
-          <v-btn
-            prepend-icon="mdi-restart"
-            variant="tonal"
-            color="error"
-            size="small"
-            @click="handleSceneRestart"
-            :disabled="!selectedScene || loading"
             :loading="loading"
-            class="scene-nav-btn ml-1"
-            title="Restart current scene"
-          >
-            Restart Scene
-          </v-btn>
+            @change="handleSceneChange"
+          />
+        </div>
+
+        <!-- Cassette Player Controls -->
+        <div class="cassette-player-controls">
+          <v-btn
+            icon="mdi-skip-previous"
+            :variant="isPressed('prior') ? 'tonal' : 'text'"
+            :color="isPressed('prior') ? 'grey-darken-2' : 'grey'"
+            size="large"
+            @click="handlePrior"
+            :disabled="loading"
+            class="cassette-btn"
+            title="Previous scene"
+          />
+          
+          <v-btn
+            icon="mdi-stop"
+            :variant="isPressed('stop') ? 'tonal' : 'text'"
+            :color="isPressed('stop') ? 'grey-darken-2' : 'grey'"
+            size="large"
+            @click="handleStop"
+            :disabled="loading"
+            class="cassette-btn"
+            title="Stop scene"
+          />
 
           <v-btn
-            icon
-            variant="tonal"
-            color="grey-lighten-1"
-            size="small"
-            @click="nextScene"
+            icon="mdi-play"
+            :variant="isPressed('play') ? 'tonal' : 'text'"
+            :color="isPressed('play') ? 'success' : 'grey'"
+            size="large"
+            @click="handlePlay"
             :disabled="loading"
-            class="scene-nav-btn ml-1"
+            class="cassette-btn"
+            title="Play scene"
+          />
+
+          <v-btn
+            icon="mdi-pause"
+            :variant="isPressed('pause') ? 'tonal' : 'text'"
+            :color="isPressed('pause') ? 'warning' : 'grey'"
+            size="large"
+            @click="handlePause"
+            :disabled="loading || !currentSceneInfo?.wantsLoop"
+            class="cassette-btn"
+            title="Pause scene"
+          />
+
+          <v-btn
+            icon="mdi-restart"
+            :variant="isPressed('restart') ? 'tonal' : 'text'"
+            :color="isPressed('restart') ? 'grey-darken-2' : 'grey'"
+            size="large"
+            @click="handleRestart"
+            :disabled="loading"
+            class="cassette-btn"
+            title="Restart scene"
+          />
+
+          <v-btn
+            icon="mdi-skip-next"
+            :variant="isPressed('next') ? 'tonal' : 'text'"
+            :color="isPressed('next') ? 'grey-darken-2' : 'grey'"
+            size="large"
+            @click="handleNext"
+            :disabled="loading"
+            class="cassette-btn"
             title="Next scene"
-          >
-            <v-icon>mdi-chevron-right</v-icon>
-          </v-btn>
+          />
         </div>
 
         <!-- Scene Description Card -->
@@ -573,6 +600,28 @@ const successRate = computed(() => {
   return Math.round((pushCount.value / total) * 100);
 });
 
+// Cassette player button states
+const playState = computed(() => props.device?.playState || 'stopped');
+
+function isPressed(button) {
+  const state = playState.value;
+  
+  switch (button) {
+    case 'play':
+      return state === 'playing' || state === 'paused';
+    case 'pause':
+      return state === 'paused';
+    case 'stop':
+      return state === 'stopped';
+    case 'prior':
+    case 'next':
+    case 'restart':
+      return false; // Momentary actions, never stay pressed
+    default:
+      return false;
+  }
+}
+
 // ECharts configuration - reactively updates when frametimeHistory changes
 const chartOptions = computed(() => {
   if (frametimeHistory.value.length === 0) return null;
@@ -887,36 +936,135 @@ async function handleSceneChange(sceneName) {
   }
 }
 
-// Restart current scene (UI-511)
-async function handleSceneRestart() {
-  if (!selectedScene.value || loading.value) return;
+// ============================================================================
+// Cassette Player Control Handlers
+// ============================================================================
+
+async function handlePlay() {
+  if (loading.value) return;
+
+  const state = playState.value;
+  
+  if (state === 'paused') {
+    // Resume paused scene
+    loading.value = true;
+    try {
+      await api.resumeScene(props.device.ip);
+      toast.success('Scene resumed', 2000);
+      emit('refresh');
+    } catch (err) {
+      toast.error(`Failed to resume: ${err.message}`);
+    } finally {
+      loading.value = false;
+    }
+  } else if (state === 'stopped') {
+    // Start selected scene
+    if (!selectedScene.value) return;
+    loading.value = true;
+    try {
+      await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
+      toast.success(`Playing ${formatSceneName(selectedScene.value)}`, 2000);
+      emit('refresh');
+    } catch (err) {
+      toast.error(`Failed to play: ${err.message}`);
+    } finally {
+      loading.value = false;
+    }
+  }
+  // If already playing, do nothing
+}
+
+async function handlePause() {
+  if (loading.value) return;
+
+  const state = playState.value;
+  
+  if (state === 'paused') {
+    // Unpause (same as play)
+    await handlePlay();
+  } else if (state === 'playing') {
+    // Pause
+    loading.value = true;
+    try {
+      await api.pauseScene(props.device.ip);
+      toast.success('Scene paused', 2000);
+      emit('refresh');
+    } catch (err) {
+      toast.error(`Failed to pause: ${err.message}`);
+    } finally {
+      loading.value = false;
+    }
+  }
+}
+
+async function handleStop() {
+  if (loading.value) return;
 
   loading.value = true;
   try {
-    // Resend the same scene to backend (triggers cleanup + init + render)
-    await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
-    toast.success(`Restarted ${formatSceneName(selectedScene.value)}`, 2000);
+    await api.stopScene(props.device.ip);
+    toast.success('Scene stopped', 2000);
     emit('refresh');
   } catch (err) {
-    toast.error(`Failed to restart scene: ${err.message}`);
+    toast.error(`Failed to stop: ${err.message}`);
   } finally {
     loading.value = false;
   }
 }
 
-function previousScene() {
-  const scenes = sceneStore.scenes;
-  const currentIndex = scenes.findIndex((s) => s.name === selectedScene.value);
-  if (currentIndex > 0) {
-    handleSceneChange(scenes[currentIndex - 1].name);
+async function handleRestart() {
+  if (!selectedScene.value || loading.value) return;
+
+  loading.value = true;
+  try {
+    // Stop, then play (resend scene)
+    await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
+    toast.success(`Restarted ${formatSceneName(selectedScene.value)}`, 2000);
+    emit('refresh');
+  } catch (err) {
+    toast.error(`Failed to restart: ${err.message}`);
+  } finally {
+    loading.value = false;
   }
 }
 
-function nextScene() {
+async function handlePrior() {
+  const scenes = sceneStore.scenes;
+  const currentIndex = scenes.findIndex((s) => s.name === selectedScene.value);
+  if (currentIndex > 0) {
+    const prevScene = scenes[currentIndex - 1].name;
+    loading.value = true;
+    try {
+      // Stop current, switch to previous, play
+      await api.switchScene(props.device.ip, prevScene, { clear: true });
+      selectedScene.value = prevScene;
+      toast.success(`Playing ${formatSceneName(prevScene)}`, 2000);
+      emit('refresh');
+    } catch (err) {
+      toast.error(`Failed to switch scene: ${err.message}`);
+    } finally {
+      loading.value = false;
+    }
+  }
+}
+
+async function handleNext() {
   const scenes = sceneStore.scenes;
   const currentIndex = scenes.findIndex((s) => s.name === selectedScene.value);
   if (currentIndex < scenes.length - 1) {
-    handleSceneChange(scenes[currentIndex + 1].name);
+    const nextScene = scenes[currentIndex + 1].name;
+    loading.value = true;
+    try {
+      // Stop current, switch to next, play
+      await api.switchScene(props.device.ip, nextScene, { clear: true });
+      selectedScene.value = nextScene;
+      toast.success(`Playing ${formatSceneName(nextScene)}`, 2000);
+      emit('refresh');
+    } catch (err) {
+      toast.error(`Failed to switch scene: ${err.message}`);
+    } finally {
+      loading.value = false;
+    }
   }
 }
 
@@ -1111,12 +1259,38 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
-.scene-nav-btn {
-  margin: 0 !important;
-  padding: 0 !important;
-  align-self: center;
-  /* Vuetify v-select with density="comfortable" has 56px height, buttons should align to center */
-  flex-shrink: 0;
+/* Cassette Player Controls - inspired by classic Sony Walkman */
+.cassette-player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 16px;
+}
+
+.cassette-btn {
+  transition: all 0.15s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.cassette-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.cassette-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Pressed state styling */
+.cassette-btn.v-btn--variant-tonal {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(1px);
 }
 
 .scene-description-card {

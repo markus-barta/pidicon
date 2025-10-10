@@ -247,6 +247,57 @@ function startWebServer(container, logger) {
     }
   });
 
+  // POST /api/devices/:ip/scene/pause - Pause current scene
+  app.post('/api/devices/:ip/scene/pause', async (req, res) => {
+    try {
+      logger.ok(`[WEB UI] Pausing scene on ${req.params.ip}`, {
+        source: 'web-ui',
+      });
+
+      const result = await sceneService.pauseScene(req.params.ip);
+      res.json(result);
+    } catch (error) {
+      logger.error(`[WEB UI] Failed to pause scene on ${req.params.ip}:`, {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/devices/:ip/scene/resume - Resume paused scene
+  app.post('/api/devices/:ip/scene/resume', async (req, res) => {
+    try {
+      logger.ok(`[WEB UI] Resuming scene on ${req.params.ip}`, {
+        source: 'web-ui',
+      });
+
+      const result = await sceneService.resumeScene(req.params.ip);
+      res.json(result);
+    } catch (error) {
+      logger.error(`[WEB UI] Failed to resume scene on ${req.params.ip}:`, {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/devices/:ip/scene/stop - Stop current scene
+  app.post('/api/devices/:ip/scene/stop', async (req, res) => {
+    try {
+      logger.ok(`[WEB UI] Stopping scene on ${req.params.ip}`, {
+        source: 'web-ui',
+      });
+
+      const result = await sceneService.stopScene(req.params.ip);
+      res.json(result);
+    } catch (error) {
+      logger.error(`[WEB UI] Failed to stop scene on ${req.params.ip}:`, {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/devices/:ip/frametime - Get current frametime/FPS
   app.get('/api/devices/:ip/frametime', async (req, res) => {
     try {
