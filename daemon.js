@@ -360,7 +360,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
           data: deviceInfo,
           timestamp: Date.now(),
         });
-        logger.debug(`📡 Broadcast device_update for ${deviceIp}`);
+        logger.info(`📡 Broadcast device_update for ${deviceIp}`);
       } catch (error) {
         // Log errors even in production
         logger.warn('WebSocket broadcast failed:', {
