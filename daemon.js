@@ -331,11 +331,12 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
 
   // Event-driven WebSocket update: Broadcast when frame is actually rendered
   if (webServer?.wsBroadcast) {
-    // Get fresh device state asynchronously (non-blocking)
-    // Use setTimeout(0) for async execution (Node.js global)
+    // Get deviceService reference BEFORE async callback (closure capture)
+    const deviceService = container.resolve('deviceService');
+
+    // Broadcast asynchronously (non-blocking)
     setTimeout(async () => {
       try {
-        const deviceService = container.resolve('deviceService');
         const deviceInfo = await deviceService.getDevice(deviceIp);
         webServer.wsBroadcast({
           type: 'device_update',
@@ -344,8 +345,11 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
           timestamp: Date.now(),
         });
       } catch (error) {
-        // Fail silently - WebSocket updates are non-critical
-        logger.debug('WebSocket broadcast failed:', { error: error.message });
+        // Log errors even in production
+        logger.warn('WebSocket broadcast failed:', {
+          deviceIp,
+          error: error.message,
+        });
       }
     }, 0);
   }
