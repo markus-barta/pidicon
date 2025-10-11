@@ -191,6 +191,12 @@ if (WEB_UI_ENABLED) {
   try {
     const { startWebServer } = require('./web/server');
     webServer = startWebServer(container, logger);
+    logger.info(`🔍 webServer initialized:`, {
+      hasWebServer: !!webServer,
+      hasWsBroadcast: !!webServer?.wsBroadcast,
+      webServerType: typeof webServer,
+      webServerKeys: webServer ? Object.keys(webServer).join(', ') : 'null',
+    });
   } catch (error) {
     logger.warn('Failed to start Web UI:', { error: error.message });
     logger.info('Web UI is optional. Daemon will continue without it.');
@@ -300,6 +306,16 @@ function publishMetrics(deviceIp) {
 }
 
 function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
+  // DEBUG: Log webServer state on FIRST call only
+  if (!publishOk._logged) {
+    logger.info(`🔍 publishOk called - webServer state:`, {
+      hasWebServer: !!webServer,
+      hasWsBroadcast: !!webServer?.wsBroadcast,
+      webServerType: typeof webServer,
+    });
+    publishOk._logged = true;
+  }
+
   const msg = {
     scene: sceneName,
     frametime,
