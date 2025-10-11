@@ -958,17 +958,32 @@ async function handlePlay() {
       loading.value = false;
     }
   } else if (state === 'stopped') {
-    // Start selected scene
-    if (!selectedScene.value) return;
-    loading.value = true;
-    try {
-      await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
-      toast.success(`Playing ${formatSceneName(selectedScene.value)}`, 2000);
-      emit('refresh');
-    } catch (err) {
-      toast.error(`Failed to play: ${err.message}`);
-    } finally {
-      loading.value = false;
+    // Resume stopped scene (scene is still loaded, just restart it)
+    const currentScene = props.device.currentScene;
+    if (currentScene && selectedScene.value === currentScene) {
+      // Same scene - just resume/restart
+      loading.value = true;
+      try {
+        await api.resumeScene(props.device.ip);
+        toast.success('Scene resumed', 2000);
+        emit('refresh');
+      } catch (err) {
+        toast.error(`Failed to resume: ${err.message}`);
+      } finally {
+        loading.value = false;
+      }
+    } else if (selectedScene.value) {
+      // Different scene selected - switch to it
+      loading.value = true;
+      try {
+        await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
+        toast.success(`Playing ${formatSceneName(selectedScene.value)}`, 2000);
+        emit('refresh');
+      } catch (err) {
+        toast.error(`Failed to play: ${err.message}`);
+      } finally {
+        loading.value = false;
+      }
     }
   }
   // If already playing, do nothing
