@@ -135,87 +135,92 @@
       <div class="scene-control-section mb-4">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
         
-        <!-- Scene Selector -->
-        <div class="mb-3">
-          <scene-selector
-            v-model="selectedScene"
-            :disabled="loading"
-            :loading="loading"
-            @change="handleSceneChange"
-          />
-        </div>
+        <!-- Scene Selector with inline controls -->
+        <div class="scene-control-row">
+          <div style="flex: 1;">
+            <scene-selector
+              v-model="selectedScene"
+              :disabled="loading"
+              :loading="loading"
+              @change="handleSceneChange"
+            />
+          </div>
 
-        <!-- Cassette Player Controls -->
-        <div class="cassette-player-controls">
-          <v-btn
-            icon="mdi-skip-previous"
-            :variant="isPressed('prior') ? 'tonal' : 'text'"
-            :color="isPressed('prior') ? 'grey-darken-2' : 'grey'"
-            size="large"
-            @click="handlePrior"
-            :disabled="loading"
-            class="cassette-btn"
-            title="Previous scene"
-          />
-          
-          <v-btn
-            icon="mdi-stop"
-            :variant="isPressed('stop') ? 'tonal' : 'text'"
-            :color="isPressed('stop') ? 'grey-darken-2' : 'grey'"
-            size="large"
-            @click="handleStop"
-            :disabled="loading"
-            class="cassette-btn"
-            title="Stop scene"
-          />
+          <div class="scene-controls-inline">
+            <v-btn
+              icon="mdi-restart"
+              :variant="isPressed('restart') ? 'tonal' : 'text'"
+              :color="isPressed('restart') ? 'grey-darken-2' : 'grey'"
+              size="small"
+              @click="handleRestart"
+              :disabled="loading"
+              class="control-btn"
+              title="Restart scene"
+            />
 
-          <v-btn
-            icon="mdi-play"
-            :variant="isPressed('play') ? 'tonal' : 'text'"
-            :color="isPressed('play') ? 'success' : 'grey'"
-            size="large"
-            @click="handlePlay"
-            :disabled="loading"
-            class="cassette-btn"
-            title="Play scene"
-          />
+            <div class="control-spacer"></div>
 
-          <v-btn
-            icon="mdi-pause"
-            :variant="isPressed('pause') ? 'tonal' : 'text'"
-            :color="isPressed('pause') ? 'warning' : 'grey'"
-            size="large"
-            @click="handlePause"
-            :disabled="loading || !currentSceneInfo?.wantsLoop"
-            class="cassette-btn"
-            title="Pause scene"
-          />
+            <v-btn
+              icon="mdi-play"
+              :variant="isPressed('play') ? 'tonal' : 'text'"
+              :color="isPressed('play') ? 'success' : 'grey'"
+              size="small"
+              @click="handlePlay"
+              :disabled="loading"
+              class="control-btn"
+              title="Play scene"
+            />
 
-          <v-btn
-            icon="mdi-restart"
-            :variant="isPressed('restart') ? 'tonal' : 'text'"
-            :color="isPressed('restart') ? 'grey-darken-2' : 'grey'"
-            size="large"
-            @click="handleRestart"
-            :disabled="loading"
-            class="cassette-btn"
-            title="Restart scene"
-          />
+            <v-btn
+              icon="mdi-pause"
+              :variant="isPressed('pause') ? 'tonal' : 'text'"
+              :color="isPressed('pause') ? 'warning' : 'grey'"
+              size="small"
+              @click="handlePause"
+              :disabled="loading || !currentSceneInfo?.wantsLoop"
+              class="control-btn"
+              title="Pause scene"
+            />
 
-          <v-btn
-            icon="mdi-skip-next"
-            :variant="isPressed('next') ? 'tonal' : 'text'"
-            :color="isPressed('next') ? 'grey-darken-2' : 'grey'"
-            size="large"
-            @click="handleNext"
-            :disabled="loading"
-            class="cassette-btn"
-            title="Next scene"
-          />
+            <v-btn
+              icon="mdi-stop"
+              :variant="isPressed('stop') ? 'tonal' : 'text'"
+              :color="isPressed('stop') ? 'error' : 'grey'"
+              size="small"
+              @click="handleStop"
+              :disabled="loading"
+              class="control-btn"
+              title="Stop scene"
+            />
+
+            <div class="control-spacer"></div>
+
+            <v-btn
+              icon="mdi-skip-previous"
+              :variant="isPressed('prior') ? 'tonal' : 'text'"
+              :color="isPressed('prior') ? 'grey-darken-2' : 'grey'"
+              size="small"
+              @click="handlePrior"
+              :disabled="loading"
+              class="control-btn"
+              title="Previous scene"
+            />
+
+            <v-btn
+              icon="mdi-skip-next"
+              :variant="isPressed('next') ? 'tonal' : 'text'"
+              :color="isPressed('next') ? 'grey-darken-2' : 'grey'"
+              size="small"
+              @click="handleNext"
+              :disabled="loading"
+              class="control-btn"
+              title="Next scene"
+            />
+          </div>
         </div>
 
         <!-- Scene Description Card -->
-        <div v-if="currentSceneInfo" class="scene-description-card pa-4">
+        <div v-if="currentSceneInfo" class="scene-description-card pa-4 mt-3">
           <div class="d-flex align-start">
             <v-icon
               :icon="currentSceneInfo.wantsLoop ? 'mdi-play-circle' : 'mdi-image'"
@@ -229,7 +234,17 @@
                   <span class="text-subtitle-2 font-weight-bold mr-2">
                     {{ formatSceneName(currentSceneInfo.name) }}
                   </span>
-                  <!-- Scene State Indicator (UI-510) - stays on left -->
+                  <!-- Play State Badge -->
+                  <v-chip
+                    :color="playStateColor"
+                    size="small"
+                    variant="flat"
+                    class="mr-2"
+                  >
+                    <v-icon start size="x-small">{{ playStateIcon }}</v-icon>
+                    {{ playStateLabel }}
+                  </v-chip>
+                  <!-- Scene State Indicator (UI-510) -->
                   <v-chip
                     :color="sceneStateColor"
                     size="small"
@@ -474,6 +489,9 @@ function updateUptime() {
 }
 
 function updateSceneTime() {
+  // Check play state first
+  const currentPlayState = playState.value;
+  
   // Check if scene is completed
   const sceneState = props.device?.sceneState;
   if (sceneState?.testCompleted) {
@@ -482,6 +500,18 @@ function updateSceneTime() {
       clearInterval(sceneTimeInterval);
       sceneTimeInterval = null;
     }
+    return;
+  }
+  
+  // If stopped, show "Stopped"
+  if (currentPlayState === 'stopped') {
+    sceneTimeDisplay.value = 'Stopped';
+    return;
+  }
+  
+  // If paused, keep showing current time but don't update
+  if (currentPlayState === 'paused') {
+    // Time display stays frozen at current value
     return;
   }
   
@@ -551,9 +581,17 @@ const selectedSceneMetadata = computed(() => {
 });
 
 const sceneStatusText = computed(() => {
+  const currentPlayState = playState.value;
   const sceneState = props.device?.sceneState;
+  
   if (sceneState?.testCompleted) {
     return 'Complete';
+  }
+  if (currentPlayState === 'stopped') {
+    return 'Stopped';
+  }
+  if (currentPlayState === 'paused') {
+    return 'Paused';
   }
   if (sceneState?.isRunning === false) {
     return 'Stopped';
@@ -602,6 +640,32 @@ const successRate = computed(() => {
 
 // Cassette player button states
 const playState = computed(() => props.device?.playState || 'stopped');
+
+// Play state badge
+const playStateLabel = computed(() => {
+  const state = playState.value;
+  return state.charAt(0).toUpperCase() + state.slice(1);
+});
+
+const playStateColor = computed(() => {
+  const state = playState.value;
+  const colors = {
+    playing: 'success',
+    paused: 'warning',
+    stopped: 'grey',
+  };
+  return colors[state] || 'grey';
+});
+
+const playStateIcon = computed(() => {
+  const state = playState.value;
+  const icons = {
+    playing: 'mdi-play',
+    paused: 'mdi-pause',
+    stopped: 'mdi-stop',
+  };
+  return icons[state] || 'mdi-help-circle';
+});
 
 function isPressed(button) {
   const state = playState.value;
@@ -748,11 +812,26 @@ watch(
   () => props.device.metrics,
   (newMetrics) => {
     console.log('[DEBUG] Device metrics changed:', newMetrics);
-    if (newMetrics && !isCollapsed.value) {
+    if (newMetrics && !isCollapsed.value && playState.value === 'playing') {
       loadMetrics();
     }
   },
   { deep: true }
+);
+
+// Watch playState changes to restart/pause metrics polling
+watch(
+  () => playState.value,
+  (newState, oldState) => {
+    console.log(`[DEBUG] Play state changed: ${oldState} -> ${newState}`);
+    if (newState === 'playing' && (oldState === 'paused' || oldState === 'stopped')) {
+      // Resume metrics polling
+      if (!metricsInterval && !isCollapsed.value) {
+        console.log('[DEBUG] Resuming metrics polling');
+        loadMetrics();
+      }
+    }
+  }
 );
 
 // Watch for scene completion to stop timer immediately (UI-506)
@@ -807,6 +886,13 @@ function loadMetrics() {
   console.log('[DEBUG] === loadMetrics START ===');
   console.log('[DEBUG] props.device:', props.device);
   console.log('[DEBUG] isCollapsed:', isCollapsed.value);
+  
+  // Check play state - stop metrics if paused or stopped
+  const currentPlayState = playState.value;
+  if (currentPlayState === 'paused' || currentPlayState === 'stopped') {
+    console.log(`[DEBUG] Play state is ${currentPlayState} - pausing metrics updates`);
+    return; // Don't stop the interval, just skip updates
+  }
   
   // Check if scene is completed or not running
   const sceneState = props.device?.sceneState;
@@ -1267,45 +1353,40 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.scene-selector-row {
+/* Scene control row - selector + inline controls */
+.scene-control-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-/* Cassette Player Controls - inspired by classic Sony Walkman */
-.cassette-player-controls {
+.scene-controls-inline {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px;
-  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
-  border-radius: 12px;
-  border: 1px solid #d1d5db;
-  margin-bottom: 16px;
+  gap: 4px;
 }
 
-.cassette-btn {
+.control-btn {
   transition: all 0.15s ease !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  min-width: 36px !important;
 }
 
-.cassette-btn:hover {
+.control-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
-.cassette-btn:active {
+.control-btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Pressed state styling */
-.cassette-btn.v-btn--variant-tonal {
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  transform: translateY(1px);
+.control-btn.v-btn--variant-tonal {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+.control-spacer {
+  width: 8px;
 }
 
 .scene-description-card {
