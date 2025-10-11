@@ -1,0 +1,20 @@
+---
+description: Always include DEBUG.md content for production server access
+alwaysApply: true
+config:
+  type: context
+  files:
+    - DEBUG.md
+reference: /DEBUG.md
+---
+
+# Debug Guide Context
+
+Always include the DEBUG.md file content when debugging production issues or accessing the miniserver24 Docker container.
+
+This provides quick access commands for:
+- SSH access to miniserver24
+- Docker container inspection
+- Log viewing
+- Version checking
+- Container restart procedures

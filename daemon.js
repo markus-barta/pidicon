@@ -337,7 +337,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
     // Broadcast asynchronously (non-blocking)
     setTimeout(async () => {
       try {
-        const deviceInfo = await deviceService.getDevice(deviceIp);
+        const deviceInfo = await deviceService.getDeviceInfo(deviceIp);
         webServer.wsBroadcast({
           type: 'device_update',
           deviceIp,
