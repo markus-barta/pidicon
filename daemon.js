@@ -344,6 +344,7 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
           data: deviceInfo,
           timestamp: Date.now(),
         });
+        logger.debug(`📡 Broadcast device_update for ${deviceIp}`);
       } catch (error) {
         // Log errors even in production
         logger.warn('WebSocket broadcast failed:', {
@@ -352,6 +353,11 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
         });
       }
     }, 0);
+  } else if (webServer) {
+    logger.warn('❌ webServer exists but wsBroadcast is missing!', {
+      hasWsBroadcast: !!webServer.wsBroadcast,
+      webServerKeys: Object.keys(webServer || {}).join(', '),
+    });
   }
 }
 
