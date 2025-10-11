@@ -534,26 +534,34 @@ const statusText = computed(() => {
 });
 
 const lastSeen = computed(() => {
-  // Only show last seen for real devices with actual metrics timestamp
+  // Only show last seen for real devices with actual hardware ACK timestamp
   if (props.device.driver !== 'real') {
     return 'N/A';
   }
   
-  const metricsTs = props.device?.metrics?.ts;
-  if (metricsTs) {
-    // Show relative time if recent (< 60 seconds ago)
-    const now = Date.now();
-    const diff = now - metricsTs;
-    if (diff < 60000) {
-      const seconds = Math.floor(diff / 1000);
-      return `${seconds}s ago`;
-    }
-    // Otherwise show actual time
-    const date = new Date(metricsTs);
-    return date.toTimeString().slice(0, 8);
+  // Use lastSeenTs which is set ONLY when real hardware responds
+  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  if (!lastSeenTs) {
+    return 'Never'; // Real device but no ACK yet
   }
   
-  return 'N/A'; // No metrics yet
+  // Show relative time from last hardware ACK
+  const now = Date.now();
+  const diff = now - lastSeenTs;
+  if (diff < 1000) {
+    return 'Just now';
+  } else if (diff < 60000) {
+    const seconds = Math.floor(diff / 1000);
+    return `${seconds}s ago`;
+  } else {
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 60) {
+      return `${minutes}m ago`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      return `${hours}h ago`;
+    }
+  }
 });
 
 const fpsDisplay = computed(() => {
@@ -600,7 +608,7 @@ const avgFpsDisplay = computed(() => {
   const avgFrametime = totalFrametime / allFrametimes.value.length;
   const avgFps = avgFrametime > 0 ? 1000 / avgFrametime : 0;
   
-  return `${avgFps.toFixed(1)} Ø FPS`;
+  return `Ø ${avgFps.toFixed(1)} FPS`;
 });
 
 // Uptime display moved to SystemStatus component

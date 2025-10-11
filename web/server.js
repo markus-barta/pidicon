@@ -457,7 +457,8 @@ function startWebServer(container, logger) {
   // Attach broadcast function to server for external use
   server.wsBroadcast = broadcast;
 
-  // Setup periodic state broadcasts (every 5 seconds as fallback)
+  // Setup periodic state broadcasts (only for slow-changing data)
+  // Event-driven updates handle frame metrics via publishOk callback
   setInterval(async () => {
     if (clients.size > 0) {
       try {
@@ -473,7 +474,7 @@ function startWebServer(container, logger) {
         });
       }
     }
-  }, 5000);
+  }, 2000); // Every 2s for scene state changes (metrics are event-driven)
 
   logger.ok(`🔌 WebSocket server started on ws://localhost:${WEB_UI_PORT}/ws`);
 

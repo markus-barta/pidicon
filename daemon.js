@@ -185,11 +185,12 @@ logger.debug('StateStore initialized:', stateStore.getStats());
  * Start Web UI server if enabled
  */
 const WEB_UI_ENABLED = process.env.PIXOO_WEB_UI !== 'false';
+let webServer = null;
 
 if (WEB_UI_ENABLED) {
   try {
     const { startWebServer } = require('./web/server');
-    startWebServer(container, logger);
+    webServer = startWebServer(container, logger);
   } catch (error) {
     logger.warn('Failed to start Web UI:', { error: error.message });
     logger.info('Web UI is optional. Daemon will continue without it.');
@@ -327,6 +328,27 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
 
   // Publish to MQTT
   mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
+
+  // Event-driven WebSocket update: Broadcast when frame is actually rendered
+  if (webServer?.wsBroadcast) {
+    // Get fresh device state asynchronously (non-blocking)
+    // Use setTimeout(0) for async execution (Node.js global)
+    setTimeout(async () => {
+      try {
+        const deviceService = container.resolve('deviceService');
+        const deviceInfo = await deviceService.getDevice(deviceIp);
+        webServer.wsBroadcast({
+          type: 'device_update',
+          deviceIp,
+          data: deviceInfo,
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        // Fail silently - WebSocket updates are non-critical
+        logger.debug('WebSocket broadcast failed:', { error: error.message });
+      }
+    }, 0);
+  }
 }
 
 // Register command handlers with MqttService
