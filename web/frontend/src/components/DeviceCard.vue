@@ -179,6 +179,22 @@
               </v-tooltip>
             </v-btn>
 
+            <!-- Perf button to toggle performance metrics -->
+            <v-btn
+              :variant="showPerfMetrics ? 'tonal' : 'text'"
+              :color="showPerfMetrics ? 'primary' : 'grey'"
+              size="small"
+              @click="showPerfMetrics = !showPerfMetrics"
+              class="info-btn"
+              :class="{ 'info-btn-pressed': showPerfMetrics }"
+              icon
+            >
+              <v-icon>mdi-chart-box-outline</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                {{ showPerfMetrics ? 'Hide' : 'Show' }} performance metrics
+              </v-tooltip>
+            </v-btn>
+
             <div class="control-spacer-large"></div>
 
             <v-btn
@@ -351,7 +367,7 @@
       </div>
 
       <!-- Performance Metrics -->
-      <div class="metrics-section">
+      <div v-if="showPerfMetrics" class="metrics-section">
         <h4 class="text-subtitle-1 font-weight-bold mb-3">
           Performance Metrics
         </h4>
@@ -433,7 +449,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import VChart from 'vue-echarts';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { LineChart } from 'echarts/charts';
+import { BarChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent } from 'echarts/components';
 import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
@@ -441,7 +457,7 @@ import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
 
 // Register ECharts components
-use([CanvasRenderer, LineChart, GridComponent, TooltipComponent]);
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
 import SceneMetadataViewer from './SceneMetadataViewer.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
@@ -472,6 +488,7 @@ const previousBrightness = ref(75); // Store brightness before power off
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
+const showPerfMetrics = ref(false); // Hide performance metrics by default
 
 // Metrics
 const fps = ref(0);
@@ -770,8 +787,14 @@ const chartOptions = computed(() => {
   if (frametimeHistory.value.length === 0) return null;
   
   const data = frametimeHistory.value;
-  const latestFrametime = data[data.length - 1];
-  const color = getFrametimeColor(latestFrametime);
+  
+  // Create array of objects with value and itemStyle for each bar
+  const barData = data.map(frametime => ({
+    value: frametime,
+    itemStyle: {
+      color: getFrametimeColor(frametime)
+    }
+  }));
   
   return {
     grid: {
@@ -835,17 +858,10 @@ const chartOptions = computed(() => {
     },
     series: [
       {
-        data: data,
-        type: 'line',
-        smooth: true,
-        symbol: 'none',
-        lineStyle: {
-          color: color,
-          width: 2
-        },
-        areaStyle: {
-          color: color.replace('rgb', 'rgba').replace(')', ', 0.05)')
-        }
+        data: barData,
+        type: 'bar',
+        barWidth: '80%',
+        barGap: '10%'
       }
     ],
     tooltip: {
