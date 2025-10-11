@@ -51,6 +51,16 @@
           </v-chip>
         </div>
         <div class="d-flex align-center">
+          <!-- IP and Last Seen -->
+          <div class="d-flex align-center text-caption mr-4" style="color: #6b7280;">
+            <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
+            <span>{{ device.ip }}</span>
+            <span v-if="lastSeen !== 'N/A'" class="ml-3">
+              <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+              {{ lastSeen }}
+            </span>
+          </div>
+          
           <v-btn
             :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
             variant="text"
@@ -62,10 +72,8 @@
     </v-card-title>
 
     <v-card-subtitle class="pt-0 pb-2">
-      <div class="d-flex align-center text-medium-emphasis">
-        <v-icon size="small" class="mr-1">mdi-wifi</v-icon>
-        {{ device.ip }}
-        <span class="ml-4">Last seen: {{ lastSeen }}</span>
+      <div v-if="false" class="d-flex align-center text-medium-emphasis">
+        <!-- Moved to header -->
       </div>
       <!-- Show scene info when collapsed -->
       <div v-if="isCollapsed && selectedScene" class="d-flex align-center mt-2">
@@ -179,22 +187,6 @@
               </v-tooltip>
             </v-btn>
 
-            <!-- Perf button to toggle performance metrics -->
-            <v-btn
-              :variant="showPerfMetrics ? 'tonal' : 'text'"
-              :color="showPerfMetrics ? 'primary' : 'grey'"
-              size="small"
-              @click="showPerfMetrics = !showPerfMetrics"
-              class="info-btn"
-              :class="{ 'info-btn-pressed': showPerfMetrics }"
-              icon
-            >
-              <v-icon>mdi-chart-box-outline</v-icon>
-              <v-tooltip activator="parent" location="bottom">
-                {{ showPerfMetrics ? 'Hide' : 'Show' }} performance metrics
-              </v-tooltip>
-            </v-btn>
-
             <div class="control-spacer-large"></div>
 
             <v-btn
@@ -290,6 +282,24 @@
                 Play next scene in list
               </v-tooltip>
             </v-btn>
+
+            <div class="control-spacer"></div>
+
+            <!-- Perf button to toggle performance metrics -->
+            <v-btn
+              :variant="showPerfMetrics ? 'tonal' : 'text'"
+              :color="showPerfMetrics ? 'primary' : 'grey'"
+              size="small"
+              @click="showPerfMetrics = !showPerfMetrics"
+              class="info-btn"
+              :class="{ 'info-btn-pressed': showPerfMetrics }"
+              icon
+            >
+              <v-icon>mdi-chart-box-outline</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                {{ showPerfMetrics ? 'Hide' : 'Show' }} performance metrics
+              </v-tooltip>
+            </v-btn>
           </div>
         </div>
 
@@ -372,7 +382,7 @@
           Performance Metrics
         </h4>
         <div class="metrics-grid">
-          <!-- Current Metrics Card (FPS + Frametime) -->
+          <!-- Current Metrics Card (FPS + Frametime + High/Low) -->
           <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #3b82f6;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
@@ -383,14 +393,17 @@
               <div class="text-caption" style="color: #64748b;">
                 {{ frametime }}ms frametime
               </div>
+              <div v-if="highLowFrametimes.high > 0" class="text-caption" style="color: #94a3b8; font-size: 10px;">
+                {{ highLowFrametimes.high }}ms / {{ highLowFrametimes.low }}ms (high/low)
+              </div>
             </v-card-text>
           </v-card>
 
-          <!-- Scene Performance Card -->
+          <!-- Scene Metrics Card -->
           <v-card class="metric-card metric-card-fps" elevation="0" style="border-left: 4px solid #10b981;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #10b981;">Scene Performance</div>
+                <div class="metric-header" style="color: #10b981;">Scene Metrics</div>
                 <v-icon size="large" style="opacity: 0.2; color: #10b981;">mdi-chart-line</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ avgFpsDisplay }}</div>
@@ -527,12 +540,20 @@ const lastSeen = computed(() => {
   }
   
   const metricsTs = props.device?.metrics?.ts;
-  if (metricsTs) {
+  if (metricsTs && props.device?.metrics?.pushes > 0) {
+    // Show relative time if recent (< 60 seconds ago)
+    const now = Date.now();
+    const diff = now - metricsTs;
+    if (diff < 60000) {
+      const seconds = Math.floor(diff / 1000);
+      return `${seconds}s ago`;
+    }
+    // Otherwise show actual time
     const date = new Date(metricsTs);
     return date.toTimeString().slice(0, 8);
   }
   
-  return 'N/A'; // No fallback - only show real device response time
+  return 'N/A'; // No metrics yet
 });
 
 const fpsDisplay = computed(() => {
@@ -550,22 +571,36 @@ const fpsDisplay = computed(() => {
   return fps.value.toFixed(1);
 });
 
+// Track all frametimes for proper average calculation
+const allFrametimes = ref([]);
+
+const highLowFrametimes = computed(() => {
+  const data = frametimeHistory.value;
+  if (data.length === 0) {
+    return { high: 0, low: 0 };
+  }
+  return {
+    high: Math.max(...data),
+    low: Math.min(...data)
+  };
+});
+
 const avgFpsDisplay = computed(() => {
   // Check if scene is static (non-looping)
   if (!currentSceneInfo.value?.wantsLoop) {
     return 'static';
   }
   
-  // Calculate average FPS from total frames and scene time
-  const sceneTime = Date.now() - sceneStartTime.value;
-  const sceneTimeSeconds = sceneTime / 1000;
-  
-  if (sceneTimeSeconds === 0 || frameCount.value === 0) {
+  if (allFrametimes.value.length === 0) {
     return '-';
   }
   
-  const avgFps = frameCount.value / sceneTimeSeconds;
-  return `${avgFps.toFixed(1)} AVG FPS`;
+  // Calculate average from all recorded frametimes
+  const totalFrametime = allFrametimes.value.reduce((sum, ft) => sum + ft, 0);
+  const avgFrametime = totalFrametime / allFrametimes.value.length;
+  const avgFps = avgFrametime > 0 ? 1000 / avgFrametime : 0;
+  
+  return `${avgFps.toFixed(1)} Ø FPS`;
 });
 
 // Uptime display moved to SystemStatus component
@@ -885,6 +920,7 @@ watch(
     if (newScene !== oldScene) {
       sceneStartTime.value = Date.now();
       frameCount.value = 0; // Reset frame counter for avg FPS calculation
+      allFrametimes.value = []; // Reset frametime history for avg FPS
       updateSceneTime();
       
       // Restart metrics polling if it was stopped
@@ -1022,6 +1058,15 @@ function loadMetrics() {
   frameCount.value = newFrameCount;
   errorCount.value = metrics.errors || 0;
   pushCount.value = metrics.pushes || 0;
+  
+  // Track all frametimes for average calculation (only when frames are sent)
+  if (rawFrametime > 0) {
+    allFrametimes.value.push(rawFrametime);
+    // Keep last 1000 frametimes to avoid memory issues
+    if (allFrametimes.value.length > 1000) {
+      allFrametimes.value.shift();
+    }
+  }
   
   // Only update chart when frames are actually sent (UI-513)
   // This prevents static scenes from polluting the chart with duplicate values
