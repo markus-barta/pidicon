@@ -45,7 +45,7 @@
                 marginRight: '6px' 
               }"></span>
               <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
-                {{ device.driver === 'real' ? 'Hardware' : 'Mock Mode' }}
+                {{ device.driver === 'real' ? 'Hardware' : 'Simulated' }}
               </span>
             </span>
           </v-chip>
@@ -61,16 +61,29 @@
       </div>
     </v-card-title>
 
-    <v-card-subtitle v-if="!isCollapsed" class="pt-0 pb-4">
+    <v-card-subtitle class="pt-0 pb-2">
       <div class="d-flex align-center text-medium-emphasis">
         <v-icon size="small" class="mr-1">mdi-wifi</v-icon>
         {{ device.ip }}
         <span class="ml-4">Last seen: {{ lastSeen }}</span>
       </div>
+      <!-- Show scene info when collapsed -->
+      <div v-if="isCollapsed && selectedScene" class="d-flex align-center mt-2">
+        <span class="text-body-2 mr-2">{{ formatSceneName(selectedScene) }}</span>
+        <v-chip
+          :color="combinedStateColor"
+          size="x-small"
+          variant="flat"
+          :title="combinedStateHint"
+        >
+          <v-icon start size="x-small">{{ combinedStateIcon }}</v-icon>
+          {{ combinedStateLabel }}
+        </v-chip>
+      </div>
     </v-card-subtitle>
 
     <v-card-text v-if="!isCollapsed" class="pt-0">
-      <!-- Power / Mock Mode / Reset / Brightness Controls -->
+      <!-- Power / Simulated Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
         <div class="control-item">
           <v-icon icon="mdi-power" size="small" class="mr-2" />
@@ -86,7 +99,7 @@
         </div>
 
         <div class="control-item">
-          <span class="text-body-2 font-weight-medium mr-3">Mock Mode</span>
+          <span class="text-body-2 font-weight-medium mr-3">Simulated</span>
           <v-switch
             :model-value="device.driver === 'mock'"
             color="warning"
@@ -150,14 +163,15 @@
 
           <div class="scene-controls-inline">
             <v-btn
-              icon="mdi-restart"
-              :variant="isPressed('restart') ? 'tonal' : 'text'"
+              :variant="isPressed('restart') ? 'tonal' : 'outlined'"
               :color="isPressed('restart') ? 'grey-darken-2' : 'grey'"
               size="small"
               @click="handleRestart"
               :disabled="loading"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-restart</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 Restart current scene from beginning
               </v-tooltip>
@@ -166,72 +180,77 @@
             <div class="control-spacer"></div>
 
             <v-btn
-              icon="mdi-play"
-              :variant="isPressed('play') ? 'tonal' : 'text'"
+              :variant="isPressed('play') ? 'tonal' : 'outlined'"
               :color="isPressed('play') ? 'success' : 'grey'"
               size="small"
               @click="handlePlay"
               :disabled="loading"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-play</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 {{ playState === 'paused' ? 'Resume animation' : playState === 'stopped' ? 'Start playing scene' : 'Already playing' }}
               </v-tooltip>
             </v-btn>
 
             <v-btn
-              icon="mdi-pause"
-              :variant="isPressed('pause') ? 'tonal' : 'text'"
+              :variant="isPressed('pause') ? 'tonal' : 'outlined'"
               :color="isPressed('pause') ? 'warning' : 'grey'"
               size="small"
               @click="handlePause"
               :disabled="loading || !currentSceneInfo?.wantsLoop"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-pause</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 {{ playState === 'paused' ? 'Resume animation' : 'Pause animation (static scenes cannot pause)' }}
               </v-tooltip>
             </v-btn>
 
             <v-btn
-              icon="mdi-stop"
-              :variant="isPressed('stop') ? 'tonal' : 'text'"
+              :variant="isPressed('stop') ? 'tonal' : 'outlined'"
               :color="isPressed('stop') ? 'error' : 'grey'"
               size="small"
               @click="handleStop"
               :disabled="loading"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-stop</v-icon>
               <v-tooltip activator="parent" location="bottom">
-                Stop scene and clear display
+                Stop scene and clear Pixoo display
               </v-tooltip>
             </v-btn>
 
             <div class="control-spacer"></div>
 
             <v-btn
-              icon="mdi-skip-previous"
-              :variant="isPressed('prior') ? 'tonal' : 'text'"
+              :variant="isPressed('prior') ? 'tonal' : 'outlined'"
               :color="isPressed('prior') ? 'grey-darken-2' : 'grey'"
               size="small"
               @click="handlePrior"
               :disabled="loading"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-skip-previous</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 Play previous scene in list
               </v-tooltip>
             </v-btn>
 
             <v-btn
-              icon="mdi-skip-next"
-              :variant="isPressed('next') ? 'tonal' : 'text'"
+              :variant="isPressed('next') ? 'tonal' : 'outlined'"
               :color="isPressed('next') ? 'grey-darken-2' : 'grey'"
               size="small"
               @click="handleNext"
               :disabled="loading"
               class="control-btn"
+              icon
             >
+              <v-icon>mdi-skip-next</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 Play next scene in list
               </v-tooltip>
@@ -463,6 +482,13 @@ const statusText = computed(() => {
 });
 
 const lastSeen = computed(() => {
+  // Use actual device metrics timestamp if available
+  const metricsTs = props.device?.metrics?.ts;
+  if (metricsTs) {
+    const date = new Date(metricsTs);
+    return date.toTimeString().slice(0, 8);
+  }
+  // Fallback to current time
   const now = new Date();
   return now.toTimeString().slice(0, 8);
 });
@@ -1161,13 +1187,14 @@ async function handlePrior() {
     const prevScene = scenes[currentIndex - 1].name;
     loading.value = true;
     try {
-      // Stop current, switch to previous, play
+      // Always switch to the new scene (this will automatically start playing)
       await api.switchScene(props.device.ip, prevScene, { clear: true });
       selectedScene.value = prevScene;
       toast.success(`Playing ${formatSceneName(prevScene)}`, 2000);
       emit('refresh');
     } catch (err) {
       toast.error(`Failed to switch scene: ${err.message}`);
+      selectedScene.value = props.device.currentScene; // Revert on error
     } finally {
       loading.value = false;
     }
@@ -1181,13 +1208,14 @@ async function handleNext() {
     const nextScene = scenes[currentIndex + 1].name;
     loading.value = true;
     try {
-      // Stop current, switch to next, play
+      // Always switch to the new scene (this will automatically start playing)
       await api.switchScene(props.device.ip, nextScene, { clear: true });
       selectedScene.value = nextScene;
       toast.success(`Playing ${formatSceneName(nextScene)}`, 2000);
       emit('refresh');
     } catch (err) {
       toast.error(`Failed to switch scene: ${err.message}`);
+      selectedScene.value = props.device.currentScene; // Revert on error
     } finally {
       loading.value = false;
     }
@@ -1395,19 +1423,27 @@ onUnmounted(() => {
 .control-btn {
   transition: all 0.15s ease !important;
   min-width: 36px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
 }
 
 .control-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16) !important;
 }
 
 .control-btn:active {
   transform: translateY(0);
 }
 
-/* Pressed state styling */
+/* Pressed state styling - inset shadow */
 .control-btn.v-btn--variant-tonal {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(1px);
+}
+
+.control-btn.v-btn--variant-tonal:hover {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 .control-spacer {
