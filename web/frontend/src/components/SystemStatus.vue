@@ -45,14 +45,17 @@
           </span>
         </v-chip>
         <v-btn
-          color="error"
           variant="tonal"
           prepend-icon="mdi-restart"
           @click="handleRestart"
           :loading="restarting"
           size="small"
+          class="action-button-danger"
         >
-          Restart Daemon
+          <span style="color: #dc2626; font-weight: 600;">Restart Daemon</span>
+          <v-tooltip activator="parent" location="bottom">
+            Restart daemon process (all displays briefly show startup)
+          </v-tooltip>
         </v-btn>
       </div>
     </v-container>
@@ -197,6 +200,24 @@ onUnmounted(() => {
 
 .pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Danger action buttons with hover effects */
+.action-button-danger {
+  background-color: #fee2e2 !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-button-danger:hover {
+  background-color: #fecaca !important;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.action-button-danger:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
 }
 </style>
 

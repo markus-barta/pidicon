@@ -98,15 +98,17 @@
         </div>
 
         <v-btn
-          color="error"
           variant="tonal"
           size="small"
           prepend-icon="mdi-restart"
           :loading="resetLoading"
           @click="handleReset"
-          class="action-button"
+          class="action-button-danger"
         >
-          Reset Pixoo
+          <span style="color: #dc2626; font-weight: 600;">Reset Pixoo</span>
+          <v-tooltip activator="parent" location="bottom">
+            Restart hardware device (briefly shows init screen)
+          </v-tooltip>
         </v-btn>
 
         <v-spacer></v-spacer>
@@ -155,8 +157,11 @@
               @click="handleRestart"
               :disabled="loading"
               class="control-btn"
-              title="Restart scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                Restart current scene from beginning
+              </v-tooltip>
+            </v-btn>
 
             <div class="control-spacer"></div>
 
@@ -168,8 +173,11 @@
               @click="handlePlay"
               :disabled="loading"
               class="control-btn"
-              title="Play scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                {{ playState === 'paused' ? 'Resume animation' : playState === 'stopped' ? 'Start playing scene' : 'Already playing' }}
+              </v-tooltip>
+            </v-btn>
 
             <v-btn
               icon="mdi-pause"
@@ -179,8 +187,11 @@
               @click="handlePause"
               :disabled="loading || !currentSceneInfo?.wantsLoop"
               class="control-btn"
-              title="Pause scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                {{ playState === 'paused' ? 'Resume animation' : 'Pause animation (static scenes cannot pause)' }}
+              </v-tooltip>
+            </v-btn>
 
             <v-btn
               icon="mdi-stop"
@@ -190,8 +201,11 @@
               @click="handleStop"
               :disabled="loading"
               class="control-btn"
-              title="Stop scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                Stop scene and clear display
+              </v-tooltip>
+            </v-btn>
 
             <div class="control-spacer"></div>
 
@@ -203,8 +217,11 @@
               @click="handlePrior"
               :disabled="loading"
               class="control-btn"
-              title="Previous scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                Play previous scene in list
+              </v-tooltip>
+            </v-btn>
 
             <v-btn
               icon="mdi-skip-next"
@@ -214,8 +231,11 @@
               @click="handleNext"
               :disabled="loading"
               class="control-btn"
-              title="Next scene"
-            />
+            >
+              <v-tooltip activator="parent" location="bottom">
+                Play next scene in list
+              </v-tooltip>
+            </v-btn>
           </div>
         </div>
 
@@ -234,24 +254,15 @@
                   <span class="text-subtitle-2 font-weight-bold mr-2">
                     {{ formatSceneName(currentSceneInfo.name) }}
                   </span>
-                  <!-- Play State Badge -->
+                  <!-- Combined State Badge -->
                   <v-chip
-                    :color="playStateColor"
+                    :color="combinedStateColor"
                     size="small"
                     variant="flat"
-                    class="mr-2"
+                    :title="combinedStateHint"
                   >
-                    <v-icon start size="x-small">{{ playStateIcon }}</v-icon>
-                    {{ playStateLabel }}
-                  </v-chip>
-                  <!-- Scene State Indicator (UI-510) -->
-                  <v-chip
-                    :color="sceneStateColor"
-                    size="small"
-                    variant="flat"
-                  >
-                    <v-icon start size="x-small">{{ sceneStateIcon }}</v-icon>
-                    {{ sceneStateLabel }}
+                    <v-icon start size="x-small">{{ combinedStateIcon }}</v-icon>
+                    {{ combinedStateLabel }}
                   </v-chip>
                 </div>
 
@@ -599,38 +610,7 @@ const sceneStatusText = computed(() => {
   return currentSceneInfo.value?.wantsLoop ? 'Running' : 'Static';
 });
 
-// Scene state display (UI-510)
-const sceneStateLabel = computed(() => {
-  const sceneState = props.device?.sceneState;
-  if (sceneState?.testCompleted) return 'Complete';
-  if (sceneState?.isRunning === false) return 'Stopped';
-  if (!currentSceneInfo.value?.wantsLoop) return 'Static';
-  return 'Looping';
-});
-
-const sceneStateColor = computed(() => {
-  const label = sceneStateLabel.value;
-  const colors = {
-    Starting: 'blue',
-    Looping: 'green',
-    Stopped: 'grey',
-    Complete: 'success',
-    Static: 'info',
-  };
-  return colors[label] || 'grey';
-});
-
-const sceneStateIcon = computed(() => {
-  const label = sceneStateLabel.value;
-  const icons = {
-    Starting: 'mdi-play-circle-outline',
-    Looping: 'mdi-sync',
-    Stopped: 'mdi-stop-circle',
-    Complete: 'mdi-check-circle',
-    Static: 'mdi-image',
-  };
-  return icons[label] || 'mdi-help-circle';
-});
+// Old scene state display removed - now using combined state badge
 
 const successRate = computed(() => {
   const total = pushCount.value + errorCount.value;
@@ -641,13 +621,30 @@ const successRate = computed(() => {
 // Cassette player button states
 const playState = computed(() => props.device?.playState || 'stopped');
 
-// Play state badge
-const playStateLabel = computed(() => {
+// Combined state badge (replaces separate play-state and scene-state badges)
+const combinedStateLabel = computed(() => {
   const state = playState.value;
-  return state.charAt(0).toUpperCase() + state.slice(1);
+  const sceneState = props.device?.sceneState;
+  const isAnimated = currentSceneInfo.value?.wantsLoop;
+  
+  // Completed state takes priority
+  if (sceneState?.testCompleted) return 'Complete';
+  
+  // Static scenes show "Displayed" when stopped (since they're shown)
+  if (!isAnimated && state === 'stopped') return 'Displayed';
+  
+  // Otherwise use play state
+  if (state === 'playing') return isAnimated ? 'Playing' : 'Displayed';
+  if (state === 'paused') return 'Paused';
+  if (state === 'stopped') return 'Stopped';
+  
+  return 'Unknown';
 });
 
-const playStateColor = computed(() => {
+const combinedStateColor = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) return 'success';
+  
   const state = playState.value;
   const colors = {
     playing: 'success',
@@ -657,14 +654,42 @@ const playStateColor = computed(() => {
   return colors[state] || 'grey';
 });
 
-const playStateIcon = computed(() => {
+const combinedStateIcon = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) return 'mdi-check-circle';
+  
   const state = playState.value;
+  const isAnimated = currentSceneInfo.value?.wantsLoop;
+  
   const icons = {
-    playing: 'mdi-play',
+    playing: isAnimated ? 'mdi-play' : 'mdi-image',
     paused: 'mdi-pause',
     stopped: 'mdi-stop',
   };
   return icons[state] || 'mdi-help-circle';
+});
+
+const combinedStateHint = computed(() => {
+  const sceneState = props.device?.sceneState;
+  const isAnimated = currentSceneInfo.value?.wantsLoop;
+  
+  if (sceneState?.testCompleted) {
+    return 'Scene has finished rendering all frames';
+  }
+  
+  const state = playState.value;
+  
+  if (state === 'playing') {
+    return isAnimated ? 'Scene is actively animating' : 'Static scene displayed';
+  }
+  if (state === 'paused') {
+    return 'Animation paused - press Play to resume';
+  }
+  if (state === 'stopped') {
+    return isAnimated ? 'Animation stopped - display cleared' : 'Static scene displayed';
+  }
+  
+  return '';
 });
 
 function isPressed(button) {
@@ -1499,19 +1524,22 @@ onUnmounted(() => {
   margin-right: 4px !important;
 }
 
-/* Action buttons with hover effects */
-.action-button {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+/* Danger action buttons with hover effects */
+.action-button-danger {
+  background-color: #fee2e2 !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
   transition: all 0.2s ease !important;
 }
 
-.action-button:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+.action-button-danger:hover {
+  background-color: #fecaca !important;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3) !important;
   transform: translateY(-1px);
 }
 
-.action-button:active {
+.action-button-danger:active {
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
 }
 
 /* Scene tags - square tags with hole (like real tags) */
