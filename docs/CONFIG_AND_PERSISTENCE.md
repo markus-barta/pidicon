@@ -68,14 +68,14 @@ PIXOO_DEVICE_TARGETS="192.168.1.159=real;192.168.1.189=mock"
 
 **2. Runtime Switching** (via MQTT or Web UI)
 
-#### Via MQTT:
+#### Via MQTT
 
 ```bash
 mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
   -t "pixoo/192.168.1.159/driver/set" -m 'mock'
 ```
 
-#### Via Web UI:
+#### Via Web UI
 
 - Click the "Mock Mode" toggle switch on any device card
 - Driver switches immediately, no restart required

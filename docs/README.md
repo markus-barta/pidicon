@@ -10,6 +10,7 @@
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture, design patterns, and Phase 1 completion status
 - **[CODE_QUALITY.md](./CODE_QUALITY.md)** - ⭐ Senior-level code quality standards and best practices
+- **[API.md](./API.md)** - 🆕 Complete API reference (v2.1)
 
 ### **Development Guides**
 
@@ -24,7 +25,8 @@
 
 ### **Project Management**
 
-- **[BACKLOG.md](./BACKLOG.md)** - Task tracking, test results, and traceability
+- **[BACKLOG.md](./BACKLOG.md)** - Task tracking, roadmap, and backlog
+- **[BACKLOG_DONE.md](./BACKLOG_DONE.md)** - Archive of completed items (58+ items)
 
 ### **Reports** (Archived Completion Documents)
 
@@ -86,6 +88,7 @@ Start here:
 ```text
 docs/
 ├── README.md                        # This file
+├── API.md                           # 🆕 Complete API reference (v2.1)
 ├── ARCHITECTURE.md                  # System design & architecture
 ├── CODE_QUALITY.md                  # ⭐ Code quality standards
 ├── SCENE_DEVELOPMENT.md             # Scene development guide
@@ -93,7 +96,8 @@ docs/
 ├── VERSIONING.md                    # Version strategy
 ├── CONFIG_AND_PERSISTENCE.md        # Configuration management
 ├── WEB_UI_SETUP.md                  # Complete Web UI setup
-├── BACKLOG.md                       # Task tracking & status
+├── BACKLOG.md                       # Task tracking & roadmap
+├── BACKLOG_DONE.md                  # Archive of completed items
 └── reports/                         # Archived completion docs
     ├── PHASE1_COMPLETE.md           # Phase 1 report
     ├── PHASE2_COMPLETE.md           # Phase 2 report
@@ -172,5 +176,6 @@ All documentation in this directory follows:
 ---
 
 **Status**: ✅ Complete and current  
-**Last Updated**: 2025-10-08  
-**Last Cleanup**: 2025-10-08 - Archived 9 completed progress/checklist documents to reports/
+**Version**: 2.1.0 (Build 603)  
+**Last Updated**: 2025-10-11  
+**Last Cleanup**: 2025-10-11 - Added API.md, updated all version references

@@ -20,9 +20,10 @@
 
 ## ✨ Highlights
 
-- **🌐 Web UI Control Panel** - Manage your Pixoo devices from any browser (port 10829)
+- **🌐 Web UI Control Panel** - Modern Vue 3 interface with real-time WebSocket updates
+- **⚡ WebSocket Integration** - Instant state updates with < 100ms latency (v2.1)
 - **📡 MQTT Integration** - Full control via MQTT messages for automation
-- **🎬 Smart Scene System** - Hot-swappable scenes with automatic scheduling
+- **🎬 Smart Scene System** - Hot-swappable scenes with play/pause/stop controls
 - **🔄 Self-Restarting** - In-container restart with clean Docker networking
 - **🎨 Advanced Graphics** - Professional rendering with gradients, charts, and smooth animations
 - **🔍 Full Observability** - Real-time metrics, FPS monitoring, and deployment tracking
@@ -47,14 +48,15 @@
 **Features:**
 
 - 🎮 **Per-Device Control** - Independent scene selection and control for each device
-- 📊 **Real-Time Metrics** - FPS display, frametime monitoring, live uptime counter
-- 🎨 **Scene Browser** - Categorized scenes with descriptions and animation indicators
+- ⚡ **WebSocket Updates** - Real-time state sync with < 100ms latency (NEW in v2.1)
+- 📊 **Real-Time Metrics** - FPS display, frametime monitoring, live scene performance
+- 🎛️ **Cassette Player Controls** - Play, pause, stop, restart, next, prior with visual feedback
+- 🎨 **Scene Browser** - Grouped by folder, numbered, with full path display
 - 🔄 **Quick Actions** - Restart daemon, switch drivers, reset devices, display on/off
 - 💬 **Toast Notifications** - Non-blocking success/error messages (no more alerts!)
 - 📱 **Responsive Design** - Works beautifully on desktop, tablet, and mobile
 - 🌙 **Material Dark Theme** - Professional UI with smooth animations
-- ⚡ **Next/Prev Navigation** - Quick scene switching with keyboard-friendly controls
-- 🏷️ **Smart Indicators** - Color-coded status, driver badges, category labels
+- 🏷️ **Smart Indicators** - Combined state badges, color-coded status, driver badges
 
 **Access:** `http://your-server:10829` (configurable via `PIXOO_WEB_UI_PORT`)
 
@@ -281,10 +283,11 @@ node scripts/live_test_perf_once.js    # Performance benchmark
 {
   "currentScene": "startup",
   "status": "running",
+  "playState": "playing",
   "generationId": 42,
-  "version": "2.0.0",
-  "buildNumber": 495,
-  "gitCommit": "b788c8e",
+  "version": "2.1.0",
+  "buildNumber": 603,
+  "gitCommit": "0317b5d",
   "ts": 1696351234567
 }
 ```
@@ -400,6 +403,7 @@ Open an issue or PR and let's make something great together!
 
 ## 📚 Documentation
 
+- [docs/API.md](docs/API.md) - **Complete API Reference** (NEW in v2.1)
 - [STANDARDS.md](STANDARDS.md) - Development standards and best practices
 - [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) - Code quality guidelines
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and patterns
@@ -407,6 +411,7 @@ Open an issue or PR and let's make something great together!
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
 - [docs/VERSIONING.md](docs/VERSIONING.md) - Version management strategy
 - [MQTT_COMMANDS.md](MQTT_COMMANDS.md) - Complete MQTT command reference
+- [docs/BACKLOG.md](docs/BACKLOG.md) - Roadmap and backlog
 
 ---
 

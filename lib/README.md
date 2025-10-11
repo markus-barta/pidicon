@@ -401,13 +401,19 @@ module.exports = { ... };
 
 ### v2.0.0 Changes
 
-**New Modules** (5 additions):
+**New Modules** (5 additions in v2.0.0):
 
 - `scene-base.js` - Base classes for scene development
 - `scene-loader.js` - Automatic scene discovery
 - `device-context.js` - Rich context objects
 - `mqtt-utils.js` - MQTT publishing utilities
 - `error-handler.js` - Professional error handling
+
+**v2.1.0 Updates**:
+
+- WebSocket integration in `web/server.js`
+- Enhanced scene controls (play/pause/stop/restart)
+- Real-time state synchronization
 
 **Code Reduction**:
 
@@ -421,6 +427,7 @@ module.exports = { ... };
 
 ## 📚 Related Documentation
 
+- [API.md](../docs/API.md) - Complete API reference
 - [STANDARDS.md](../STANDARDS.md) - Development standards
 - [VERSIONING.md](../docs/VERSIONING.md) - Version management strategy
 - [scenes/README.md](../scenes/README.md) - Scene development guide

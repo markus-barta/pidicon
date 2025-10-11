@@ -1,7 +1,7 @@
 # Pixoo Daemon API Documentation
 
-**Version**: 2.0.0  
-**Last Updated**: 2025-10-11 (Build 602)
+**Version**: 2.1.0  
+**Last Updated**: 2025-10-11 (Build 603)
 
 Complete API reference for Pixoo Daemon services, commands, and integrations.
 
@@ -690,4 +690,4 @@ See [scenes/examples/](../scenes/examples/) for complete working examples:
 
 ---
 
-**Build**: 602 | **Version**: 2.0.0 | **Status**: Production
+**Build**: 603 | **Version**: 2.1.0 | **Status**: Production

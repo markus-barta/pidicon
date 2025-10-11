@@ -1,6 +1,6 @@
 {
   "name": "pixoo-daemon",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "daemon.js",
   "scripts": {
     "start": "node daemon.js",
@@ -15,10 +15,11 @@
     "format": "prettier -w .",
     "format:check": "prettier -c .",
     "lint:errors": "eslint . --quiet -f codeframe || true",
-    "md:lint": "markdownlint \"**/*.md\" --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc",
-    "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc",
+    "md:lint": "markdownlint \"**/*.md\" --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
+    "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
     "test": "node --test",
     "coverage": "c8 npm test",
+    "coverage:report": "c8 report --reporter=text",
     "hooks:setup": "husky init"
   },
   "dependencies": {

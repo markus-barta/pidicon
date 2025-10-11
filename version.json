@@ -1,12 +1,12 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "deploymentId": "v2.0.0",
-  "buildNumber": 602,
-  "gitCommit": "4f557b4",
-  "gitCommitFull": "4f557b4626d79bab3ccd483d0ae4a61fb4a620d7",
-  "gitCommitCount": 602,
+  "buildNumber": 603,
+  "gitCommit": "0317b5d",
+  "gitCommitFull": "0317b5da4f54f42f59deac12d8bdd0deca9db0bd",
+  "gitCommitCount": 603,
   "gitBranch": "main",
   "gitTag": "v2.0.0",
-  "buildTime": "2025-10-11T10:58:30.859Z",
+  "buildTime": "2025-10-11T11:21:16.972Z",
   "environment": "development"
 }
