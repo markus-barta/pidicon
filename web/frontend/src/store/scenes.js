@@ -30,7 +30,11 @@ export const useSceneStore = defineStore('scenes', () => {
 
   // Actions
   function setScenes(newScenes) {
-    scenes.value = newScenes;
+    // Add scene number to each scene based on sorted order
+    scenes.value = newScenes.map((scene, index) => ({
+      ...scene,
+      sceneNumber: index + 1,
+    }));
   }
 
   function setLoading(value) {

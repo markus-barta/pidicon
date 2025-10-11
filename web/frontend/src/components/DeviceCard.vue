@@ -162,6 +162,23 @@
           </div>
 
           <div class="scene-controls-inline">
+            <!-- Info button to toggle scene details -->
+            <v-btn
+              variant="text"
+              size="small"
+              @click="showSceneDetails = !showSceneDetails"
+              :disabled="!currentSceneInfo"
+              class="control-btn"
+              icon
+            >
+              <v-icon>mdi-information-outline</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                {{ showSceneDetails ? 'Hide' : 'Show' }} scene details
+              </v-tooltip>
+            </v-btn>
+
+            <div class="control-spacer-large"></div>
+
             <v-btn
               :variant="isPressed('restart') ? 'tonal' : 'outlined'"
               :color="isPressed('restart') ? 'grey-darken-2' : 'grey'"
@@ -258,8 +275,8 @@
           </div>
         </div>
 
-        <!-- Scene Description Card -->
-        <div v-if="currentSceneInfo" class="scene-description-card pa-4 mt-3">
+        <!-- Scene Description Card (Collapsible) -->
+        <div v-if="currentSceneInfo && showSceneDetails" class="scene-description-card pa-4 mt-3">
           <div class="d-flex align-start">
             <v-icon
               :icon="currentSceneInfo.wantsLoop ? 'mdi-play-circle' : 'mdi-image'"
@@ -303,6 +320,13 @@
                   </span>
                 </div>
               </div>
+              
+              <!-- Show full file path -->
+              <div v-if="currentSceneInfo.filePath" class="text-caption mb-2" style="color: #9ca3af;">
+                <v-icon size="x-small" class="mr-1">mdi-file-code-outline</v-icon>
+                {{ currentSceneInfo.filePath }}
+              </div>
+              
               <p class="text-body-2" style="color: #6b7280;" mb-0>
                 {{ currentSceneInfo.description || 'No description available for this scene.' }}
               </p>
@@ -448,6 +472,7 @@ const brightness = ref(75);
 const previousBrightness = ref(75); // Store brightness before power off
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
+const showSceneDetails = ref(true); // Show scene details by default
 
 // Metrics
 const fps = ref(0);

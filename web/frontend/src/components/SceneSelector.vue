@@ -69,13 +69,21 @@ watch(
 );
 
 const sceneItems = computed(() => {
-  return sceneStore.scenes.map((scene) => ({
-    name: scene.name,
-    title: scene.name,
-    description: scene.description || `Scene: ${scene.name}`,
-    wantsLoop: scene.wantsLoop || false,
-    category: scene.category || 'General',
-  }));
+  return sceneStore.scenes.map((scene) => {
+    const folder = scene.filePath?.includes('/') 
+      ? scene.filePath.split('/')[0] + '/' 
+      : '';
+    const displayName = `${scene.sceneNumber}. ${folder}${scene.name}`;
+    
+    return {
+      name: scene.name,
+      title: displayName,
+      description: scene.description || `Scene: ${scene.name}`,
+      wantsLoop: scene.wantsLoop || false,
+      category: scene.category || 'General',
+      filePath: scene.filePath,
+    };
+  });
 });
 
 function handleSceneChange(newScene) {
