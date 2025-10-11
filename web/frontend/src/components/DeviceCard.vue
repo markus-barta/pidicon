@@ -118,7 +118,7 @@
           @click="handleReset"
           class="action-button-danger"
         >
-          <span style="color: #dc2626; font-weight: 600;">Reset Pixoo</span>
+          <span style="color: #dc2626; font-weight: 600;">Device</span>
           <v-tooltip activator="parent" location="bottom">
             Restart hardware device (briefly shows init screen)
           </v-tooltip>
@@ -164,11 +164,13 @@
           <div class="scene-controls-inline">
             <!-- Info button to toggle scene details -->
             <v-btn
-              variant="text"
+              :variant="showSceneDetails ? 'tonal' : 'text'"
+              :color="showSceneDetails ? 'primary' : 'grey'"
               size="small"
               @click="showSceneDetails = !showSceneDetails"
               :disabled="!currentSceneInfo"
-              class="control-btn"
+              class="info-btn"
+              :class="{ 'info-btn-pressed': showSceneDetails }"
               icon
             >
               <v-icon>mdi-information-outline</v-icon>
@@ -354,11 +356,11 @@
           Performance Metrics
         </h4>
         <div class="metrics-grid">
-          <!-- Performance Card (FPS + Frametime) -->
+          <!-- Current Metrics Card (FPS + Frametime) -->
           <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #3b82f6;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #3b82f6;">Performance</div>
+                <div class="metric-header" style="color: #3b82f6;">Current Metrics</div>
                 <v-icon size="large" style="opacity: 0.2; color: #3b82f6;">mdi-speedometer</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ fpsDisplay }} FPS</div>
@@ -368,16 +370,16 @@
             </v-card-text>
           </v-card>
 
-          <!-- Average FPS Card -->
+          <!-- Scene Performance Card -->
           <v-card class="metric-card metric-card-fps" elevation="0" style="border-left: 4px solid #10b981;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #10b981;">Avg FPS</div>
+                <div class="metric-header" style="color: #10b981;">Scene Performance</div>
                 <v-icon size="large" style="opacity: 0.2; color: #10b981;">mdi-chart-line</v-icon>
               </div>
               <div class="metric-value mb-1" style="color: #1e293b;">{{ avgFpsDisplay }}</div>
               <div class="text-caption" style="color: #64748b;">
-                {{ frameCount }} frames sent
+                {{ frameCount.toLocaleString() }} frames sent
               </div>
             </v-card-text>
           </v-card>
@@ -469,7 +471,7 @@ const brightness = ref(75);
 const previousBrightness = ref(75); // Store brightness before power off
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
-const showSceneDetails = ref(true); // Show scene details by default
+const showSceneDetails = ref(false); // Hide scene details by default
 
 // Metrics
 const fps = ref(0);
@@ -546,7 +548,7 @@ const avgFpsDisplay = computed(() => {
   }
   
   const avgFps = frameCount.value / sceneTimeSeconds;
-  return avgFps.toFixed(1);
+  return `${avgFps.toFixed(1)} AVG FPS`;
 });
 
 // Uptime display moved to SystemStatus component
@@ -863,9 +865,10 @@ watch(
     if (newScene && newScene !== selectedScene.value) {
       selectedScene.value = newScene;
     }
-    // Reset scene timer when scene changes
+    // Reset scene timer and metrics when scene changes
     if (newScene !== oldScene) {
       sceneStartTime.value = Date.now();
+      frameCount.value = 0; // Reset frame counter for avg FPS calculation
       updateSceneTime();
       
       // Restart metrics polling if it was stopped
@@ -1109,7 +1112,7 @@ async function handlePlay() {
   const state = playState.value;
   
   if (state === 'paused') {
-    // Resume paused scene
+    // Resume paused scene (just unpause, don't restart)
     loading.value = true;
     try {
       await api.resumeScene(props.device.ip);
@@ -1121,26 +1124,13 @@ async function handlePlay() {
       loading.value = false;
     }
   } else if (state === 'stopped') {
-    // Resume stopped scene (scene is still loaded, just restart it)
-    const currentScene = props.device.currentScene;
-    if (currentScene && selectedScene.value === currentScene) {
-      // Same scene - just resume/restart
+    // After stop, always restart the scene (like restart button) to reset state
+    const currentScene = props.device.currentScene || selectedScene.value;
+    if (currentScene) {
       loading.value = true;
       try {
-        await api.resumeScene(props.device.ip);
-        toast.success('Scene resumed', 2000);
-        emit('refresh');
-      } catch (err) {
-        toast.error(`Failed to resume: ${err.message}`);
-      } finally {
-        loading.value = false;
-      }
-    } else if (selectedScene.value) {
-      // Different scene selected - switch to it
-      loading.value = true;
-      try {
-        await api.switchScene(props.device.ip, selectedScene.value, { clear: true });
-        toast.success(`Playing ${formatSceneName(selectedScene.value)}`, 2000);
+        await api.switchScene(props.device.ip, currentScene, { clear: true });
+        toast.success(`Playing ${formatSceneName(currentScene)}`, 2000);
         emit('refresh');
       } catch (err) {
         toast.error(`Failed to play: ${err.message}`);
@@ -1619,5 +1609,18 @@ onUnmounted(() => {
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   /* No media query - cards stay horizontal at all window sizes */
+}
+
+/* Info button - special styling */
+.info-btn {
+  /* When not pressed: no frame, no shadow */
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.info-btn-pressed {
+  /* When pressed: has frame and shadow */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

@@ -54,7 +54,7 @@
           size="small"
           class="action-button-danger"
         >
-          <span style="color: #dc2626; font-weight: 600;">Restart Daemon</span>
+          <span style="color: #dc2626; font-weight: 600;">Daemon</span>
           <v-tooltip activator="parent" location="bottom">
             Restart daemon process (all displays briefly show startup)
           </v-tooltip>
