@@ -540,7 +540,7 @@ const lastSeen = computed(() => {
   }
   
   const metricsTs = props.device?.metrics?.ts;
-  if (metricsTs && props.device?.metrics?.pushes > 0) {
+  if (metricsTs) {
     // Show relative time if recent (< 60 seconds ago)
     const now = Date.now();
     const diff = now - metricsTs;
@@ -921,19 +921,20 @@ watch(
       sceneStartTime.value = Date.now();
       frameCount.value = 0; // Reset frame counter for avg FPS calculation
       allFrametimes.value = []; // Reset frametime history for avg FPS
-      updateSceneTime();
+      
+      // Always restart scene time interval on scene change
+      if (sceneTimeInterval) {
+        clearInterval(sceneTimeInterval);
+      }
+      sceneTimeInterval = setInterval(updateSceneTime, 1000);
+      updateSceneTime(); // Immediate update
       
       // Restart metrics polling if it was stopped
-      if (!metricsInterval) {
+      if (!metricsInterval && !isCollapsed.value) {
         console.log('[DEBUG] Scene changed - restarting metrics polling');
         metricsInterval = setInterval(() => {
           loadMetrics();
         }, 200);
-      }
-      
-      // Restart scene time interval if it was stopped
-      if (!sceneTimeInterval) {
-        sceneTimeInterval = setInterval(updateSceneTime, 1000);
       }
     }
   },
@@ -951,17 +952,35 @@ watch(
   { deep: true }
 );
 
-// Watch playState changes to restart/pause metrics polling
+// Watch playState changes to restart/pause metrics polling and scene time
 watch(
   () => playState.value,
   (newState, oldState) => {
     console.log(`[DEBUG] Play state changed: ${oldState} -> ${newState}`);
-    if (newState === 'playing' && (oldState === 'paused' || oldState === 'stopped')) {
+    
+    if (newState === 'playing') {
+      // Restart scene time interval if stopped
+      if (!sceneTimeInterval) {
+        console.log('[DEBUG] Restarting scene time interval');
+        sceneStartTime.value = Date.now(); // Reset start time
+        sceneTimeInterval = setInterval(updateSceneTime, 1000);
+        updateSceneTime(); // Immediate update
+      }
+      
       // Resume metrics polling
       if (!metricsInterval && !isCollapsed.value) {
         console.log('[DEBUG] Resuming metrics polling');
         loadMetrics();
+        metricsInterval = setInterval(() => {
+          loadMetrics();
+        }, 200);
       }
+    } else if (newState === 'stopped') {
+      // On stop, update display but keep interval running (will show "Stopped")
+      updateSceneTime();
+    } else if (newState === 'paused') {
+      // On pause, just update display (interval keeps running, but updateSceneTime freezes the value)
+      updateSceneTime();
     }
   }
 );

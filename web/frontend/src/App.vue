@@ -74,11 +74,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useDeviceStore } from './store/devices';
 import { useSceneStore } from './store/scenes';
 import { useApi } from './composables/useApi';
 import { useToast } from './composables/useToast';
+import { useGlobalWebSocket } from './composables/useWebSocket';
 import SystemStatus from './components/SystemStatus.vue';
 import DeviceCard from './components/DeviceCard.vue';
 import ToastNotifications from './components/ToastNotifications.vue';
@@ -88,9 +89,11 @@ const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
 const api = useApi();
 const toast = useToast();
+const ws = useGlobalWebSocket();
 
 const dataLoaded = ref(false);
 const error = ref(null);
+let pollInterval = null;
 
 async function loadData() {
   try {
@@ -116,10 +119,41 @@ async function loadData() {
   }
 }
 
+// Watch WebSocket connection state
+watch(() => ws.connected.value, (connected) => {
+  if (connected) {
+    // WebSocket connected - stop polling
+    console.log('[App] WebSocket connected - disabling polling');
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    toast.success('Real-time updates enabled', 2000);
+  } else {
+    // WebSocket disconnected - start polling as fallback
+    console.log('[App] WebSocket disconnected - enabling fallback polling');
+    if (!pollInterval) {
+      pollInterval = setInterval(loadData, 200);
+    }
+  }
+});
+
 onMounted(() => {
+  // Initial load
   loadData();
-  // Poll for updates every 200ms for smooth chart updates
-  setInterval(loadData, 200);
+  
+  // Start WebSocket connection
+  ws.connect();
+  
+  // Start polling as fallback (will stop when WebSocket connects)
+  pollInterval = setInterval(loadData, 200);
+});
+
+onUnmounted(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+  }
+  ws.disconnect();
 });
 </script>
 

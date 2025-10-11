@@ -9,6 +9,7 @@
 
 const express = require('express');
 const path = require('path');
+const WebSocket = require('ws');
 
 const WEB_UI_PORT = parseInt(process.env.PIXOO_WEB_PORT || '10829', 10);
 const WEB_UI_AUTH = process.env.PIXOO_WEB_AUTH; // format: "user:password"
@@ -365,6 +366,116 @@ function startWebServer(container, logger) {
       );
     }
   });
+
+  // =========================================================================
+  // WEBSOCKET SERVER
+  // =========================================================================
+
+  const wss = new WebSocket.Server({ server, path: '/ws' });
+  const clients = new Set();
+
+  wss.on('connection', (ws, req) => {
+    const clientIp = req.socket.remoteAddress;
+    logger.info(`🔌 WebSocket client connected from ${clientIp}`);
+    clients.add(ws);
+
+    // Send initial state
+    (async () => {
+      try {
+        const devices = await deviceService.listDevices();
+        const scenes = await sceneService.listScenes();
+
+        ws.send(
+          JSON.stringify({
+            type: 'init',
+            data: {
+              devices,
+              scenes,
+              timestamp: Date.now(),
+            },
+          }),
+        );
+      } catch (error) {
+        logger.error('Failed to send initial WebSocket state:', {
+          error: error.message,
+        });
+      }
+    })();
+
+    // Setup ping/pong for keepalive
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    }, 30000); // Every 30 seconds
+
+    ws.on('pong', () => {
+      // Client responded to ping, connection is alive
+    });
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+        }
+      } catch (error) {
+        logger.error('Invalid WebSocket message:', { error: error.message });
+      }
+    });
+
+    ws.on('close', () => {
+      logger.info(`🔌 WebSocket client disconnected from ${clientIp}`);
+      clients.delete(ws);
+      clearInterval(pingInterval);
+    });
+
+    ws.on('error', (error) => {
+      logger.error('WebSocket error:', { error: error.message, clientIp });
+      clients.delete(ws);
+      clearInterval(pingInterval);
+    });
+  });
+
+  // Broadcast function for state updates
+  function broadcast(message) {
+    const payload = JSON.stringify(message);
+    let sent = 0;
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+        sent++;
+      }
+    });
+    if (sent > 0) {
+      logger.debug(
+        `📡 WebSocket broadcast to ${sent} client(s): ${message.type}`,
+      );
+    }
+  }
+
+  // Attach broadcast function to server for external use
+  server.wsBroadcast = broadcast;
+
+  // Setup periodic state broadcasts (every 5 seconds as fallback)
+  setInterval(async () => {
+    if (clients.size > 0) {
+      try {
+        const devices = await deviceService.listDevices();
+        broadcast({
+          type: 'devices_update',
+          data: devices,
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        logger.error('Failed to broadcast device updates:', {
+          error: error.message,
+        });
+      }
+    }
+  }, 5000);
+
+  logger.ok(`🔌 WebSocket server started on ws://localhost:${WEB_UI_PORT}/ws`);
 
   return server;
 }
