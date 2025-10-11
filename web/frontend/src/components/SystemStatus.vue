@@ -10,11 +10,13 @@
           <div class="text-h6 font-weight-bold primary--text">
             Pixoo Control Center
           </div>
-          <div class="text-caption">
-            <span style="display: inline-flex; align-items: center;">
+          <div class="text-caption d-flex align-center">
+            <span class="d-inline-flex align-center">
               <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor, marginRight: '6px' }"></span>
               <span style="color: #6b7280;">{{ status }}</span>
             </span>
+            <span class="mx-2" style="color: #d1d5db;">•</span>
+            <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">{{ hostname }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>

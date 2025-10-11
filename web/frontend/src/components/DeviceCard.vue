@@ -354,7 +354,7 @@
           Performance Metrics
         </h4>
         <div class="metrics-grid">
-          <!-- Performance Card (FPS + Frametime + Frame Count) -->
+          <!-- Performance Card (FPS + Frametime) -->
           <v-card class="metric-card metric-card-performance" elevation="0" style="border-left: 4px solid #3b82f6;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
@@ -365,22 +365,19 @@
               <div class="text-caption" style="color: #64748b;">
                 {{ frametime }}ms frametime
               </div>
-              <div class="text-caption" style="color: #94a3b8;">
-                {{ frameCount.toLocaleString() }} frames sent
-              </div>
             </v-card-text>
           </v-card>
 
-          <!-- Uptime Card -->
-          <v-card class="metric-card metric-card-uptime" elevation="0" style="border-left: 4px solid #10b981;">
+          <!-- Average FPS Card -->
+          <v-card class="metric-card metric-card-fps" elevation="0" style="border-left: 4px solid #10b981;">
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-2">
-                <div class="metric-header" style="color: #10b981;">Uptime</div>
-                <v-icon size="large" style="opacity: 0.2; color: #10b981;">mdi-clock-outline</v-icon>
+                <div class="metric-header" style="color: #10b981;">Avg FPS</div>
+                <v-icon size="large" style="opacity: 0.2; color: #10b981;">mdi-chart-line</v-icon>
               </div>
-              <div class="metric-value mb-1" style="color: #1e293b;">{{ uptimeDisplay }}</div>
+              <div class="metric-value mb-1" style="color: #1e293b;">{{ avgFpsDisplay }}</div>
               <div class="text-caption" style="color: #64748b;">
-                Since daemon start
+                {{ frameCount }} frames sent
               </div>
             </v-card-text>
           </v-card>
@@ -481,12 +478,10 @@ const frameCount = ref(0);
 const errorCount = ref(0);
 const pushCount = ref(0);
 const startTime = ref(Date.now());
-const daemonStartTime = ref(Date.now());
 const frametimeHistory = ref([]);
 const lastFrameCount = ref(0); // Track last frame count for chart optimization (UI-513)
 const sceneStartTime = ref(Date.now());
 const sceneTimeDisplay = ref('0s');
-let uptimeInterval = null;
 let sceneTimeInterval = null;
 
 let metricsInterval = null;
@@ -507,15 +502,18 @@ const statusText = computed(() => {
 });
 
 const lastSeen = computed(() => {
-  // Use actual device metrics timestamp if available
+  // Only show last seen for real devices with actual metrics timestamp
+  if (props.device.driver !== 'real') {
+    return 'N/A';
+  }
+  
   const metricsTs = props.device?.metrics?.ts;
   if (metricsTs) {
     const date = new Date(metricsTs);
     return date.toTimeString().slice(0, 8);
   }
-  // Fallback to current time
-  const now = new Date();
-  return now.toTimeString().slice(0, 8);
+  
+  return 'N/A'; // No fallback - only show real device response time
 });
 
 const fpsDisplay = computed(() => {
@@ -533,22 +531,25 @@ const fpsDisplay = computed(() => {
   return fps.value.toFixed(1);
 });
 
-const uptimeDisplay = ref('0s');
-
-function updateUptime() {
-  const diff = Date.now() - daemonStartTime.value;
-  const hours = Math.floor(diff / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-  
-  if (hours > 0) {
-    uptimeDisplay.value = `${hours}h ${minutes}m`;
-  } else if (minutes > 0) {
-    uptimeDisplay.value = `${minutes}m ${seconds}s`;
-  } else {
-    uptimeDisplay.value = `${seconds}s`;
+const avgFpsDisplay = computed(() => {
+  // Check if scene is static (non-looping)
+  if (!currentSceneInfo.value?.wantsLoop) {
+    return 'static';
   }
-}
+  
+  // Calculate average FPS from total frames and scene time
+  const sceneTime = Date.now() - sceneStartTime.value;
+  const sceneTimeSeconds = sceneTime / 1000;
+  
+  if (sceneTimeSeconds === 0 || frameCount.value === 0) {
+    return '-';
+  }
+  
+  const avgFps = frameCount.value / sceneTimeSeconds;
+  return avgFps.toFixed(1);
+});
+
+// Uptime display moved to SystemStatus component
 
 function updateSceneTime() {
   // Check play state first
@@ -1354,22 +1355,6 @@ async function toggleDriver() {
 }
 
 onMounted(async () => {
-  // Initialize daemon start time from system status
-  try {
-    const systemStatus = await api.getSystemStatus();
-    if (systemStatus.startTime) {
-      daemonStartTime.value = new Date(systemStatus.startTime).getTime();
-    } else {
-      daemonStartTime.value = Date.now() - (systemStatus.uptime || 0) * 1000;
-    }
-    updateUptime();
-  } catch (error) {
-    console.error('Failed to load system status for uptime:', error);
-  }
-
-  // Start uptime counter (updates every second)
-  uptimeInterval = setInterval(updateUptime, 1000);
-  
   // Start scene time counter (updates every second)
   sceneTimeInterval = setInterval(updateSceneTime, 1000);
   updateSceneTime(); // Initial call
@@ -1392,9 +1377,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (metricsInterval) {
     clearInterval(metricsInterval);
-  }
-  if (uptimeInterval) {
-    clearInterval(uptimeInterval);
   }
   if (sceneTimeInterval) {
     clearInterval(sceneTimeInterval);
@@ -1507,7 +1489,7 @@ onUnmounted(() => {
   border: 1px solid #bfdbfe;
 }
 
-.metric-card-uptime {
+.metric-card-fps {
   background: linear-gradient(135deg, #ffffff 0%, #d1fae5 100%);
   border: 1px solid #a7f3d0;
 }
