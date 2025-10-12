@@ -1,6 +1,9 @@
 node_modules/
 .env
 
+# Generated build artifacts
+version.json
+
 # Vite build output (Vue frontend)
 web/public/
 web/frontend/dist/
