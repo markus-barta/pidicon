@@ -84,6 +84,8 @@ module.exports = {
     context.setState('phase', PHASES.INTRO);
     context.setState('frame', 0);
   },
+
+  wantsLoop: true,
 };
 
 // ============================================================================
