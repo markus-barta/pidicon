@@ -237,6 +237,36 @@ function startWebServer(container, logger) {
     }
   });
 
+  // POST /api/devices/:ip/logging - Enable/disable debug logging
+  app.post('/api/devices/:ip/logging', async (req, res) => {
+    try {
+      const { enabled } = req.body;
+
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ error: 'enabled must be a boolean' });
+      }
+
+      logger.ok(
+        `[WEB UI] ${enabled ? 'Enabling' : 'Disabling'} logging for ${req.params.ip}`,
+        {
+          source: 'web-ui',
+        },
+      );
+
+      const result = await deviceService.setDeviceLogging(
+        req.params.ip,
+        enabled,
+      );
+      res.json(result);
+    } catch (error) {
+      logger.error(`[WEB UI] Failed to set logging on ${req.params.ip}:`, {
+        error: error.message,
+        enabled: req.body.enabled,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/scenes - List all scenes with metadata
   app.get('/api/scenes', async (req, res) => {
     try {

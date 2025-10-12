@@ -96,6 +96,13 @@ export function useApi() {
     });
   }
 
+  async function setDeviceLogging(ip, enabled) {
+    return await request(`/devices/${ip}/logging`, {
+      method: 'POST',
+      body: JSON.stringify({ enabled }),
+    });
+  }
+
   async function switchDriver(ip, driver) {
     return await request(`/devices/${ip}/driver`, {
       method: 'POST',
@@ -134,6 +141,7 @@ export function useApi() {
     setDisplayPower,
     setDisplayBrightness,
     resetDevice,
+    setDeviceLogging,
     switchDriver,
     // Scene methods
     getScenes,

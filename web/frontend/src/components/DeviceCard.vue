@@ -139,6 +139,20 @@
           </v-tooltip>
         </v-btn>
 
+        <div class="control-item ml-4">
+          <span 
+            class="text-body-2 font-weight-medium" 
+            style="cursor: pointer; user-select: none;"
+            @click="toggleLogging"
+          >
+            <v-icon size="small" class="mr-1">{{ loggingEnabled ? 'mdi-console' : 'mdi-console-line' }}</v-icon>
+            Logging
+          </span>
+          <v-tooltip activator="parent" location="bottom">
+            {{ loggingEnabled ? 'Click to disable debug logging' : 'Click to enable debug logging' }}
+          </v-tooltip>
+        </div>
+
         <v-spacer></v-spacer>
 
         <!-- Brightness Slider (right-aligned) -->
@@ -521,6 +535,7 @@ const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
 const previousBrightness = ref(75); // Store brightness before power off
+const loggingEnabled = ref(props.device.driver === 'real'); // Real devices: logging ON, Mock devices: logging OFF
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
@@ -1398,6 +1413,23 @@ async function setBrightness() {
     toast.error(`Failed to set brightness: ${err.message}`);
   } finally {
     brightnessLoading.value = false;
+  }
+}
+
+async function toggleLogging() {
+  loggingEnabled.value = !loggingEnabled.value;
+  try {
+    await api.setDeviceLogging(props.device.ip, loggingEnabled.value);
+    toast.success(
+      loggingEnabled.value 
+        ? 'Debug logging enabled' 
+        : 'Debug logging disabled',
+      2000
+    );
+  } catch (err) {
+    // Revert on error
+    loggingEnabled.value = !loggingEnabled.value;
+    toast.error(`Failed to toggle logging: ${err.message}`);
   }
 }
 

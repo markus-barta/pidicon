@@ -19,6 +19,7 @@ const {
   devices,
   deviceDrivers,
 } = require('./lib/device-adapter');
+const { setStateStore } = require('./lib/device-adapter');
 const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
 const MqttService = require('./lib/mqtt-service');
@@ -177,6 +178,9 @@ logger.ok('✅ DI Container initialized with services:', {
 
 // Log StateStore stats for observability (and to satisfy linter)
 logger.debug('StateStore initialized:', stateStore.getStats());
+
+// Inject StateStore into device-adapter for per-device logging preferences
+setStateStore(stateStore);
 
 // ============================================================================
 // WEB UI SERVER (OPTIONAL)
