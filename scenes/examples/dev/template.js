@@ -40,7 +40,6 @@ const name = 'template';
 /**
  * Import required modules
  */
-const logger = require('../../../lib/logger');
 // const { validateSceneContext } = require('../../../lib/performance-utils');
 // const { validateColor } = require('../../../lib/validation');
 
@@ -83,15 +82,14 @@ const DEFAULTS = Object.freeze({
  * @returns {Promise<void>}
  */
 async function init(context) {
-  logger.debug(`🚀 [TEMPLATE] Scene initialized`);
-
   // Validate context (recommended)
   // if (!validateSceneContext(context, name)) {
   //   return;
   // }
 
   // Extract parameters from MQTT payload with defaults
-  const { device, setState, payload } = context;
+  const { device, setState, payload, log } = context;
+  log?.(`🚀 Scene initialized`, 'debug');
   const config = {
     ...DEFAULTS,
     ...payload, // Override defaults with MQTT parameters
@@ -102,11 +100,11 @@ async function init(context) {
   setState('initialized', true);
 
   // One-time setup code here
-  logger.info(`[TEMPLATE] Configuration:`, config);
+  log?.(`Configuration: ${JSON.stringify(config)}`, 'info');
 
   // Validate device object (example validation)
   if (!device || typeof device !== 'object') {
-    logger.error(`[TEMPLATE] Invalid device object in context`);
+    log?.(`Invalid device object in context`, 'error');
     return;
   }
 }
@@ -130,7 +128,7 @@ async function render(context) {
   //   return null;
   // }
 
-  const { device, getState, setState, payload, loopDriven, publishOk } =
+  const { device, getState, setState, payload, loopDriven, publishOk, log } =
     context;
 
   try {
@@ -149,7 +147,7 @@ async function render(context) {
 
     // Log loop-driven status for debugging
     if (loopDriven) {
-      logger.debug(`[TEMPLATE] Render called by central loop`);
+      log?.(`Render called by central loop`, 'debug');
     }
 
     // Example: Animation logic
@@ -163,7 +161,7 @@ async function render(context) {
       // Push frame to device
       await device.push(name, publishOk);
 
-      logger.debug(`🎬 [TEMPLATE] Frame ${frameCount} rendered`);
+      log?.(`🎬 Frame ${frameCount} rendered`, 'debug');
 
       // Return delay for next frame
       return delay;
@@ -174,16 +172,13 @@ async function render(context) {
       // Push frame to device
       await device.push(name, publishOk);
 
-      logger.debug(`🖼️ [TEMPLATE] Static frame rendered`);
+      log?.(`🖼️ Static frame rendered`, 'debug');
 
       // Signal completion by returning null
       return null;
     }
   } catch (error) {
-    logger.error(`❌ [TEMPLATE] Render error:`, {
-      error: error.message,
-      scene: name,
-    });
+    log?.(`❌ Render error: ${error.message}`, 'error');
     return null; // Stop on error
   }
 }
@@ -194,9 +189,8 @@ async function render(context) {
  * @param {Object} config - Scene configuration
  * @returns {Promise<void>}
  */
-async function drawStaticFrame(device, config) {
+async function drawStaticFrame(device) {
   // Use config for static content customization
-  logger.debug(`[TEMPLATE] Drawing static frame with config:`, config);
   // Clear screen
   await device.clear();
 
@@ -223,12 +217,8 @@ async function drawStaticFrame(device, config) {
  * @param {Object} config - Scene configuration
  * @returns {Promise<void>}
  */
-async function drawAnimatedFrame(device, frameCount, config) {
+async function drawAnimatedFrame(device, frameCount) {
   // Use config for animation customization
-  logger.debug(
-    `[TEMPLATE] Drawing animated frame ${frameCount} with config:`,
-    config,
-  );
   // Clear screen
   await device.clear();
 
@@ -270,22 +260,18 @@ async function drawAnimatedFrame(device, frameCount, config) {
  * @returns {Promise<void>}
  */
 async function cleanup(context) {
-  const { getState, setState } = context;
+  const { setState } = context;
 
   try {
     // Clean up any resources
-    const frameCount = getState('frameCount') || 0;
-
     // Clear state
     setState('frameCount', 0);
     setState('initialized', false);
     setState('config', null);
 
-    logger.info(`[TEMPLATE] Scene cleaned up (rendered ${frameCount} frames)`);
-  } catch (error) {
-    logger.warn(`⚠️ [TEMPLATE] Cleanup error:`, {
-      error: error.message,
-    });
+    // Scene cleaned up
+  } catch {
+    // Cleanup error, silently ignore
   }
 }
 

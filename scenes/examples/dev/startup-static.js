@@ -10,7 +10,6 @@
  */
 
 const name = 'startup-static';
-const logger = require('../../../lib/logger');
 const { validateSceneContext } = require('../../../lib/performance-utils');
 
 const COLORS = Object.freeze({
@@ -34,8 +33,9 @@ const LAYOUT = Object.freeze({
   STATUS_FONT_HEIGHT: 5,
 });
 
-async function init() {
-  logger.info(`[STARTUP] Scene initialized`);
+async function init(context) {
+  const { log } = context;
+  log?.(`Scene initialized`, 'info');
 }
 
 async function render(ctx) {
@@ -44,13 +44,13 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state } = ctx;
+  const { device, state, log } = ctx;
 
   // Log debug information
-  logDebugInfo(state);
+  logDebugInfo(state, log);
 
   // Build version information
-  const versionInfo = buildVersionInfo(state);
+  const versionInfo = buildVersionInfo(state, log);
 
   // Clear screen and draw startup information
   await drawStartupInfo(device, versionInfo);
@@ -58,44 +58,48 @@ async function render(ctx) {
   // Push the startup frame to the device
   await device.push(name, ctx.publishOk);
 
-  logger.info(`[STARTUP] Deployment ${versionInfo.deploymentId} displayed`);
+  log?.(`Deployment ${versionInfo.deploymentId} displayed`, 'info');
 }
 
-function logDebugInfo(state) {
+function logDebugInfo(state, log) {
   // Get deployment info from state or use defaults
-  logger.debug('Startup scene state:', {
-    stateKeys: Array.from(state.keys()),
-    deploymentId: state.get('deploymentId'),
-    buildNumber: state.get('buildNumber'),
-    gitCommit: state.get('gitCommit'),
-    buildTime: state.get('buildTime'),
-    daemonStart: state.get('daemonStart'),
-    stateType: typeof state,
-    stateConstructor: state.constructor.name,
-  });
+  log?.(
+    `Startup scene state: ${JSON.stringify({
+      stateKeys: Array.from(state.keys()),
+      deploymentId: state.get('deploymentId'),
+      buildNumber: state.get('buildNumber'),
+      gitCommit: state.get('gitCommit'),
+      buildTime: state.get('buildTime'),
+      daemonStart: state.get('daemonStart'),
+      stateType: typeof state,
+      stateConstructor: state.constructor.name,
+    })}`,
+    'debug',
+  );
 
   // Also check environment variables directly
-  logger.debug('Environment variables:', {
-    GIT_COMMIT: process.env.GIT_COMMIT,
-    GIT_COMMIT_COUNT: process.env.GIT_COMMIT_COUNT,
-    NODE_ENV: process.env.NODE_ENV,
-  });
+  log?.(
+    `Environment variables: ${JSON.stringify({
+      GIT_COMMIT: process.env.GIT_COMMIT,
+      GIT_COMMIT_COUNT: process.env.GIT_COMMIT_COUNT,
+      NODE_ENV: process.env.NODE_ENV,
+    })}`,
+    'debug',
+  );
 
   // Check all environment variables for debugging
-  logger.debug(
-    'All environment variables:',
-    Object.keys(process.env).filter(
-      (key) =>
-        key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD'),
-    ),
+  const envKeys = Object.keys(process.env).filter(
+    (key) =>
+      key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD'),
   );
+  log?.(`All environment variables: ${JSON.stringify(envKeys)}`, 'debug');
 }
 
 function getStateValue(state, key, defaultValue) {
   return state.get(key) || defaultValue;
 }
 
-function buildVersionInfo(state) {
+function buildVersionInfo(state, log) {
   const gitSha = process.env.GITHUB_SHA?.substring(0, 7);
 
   // Always read the latest version.json to ensure current build number
@@ -114,12 +118,13 @@ function buildVersionInfo(state) {
         gitCommit: versionData.gitCommit,
         buildTime: versionData.buildTime,
       };
-      logger.info(
-        `[STARTUP] Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
+      log?.(
+        `Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
+        'info',
       );
     }
   } catch (error) {
-    logger.warn(`[STARTUP] Failed to read version.json: ${error.message}`);
+    log?.(`Failed to read version.json: ${error.message}`, 'warning');
   }
 
   return {
@@ -248,8 +253,9 @@ async function drawStartupInfo(device, versionInfo) {
   );
 }
 
-async function cleanup() {
-  logger.info(`[STARTUP] Scene cleaned up`);
+async function cleanup(context) {
+  const { log } = context;
+  log?.(`Scene cleaned up`, 'info');
 }
 
 const wantsLoop = false;

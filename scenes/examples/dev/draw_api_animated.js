@@ -46,7 +46,6 @@ const MOVEMENT_LIMITS = Object.freeze({
 });
 
 // Imports
-const logger = require('../../../lib/logger');
 const {
   CHART_CONFIG,
   getPerformanceColor,
@@ -233,7 +232,7 @@ async function renderFrame(context, config) {
   await device.clear();
 
   // Draw animated layers (ported from draw_api_animated.js)
-  await drawAnimatedBackground(device, t, frameCount);
+  await drawAnimatedBackground(device, t);
   await drawMovingShapes(device, t, getState, setState, maxDelta);
   await drawSweepingLines(device, t, getState, setState, maxDelta);
   await drawAnimatedText(device, t, getState, setState, maxDelta);
@@ -296,17 +295,16 @@ async function renderFrame(context, config) {
 
 // --- Scene lifecycle ---
 async function init() {
-  logger.debug('🚀 [ANIM V2] Scene initialized');
+  // logger.debug('🚀 [ANIM V2] Scene initialized');
 }
 
 async function cleanup(context) {
   try {
     const { setState } = context;
     setState?.('isRunning', false);
-  } catch (e) {
-    logger.warn('⚠️ [ANIM V2] Cleanup issue', { message: e?.message });
+  } catch {
+    // Cleanup issue, silently ignore
   }
-  logger.debug('🧹 [ANIM V2] Scene cleaned up');
 }
 
 async function render(context) {
@@ -324,9 +322,6 @@ async function render(context) {
       const s = new AnimatedV2State(getState, setState);
       s.reset();
       await device.clear();
-      logger.ok(
-        `🎬 [ANIM V2] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} animation${frames ? ` for ${frames} frames` : ''}`,
-      );
       // Under central scheduler, we do not self-schedule
       // No self-scheduling in pure-render contract
     }
@@ -335,13 +330,13 @@ async function render(context) {
     if (loopDriven && getState('isRunning')) {
       return await renderFrame(context, getState('config') || config);
     }
-  } catch (error) {
-    logger.error(`❌ [ANIM V2] Render error: ${error.message}`);
+  } catch {
+    // Render error, silently ignore
   }
 }
 
 // --- Animated layers (ported from draw_api_animated.js, adapted to use time t) ---
-async function drawAnimatedBackground(device, t, frameCount) {
+async function drawAnimatedBackground(device, t) {
   for (let y = 0; y < ANIMATION_CONFIG.SCREEN_SIZE; y++) {
     for (let x = 0; x < ANIMATION_CONFIG.SCREEN_SIZE; x++) {
       const wave1 = Math.sin((x * 0.1 + t) * 0.5) * 30 + 30;
@@ -352,12 +347,6 @@ async function drawAnimatedBackground(device, t, frameCount) {
         const g = Math.round(intensity * 0.05);
         const b = Math.round(intensity * 0.2);
         const color = [r, g, b, 60];
-        if (x === 0 && y === 0 && frameCount < 3) {
-          // very early debug pixel
-          logger.debug(
-            `🎨 [ANIM V2 BG] Pixel [${x},${y}] intensity=${intensity.toFixed(1)} color=[${color.join(',')}]`,
-          );
-        }
         await device.drawPixelRgba([x, y], color);
       }
     }
@@ -649,12 +638,7 @@ async function drawMoonAnimation(
     255,
   );
 
-  // Debug logging for first few frames
-  if (frameCount <= 3) {
-    logger.debug(
-      `🌙 Moon animation: frame=${frameCount}, phase=${moonPhase}, pos=[${moonX},${moonY}], path=${moonImagePath}`,
-    );
-  }
+  // Debug logging for first few frames (disabled)
 }
 
 async function drawFinalOverlay(device, t) {

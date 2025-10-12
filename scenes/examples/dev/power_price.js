@@ -15,7 +15,6 @@ const SunCalc = require('suncalc');
 
 const { drawVerticalGradientLine } = require('../../../lib/gradient-renderer');
 const GraphicsEngine = require('../../../lib/graphics-engine');
-const logger = require('../../../lib/logger');
 const {
   BaseSceneState,
   FrameCounter,
@@ -273,8 +272,8 @@ class PowerPriceScene extends AnimatedScene {
         [200, 200, 200, 255],
         'left',
       );
-    } catch (error) {
-      logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
+    } catch {
+      // Silently ignore performance metrics rendering errors
     }
   }
 
@@ -289,7 +288,7 @@ class PowerPriceScene extends AnimatedScene {
     } = context;
 
     // Extract original context parameters
-    const { payload, getState, setState } = baseContext;
+    const { payload, getState, setState, log } = baseContext;
 
     // Initialize graphics engine if not already done
     if (!this.graphicsEngine) {
@@ -325,7 +324,7 @@ class PowerPriceScene extends AnimatedScene {
           clockFadeDirection: 1,
           lastRenderTime: Date.now(),
         });
-        logger.ok(`🎬 [POWER_PRICE] Starting scene`);
+        log?.(`🎬 Starting scene`, 'info');
       }
 
       // Get current time info (normally from global.get('suncalc') and time functions)
@@ -362,7 +361,7 @@ class PowerPriceScene extends AnimatedScene {
 
       // Check if we should continue based on frame limit
       if (!frameCounter.shouldContinue(config.frames)) {
-        logger.ok(`🏁 [POWER_PRICE] Completed after ${framesPushed} frames`);
+        log?.(`🏁 Completed after ${framesPushed} frames`, 'info');
         return null;
       }
 
@@ -400,8 +399,8 @@ class PowerPriceScene extends AnimatedScene {
             image.alpha || 255,
             'multiply', // Multiply blend mode treats black backgrounds as transparent
           );
-        } catch (error) {
-          logger.debug(`Error rendering image ${image.path}: ${error.message}`);
+        } catch {
+          // Silently ignore image rendering errors
         }
       }
     }
@@ -701,8 +700,8 @@ class PowerPriceScene extends AnimatedScene {
             partialPixelAlpha,
             'start',
           );
-        } catch (error) {
-          logger.debug(`Error drawing PV bar at x=${x}: ${error.message}`);
+        } catch {
+          // Silently ignore PV bar rendering errors
         }
       }
     }
@@ -810,7 +809,7 @@ class PowerPriceScene extends AnimatedScene {
   async renderPowerPriceChart(device, config, timeInfo) {
     const priceData = config.powerPriceData || {};
     if (!priceData?.data) {
-      logger.debug('Power price data unavailable.');
+      // Power price data unavailable - silently return
       return;
     }
 
@@ -870,9 +869,8 @@ class PowerPriceScene extends AnimatedScene {
         moonAlpha,
         'multiply',
       );
-    } catch (error) {
-      logger.debug(`Error rendering moon phase: ${error.message}`);
-      // Fallback to static moon with multiply blend
+    } catch {
+      // Error rendering moon phase - fallback to static moon with multiply blend
       await this.graphicsEngine.drawImageBlended(
         'scenes/media/moon.png',
         moonConfig.position,
@@ -926,13 +924,10 @@ function getMoonPhaseFilename(date = new Date()) {
     // Format the index with leading zero (e.g., 5 -> "05")
     const formattedPhase = imageIndex.toString().padStart(2, '0');
     const imagePath = `scenes/media/moonphase/5x5/Moon_${formattedPhase}.png`;
-    logger.debug(
-      `Moon phase: ${phaseValue.toFixed(2)}, Index: ${imageIndex}, Path: ${imagePath}`,
-    );
     return imagePath;
-  } catch (error) {
-    logger.warn('Error calculating moon phase: ' + error.message);
-    return 'scenes/media/moon.png'; // Fallback to static moon
+  } catch {
+    // Error calculating moon phase - fallback to static moon
+    return 'scenes/media/moon.png';
   }
 }
 
@@ -1057,8 +1052,8 @@ async function drawZeroLineMarker(device, x, y, isPastHour) {
 
   try {
     await device.drawPixelRgba([x, y], color);
-  } catch (error) {
-    logger.debug(`Zero line marker error at [${x}, ${y}]: ${error.message}`);
+  } catch {
+    // Silently ignore zero line marker error
   }
 }
 
@@ -1081,8 +1076,8 @@ async function drawCurrentHourIndicator(device, x, config) {
     await device.drawPixelRgba([x - 1, yBase], color);
     await device.drawPixelRgba([x, yBase], color);
     await device.drawPixelRgba([x + 1, yBase], color);
-  } catch (error) {
-    logger.debug(`Current hour indicator error at x=${x}: ${error.message}`);
+  } catch {
+    // Silently ignore current hour indicator error
   }
 }
 

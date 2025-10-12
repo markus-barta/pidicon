@@ -21,7 +21,6 @@
 const SCENE_NAME = 'advanced_chart';
 
 // Import shared utilities
-const logger = require('../../../lib/logger');
 const { validateSceneContext } = require('../../../lib/performance-utils');
 
 /**
@@ -29,9 +28,10 @@ const { validateSceneContext } = require('../../../lib/performance-utils');
  * @param {Object} ctx - Render context
  * @returns {Promise<void>}
  */
-async function init() {
+async function init(context) {
   // Initialize advanced chart scene - nothing special needed
-  logger.debug(`🚀 [ADVANCED_CHART] Scene initialized`);
+  const { log } = context;
+  log?.(`🚀 Scene initialized`, 'debug');
 }
 
 async function render(ctx) {
@@ -40,7 +40,7 @@ async function render(ctx) {
     return;
   }
 
-  const { device, state, publishOk } = ctx;
+  const { device, state, publishOk, log } = ctx;
 
   // Advanced chart is always available
 
@@ -93,11 +93,12 @@ async function render(ctx) {
 
   // Log performance
   if (result.success) {
-    logger.debug(
-      `📊 [ADVANCED CHART] Rendered ${result.dataPoints} points in ${result.renderTime}ms`,
+    log?.(
+      `📊 Rendered ${result.dataPoints} points in ${result.renderTime}ms`,
+      'debug',
     );
   } else {
-    logger.error(`❌ [ADVANCED CHART] Render failed: ${result.error}`);
+    log?.(`❌ Render failed: ${result.error}`, 'error');
   }
 }
 
@@ -148,7 +149,7 @@ function generateDemoData(config) {
 
 async function cleanup() {
   // Cleanup advanced chart scene - nothing special needed
-  logger.debug(`🧹 [ADVANCED_CHART] Scene cleaned up`);
+  // logger.debug(`🧹 [ADVANCED_CHART] Scene cleaned up`);
 }
 
 const wantsLoop = false;

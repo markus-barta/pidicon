@@ -7,7 +7,6 @@
  */
 
 const ConfigValidator = require('../../../lib/config-validator');
-const logger = require('../../../lib/logger');
 
 class ConfigValidatorDemoScene {
   constructor() {
@@ -22,8 +21,11 @@ class ConfigValidatorDemoScene {
   }
 
   async init(context) {
-    logger.info(
+    const { log } = context;
+    this.log = log; // Store for use in helper methods
+    log?.(
       `⚙️ [${context.device.host}] Initializing Config Validator Demo`,
+      'info',
     );
 
     // Initialize config validator
@@ -38,6 +40,8 @@ class ConfigValidatorDemoScene {
   }
 
   async render(context) {
+    const { log } = context;
+    this.log = log; // Store for use in helper methods
     this.frameCount++;
 
     // Update demo phase
@@ -59,8 +63,9 @@ class ConfigValidatorDemoScene {
           break;
       }
 
-      logger.debug(
+      log?.(
         `⚙️ [${context.device.host}] Config Demo phase ${this.demoPhase}`,
+        'debug',
       );
     }
 
@@ -92,7 +97,7 @@ class ConfigValidatorDemoScene {
 
       return 200; // ~5fps
     } catch (error) {
-      logger.error(`⚙️ Config Demo render error: ${error.message}`);
+      this.log?.(`⚙️ Config Demo render error: ${error.message}`, 'error');
 
       // Fallback display
       await context.device.clear();
@@ -109,12 +114,13 @@ class ConfigValidatorDemoScene {
   }
 
   _demonstratePresets() {
-    logger.info('⚙️ Demonstrating configuration presets...');
+    this.log?.('⚙️ Demonstrating configuration presets...', 'info');
 
     // Show available presets
     const presets = this.configValidator.getAllPresets();
-    logger.info(
+    this.log?.(
       `📋 Available presets: ${Array.from(presets.keys()).join(', ')}`,
+      'info',
     );
 
     // Demonstrate preset creation
@@ -122,13 +128,19 @@ class ConfigValidatorDemoScene {
       text: 'HELLO',
       position: [32, 20],
     });
-    logger.info('📋 Created text config from preset:', textConfig);
+    this.log?.(
+      `📋 Created text config from preset: ${JSON.stringify(textConfig)}`,
+      'info',
+    );
 
     // Demonstrate chart preset
     const chartConfig = this.configValidator.createFromPreset('chart-basic', {
       data: [10, 20, 30, 40, 50],
     });
-    logger.info('📋 Created chart config from preset:', chartConfig);
+    this.log?.(
+      `📋 Created chart config from preset: ${JSON.stringify(chartConfig)}`,
+      'info',
+    );
   }
 
   _setupPresetDemo() {
@@ -294,8 +306,10 @@ class ConfigValidatorDemoScene {
   }
 
   async cleanup(context) {
-    logger.info(
+    const { log } = context;
+    log?.(
       `🧹 [${context.device.host}] Cleaning up Config Validator Demo`,
+      'info',
     );
 
     if (this.configValidator) {

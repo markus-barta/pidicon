@@ -7,7 +7,6 @@
  */
 
 const GraphicsEngine = require('../../../lib/graphics-engine');
-const logger = require('../../../lib/logger');
 
 // Configuration constants
 const GFX_DEMO_CONFIG = {
@@ -193,10 +192,6 @@ class GraphicsEngineDemoScene {
   }
 
   async init(context) {
-    logger.info(
-      `🎨 [${context.device.host}] Initializing Graphics Engine Demo`,
-    );
-
     // Initialize graphics engine
     this.graphicsEngine = new GraphicsEngine(context.device);
 
@@ -284,12 +279,7 @@ class GraphicsEngineDemoScene {
       this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
     const fps = Math.round(1000 / avgFrameTime);
 
-    // Debug: Log every 30 frames to avoid spam
-    if (this.frameCount % 30 === 1) {
-      logger.debug(
-        `🎨 [${context.device.host}] GFX Demo render frame ${this.frameCount}, phase ${this.demoPhase}, FPS: ${fps}, FrameTime: ${Math.round(avgFrameTime)}ms`,
-      );
-    }
+    // Debug logging disabled
 
     // Update fade transition
     const opacity = this.graphicsEngine.updateFadeTransition();
@@ -340,10 +330,6 @@ class GraphicsEngineDemoScene {
           this._setupFadeOutPhase();
           break;
       }
-
-      logger.debug(
-        `🎨 [${context.device.host}] GFX Demo phase ${this.demoPhase}`,
-      );
     }
 
     try {
@@ -375,8 +361,8 @@ class GraphicsEngineDemoScene {
       await context.device.push('graphics_engine_demo', context.publishOk);
 
       return 0; // Adaptive timing - render as soon as possible (~5fps max)
-    } catch (error) {
-      logger.error(`🎨 GFX Demo render error: ${error.message}`);
+    } catch {
+      // logger.error(`🎨 GFX Demo render error: ${error.message}`);
 
       // Fallback display
       await context.device.clear();
@@ -408,12 +394,7 @@ class GraphicsEngineDemoScene {
       Math.round(255 * opacity),
     ];
 
-    // Debug: Log background drawing
-    if (this.frameCount % 60 === 1) {
-      logger.debug(
-        `🎨 [${this.graphicsEngine.device?.host || 'unknown'}] GFX Demo drawing background`,
-      );
-    }
+    // Debug: Log background drawing (disabled)
 
     try {
       await this.graphicsEngine.drawGradientBackground(
@@ -422,10 +403,10 @@ class GraphicsEngineDemoScene {
         'vertical',
       );
       if (this.frameCount % 60 === 1) {
-        logger.debug(`🎨 GFX Demo background drawn successfully`);
+        // logger.debug(`🎨 GFX Demo background drawn successfully`);
       }
-    } catch (error) {
-      logger.error(`🎨 GFX Demo background draw error: ${error.message}`);
+    } catch {
+      // logger.error(`🎨 GFX Demo background draw error: ${error.message}`);
     }
   }
 
@@ -800,8 +781,8 @@ class GraphicsEngineDemoScene {
         [200, 200, 200, 255],
         'left',
       );
-    } catch (error) {
-      logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
+    } catch {
+      // logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
     }
   }
 
@@ -1019,9 +1000,8 @@ class GraphicsEngineDemoScene {
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
   }
 
-  async cleanup(context) {
-    logger.info(`🧹 [${context.device.host}] Cleaning up Graphics Engine Demo`);
-
+  async cleanup() {
+    // Cleanup graphics engine demo
     if (this.graphicsEngine) {
       this.graphicsEngine.shutdown();
       this.graphicsEngine = null;
