@@ -48,18 +48,22 @@ module.exports = {
     context.setState('globalFrame', 0);
 
     // Animation states
-    context.setState('particles', this.initParticles(20));
-    context.setState('stars', this.initStars(30));
+    context.setState('particles', this.initParticles(25));
+    context.setState('stars', this.initStars(50)); // Increase for fuller starfield
+    context.setState('stars3d', this.initStars3D(25)); // Init 3D stars
     context.setState('tunnelAngle', 0);
     context.setState('plasmaOffset', 0);
     context.setState('hue', 0);
     context.setState('bounceY', 32);
     context.setState('bounceDir', 1);
+    context.setState('particlesInitialized', false); // Track if particles were reset this phase
   },
 
   initParticles(count) {
     const particles = [];
     for (let i = 0; i < count; i++) {
+      // Different sizes for particles (0.8 to 2.0)
+      const size = 0.8 + Math.random() * 1.2;
       particles.push({
         x: 32,
         y: 32,
@@ -67,6 +71,7 @@ module.exports = {
         vy: (Math.random() - 0.5) * 2.5,
         life: 1.0,
         hue: Math.random() * 360,
+        size, // Add size property
       });
     }
     return particles;
@@ -76,7 +81,7 @@ module.exports = {
     const stars = [];
     for (let i = 0; i < count; i++) {
       stars.push({
-        x: Math.random() * 64,
+        x: Math.random() * 74 - 5, // Start some off-screen left for wrap effect
         y: Math.random() * 64,
         z: Math.random() * 2 + 0.5, // 0.5-2.5 range for speed/brightness
       });
@@ -161,6 +166,13 @@ module.exports = {
       const nextPhase = (phase + 1) % Object.keys(PHASES).length;
       setState('phase', nextPhase);
       setState('phaseFrame', 0);
+      setState('particlesInitialized', false); // Reset flag for next phase
+
+      // Reinit particles for INTRO and FINALE phases
+      if (nextPhase === PHASES.INTRO || nextPhase === PHASES.FINALE) {
+        setState('particles', this.initParticles(25));
+      }
+
       context.log(`Phase: ${Object.keys(PHASES)[nextPhase]}`, 'info');
     }
 
@@ -188,17 +200,19 @@ module.exports = {
       p.vy += 0.05; // Gentler gravity
     });
 
-    // Draw particles
+    // Draw particles with different sizes
     for (const p of particles) {
       if (p.life > 0) {
         const rgb = this.hslToRgb(p.hue / 360, 1, 0.5);
         const alpha = Math.floor(255 * p.life * fadeIn);
         if (p.x >= 0 && p.x < 64 && p.y >= 0 && p.y < 64) {
+          const innerRadius = Math.floor(p.size * 1.5);
+          const outerRadius = Math.floor(p.size * 3);
           await drawGlowCircle(
             device,
             [Math.floor(p.x), Math.floor(p.y)],
-            2,
-            4,
+            innerRadius,
+            outerRadius,
             [...rgb, alpha],
           );
         }
@@ -312,12 +326,12 @@ module.exports = {
       }
     }
 
-    // Title with semi-transparent outline
+    // Title with 25% transparent outline
     await gfx.drawTextEnhanced('COPPER', [32, 28], [255, 255, 255, 255], {
       alignment: 'center',
       effects: {
         outline: true,
-        outlineColor: [0, 0, 0, 150],
+        outlineColor: [0, 0, 0, 64], // 25% opacity
         outlineWidth: 1,
       },
     });
@@ -354,51 +368,62 @@ module.exports = {
   // 🎬 PHASE 5: GEOMETRY - Circle Functions Showcase
   // ============================================================================
   async renderGeometry(device, gfx, frame) {
-    // Gradient background
+    // Dark gradient background
     await gfx.drawGradientBackground(
-      [10, 10, 25, 255],
       [5, 5, 15, 255],
+      [15, 5, 25, 255],
       'vertical',
     );
 
     // Title
-    await device.drawText('CIRCLES', [32, 2], [255, 255, 255, 255], 'center');
+    await device.drawText('GEOMETRY', [32, 2], [255, 255, 255, 255], 'center');
 
-    // Single large gradient circle in center - pulsing
-    const radius = 12 + Math.sin(frame * 0.15) * 4;
+    // Center pulsing gradient circle
+    const centerPulse = Math.sin(frame * 0.1) * 0.5 + 0.5;
+    const centerRadius = Math.floor(8 + centerPulse * 4);
     await drawGradientCircle(
       device,
       [32, 32],
-      Math.floor(radius),
-      [255, 200, 0, 255],
-      [255, 0, 100, 150],
+      centerRadius,
+      [255, 150, 0, 255],
+      [255, 50, 150, 200],
     );
 
-    // Outline circle overlay - pulsing thickness
-    const outlineRadius = 18 + Math.cos(frame * 0.12) * 3;
-    const thickness = Math.floor(Math.abs(Math.sin(frame * 0.2)) * 2) + 1;
-    await drawCircleOutline(
-      device,
-      [32, 32],
-      Math.floor(outlineRadius),
-      [0, 255, 255, 255],
-      thickness,
-    );
+    // Rotating orbit with 6 circles
+    for (let i = 0; i < 6; i++) {
+      const angle = frame * 0.12 + (i * Math.PI * 2) / 6;
+      const orbitRadius = 18;
+      const orbitX = 32 + Math.cos(angle) * orbitRadius;
+      const orbitY = 32 + Math.sin(angle) * orbitRadius;
 
-    // Small orbiting circles
-    for (let i = 0; i < 4; i++) {
-      const angle = frame * 0.08 + (i * Math.PI) / 2;
-      const orbitX = 32 + Math.cos(angle) * 22;
-      const orbitY = 32 + Math.sin(angle) * 22;
-      const hue = ((frame * 5 + i * 90) % 360) / 360;
+      // Rainbow colors
+      const hue = ((frame * 3 + i * 60) % 360) / 360;
       const rgb = this.hslToRgb(hue, 1, 0.6);
-      await drawFilledCircle(
+
+      // Pulsing size
+      const sizePulse = Math.sin(frame * 0.15 + i * 0.5) * 0.3 + 0.7;
+      const circleSize = Math.floor(3 * sizePulse);
+
+      await drawGlowCircle(
         device,
         [Math.floor(orbitX), Math.floor(orbitY)],
-        3,
+        circleSize,
+        circleSize + 2,
         [...rgb, 255],
       );
     }
+
+    // Outer orbit ring - pulsing
+    const ringRadius = 24 + Math.sin(frame * 0.08) * 2;
+    const ringThickness =
+      Math.floor(Math.abs(Math.sin(frame * 0.15)) * 1.5) + 1;
+    await drawCircleOutline(
+      device,
+      [32, 32],
+      Math.floor(ringRadius),
+      [100, 200, 255, 180],
+      ringThickness,
+    );
   },
 
   // ============================================================================
@@ -614,10 +639,10 @@ module.exports = {
   // 🎬 PHASE 10: IMAGE GALLERY - Moon Phases & Sun
   // ============================================================================
   async renderImageGallery(device, gfx, frame) {
-    // Gradient background
+    // Gradient background - space theme
     await gfx.drawGradientBackground(
-      [20, 20, 40, 255],
-      [10, 10, 20, 255],
+      [5, 5, 20, 255],
+      [15, 5, 30, 255],
       'vertical',
     );
 
@@ -625,40 +650,51 @@ module.exports = {
     const moonPhase = Math.floor(frame / 2) % 26;
     const moonPath = `scenes/media/moonphase/5x5/Moon_${moonPhase.toString().padStart(2, '0')}.png`;
 
-    // Sun
+    // Sun path
     const sunPath = 'scenes/media/sun.png';
 
-    // Orbital animation
-    const orbitAngle = frame * 0.1;
-    const moonX = Math.floor(32 + Math.cos(orbitAngle) * 18);
-    const moonY = Math.floor(32 + Math.sin(orbitAngle) * 18);
-    const sunX = Math.floor(32 - Math.cos(orbitAngle) * 18);
-    const sunY = Math.floor(32 - Math.sin(orbitAngle) * 18);
+    // Sun stays in center
+    const sunX = 32;
+    const sunY = 32;
+
+    // Moon rotates around sun
+    const orbitAngle = frame * 0.08;
+    const moonX = Math.floor(32 + Math.cos(orbitAngle) * 20);
+    const moonY = Math.floor(32 + Math.sin(orbitAngle) * 20);
 
     try {
+      // Draw sun in center
       await gfx.drawImageBlended(
-        moonPath,
-        [moonX, moonY],
-        [5, 5],
+        sunPath,
+        [sunX, sunY],
+        [11, 11],
         255,
         'normal',
       );
-      await gfx.drawImageBlended(sunPath, [sunX, sunY], [9, 9], 255, 'normal');
+
+      // Draw moon rotating around sun
+      await gfx.drawImageBlended(
+        moonPath,
+        [moonX, moonY],
+        [6, 6],
+        255,
+        'normal',
+      );
     } catch {
       // Fallback
+      await device.drawText('☀️', [sunX, sunY], [255, 200, 0, 255], 'center');
       await device.drawText(
         '🌙',
         [moonX, moonY],
         [255, 255, 255, 255],
         'center',
       );
-      await device.drawText('☀️', [sunX, sunY], [255, 200, 0, 255], 'center');
     }
 
     // Title
     await device.drawText('IMAGES', [32, 2], [255, 255, 255, 255], 'center');
     await device.drawText(
-      `Phase: ${moonPhase}`,
+      `Moon Phase: ${moonPhase}`,
       [32, 58],
       [180, 180, 255, 200],
       'center',

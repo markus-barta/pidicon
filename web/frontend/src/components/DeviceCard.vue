@@ -511,8 +511,11 @@
               <div class="text-caption" style="color: #64748b;">
                 {{ frametime }}ms frametime
               </div>
-              <div v-if="highLowFrametimes.high > 0" class="text-caption" style="color: #94a3b8; font-size: 10px;">
-                {{ highLowFrametimes.high }}ms / {{ highLowFrametimes.low }}ms (high/low)
+              <div v-if="highLowFrametimes.high > 0" class="text-caption d-flex align-center" style="color: #94a3b8; font-size: 10px; gap: 4px;">
+                <v-icon size="x-small" color="#ef4444">mdi-arrow-up</v-icon>
+                <span>{{ highLowFrametimes.high }}ms</span>
+                <v-icon size="x-small" color="#10b981">mdi-arrow-down</v-icon>
+                <span>{{ highLowFrametimes.low }}ms</span>
               </div>
             </v-card-text>
           </v-card>
@@ -636,6 +639,10 @@ const lastFrameCount = ref(0); // Track last frame count for chart optimization 
 const sceneStartTime = ref(Date.now());
 const sceneTimeDisplay = ref('0s');
 let sceneTimeInterval = null;
+
+// Real FPS calculation tracking
+const fpsFrameCount = ref(0); // Frames counted for FPS
+const fpsLastTime = ref(Date.now()); // Last FPS calculation time
 
 let metricsInterval = null;
 
@@ -1070,6 +1077,11 @@ watch(
       frameCount.value = 0; // Reset frame counter for avg FPS calculation
       allFrametimes.value = []; // Reset frametime history for avg FPS
       
+      // Reset real FPS calculation
+      fps.value = 0;
+      fpsFrameCount.value = 0;
+      fpsLastTime.value = Date.now();
+      
       // Always restart scene time interval on scene change
       if (sceneTimeInterval) {
         clearInterval(sceneTimeInterval);
@@ -1203,18 +1215,29 @@ function loadMetrics() {
     return;
   }
   
-  // Calculate FPS from frametime - use raw value for accurate FPS
+  // Calculate FPS from real frame counting over time
   const rawFrametime = metrics.lastFrametime || 0;
   const newFrametime = Math.round(rawFrametime);
   console.log('[DEBUG] rawFrametime:', rawFrametime, 'rounded:', newFrametime);
   
-  // Use raw frametime for FPS calculation to get accurate decimals
-  fps.value = rawFrametime > 0 ? Math.round((1000 / rawFrametime) * 10) / 10 : 0;
   frametime.value = newFrametime;
   const newFrameCount = metrics.pushes || 0;
   frameCount.value = newFrameCount;
   errorCount.value = metrics.errors || 0;
   pushCount.value = metrics.pushes || 0;
+  
+  // Real FPS calculation: count frames over time
+  const currentTime = Date.now();
+  const newFrames = newFrameCount - fpsFrameCount.value;
+  
+  if (newFrames > 0) {
+    const timeDelta = currentTime - fpsLastTime.value;
+    if (timeDelta >= 1000) { // Update FPS every second
+      fps.value = Math.round((newFrames / timeDelta) * 1000 * 10) / 10; // 1 decimal
+      fpsFrameCount.value = newFrameCount;
+      fpsLastTime.value = currentTime;
+    }
+  }
   
   // Track all frametimes for average calculation (only when frames are sent)
   if (rawFrametime > 0) {
