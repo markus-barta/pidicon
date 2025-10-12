@@ -29,8 +29,9 @@ const PHASES = {
   FINALE: 9, // Epic goodbye
 };
 
-const PHASE_DURATION = 25; // frames per phase (~5 seconds at 5fps)
+const PHASE_DURATION = 38; // frames per phase (~7.5 seconds at 5fps) - 50% longer
 const FADE_DURATION = 5; // frames for fades
+const IMAGE_PHASE_DURATION = 60; // images phase gets 2x time
 
 module.exports = {
   name: 'pixoo_showcase',
@@ -61,8 +62,8 @@ module.exports = {
       particles.push({
         x: 32,
         y: 32,
-        vx: (Math.random() - 0.5) * 4,
-        vy: (Math.random() - 0.5) * 4,
+        vx: (Math.random() - 0.5) * 2.5, // Slower initial velocity
+        vy: (Math.random() - 0.5) * 2.5,
         life: 1.0,
         hue: Math.random() * 360,
       });
@@ -95,7 +96,7 @@ module.exports = {
     // 🎬 Render current phase
     switch (phase) {
       case PHASES.INTRO:
-        await this.renderIntro(device, gfx, phaseFrame, getState, setState);
+        await this.renderIntro(device, gfx, phaseFrame, getState);
         break;
       case PHASES.TEXT_SHOWCASE:
         await this.renderTextShowcase(device, gfx, phaseFrame);
@@ -136,7 +137,11 @@ module.exports = {
     setState('phaseFrame', phaseFrame + 1);
     setState('globalFrame', globalFrame + 1);
 
-    if (phaseFrame >= PHASE_DURATION) {
+    // Use longer duration for image gallery phase
+    const currentPhaseDuration =
+      phase === PHASES.IMAGE_GALLERY ? IMAGE_PHASE_DURATION : PHASE_DURATION;
+
+    if (phaseFrame >= currentPhaseDuration) {
       const nextPhase = (phase + 1) % Object.keys(PHASES).length;
       setState('phase', nextPhase);
       setState('phaseFrame', 0);
@@ -155,16 +160,16 @@ module.exports = {
   // ============================================================================
   // 🎬 PHASE 1: INTRO - Particle Explosion
   // ============================================================================
-  async renderIntro(device, gfx, frame, getState, setState) {
+  async renderIntro(device, gfx, frame, getState) {
     const fadeIn = Math.min(frame / FADE_DURATION, 1);
     const particles = getState('particles', []);
 
-    // Update particles
+    // Update particles (slower, smoother)
     particles.forEach((p) => {
       p.x += p.vx;
       p.y += p.vy;
-      p.life -= 0.02;
-      p.vy += 0.1; // Gravity
+      p.life -= 0.01; // Slower decay
+      p.vy += 0.05; // Gentler gravity
     });
 
     // Draw particles
@@ -190,7 +195,7 @@ module.exports = {
       alignment: 'center',
       effects: {
         shadow: true,
-        shadowOffset: 2,
+        shadowOffset: 1, // Less offset
         shadowColor: [100, 50, 0, alpha],
       },
     });
@@ -203,11 +208,6 @@ module.exports = {
         alignment: 'center',
       },
     );
-
-    // Reset particles if needed
-    if (frame === Math.floor(PHASE_DURATION / 2)) {
-      setState('particles', this.initParticles(20));
-    }
   },
 
   // ============================================================================
@@ -221,8 +221,8 @@ module.exports = {
       'vertical',
     );
 
-    // Shadow effect
-    await gfx.drawTextEnhanced('SHADOW', [32, 10], [100, 200, 255, 255], {
+    // Shadow effect - higher, centered
+    await gfx.drawTextEnhanced('SHADOW', [32, 8], [100, 200, 255, 255], {
       alignment: 'center',
       effects: {
         shadow: true,
@@ -233,7 +233,7 @@ module.exports = {
 
     // Outline effect (animated thickness)
     const outlineWidth = Math.floor(Math.abs(Math.sin(frame * 0.2)) * 2) + 1;
-    await gfx.drawTextEnhanced('OUTLINE', [32, 22], [255, 200, 100, 255], {
+    await gfx.drawTextEnhanced('OUTLINE', [32, 20], [255, 200, 100, 255], {
       alignment: 'center',
       effects: {
         outline: true,
@@ -245,24 +245,26 @@ module.exports = {
     // Rainbow gradient text
     const hue = (frame * 10) % 360;
     const rgb = this.hslToRgb(hue / 360, 0.8, 0.6);
-    await device.drawText('RAINBOW', [32, 34], [...rgb, 255], 'center');
+    await device.drawText('RAINBOW', [32, 32], [...rgb, 255], 'center');
 
-    // Pulsing combo effect
+    // Pulsing combo effect with outline
     const pulse = Math.sin(frame * 0.15) * 0.4 + 0.6;
     const pulseAlpha = Math.floor(255 * pulse);
-    await gfx.drawTextEnhanced('COMBO', [32, 46], [255, 100, 255, pulseAlpha], {
+    await gfx.drawTextEnhanced('COMBO', [32, 44], [255, 100, 255, pulseAlpha], {
       alignment: 'center',
       effects: {
         shadow: true,
         outline: true,
         shadowOffset: 1,
+        outlineWidth: 1,
         shadowColor: [60, 20, 100, Math.floor(150 * pulse)],
+        outlineColor: [150, 50, 150, pulseAlpha],
       },
     });
 
     // Glitching text
     const glitchX = 32 + (Math.random() > 0.9 ? (Math.random() - 0.5) * 4 : 0);
-    await device.drawText('GLITCH', [glitchX, 58], [255, 0, 0, 255], 'center');
+    await device.drawText('GLITCH', [glitchX, 56], [255, 0, 0, 255], 'center');
   },
 
   // ============================================================================
@@ -336,55 +338,56 @@ module.exports = {
   // 🎬 PHASE 5: GEOMETRY - Circle Functions Showcase
   // ============================================================================
   async renderGeometry(device, gfx, frame) {
-    // Dark background
-    device.fillRect([0, 0], [64, 64], [5, 5, 15, 255]);
+    // Slightly lighter background for better visibility
+    device.fillRect([0, 0], [64, 64], [8, 8, 18, 255]);
 
     // Title first (so circles draw over it)
-    await device.drawText('GEOMETRY', [32, 58], [255, 255, 255, 200], 'center');
+    await device.drawText('GEOMETRY', [32, 58], [255, 255, 255, 220], 'center');
 
-    // Gradient circle (pulsing) - top left
-    const radius1 = 6 + Math.sin(frame * 0.2) * 2;
+    // Gradient circle (pulsing) - top left - more visible
+    const radius1 = 7 + Math.sin(frame * 0.2) * 2;
     await drawGradientCircle(
       device,
-      [14, 20],
+      [16, 22],
       Math.floor(radius1),
-      [255, 200, 0, 255],
-      [255, 0, 0, 100],
+      [255, 220, 0, 255],
+      [255, 100, 0, 200],
     );
 
-    // Outlined circle (rotating) - top right
-    const radius2 = 5 + Math.sin(frame * 0.15) * 2;
+    // Outlined circle (pulsing thickness) - top right
+    const radius2 = 6 + Math.sin(frame * 0.15) * 2;
+    const thickness = Math.floor(Math.abs(Math.sin(frame * 0.1)) * 2) + 1;
     await drawCircleOutline(
       device,
-      [50, 20],
+      [48, 22],
       Math.floor(radius2),
       [0, 255, 255, 255],
-      2,
+      thickness,
     );
 
     // Glow circle (breathing) - bottom left
-    const radius3 = 4 + Math.sin(frame * 0.25) * 2;
+    const radius3 = 5 + Math.sin(frame * 0.25) * 2;
     await drawGlowCircle(
       device,
-      [14, 44],
+      [16, 42],
       Math.floor(radius3),
-      Math.floor(radius3 + 3),
-      [100, 100, 255, 255],
+      Math.floor(radius3 + 4),
+      [150, 150, 255, 255],
     );
 
     // Filled circle (bouncing color) - bottom right
     const hue = (frame * 5) % 360;
-    const rgb = this.hslToRgb(hue / 360, 1, 0.5);
-    await drawFilledCircle(device, [50, 44], 6, [...rgb, 255]);
+    const rgb = this.hslToRgb(hue / 360, 1, 0.6);
+    await drawFilledCircle(device, [48, 42], 7, [...rgb, 255]);
 
-    // Rotating line
+    // Rotating line from center
     const angle = frame * 0.1;
-    const x1 = 32 + Math.cos(angle) * 20;
-    const y1 = 32 + Math.sin(angle) * 20;
+    const x1 = 32 + Math.cos(angle) * 22;
+    const y1 = 32 + Math.sin(angle) * 22;
     await device.drawLine(
       [32, 32],
       [Math.floor(x1), Math.floor(y1)],
-      [255, 255, 0, 255],
+      [255, 255, 100, 255],
     );
   },
 
@@ -481,15 +484,23 @@ module.exports = {
   // 🎬 PHASE 8: ANIMATION FEST - Everything Moving!
   // ============================================================================
   async renderAnimationFest(device, gfx, getState, setState, frame) {
-    // Dark background
-    device.fillRect([0, 0], [64, 64], [5, 5, 10, 255]);
+    // Lighter background for better visibility
+    device.fillRect([0, 0], [64, 64], [10, 10, 20, 255]);
+
+    // Title at top center
+    await device.drawText(
+      'ANIMATIONS',
+      [32, 2],
+      [255, 255, 255, 255],
+      'center',
+    );
 
     // Bouncing ball with glow
     let bounceY = getState('bounceY', 32);
     let bounceDir = getState('bounceDir', 1);
 
     bounceY += bounceDir * 2;
-    if (bounceY >= 55 || bounceY <= 15) bounceDir *= -1;
+    if (bounceY >= 52 || bounceY <= 15) bounceDir *= -1;
 
     setState('bounceY', bounceY);
     setState('bounceDir', bounceDir);
@@ -497,14 +508,14 @@ module.exports = {
     await drawGlowCircle(
       device,
       [16, Math.floor(bounceY)],
-      4,
-      7,
-      [255, 100, 100, 255],
+      5,
+      8,
+      [255, 120, 120, 255],
     );
 
-    // Rotating square
+    // Rotating square - brighter
     const angle = frame * 0.08;
-    const size = 6;
+    const size = 8;
     for (let i = 0; i < 4; i++) {
       const a1 = angle + (i * Math.PI) / 2;
       const a2 = angle + ((i + 1) * Math.PI) / 2;
@@ -515,7 +526,7 @@ module.exports = {
       await device.drawLine(
         [Math.floor(x1), Math.floor(y1)],
         [Math.floor(x2), Math.floor(y2)],
-        [100, 255, 100, 255],
+        [150, 255, 150, 255],
       );
     }
 
@@ -523,12 +534,15 @@ module.exports = {
     const textX = ((frame * 3) % 80) - 10;
     const hue = getState('hue', 0);
     setState('hue', (hue + 5) % 360);
-    const rgb = this.hslToRgb(hue / 360, 1, 0.6);
+    const rgb = this.hslToRgb(hue / 360, 1, 0.7);
 
-    await device.drawText('ANIMATE!', [textX, 50], [...rgb, 255], 'left');
-
-    // Title
-    await device.drawText('ANIMATIONS', [2, 2], [255, 255, 255, 255], 'left');
+    await gfx.drawTextEnhanced('ANIMATE!', [textX, 52], [...rgb, 255], {
+      alignment: 'left',
+      effects: {
+        outline: true,
+        outlineColor: [0, 0, 0, 255],
+      },
+    });
   },
 
   // ============================================================================
@@ -633,25 +647,29 @@ module.exports = {
     }
     setState('particles', updatedParticles);
 
-    // Finale text
+    // Finale text - clean and elegant
     const alpha = Math.floor(255 * fadeOut);
     if (alpha > 0) {
-      await gfx.drawTextEnhanced('THANKS!', [32, 24], [255, 255, 255, alpha], {
+      await gfx.drawTextEnhanced('THANKS!', [32, 24], [255, 255, 100, alpha], {
         alignment: 'center',
         effects: {
           shadow: true,
-          outline: true,
           shadowOffset: 2,
-          shadowColor: [100, 100, 0, alpha],
+          shadowColor: [80, 80, 0, Math.floor(alpha * 0.7)],
         },
       });
 
       await gfx.drawTextEnhanced(
         'PIXOO RULES',
         [32, 40],
-        [255, 200, 0, alpha],
+        [100, 200, 255, alpha],
         {
           alignment: 'center',
+          effects: {
+            shadow: true,
+            shadowOffset: 1,
+            shadowColor: [30, 60, 80, Math.floor(alpha * 0.6)],
+          },
         },
       );
     }
