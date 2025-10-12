@@ -1,13 +1,13 @@
 # Scene Logging Audit Report
 
-**Generated:** 2025-10-12T15:13:59.230Z
+**Generated:** 2025-10-12T15:21:03.397Z
 
 **Total Scenes:** 16
 
 ## Summary
 
 - ✅ **Compliant scenes** (using context.log): 0/16
-- ⚠️ **Scenes with legacy logger**: 9
+- ⚠️ **Scenes with legacy logger**: 0
 - 📊 **Scenes with context.log**: 0
 
 ## Logging Level Usage
@@ -25,29 +25,21 @@
 
 **Status:** No context.log calls found
 
-### ⚠️ `scenes/examples/dev/advanced_chart.js`
+### ❓ `scenes/examples/dev/advanced_chart.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/config-validator-demo.js`
+### ❓ `scenes/examples/dev/config-validator-demo.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/draw_api.js`
+### ❓ `scenes/examples/dev/draw_api.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/draw_api_animated.js`
+### ❓ `scenes/examples/dev/draw_api_animated.js`
 
 **Status:** No context.log calls found
-
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
 
 ### ❓ `scenes/examples/dev/framework-animated-demo.js`
 
@@ -61,35 +53,25 @@
 
 **Status:** No context.log calls found
 
-### ⚠️ `scenes/examples/dev/graphics-engine-demo.js`
+### ❓ `scenes/examples/dev/graphics-engine-demo.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/performance-test.js`
+### ❓ `scenes/examples/dev/performance-test.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/power_price.js`
+### ❓ `scenes/examples/dev/power_price.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/startup-static.js`
+### ❓ `scenes/examples/dev/startup-static.js`
 
 **Status:** No context.log calls found
 
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
-
-### ⚠️ `scenes/examples/dev/template.js`
+### ❓ `scenes/examples/dev/template.js`
 
 **Status:** No context.log calls found
-
-⚠️ **WARNING:** Scene uses legacy logger (logger.debug/info/warn/error) - should migrate to context.log()
 
 ### ❓ `scenes/examples/pixoo_showcase.js`
 
