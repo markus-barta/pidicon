@@ -527,23 +527,33 @@ module.exports = {
       const x2d = Math.floor(32 + star.x * scale);
       const y2d = Math.floor(32 + star.y * scale);
 
-      // Draw star (brighter when closer)
-      const brightness = Math.min(255, Math.floor((1 - star.z / 80) * 255));
-      if (x2d >= 0 && x2d < 64 && y2d >= 0 && y2d < 64 && brightness > 20) {
+      // Draw star (much brighter, visible at all depths)
+      // Map z=80 (far) to brightness=80, z=1 (close) to brightness=255
+      const brightness = Math.floor(80 + (1 - star.z / 80) * 175);
+      const x = Math.floor(x2d);
+      const y = Math.floor(y2d);
+
+      if (x >= 0 && x < 64 && y >= 0 && y < 64) {
         await device.drawPixel(
-          [x2d, y2d],
+          [x, y],
           [brightness, brightness, brightness, 255],
         );
 
-        // Simple trail effect for close stars only
-        if (star.z < 20) {
-          const tz = star.z + 3;
-          const tscale = 150 / tz;
-          const tx = Math.floor(32 + star.x * tscale);
-          const ty = Math.floor(32 + star.y * tscale);
-          const tb = Math.floor(brightness * 0.5);
-          if (tx >= 0 && tx < 64 && ty >= 0 && ty < 64) {
-            await device.drawPixel([tx, ty], [tb, tb, tb, 150]);
+        // Add glow for close stars
+        if (star.z < 30) {
+          const glowBrightness = Math.floor(brightness * 0.6);
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx === 0 && dy === 0) continue;
+              const gx = x + dx;
+              const gy = y + dy;
+              if (gx >= 0 && gx < 64 && gy >= 0 && gy < 64) {
+                await device.drawPixel(
+                  [gx, gy],
+                  [glowBrightness, glowBrightness, glowBrightness, 150],
+                );
+              }
+            }
           }
         }
       }

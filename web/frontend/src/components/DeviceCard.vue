@@ -100,85 +100,76 @@
     <v-card-text v-if="!isCollapsed" class="pt-0">
       <!-- Power / Simulated Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
-        <!-- Power Toggle -->
-        <div class="control-item">
-          <v-icon icon="mdi-power" size="small" class="mr-2" />
-          <span 
-            class="toggle-text"
-            :class="{ 'toggle-text-active': displayOn }"
-            @click="toggleDisplay"
-          >
-            Power
-            <v-icon 
-              size="x-small" 
-              :color="displayOn ? 'success' : 'grey'"
-              class="ml-1"
-            >
-              {{ displayOn ? 'mdi-power-on' : 'mdi-power-off' }}
-            </v-icon>
-          </span>
+        <!-- Power Button -->
+        <v-btn
+          size="small"
+          :variant="displayOn ? 'tonal' : 'outlined'"
+          :color="displayOn ? 'success' : 'grey'"
+          @click="toggleDisplay"
+          :loading="toggleLoading"
+          class="control-btn-compact"
+        >
+          <v-icon size="small" class="mr-1">mdi-power</v-icon>
+          <span class="text-caption">Power</span>
           <v-tooltip activator="parent" location="bottom">
-            {{ displayOn ? 'Click to power off display' : 'Click to power on display' }}
+            {{ displayOn ? 'Power off display' : 'Power on display' }}
           </v-tooltip>
-        </div>
+        </v-btn>
 
-        <!-- Simulated Toggle -->
-        <div class="control-item">
-          <span 
-            class="toggle-text"
-            :class="{ 'toggle-text-active': device.driver === 'mock' }"
-            @click="toggleDriver"
-          >
-            Simulated
-            <v-icon 
-              size="x-small" 
-              :color="device.driver === 'mock' ? 'warning' : 'grey'"
-              class="ml-1"
-            >
-              {{ device.driver === 'mock' ? 'mdi-chip' : 'mdi-lan-connect' }}
-            </v-icon>
-          </span>
+        <!-- Simulated Button -->
+        <v-btn
+          size="small"
+          :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
+          :color="device.driver === 'mock' ? 'warning' : 'grey'"
+          @click="toggleDriver"
+          :loading="driverLoading"
+          class="control-btn-compact"
+        >
+          <v-icon size="small" class="mr-1">{{ device.driver === 'mock' ? 'mdi-chip' : 'mdi-lan-connect' }}</v-icon>
+          <span class="text-caption">Mock</span>
           <v-tooltip activator="parent" location="bottom">
-            {{ device.driver === 'mock' ? 'Click to switch to real hardware' : 'Click to switch to simulated mode' }}
+            {{ device.driver === 'mock' ? 'Switch to real hardware' : 'Switch to simulated mode' }}
           </v-tooltip>
-        </div>
+        </v-btn>
 
         <!-- Device Restart Button -->
         <v-btn
-          :variant="'outlined'"
-          :color="'grey'"
           size="small"
-          :loading="resetLoading"
+          variant="outlined"
+          color="grey"
           @click="handleReset"
-          class="control-btn-restart"
-          icon
+          :loading="resetLoading"
+          class="control-btn-compact"
         >
-          <v-icon color="error">mdi-restart</v-icon>
+          <v-icon size="small" color="error" class="mr-1">mdi-restart</v-icon>
+          <span class="text-caption">Device</span>
           <v-tooltip activator="parent" location="bottom">
-            Restart hardware device (briefly shows init screen)
+            Restart hardware device
           </v-tooltip>
         </v-btn>
 
         <!-- Daemon Restart Button -->
         <v-btn
-          :variant="'outlined'"
-          :color="'grey'"
           size="small"
-          :loading="daemonResetLoading"
+          variant="outlined"
+          color="grey"
           @click="handleDaemonReset"
-          class="control-btn-restart"
-          icon
+          :loading="daemonResetLoading"
+          class="control-btn-compact"
         >
-          <v-icon color="warning">mdi-restart-alert</v-icon>
+          <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
+          <span class="text-caption">Daemon</span>
           <v-tooltip activator="parent" location="bottom">
-            Restart entire daemon (reconnects all devices)
+            Restart entire daemon
           </v-tooltip>
         </v-btn>
 
+        <div class="control-divider"></div>
+
         <!-- Logging Level Controls -->
-        <div class="control-item ml-4">
-          <span class="text-body-2 font-weight-medium mr-2">
-            <v-icon size="small" class="mr-1">{{ getLoggingIcon }}</v-icon>
+        <div class="control-item">
+          <span class="text-caption font-weight-medium mr-2" style="color: #6b7280;">
+            <v-icon size="x-small" class="mr-1">{{ getLoggingIcon }}</v-icon>
             {{ getLoggingLabel }}
           </span>
           
@@ -236,21 +227,27 @@
 
         <v-spacer></v-spacer>
 
-        <!-- Brightness Slider (right-aligned) -->
-        <div class="brightness-slider-compact">
-          <v-icon size="small" class="mr-2">mdi-brightness-6</v-icon>
+        <!-- Brightness Slider (right-aligned, compact) -->
+        <div class="brightness-control">
+          <v-icon 
+            size="small" 
+            class="mr-2 brightness-icon"
+            :style="{ opacity: brightnessIconOpacity }"
+          >
+            mdi-brightness-6
+          </v-icon>
           <v-slider
             v-model="brightness"
             :min="0"
             :max="100"
-            :step="5"
+            :step="1"
             color="grey-darken-1"
             hide-details
             :loading="brightnessLoading"
             @end="setBrightness"
-            style="width: 200px"
+            style="width: 100px"
           ></v-slider>
-          <span class="text-caption ml-2" style="width: 40px">
+          <span class="text-caption ml-2" style="min-width: 35px">
             {{ brightness }}%
           </span>
         </div>
@@ -1572,6 +1569,11 @@ const getLoggingTooltip = computed(() => {
   return tooltips[loggingLevel.value];
 });
 
+// Brightness icon opacity based on brightness level (20-255 mapped from 0-100%)
+const brightnessIconOpacity = computed(() => {
+  return (20 + (brightness.value / 100) * 235) / 255;
+});
+
 async function handleReset() {
   // Use Vue confirm dialog instead of browser confirm (UI-512)
   const confirmed = await confirmDialog.value?.show({
@@ -1953,32 +1955,45 @@ onUnmounted(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Toggle text styling (Power, Simulated) */
-.toggle-text {
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-  display: inline-flex;
+/* Compact control buttons with icon + caption */
+.control-btn-compact {
+  min-width: 80px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.control-btn-compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15) !important;
+}
+
+.control-btn-compact:active {
+  transform: translateY(0);
+}
+
+/* Pressed state for compact buttons */
+.control-btn-compact.v-btn--variant-tonal {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Control divider */
+.control-divider {
+  width: 1px;
+  height: 32px;
+  background-color: #e5e7eb;
+  margin: 0 8px;
+}
+
+/* Brightness control */
+.brightness-control {
+  display: flex;
   align-items: center;
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: #6b7280;
 }
 
-.toggle-text:hover {
-  color: rgb(var(--v-theme-primary));
-  background-color: rgba(var(--v-theme-primary), 0.05);
-}
-
-.toggle-text-active {
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.toggle-text-active:hover {
-  background-color: rgba(var(--v-theme-primary), 0.08);
+.brightness-icon {
+  transition: opacity 0.2s ease;
 }
 
 /* Logging buttons container */
@@ -2017,19 +2032,4 @@ onUnmounted(() => {
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Restart buttons (Device & Daemon) */
-.control-btn-restart {
-  min-width: 36px !important;
-  transition: all 0.15s ease !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
-}
-
-.control-btn-restart:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16) !important;
-}
-
-.control-btn-restart:active {
-  transform: translateY(0);
-}
 </style>
