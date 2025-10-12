@@ -49,6 +49,10 @@ module.exports = [
       ...importPlugin.configs.recommended.rules,
       ...promisePlugin.configs.recommended.rules,
       'no-console': 'off', // Temporarily disabled for development
+      'no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       complexity: ['warn', 30],
       'max-params': ['warn', 10],
       'max-lines-per-function': [

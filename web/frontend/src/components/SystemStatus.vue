@@ -8,7 +8,7 @@
         </v-avatar>
         <div>
           <div class="text-h6 font-weight-bold primary--text">
-            Pixoo Control Center
+            PIDICO: Pixel Display Controller
           </div>
           <div class="text-caption d-flex align-center">
             <span class="d-inline-flex align-center">
