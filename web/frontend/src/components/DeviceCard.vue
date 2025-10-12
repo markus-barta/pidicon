@@ -106,47 +106,66 @@
     <v-card-text v-if="!isCollapsed" class="pt-0">
       <!-- Power / Simulated Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
-        <!-- Power Flip Switch (ON/OFF) -->
-        <div class="control-group">
-          <v-btn-toggle
-            v-model="displayOn"
-            mandatory
-            variant="outlined"
-            density="compact"
-            class="flip-switch power-flip-switch"
-            @update:model-value="toggleDisplay"
+        <!-- Power Buttons (ON/OFF) -->
+        <div class="button-group">
+          <v-btn
+            :variant="displayOn ? 'tonal' : 'outlined'"
+            :color="displayOn ? 'success' : 'grey'"
+            size="small"
+            @click="() => { if (!displayOn) { displayOn = true; toggleDisplay(); } }"
+            class="control-btn-compact"
           >
-            <v-btn :value="true" size="small" class="flip-btn" :color="displayOn ? 'success' : 'grey'">
-              <v-icon size="small" class="mr-1">mdi-power-on</v-icon>
-              <span class="text-caption">ON</span>
-            </v-btn>
-            <v-btn :value="false" size="small" class="flip-btn flip-btn-off" :color="!displayOn ? 'error' : 'grey'">
-              <v-icon size="small" class="mr-1">mdi-power-off</v-icon>
-              <span class="text-caption">OFF</span>
-            </v-btn>
-          </v-btn-toggle>
+            <v-icon size="small" class="mr-1">mdi-power-on</v-icon>
+            <span class="text-caption">ON</span>
+            <v-tooltip activator="parent" location="bottom">
+              Power display on
+            </v-tooltip>
+          </v-btn>
+
+          <v-btn
+            :variant="!displayOn ? 'tonal' : 'outlined'"
+            :color="!displayOn ? 'error' : 'grey'"
+            size="small"
+            @click="() => { if (displayOn) { displayOn = false; toggleDisplay(); } }"
+            class="control-btn-compact"
+          >
+            <v-icon size="small" class="mr-1">mdi-power-off</v-icon>
+            <span class="text-caption">OFF</span>
+            <v-tooltip activator="parent" location="bottom">
+              Power display off
+            </v-tooltip>
+          </v-btn>
         </div>
 
-        <!-- Driver Flip Switch (Real/Mock) -->
-        <div class="control-group">
-          <v-btn-toggle
-            :model-value="device.driver"
-            mandatory
-            color="warning"
-            variant="outlined"
-            density="compact"
-            class="flip-switch"
-            @update:model-value="toggleDriver"
+        <!-- Driver Buttons (Real/Mock) -->
+        <div class="button-group">
+          <v-btn
+            :variant="device.driver === 'real' ? 'tonal' : 'outlined'"
+            :color="device.driver === 'real' ? 'warning' : 'grey'"
+            size="small"
+            @click="device.driver === 'real' ? null : toggleDriver('real')"
+            class="control-btn-compact"
           >
-            <v-btn value="real" size="small" class="flip-btn">
-              <v-icon size="small" class="mr-1">mdi-lan-connect</v-icon>
-              <span class="text-caption">Real</span>
-            </v-btn>
-            <v-btn value="mock" size="small" class="flip-btn">
-              <v-icon size="small" class="mr-1">mdi-chip</v-icon>
-              <span class="text-caption">Mock</span>
-            </v-btn>
-          </v-btn-toggle>
+            <v-icon size="small" class="mr-1">mdi-lan-connect</v-icon>
+            <span class="text-caption">Real</span>
+            <v-tooltip activator="parent" location="bottom">
+              Use real hardware device
+            </v-tooltip>
+          </v-btn>
+
+          <v-btn
+            :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
+            :color="device.driver === 'mock' ? 'info' : 'grey'"
+            size="small"
+            @click="device.driver === 'mock' ? null : toggleDriver('mock')"
+            class="control-btn-compact"
+          >
+            <v-icon size="small" class="mr-1">mdi-chip</v-icon>
+            <span class="text-caption">Mock</span>
+            <v-tooltip activator="parent" location="bottom">
+              Use simulated device
+            </v-tooltip>
+          </v-btn>
         </div>
 
         <!-- Device Reset Button -->
@@ -2017,48 +2036,12 @@ onUnmounted(() => {
 }
 
 /* Control group container */
-.control-group {
+/* Button group for ON/OFF and Real/Mock - same 4px gap as play/pause */
+.button-group {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   height: 28px;
-}
-
-/* Flip switch styling - no frame around combined buttons */
-.flip-switch {
-  box-shadow: none !important;
-  border: none !important;
-  height: 28px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-}
-
-/* Remove any extra padding/margin from v-btn-toggle */
-.flip-switch :deep(.v-btn-group) {
-  height: 28px !important;
-  box-shadow: none !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Force the v-btn-toggle itself to be 28px */
-.flip-switch :deep(.v-btn-toggle) {
-  height: 28px !important;
-}
-
-.flip-btn {
-  min-width: 50px !important;
-  height: 28px !important;
-  max-height: 28px !important;
-  padding: 0 6px !important;
-  transition: all 0.15s ease !important;
-  line-height: 1 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.flip-btn.v-btn--active {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Compact control buttons with icon + caption */
