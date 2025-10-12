@@ -9,7 +9,8 @@
 
 ### Current Implementation
 
-The Pixoo Daemon currently uses **environment variables** for configuration, loaded at startup. There is **no persistent file-based configuration** yet.
+The Pixoo Daemon currently uses **environment variables** for configuration, loaded at startup.
+There is **no persistent file-based configuration** yet.
 
 ### Configuration Sources (Priority Order)
 

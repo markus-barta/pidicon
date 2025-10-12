@@ -8,7 +8,9 @@
 
 ## Problem Statement
 
-"Last Seen" timestamp always showed "Never" for real devices, even though they were actively rendering frames. This was frustrating for operators monitoring multiple devices, as there was no way to quickly identify network or hardware issues.
+"Last Seen" timestamp always showed "Never" for real devices, even though they were actively rendering
+frames. This was frustrating for operators monitoring multiple devices, as there was no way to quickly
+identify network or hardware issues.
 
 ---
 
@@ -58,7 +60,7 @@ metrics: {
 
 1. **Real Device Push**:
 
-   ```
+   ```text
    Scene renders → device.push() → HTTP request to Pixoo → Success 200 OK
    → device-adapter sets lastSeenTs = Date.now()
    → WebSocket broadcast includes metrics.lastSeenTs
@@ -67,7 +69,7 @@ metrics: {
 
 2. **Mock Device**:
 
-   ```
+   ```text
    Scene renders → device.push() → Mock (no network)
    → lastSeenTs stays null
    → Frontend displays "N/A"

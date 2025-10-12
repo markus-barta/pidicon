@@ -7,7 +7,8 @@
 
 ## Overview
 
-The Pixoo Daemon uses **event-driven WebSocket updates** for real-time performance metrics, eliminating wasteful periodic polling.
+The Pixoo Daemon uses **event-driven WebSocket updates** for real-time performance metrics,
+eliminating wasteful periodic polling.
 
 ---
 
@@ -15,7 +16,7 @@ The Pixoo Daemon uses **event-driven WebSocket updates** for real-time performan
 
 ### **Event-Driven Updates (Professional Approach)** ✅
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │ FRAME RENDERED                                               │
 │ ↓                                                            │
@@ -218,7 +219,7 @@ This hybrid approach ensures:
 
 ### **Before (Wasteful Polling)**
 
-```
+```text
 Backend: Broadcast every 200ms (5/sec) regardless of activity
 Frontend: Poll API every 200ms (5/sec) for each device
 
@@ -227,7 +228,7 @@ Result: 10 API calls/sec per device (wasteful!)
 
 ### **After (Event-Driven)** ✅
 
-```
+```text
 Backend: Broadcast only when frames render (event-driven)
 Frontend: Read reactive props every 200ms (no API calls)
 

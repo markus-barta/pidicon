@@ -333,7 +333,7 @@ guide.**
 
 Cursor's built-in UI creates rules in `.cursor/rules/` when you use:
 
-```
+```text
 Menu → New → Rule
 ```
 
@@ -361,7 +361,7 @@ documentation, or communication, **ALWAYS** include:
 
 **Example**:
 
-```
+```text
 Pushed to main in commit `abc1234` (Build #560). Watchtower will deploy shortly!
 ```
 

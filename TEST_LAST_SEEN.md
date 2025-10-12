@@ -238,7 +238,8 @@ const lastSeen = computed(() => {
 
 ## User Feedback
 
-**Request**: "i asked for it 3 times already. i want to see it next to the ip in the device card. it shall display when the real hardware gave us a definitive 'ack' that it is in the network."
+**Request**: "i asked for it 3 times already. i want to see it next to the ip in the device card.
+it shall display when the real hardware gave us a definitive 'ack' that it is in the network."
 
 **Response**: ✅ Implemented exactly as requested!
 

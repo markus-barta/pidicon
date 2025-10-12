@@ -48,12 +48,14 @@
 - **[reports/\[DONE\]\_PHASE2_PLAN.md](./reports/[DONE]_PHASE2_PLAN.md)** - Phase 2 plan (archived)
 - **[reports/\[DONE\]\_PHASE3_PLAN.md](./reports/[DONE]_PHASE3_PLAN.md)** - Phase 3 plan (archived)
 - **[reports/\[DONE\]\_UI-501-PROGRESS.md](./reports/[DONE]_UI-501-PROGRESS.md)** - Vue 3 migration tracker (archived)
-- **[reports/\[DONE\]\_VUE_MIGRATION_ANALYSIS.md](./reports/[DONE]_VUE_MIGRATION_ANALYSIS.md)** - Vue migration analysis (archived)
+- **[reports/\[DONE\]\_VUE_MIGRATION_ANALYSIS.md](./reports/[DONE]_VUE_MIGRATION_ANALYSIS.md)** -
+  Vue migration analysis (archived)
 - **[reports/\[DONE\]\_CODEBASE_AUDIT.md](./reports/[DONE]_CODEBASE_AUDIT.md)** - Initial codebase audit (archived)
 - **[reports/\[DONE\]\_CONSOLIDATION_SUMMARY.md](./reports/[DONE]_CONSOLIDATION_SUMMARY.md)** - Docs consolidation (archived)
 - **[reports/\[DONE\]\_DOCUMENTATION_STRUCTURE.md](./reports/[DONE]_DOCUMENTATION_STRUCTURE.md)** - Docs structure plan (archived)
 - **[reports/\[DONE\]\_STANDARDS_UPGRADE.md](./reports/[DONE]_STANDARDS_UPGRADE.md)** - Standards upgrade (archived)
-- **[reports/\[DONE\]\_WEB_UI_DOCKER_COMPOSE.md](./reports/[DONE]_WEB_UI_DOCKER_COMPOSE.md)** - Docker Compose setup (merged into WEB_UI_SETUP.md)
+- **[reports/\[DONE\]\_WEB_UI_DOCKER_COMPOSE.md](./reports/[DONE]_WEB_UI_DOCKER_COMPOSE.md)** -
+  Docker Compose setup (merged into WEB_UI_SETUP.md)
 
 ---
 
