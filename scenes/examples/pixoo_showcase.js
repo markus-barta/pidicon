@@ -16,8 +16,8 @@ const PHASES = {
   OUTRO: 4,
 };
 
-const PHASE_DURATION = 60; // frames per phase (~12 seconds at 5fps)
-const FADE_DURATION = 15; // frames for fade effects (doubled speed)
+const PHASE_DURATION = 40; // frames per phase (4 seconds at 10fps)
+const FADE_DURATION = 10; // frames for fade effects (1 second)
 
 module.exports = {
   name: 'pixoo_showcase',
@@ -74,7 +74,7 @@ module.exports = {
       ];
       context.log(
         `Phase transition: ${phaseNames[phase]} → ${phaseNames[nextPhase]} (frame ${frame})`,
-        'info'
+        'info',
       );
       setState('phase', nextPhase);
 
@@ -87,7 +87,7 @@ module.exports = {
     // Push to device
     await device.push('pixoo_showcase', context.publishOk);
 
-    return 200; // ~5fps for smooth animations
+    return 100; // 10fps for smooth, fast animations
   },
 
   async cleanup(context) {
