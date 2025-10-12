@@ -145,11 +145,11 @@
             style="cursor: pointer; user-select: none;"
             @click="cycleLogging"
           >
-            <v-icon size="small" class="mr-1">{{ getLoggingIcon(loggingLevel) }}</v-icon>
-            Logging
+            <v-icon size="small" class="mr-1">{{ getLoggingIcon }}</v-icon>
+            {{ getLoggingLabel }}
           </span>
           <v-tooltip activator="parent" location="bottom">
-            {{ getLoggingTooltip(loggingLevel) }}
+            {{ getLoggingTooltip }}
           </v-tooltip>
         </div>
 
@@ -1442,24 +1442,33 @@ async function cycleLogging() {
 }
 
 // Get appropriate icon for logging level
-function getLoggingIcon(level) {
+// Logging level display (computed)
+const getLoggingIcon = computed(() => {
   const icons = {
-    debug: 'mdi-console',
+    debug: 'mdi-bug',
     warn: 'mdi-alert-circle-outline',
-    none: 'mdi-console-line'
+    none: 'mdi-cancel'
   };
-  return icons[level] || 'mdi-console-line';
-}
+  return icons[loggingLevel.value] || 'mdi-cancel';
+});
 
-// Get tooltip text for logging level
-function getLoggingTooltip(level) {
-  const tooltips = {
-    debug: 'Click to cycle: Debug logs → Warn/Error only → No logs → Debug logs',
-    warn: 'Click to cycle: Warn/Error only → No logs → Debug logs → Warn/Error only',
-    none: 'Click to cycle: No logs → Debug logs → Warn/Error only → No logs'
+const getLoggingLabel = computed(() => {
+  const labels = {
+    debug: 'All Logs',
+    warn: 'Warnings',
+    none: 'Silent'
   };
-  return tooltips[level] || 'Click to cycle logging levels';
-}
+  return labels[loggingLevel.value] || 'Silent';
+});
+
+const getLoggingTooltip = computed(() => {
+  const tooltips = {
+    debug: 'Scene logging: All messages (debug, info, warn, error)',
+    warn: 'Scene logging: Warnings and errors only',
+    none: 'Scene logging: Disabled (silent mode)'
+  };
+  return tooltips[loggingLevel.value] + ' • Click to cycle';
+});
 
 async function handleReset() {
   // Use Vue confirm dialog instead of browser confirm (UI-512)

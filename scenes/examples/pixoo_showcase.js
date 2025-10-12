@@ -16,8 +16,8 @@ const PHASES = {
   OUTRO: 4,
 };
 
-const PHASE_DURATION = 40; // frames per phase (4 seconds at 10fps)
-const FADE_DURATION = 10; // frames for fade effects (1 second)
+const PHASE_DURATION = 20; // frames per phase (4 seconds at 5fps)
+const FADE_DURATION = 5; // frames for fade effects (1 second at 5fps)
 
 module.exports = {
   name: 'pixoo_showcase',
@@ -87,7 +87,7 @@ module.exports = {
     // Push to device
     await device.push('pixoo_showcase', context.publishOk);
 
-    return 100; // 10fps for smooth, fast animations
+    return 0; // Adaptive timing - hardware handles ~5fps max
   },
 
   async cleanup(context) {

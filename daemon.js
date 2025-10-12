@@ -29,21 +29,7 @@ const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
-
-// Load version info (with fallback if not yet generated)
-let versionInfo;
-try {
-  versionInfo = require('./version.json');
-} catch {
-  // Fallback for development/testing when version.json doesn't exist yet
-  const packageJson = require('./package.json');
-  versionInfo = {
-    version: packageJson.version,
-    buildNumber: 0,
-    gitCommit: 'dev',
-    environment: 'development',
-  };
-}
+const versionInfo = require('./version.json');
 
 // Create a logger instance
 
@@ -349,18 +335,30 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
     ts: Date.now(),
   };
 
-  // Log locally
-  logger.ok(`OK [${deviceIp}]`, {
-    scene: sceneName,
-    frametime,
-    diffPixels,
-    pushes: metrics.pushes,
-    skipped: metrics.skipped,
-    errors: metrics.errors,
-    version: versionInfo.version,
-    buildNumber: versionInfo.buildNumber,
-    gitCommit: versionInfo.gitCommit,
-  });
+  // Check device logging level (respect per-device logging preferences)
+  const loggingLevel = stateStore.getDeviceState(deviceIp, '__logging_level');
+  const { getDriverForDevice } = require('./lib/device-adapter');
+  const driver = getDriverForDevice(deviceIp);
+  const defaultLevel = driver === 'real' ? 'warn' : 'none';
+  const effectiveLevel =
+    loggingLevel !== null && loggingLevel !== undefined
+      ? loggingLevel
+      : defaultLevel;
+
+  // Only log if device logging allows it (debug = all, warn = warn/error only, none = silent)
+  if (effectiveLevel === 'debug') {
+    logger.ok(`OK [${deviceIp}]`, {
+      scene: sceneName,
+      frametime,
+      diffPixels,
+      pushes: metrics.pushes,
+      skipped: metrics.skipped,
+      errors: metrics.errors,
+      version: versionInfo.version,
+      buildNumber: versionInfo.buildNumber,
+      gitCommit: versionInfo.gitCommit,
+    });
+  }
 
   // Publish to MQTT
   mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
@@ -381,12 +379,9 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
           timestamp: Date.now(),
         });
 
-        // Log at debug level for mock devices to reduce noise
-        const driver = deviceInfo.driver || 'unknown';
-        if (driver === 'mock') {
-          logger.debug(`📡 Broadcast device_update for ${deviceIp} (mock)`);
-        } else {
-          logger.info(`📡 Broadcast device_update for ${deviceIp}`);
+        // Respect device logging level
+        if (effectiveLevel === 'debug') {
+          logger.debug(`📡 Broadcast device_update for ${deviceIp}`);
         }
       } catch (error) {
         // Log errors even in production
