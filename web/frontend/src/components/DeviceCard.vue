@@ -163,7 +163,22 @@
 
       <!-- Scene Control -->
       <div class="scene-control-section mb-4">
-        <h4 class="text-subtitle-1 font-weight-bold mb-3">Scene Control</h4>
+        <h4 
+          class="text-subtitle-1 font-weight-bold mb-3 scene-control-title"
+          @click="showDevScenes = !showDevScenes"
+        >
+          <span>Scene Control</span>
+          <v-icon 
+            size="small" 
+            :color="showDevScenes ? 'warning' : 'grey'"
+            class="ml-2"
+          >
+            {{ showDevScenes ? 'mdi-code-braces' : 'mdi-code-braces-box' }}
+          </v-icon>
+          <v-tooltip activator="parent" location="bottom">
+            {{ showDevScenes ? 'Click to hide dev scenes' : 'Click to show dev scenes' }}
+          </v-tooltip>
+        </h4>
         
         <!-- Scene Selector with inline controls -->
         <div class="scene-control-row">
@@ -172,6 +187,7 @@
               v-model="selectedScene"
               :disabled="loading"
               :loading="loading"
+              :show-dev-scenes="showDevScenes"
               @change="handleSceneChange"
             />
           </div>
@@ -509,6 +525,7 @@ const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock device
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
 const showPerfMetrics = ref(false); // Hide performance metrics by default
+const showDevScenes = ref(false); // Hide dev scenes by default
 
 // Metrics
 const fps = ref(0);
@@ -1556,6 +1573,18 @@ onUnmounted(() => {
 .scene-control-section {
   padding-bottom: 16px;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.scene-control-title {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.scene-control-title:hover {
+  color: rgb(var(--v-theme-primary));
 }
 
 .performance-metrics {

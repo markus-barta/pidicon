@@ -37,7 +37,7 @@ docker pull ghcr.io/markus-barta/pixoo-daemon:latest && docker restart pixoo-dae
 **Running Process**: `/usr/local/bin/node daemon.js`  
 **Working Directory**: `/app`  
 **Image**: `ghcr.io/markus-barta/pixoo-daemon:latest`  
-**Web UI**: http://miniserver24:10829
+**Web UI**: <http://miniserver24:10829>
 
 ---
 

@@ -53,6 +53,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showDevScenes: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
@@ -69,7 +73,17 @@ watch(
 );
 
 const sceneItems = computed(() => {
-  return sceneStore.scenes.map((scene) => {
+  // Filter scenes based on showDevScenes prop
+  let filteredScenes = sceneStore.scenes;
+  
+  if (!props.showDevScenes) {
+    // Hide scenes in examples/dev/ folder
+    filteredScenes = filteredScenes.filter(scene => {
+      return !scene.filePath?.includes('examples/dev/');
+    });
+  }
+  
+  return filteredScenes.map((scene) => {
     const folder = scene.filePath?.includes('/') 
       ? scene.filePath.split('/')[0] + '/' 
       : '';

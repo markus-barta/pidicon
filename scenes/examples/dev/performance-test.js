@@ -21,16 +21,16 @@ const LINE_ALPHA = 178; // ~70%
 // Import external dependencies
 
 // Import internal modules
-const logger = require('../../lib/logger');
+const logger = require('../../../lib/logger');
 const {
   CHART_CONFIG,
   getPerformanceColor,
-} = require('../../lib/performance-utils');
+} = require('../../../lib/performance-utils');
 const {
   drawTextRgbaAlignedWithBg,
   drawLine,
   BACKGROUND_COLORS,
-} = require('../../lib/rendering-utils');
+} = require('../../../lib/rendering-utils');
 
 // Default configuration
 const DEFAULT_FRAMES = 100;

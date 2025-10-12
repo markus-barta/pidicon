@@ -14,10 +14,11 @@
 
 ```javascript
 // daemon.js automatically loads from:
-✅ ./scenes/*.js                    // Main scenes
-✅ ./scenes/examples/*.js          // Example/demo scenes
-❌ ./scenes/subdir/*.js            // NOT loaded automatically
-❌ ./scenes/examples/subdir/*.js   // NOT loaded automatically
+✅ ./scenes/*.js                      // Core production scenes (startup, empty, fill)
+✅ ./scenes/examples/*.js            // Showcase scenes (pixoo_showcase)
+✅ ./scenes/examples/dev/*.js        // Development & advanced scenes (hidden by default in UI)
+❌ ./scenes/subdir/*.js              // NOT loaded automatically
+❌ ./scenes/examples/other/*.js      // NOT loaded automatically (must be in root or dev/)
 ```
 
 **Scene Registration Process:**
@@ -36,12 +37,13 @@ const sceneName = sceneModule.name || path.basename(file, '.js');
 
 ```javascript
 // ✅ Correct locations:
-scenes/my_scene.js              // Main production scene
-scenes/examples/my_demo.js      // Demo/example scene
+scenes/my_scene.js                   // Core production scene (e.g., startup, empty, fill)
+scenes/examples/my_showcase.js       // Showcase/demo scene (visible by default)
+scenes/examples/dev/my_advanced.js   // Development scene (hidden by default in UI)
 
 // ❌ Wrong locations:
-scenes/demos/my_demo.js         // Won't be loaded!
-scenes/examples/demos/...       // Won't be loaded!
+scenes/demos/my_demo.js              // Won't be loaded!
+scenes/examples/other/...            // Won't be loaded!
 ```
 
 #### **2. Required Scene Interface**
@@ -129,18 +131,23 @@ console.log('Has init:', typeof scene.prototype?.init === 'function');
 
 ```text
 scenes/
-├── startup.js         # ✅ Auto-loaded (main)
-├── empty.js           # ✅ Auto-loaded (main)
-├── power_price.js     # ✅ Auto-loaded (main)
-├── advanced_chart.js  # ✅ Auto-loaded (main)
-└── examples/          # ✅ Auto-loaded directory
-    ├── draw_api_animated.js
-    ├── draw_api.js
-    ├── performance-test.js
-    ├── framework-static-demo.js
-    ├── framework-animated-demo.js
-    ├── framework-data-demo.js
-    └── graphics-engine-demo.js  # ✅ Auto-loaded (configurable)
+├── startup.js                        # ✅ Core scene
+├── empty.js                          # ✅ Core scene
+├── fill.js                           # ✅ Core scene
+└── examples/
+    ├── pixoo_showcase.js            # ✅ Main showcase (visible by default)
+    └── dev/                         # ✅ Development scenes (hidden by default in UI)
+        ├── advanced_chart.js        # Advanced features
+        ├── power_price.js           # Production dashboard
+        ├── template.js              # Development template
+        ├── draw_api.js              # Drawing demos
+        ├── draw_api_animated.js
+        ├── framework-static-demo.js
+        ├── framework-animated-demo.js
+        ├── framework-data-demo.js
+        ├── performance-test.js
+        ├── config-validator-demo.js
+        └── startup-static.js
 ```
 
 ## 🎨 **CONFIGURABLE CONSTANTS - No More Magic Numbers!**
@@ -318,7 +325,9 @@ testConfigs.forEach((config) => {
 
 ```bash
 # Use existing examples as templates:
-cp scenes/examples/framework-static-demo.js scenes/my_new_scene.js
+cp scenes/examples/dev/template.js scenes/my_new_scene.js
+# Or for a showcase scene:
+cp scenes/examples/dev/template.js scenes/examples/my_showcase.js
 # Edit name, implement render logic
 ```
 
@@ -331,19 +340,21 @@ cp scenes/examples/framework-static-demo.js scenes/my_new_scene.js
 
 ### **🚨 Pro Tips to Avoid Registration Issues**
 
-1. **✅ Always put example scenes in `scenes/examples/`**
-2. **✅ Use class-based scenes with proper `this.name`**
-3. **✅ Check daemon logs immediately after adding new scene**
-4. **✅ Test scene switching right after daemon restart**
-5. **✅ Use consistent naming: filename matches `scene.name`**
-6. **❌ Don't create subdirectories in scenes/ - won't be loaded**
-7. **❌ Don't forget to export the class with `module.exports`**
+1. **✅ Core scenes go in `scenes/` (startup, empty, fill)**
+2. **✅ Showcase scenes go in `scenes/examples/` (pixoo_showcase)**
+3. **✅ Dev/advanced scenes go in `scenes/examples/dev/` (hidden by default in UI)**
+4. **✅ Use class-based scenes with proper `this.name`**
+5. **✅ Check daemon logs immediately after adding new scene**
+6. **✅ Test scene switching right after daemon restart**
+7. **✅ Use consistent naming: filename matches `scene.name`**
+8. **❌ Don't create other subdirectories - only examples/ and examples/dev/ are auto-loaded**
+9. **❌ Don't forget to export the class with `module.exports`**
 
 ### **🔍 Troubleshooting Checklist**
 
 When you get "No renderer found for scene":
 
-1. **File location**: Is it in `scenes/` or `scenes/examples/`?
+1. **File location**: Is it in `scenes/`, `scenes/examples/`, or `scenes/examples/dev/`?
 2. **File extension**: Must be `.js`
 3. **Export**: Does `module.exports = MyScene` exist?
 4. **Class name**: Does the class have a proper constructor?

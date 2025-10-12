@@ -9,7 +9,7 @@
 
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
-const { AnimatedScene } = require('../../lib/scene-framework');
+const { AnimatedScene } = require('../../../lib/scene-framework');
 
 const name = 'framework_animated_demo';
 

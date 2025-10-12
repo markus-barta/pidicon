@@ -25,6 +25,7 @@ The issue was **NOT** in the tracking logic, but in the **API response layer**:
    ```
 
 2. **❌ API didn't expose it**: `device-service.js` line 111-116
+
    ```javascript
    metrics: {
      pushes: metrics.pushes || 0,
@@ -65,6 +66,7 @@ metrics: {
    ```
 
 2. **Mock Device**:
+
    ```
    Scene renders → device.push() → Mock (no network)
    → lastSeenTs stays null
@@ -142,9 +144,11 @@ const lastSeen = computed(() => {
    - Timestamp updates in real-time (via WebSocket)
 
 3. **Check Logs**:
+
    ```bash
    docker logs pixoo-daemon | grep "LAST SEEN"
    ```
+
    **Expected**: `[LAST SEEN] Real device 192.168.1.159 ACKed at 1760252198954`
 
 ---
@@ -200,7 +204,7 @@ const lastSeen = computed(() => {
 
 ### Manual Verification ✅
 
-- Checked Web UI: http://miniserver24:10829/
+- Checked Web UI: <http://miniserver24:10829/>
 - Device 192.168.1.159 (real): Shows "3s ago" ✓
 - Device 192.168.1.189 (mock): Shows "N/A" ✓
 - Timestamp updates in real-time ✓

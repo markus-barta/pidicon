@@ -9,8 +9,8 @@
  * @license MIT
  */
 
-const logger = require('../../lib/logger');
-const { validateSceneContext } = require('../../lib/performance-utils');
+const logger = require('../../../lib/logger');
+const { validateSceneContext } = require('../../../lib/performance-utils');
 
 const name = 'draw_api';
 

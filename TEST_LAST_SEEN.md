@@ -17,7 +17,7 @@
 
 **Steps**:
 
-1. Open Web UI at http://localhost:10829
+1. Open Web UI at <http://localhost:10829>
 2. Select real device
 3. Start animated scene (5fps target)
 4. Observe "Last Seen" next to IP in device card header

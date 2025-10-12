@@ -6,8 +6,8 @@
  * @license MIT
  */
 
-const ConfigValidator = require('../../lib/config-validator');
-const logger = require('../../lib/logger');
+const ConfigValidator = require('../../../lib/config-validator');
+const logger = require('../../../lib/logger');
 
 class ConfigValidatorDemoScene {
   constructor() {

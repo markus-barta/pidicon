@@ -241,7 +241,17 @@ module.exports = {
 };
 ```
 
-See `scenes/template.js` for a complete starter template and [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) for the full guide.
+See `scenes/examples/dev/template.js` for a complete starter template and [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) for the full guide.
+
+### **Scene Organization**
+
+Scenes are organized into three categories:
+
+- **Core Scenes** (`scenes/`): Production scenes - `startup`, `empty`, `fill`
+- **Showcase** (`scenes/examples/`): Feature demonstrations - `pixoo_showcase` (comprehensive demo of all capabilities)
+- **Development** (`scenes/examples/dev/`): Advanced scenes, templates, and testing - hidden by default in Web UI
+
+**Toggle Dev Scenes:** Click the "Scene Control" label in the Web UI to show/hide development scenes in the dropdown.
 
 ---
 

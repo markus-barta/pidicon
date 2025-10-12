@@ -31,15 +31,41 @@ Pure-render contract: Scenes must not manage their own timers or publish MQTT
 continuations. Timing is handled centrally; use the `render` return value to
 control cadence.
 
-## Core Scenes
+## Directory Structure
 
-- `advanced_chart.js`: Renders an advanced, dynamic line chart.
-- `empty.js`: A blank scene, used to clear the display.
-- `fill.js`: Fills the entire screen with a solid color.
-- `power_price.js`: **Comprehensive power price dashboard** - Displays electricity prices,
-  PV generation, battery status, weather data, and a digital clock with animated elements.
-- `startup.js`: Displays deployment and version information when the daemon
-  starts.
+### Core Scenes (Root Directory)
+
+Production-ready scenes for everyday use:
+
+- `startup.js`: Deployment and version information (shown on daemon startup)
+- `empty.js`: Blank scene to clear the display
+- `fill.js`: Solid color fill for the entire screen
+
+### Showcase & Examples
+
+- `examples/pixoo_showcase.js`: **Comprehensive feature demonstration**
+  - Showcases all Pixoo daemon capabilities in one creative demo
+  - Phases: Intro, Text Effects, Gradients, Animations, Images, Performance, Outro
+  - Perfect for demonstrating the system or testing new hardware
+  - ~7 phases × 16 seconds each = continuous loop
+
+### Development Scenes (`examples/dev/`)
+
+Advanced scenes for development, testing, and production use (hidden by default in Web UI):
+
+- `advanced_chart.js`: Advanced dynamic line chart rendering
+- `power_price.js`: Comprehensive power price dashboard with PV data, battery status, weather, and clock
+- `template.js`: Scene development template with best practices
+- `startup-static.js`: Static version of the startup scene
+- `config-validator-demo.js`: Configuration validation demonstration
+- `draw_api.js`: Static drawing primitives showcase
+- `draw_api_animated.js`: Animated drawing techniques
+- `framework-static-demo.js`: Static scene framework demo
+- `framework-animated-demo.js`: Animated scene framework demo
+- `framework-data-demo.js`: Data-driven scene demo
+- `performance-test.js`: Performance benchmarking
+
+**Note:** Dev scenes can be shown/hidden in the Web UI by clicking the "Scene Control" label.
 
 ## Power Price Scene (`power_price.js`)
 
