@@ -41,26 +41,18 @@ module.exports = {
 
   async init(context) {
     // Scene initialization (called once when scene starts)
-    context.setState('initialized', false);
     context.setState('phase', PHASES.INTRO);
     context.setState('frame', 0);
     context.setState('startTime', Date.now());
+    context.setState('initialized', true);
   },
 
   async render(context) {
     const { device, getState, setState } = context;
     const gfx = new GraphicsEngine();
 
-    // Initialize state
-    if (!getState('initialized')) {
-      setState('phase', PHASES.INTRO);
-      setState('frame', 0);
-      setState('startTime', Date.now());
-      setState('initialized', true);
-    }
-
-    const phase = getState('phase');
-    const frame = getState('frame');
+    const phase = getState('phase', PHASES.INTRO);
+    const frame = getState('frame', 0);
 
     // Clear screen
     device.clear();
@@ -109,9 +101,9 @@ module.exports = {
     return 200; // ~5fps for smooth animations
   },
 
-  async cleanup(context) {
+  async cleanup() {
     // Scene cleanup (called when switching away from scene)
-    context.setState('initialized', false);
+    // No cleanup needed - state persists for next render
   },
 };
 
