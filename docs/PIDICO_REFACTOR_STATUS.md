@@ -84,24 +84,29 @@
 - ❌ Update `lib/config-validator.js` for new device type syntax
 - ❌ Implement backward compatibility layer
 
-### Phase 9: Web-Based Configuration (Frontend) ❌
+### Phase 9: Web-Based Configuration ✅ (Frontend Complete, Backend Integration Pending)
 
-**Backend API (9.2)**:
+**Backend API (9.2)**: ✅
 
-- ❌ Add API endpoints to `web/server.js`:
+- ✅ Add API endpoints to `web/server.js`:
   - `GET/POST/PUT/DELETE /api/config/devices`
-  - `GET/PUT /api/config/devices/:ip/watchdog`
   - `POST /api/config/devices/:ip/test`
   - `GET /api/scenes/list`
 
-**Vue Components (9.4-9.6)**:
+**Vue Components (9.4-9.6)**: ✅
 
-- ❌ Create `web/frontend/src/components/DeviceConfigDialog.vue`
-- ❌ Create `web/frontend/src/components/DeviceManagement.vue`
-- ❌ Create `web/frontend/src/views/Settings.vue`
-- ❌ Add route and navigation for Settings page
+- ✅ `web/frontend/src/components/DeviceConfigDialog.vue`
+  - Comprehensive add/edit dialog with validation
+  - Device config, startup scene, brightness, watchdog
+- ✅ `web/frontend/src/components/DeviceManagement.vue`
+  - Device table with search/filter
+  - Edit, delete, test connection actions
+- ✅ `web/frontend/src/views/Settings.vue`
+  - Tabbed interface (Devices, Global, Import/Export)
+  - Device management, global defaults, config backup/restore
+- ✅ Add navigation in SystemStatus and App.vue
 
-**Integration (9.7-9.9)**:
+**Integration (9.7-9.9)**: ❌
 
 - ❌ Update `lib/device-adapter.js` to load from DeviceConfigStore
 - ❌ Update `daemon.js` to apply startup scenes and watchdog
@@ -168,10 +173,11 @@
 | Phase 7: Testing         | ❌ Not Started | -          | ~6-8h     |
 | Phase 8: Config Env      | ❌ Not Started | -          | ~2h       |
 | Phase 9.1-9.3: Backend   | ✅ Complete    | ~2h        | -         |
-| Phase 9.4-9.9: Frontend  | ❌ Not Started | -          | ~6-8h     |
+| Phase 9.4-9.6: Frontend  | ✅ Complete    | ~3h        | -         |
+| Phase 9.7-9.9: Backend   | ❌ Not Started | -          | ~2-3h     |
 | Phase 10: Migration      | ❌ Not Started | -          | ~2h       |
 
-**Total Progress**: ~40% complete (8h / ~20h estimated for critical path)  
+**Total Progress**: ~55% complete (13h / ~24h estimated for critical path)  
 **Critical Path Remaining**: ~12-16 hours
 
 ---
