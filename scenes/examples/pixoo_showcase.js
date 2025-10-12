@@ -22,11 +22,12 @@ const PHASES = {
   GRADIENT_PARADISE: 2, // Copper bars & gradients
   PLASMA: 3, // Classic plasma effect
   GEOMETRY: 4, // Circles, lines, shapes
-  STARFIELD: 5, // 3D starfield
-  TUNNEL: 6, // Rotating tunnel
-  ANIMATION_FEST: 7, // Bouncing, rotating madness
-  IMAGE_GALLERY: 8, // Moon, sun, blending
-  FINALE: 9, // Epic goodbye
+  STARFIELD_2D: 5, // 2D scrolling starfield
+  STARFIELD_3D: 6, // 3D perspective starfield
+  TUNNEL: 7, // Rotating tunnel
+  ANIMATION_FEST: 8, // Bouncing, rotating madness
+  IMAGE_GALLERY: 9, // Moon, sun, blending
+  FINALE: 10, // Epic goodbye
 };
 
 const PHASE_DURATION = 45; // frames per phase (~9 seconds at 5fps) - Total ~90s demo
@@ -36,7 +37,7 @@ const IMAGE_PHASE_DURATION = 70; // images phase gets extra time
 module.exports = {
   name: 'pixoo_showcase',
   description:
-    '🔥 ULTIMATE Pixoo Demo - 10 phases of mind-blowing effects! Plasma, tunnels, starfields, and more!',
+    '🔥 ULTIMATE Pixoo Demo - 11 phases of mind-blowing effects! Plasma, tunnels, 2D & 3D starfields, and more!',
   category: 'Demo',
   wantsLoop: true,
 
@@ -83,6 +84,18 @@ module.exports = {
     return stars;
   },
 
+  initStars3D(count) {
+    const stars = [];
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: (Math.random() - 0.5) * 100,
+        y: (Math.random() - 0.5) * 100,
+        z: Math.random() * 80 + 10,
+      });
+    }
+    return stars;
+  },
+
   async render(context) {
     const { device, getState, setState } = context;
     const gfx = new GraphicsEngine(device);
@@ -110,8 +123,11 @@ module.exports = {
       case PHASES.GEOMETRY:
         await this.renderGeometry(device, gfx, phaseFrame);
         break;
-      case PHASES.STARFIELD:
-        await this.renderStarfield(device, gfx, getState, setState);
+      case PHASES.STARFIELD_2D:
+        await this.renderStarfield2D(device, gfx, getState, setState);
+        break;
+      case PHASES.STARFIELD_3D:
+        await this.renderStarfield3D(device, gfx, getState, setState);
         break;
       case PHASES.TUNNEL:
         await this.renderTunnel(device, getState, setState, phaseFrame);
@@ -296,13 +312,13 @@ module.exports = {
       }
     }
 
-    // Title with outline
+    // Title with semi-transparent outline
     await gfx.drawTextEnhanced('COPPER', [32, 28], [255, 255, 255, 255], {
       alignment: 'center',
       effects: {
         outline: true,
-        outlineColor: [0, 0, 0, 255],
-        outlineWidth: 2,
+        outlineColor: [0, 0, 0, 150],
+        outlineWidth: 1,
       },
     });
   },
@@ -386,9 +402,9 @@ module.exports = {
   },
 
   // ============================================================================
-  // 🎬 PHASE 6: STARFIELD - Simplified 2D Starfield
+  // 🎬 PHASE 6: STARFIELD 2D - Scrolling Stars
   // ============================================================================
-  async renderStarfield(device, gfx, getState, setState) {
+  async renderStarfield2D(device, gfx, getState, setState) {
     // Black space background
     device.fillRect([0, 0], [64, 64], [0, 0, 10, 255]);
 
@@ -406,9 +422,9 @@ module.exports = {
         star.y = Math.random() * 64;
       }
 
-      // Draw star and glow
-      const brightness = Math.floor(star.z * 80 + 100); // Much brighter!
-      const size = Math.floor(star.z * 1.5); // Bigger stars for closer ones
+      // Draw star and glow (FIXED: clamp brightness to 0-255)
+      const brightness = Math.min(255, Math.floor(star.z * 80 + 100));
+      const size = Math.floor(star.z * 1.5);
 
       // Main star pixel
       const x = Math.floor(star.x);
@@ -421,6 +437,7 @@ module.exports = {
 
         // Add glow pixels around it for visibility
         if (size >= 1) {
+          const glowBrightness = Math.floor(brightness / 2);
           for (let dx = -1; dx <= 1; dx++) {
             for (let dy = -1; dy <= 1; dy++) {
               if (dx === 0 && dy === 0) continue;
@@ -429,7 +446,7 @@ module.exports = {
               if (gx >= 0 && gx < 64 && gy >= 0 && gy < 64) {
                 await device.drawPixel(
                   [gx, gy],
-                  [brightness / 2, brightness / 2, brightness / 2, 150],
+                  [glowBrightness, glowBrightness, glowBrightness, 150],
                 );
               }
             }
@@ -441,11 +458,64 @@ module.exports = {
     setState('stars', stars);
 
     // Title
-    await device.drawText('STARS', [32, 2], [255, 255, 255, 255], 'center');
+    await device.drawText('STARS 2D', [32, 2], [255, 255, 255, 255], 'center');
   },
 
   // ============================================================================
-  // 🎬 PHASE 7: TUNNEL - Rotating Tunnel Effect
+  // 🎬 PHASE 7: STARFIELD 3D - Perspective Starfield
+  // ============================================================================
+  async renderStarfield3D(device, gfx, getState, setState) {
+    // Black space background
+    device.fillRect([0, 0], [64, 64], [0, 0, 5, 255]);
+
+    const stars = getState('stars3d', this.initStars3D(20)); // Fewer stars for performance
+
+    // Update and draw stars
+    for (const star of stars) {
+      star.z -= 1.5; // Move towards viewer
+
+      // Reset if too close
+      if (star.z <= 1) {
+        star.x = (Math.random() - 0.5) * 100;
+        star.y = (Math.random() - 0.5) * 100;
+        star.z = 80;
+      }
+
+      // Project 3D to 2D
+      const scale = 150 / star.z;
+      const x2d = Math.floor(32 + star.x * scale);
+      const y2d = Math.floor(32 + star.y * scale);
+
+      // Draw star (brighter when closer)
+      const brightness = Math.min(255, Math.floor((1 - star.z / 80) * 255));
+      if (x2d >= 0 && x2d < 64 && y2d >= 0 && y2d < 64 && brightness > 20) {
+        await device.drawPixel(
+          [x2d, y2d],
+          [brightness, brightness, brightness, 255],
+        );
+
+        // Simple trail effect for close stars only
+        if (star.z < 20) {
+          const tz = star.z + 3;
+          const tscale = 150 / tz;
+          const tx = Math.floor(32 + star.x * tscale);
+          const ty = Math.floor(32 + star.y * tscale);
+          const tb = Math.floor(brightness * 0.5);
+          if (tx >= 0 && tx < 64 && ty >= 0 && ty < 64) {
+            await device.drawPixel([tx, ty], [tb, tb, tb, 150]);
+          }
+        }
+      }
+    }
+
+    setState('stars3d', stars);
+
+    // Title
+    await device.drawText('STARS 3D', [32, 2], [255, 255, 255, 255], 'center');
+  },
+
+  // ============================================================================
+  // 🎬 PHASE 8: TUNNEL - Rotating Tunnel Effect
   // ============================================================================
   async renderTunnel(device, getState, setState, frame) {
     const angle = getState('tunnelAngle', 0);
@@ -478,7 +548,7 @@ module.exports = {
   },
 
   // ============================================================================
-  // 🎬 PHASE 8: ANIMATION FEST - Everything Moving!
+  // 🎬 PHASE 9: ANIMATION FEST - Everything Moving!
   // ============================================================================
   async renderAnimationFest(device, gfx, getState, setState, frame) {
     // Nice gradient background
@@ -541,7 +611,7 @@ module.exports = {
   },
 
   // ============================================================================
-  // 🎬 PHASE 9: IMAGE GALLERY - Moon Phases & Sun
+  // 🎬 PHASE 10: IMAGE GALLERY - Moon Phases & Sun
   // ============================================================================
   async renderImageGallery(device, gfx, frame) {
     // Gradient background
@@ -596,7 +666,7 @@ module.exports = {
   },
 
   // ============================================================================
-  // 🎬 PHASE 10: FINALE - Epic Goodbye
+  // 🎬 PHASE 11: FINALE - Epic Goodbye
   // ============================================================================
   async renderFinale(device, gfx, getState, setState, frame) {
     const fadeOut = Math.max(0, 1 - frame / PHASE_DURATION);
