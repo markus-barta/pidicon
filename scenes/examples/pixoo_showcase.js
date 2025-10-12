@@ -229,14 +229,21 @@ async function renderAnimations(device, gfx, frame) {
   // Title
   await device.drawText('ANIMATIONS', [2, 2], [255, 255, 255, 255], 'left');
 
-  // Bouncing ball
-  const ballX = 32 + Math.sin(frame * 0.1) * 24;
-  const ballY = 32 + Math.abs(Math.sin(frame * 0.15)) * 20;
-  device.fillCircle(
-    [Math.floor(ballX), Math.floor(ballY)],
-    4,
-    [255, 100, 100, 255],
-  );
+  // Bouncing ball (filled circle using drawPixel)
+  const ballX = Math.floor(32 + Math.sin(frame * 0.1) * 24);
+  const ballY = Math.floor(32 + Math.abs(Math.sin(frame * 0.15)) * 20);
+  const ballRadius = 4;
+  for (let dx = -ballRadius; dx <= ballRadius; dx++) {
+    for (let dy = -ballRadius; dy <= ballRadius; dy++) {
+      if (dx * dx + dy * dy <= ballRadius * ballRadius) {
+        const x = ballX + dx;
+        const y = ballY + dy;
+        if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+          await device.drawPixel([x, y], [255, 100, 100, 255]);
+        }
+      }
+    }
+  }
 
   // Rotating square
   const angle = frame * 0.05;
@@ -255,9 +262,25 @@ async function renderAnimations(device, gfx, frame) {
     );
   }
 
-  // Pulsing circle
-  const pulseRadius = 3 + Math.sin(frame * 0.2) * 2;
-  device.drawCircle([16, 48], Math.floor(pulseRadius), [100, 100, 255, 255]);
+  // Pulsing circle (outline using drawPixel)
+  const pulseRadius = Math.floor(3 + Math.sin(frame * 0.2) * 2);
+  const pulseCenterX = 16;
+  const pulseCenterY = 48;
+  for (let dx = -pulseRadius; dx <= pulseRadius; dx++) {
+    for (let dy = -pulseRadius; dy <= pulseRadius; dy++) {
+      const distSq = dx * dx + dy * dy;
+      const innerRadiusSq = (pulseRadius - 1) * (pulseRadius - 1);
+      const outerRadiusSq = pulseRadius * pulseRadius;
+      // Draw only the outline (between inner and outer radius)
+      if (distSq >= innerRadiusSq && distSq <= outerRadiusSq) {
+        const x = pulseCenterX + dx;
+        const y = pulseCenterY + dy;
+        if (x >= 0 && x < 64 && y >= 0 && y < 64) {
+          await device.drawPixel([x, y], [100, 100, 255, 255]);
+        }
+      }
+    }
+  }
 }
 
 // ============================================================================
