@@ -396,18 +396,21 @@ function generateDisplayContent(config, frametime, performanceState) {
  * @param {Object} config - Test configuration
  */
 async function renderFrame(context, config) {
-  const { device, publishOk, getState, setState } = context;
+  const { device, publishOk, getState, setState, log } = context;
 
   // Stop if scene not marked running
   const running = !!getState('isRunning');
   if (!running) {
-    logger.ok(`[PERF V3] renderFrame: isRunning=false; abort frame`);
+    log?.(`[PERF V3] renderFrame: isRunning=false; abort frame`, 'debug');
     return;
   }
 
   // Prevent re-entrancy (e.g., slow frame overlaps)
   if (getState('inFrame')) {
-    logger.ok(`[PERF V3] renderFrame: inFrame=true; skip overlapping frame`);
+    log?.(
+      `[PERF V3] renderFrame: inFrame=true; skip overlapping frame`,
+      'debug',
+    );
     return;
   }
   setState('inFrame', true);
@@ -415,7 +418,7 @@ async function renderFrame(context, config) {
   // Use previous push duration as the frame's measured frametime
   const lastPushMetrics = device.getMetrics();
   const frametime = lastPushMetrics.lastFrametime || 0;
-  logger.ok(`[PERF V3] renderFrame: frametime(prev push)=${frametime}ms`);
+  log?.(`[PERF V3] renderFrame: frametime(prev push)=${frametime}ms`, 'debug');
 
   // Create performance state
   const performanceState = new PerformanceTestState(getState, setState);
@@ -427,10 +430,11 @@ async function renderFrame(context, config) {
 
   // Get metrics
   const metrics = performanceState.getMetrics();
-  logger.ok(
+  log?.(
     `[PERF V3] metrics: frames=${metrics.framesRendered}, avg=${Math.round(
       metrics.avgFrametime,
     )}ms`,
+    'debug',
   );
 
   // Generate display content for current frame (show previous frame time)
@@ -531,8 +535,9 @@ async function renderFrame(context, config) {
   const shouldContinue = nextPushed < (config.frames | 0);
 
   setState('inFrame', false);
-  logger.ok(
+  log?.(
     `[PERF V3] shouldContinue=${shouldContinue} pushes=${nextPushed} chartX=${getState('chartX')}`,
+    'debug',
   );
 
   if (!shouldContinue) {
@@ -597,15 +602,16 @@ async function updateStatistics(frametime, getState, setState) {
 }
 
 async function handleTestCompletion(context, metrics, chartRenderer) {
-  const { getState, setState, device, publishOk } = context;
+  const { getState, setState, device, publishOk, log } = context;
   const now = Date.now();
   const framesRendered = getState?.('framesRendered') || 0;
 
   setState('isRunning', false);
   setState('testCompleted', true);
   const duration = now - (getState?.('startTime') || now);
-  logger.ok(
+  log?.(
     `✅ [PERF V3] Test completed: ${framesRendered} frames in ${duration}ms (avg: ${Math.round(metrics.avgFrametime)}ms)`,
+    'info',
   );
 
   // Show completion overlay
@@ -614,7 +620,7 @@ async function handleTestCompletion(context, metrics, chartRenderer) {
 }
 
 async function render(context) {
-  const { device, payload, getState, setState, loopDriven } = context;
+  const { device, payload, getState, setState, loopDriven, log } = context;
 
   try {
     // Get configuration from payload
@@ -634,8 +640,9 @@ async function render(context) {
       performanceState.reset();
       setState('chartInitialized', false);
       await device.clear();
-      logger.ok(
+      log?.(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames (reset on param change)`,
+        'info',
       );
     }
     setState('config', config);
@@ -648,7 +655,7 @@ async function render(context) {
       return await renderFrame(context, getState('config') || config);
     }
   } catch (error) {
-    logger.error(`❌ [PERF V3] Render error: ${error.message}`);
+    log?.(`❌ [PERF V3] Render error: ${error.message}`, 'error');
   }
 }
 
