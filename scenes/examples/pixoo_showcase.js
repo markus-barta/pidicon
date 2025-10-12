@@ -251,13 +251,13 @@ module.exports = {
       'vertical',
     );
 
-    // Shadow effect - higher, centered
+    // Shadow effect - higher, centered (1px offset, more visible)
     await gfx.drawTextEnhanced('SHADOW', [32, 8], [100, 200, 255, 255], {
       alignment: 'center',
       effects: {
         shadow: true,
-        shadowOffset: 2,
-        shadowColor: [20, 40, 50, 200],
+        shadowOffset: 1,
+        shadowColor: [0, 0, 0, 220],
       },
     });
 
@@ -505,57 +505,37 @@ module.exports = {
 
     let stars = getState('stars3d', []);
 
-    // If no stars, initialize them
+    // If no stars, initialize with just 5 stars for simplicity
     if (stars.length === 0) {
-      stars = this.initStars3D(25);
+      stars = this.initStars3D(5);
       setState('stars3d', stars);
     }
 
-    // Update and draw stars
+    // Update and draw stars - SIMPLE approach
     for (const star of stars) {
-      star.z -= 1.5; // Move towards viewer
+      star.z -= 1; // Move towards viewer (slower)
 
       // Reset if too close
-      if (star.z <= 1) {
-        star.x = (Math.random() - 0.5) * 100;
-        star.y = (Math.random() - 0.5) * 100;
-        star.z = 80;
+      if (star.z <= 5) {
+        star.x = (Math.random() - 0.5) * 60;
+        star.y = (Math.random() - 0.5) * 60;
+        star.z = 60;
       }
 
-      // Project 3D to 2D
-      const scale = 150 / star.z;
-      const x2d = Math.floor(32 + star.x * scale);
-      const y2d = Math.floor(32 + star.y * scale);
+      // Simple 3D to 2D projection
+      const scale = 100 / star.z;
+      const x = Math.floor(32 + star.x * scale);
+      const y = Math.floor(32 + star.y * scale);
 
-      // Draw star (much brighter, visible at all depths)
-      // Map z=80 (far) to brightness=80, z=1 (close) to brightness=255
-      const brightness = Math.floor(80 + (1 - star.z / 80) * 175);
-      const x = Math.floor(x2d);
-      const y = Math.floor(y2d);
+      // Simple brightness: closer = brighter
+      const brightness = Math.floor(150 + (60 - star.z));
 
+      // Draw star if on screen
       if (x >= 0 && x < 64 && y >= 0 && y < 64) {
         await device.drawPixel(
           [x, y],
           [brightness, brightness, brightness, 255],
         );
-
-        // Add glow for close stars
-        if (star.z < 30) {
-          const glowBrightness = Math.floor(brightness * 0.6);
-          for (let dx = -1; dx <= 1; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
-              if (dx === 0 && dy === 0) continue;
-              const gx = x + dx;
-              const gy = y + dy;
-              if (gx >= 0 && gx < 64 && gy >= 0 && gy < 64) {
-                await device.drawPixel(
-                  [gx, gy],
-                  [glowBrightness, glowBrightness, glowBrightness, 150],
-                );
-              }
-            }
-          }
-        }
       }
     }
 
@@ -630,9 +610,10 @@ module.exports = {
       [255, 150, 150, 255],
     );
 
-    // Rotating square - bright and visible
+    // Rotating square - with zoom/shrink effect (almost to max)
     const angle = frame * 0.1;
-    const size = 10;
+    const sizeScale = Math.sin(frame * 0.15) * 0.5 + 0.5; // 0 to 1
+    const size = 8 + sizeScale * 18; // From 8 to 26 (almost full screen)
     for (let i = 0; i < 4; i++) {
       const a1 = angle + (i * Math.PI) / 2;
       const a2 = angle + ((i + 1) * Math.PI) / 2;
@@ -690,11 +671,11 @@ module.exports = {
     const moonY = Math.floor(32 + Math.sin(orbitAngle) * 20);
 
     try {
-      // Draw sun in center
+      // Draw sun in center (larger, square size to avoid distortion)
       await gfx.drawImageBlended(
         sunPath,
         [sunX, sunY],
-        [11, 11],
+        [16, 16],
         255,
         'normal',
       );

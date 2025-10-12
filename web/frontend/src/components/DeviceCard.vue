@@ -1977,10 +1977,10 @@ onUnmounted(() => {
   display: inline-flex;
 }
 
-/* Flip switch styling */
+/* Flip switch styling - no frame around combined buttons */
 .flip-switch {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 4px !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .flip-btn {
