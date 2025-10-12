@@ -132,7 +132,7 @@ module.exports = {
         await this.renderStarfield2D(device, gfx, getState, setState);
         break;
       case PHASES.STARFIELD_3D:
-        await this.renderStarfield3D(device, gfx, getState, setState);
+        await this.renderStarfield3D(device);
         break;
       case PHASES.TUNNEL:
         await this.renderTunnel(device, getState, setState, phaseFrame);
@@ -499,51 +499,19 @@ module.exports = {
   // ============================================================================
   // 🎬 PHASE 7: STARFIELD 3D - Perspective Starfield
   // ============================================================================
-  async renderStarfield3D(device, gfx, getState, setState) {
-    // Black space background
-    device.fillRect([0, 0], [64, 64], [0, 0, 5, 255]);
+  async renderStarfield3D(device) {
+    // MASSIVE RED RECTANGLE TO TEST IF THIS EVEN RENDERS
+    await device.fillRect([0, 0], [64, 64], [255, 0, 0, 255]);
 
-    let stars = getState('stars3d', []);
+    // Title in huge white
+    await device.drawText('3D STARS', [32, 30], [255, 255, 255, 255], 'center');
 
-    // If no stars, initialize with just 5 stars for simplicity
-    if (stars.length === 0) {
-      stars = this.initStars3D(5);
-      setState('stars3d', stars);
-    }
-
-    // Update and draw stars - SIMPLE approach
-    for (const star of stars) {
-      star.z -= 1; // Move towards viewer (slower)
-
-      // Reset if too close
-      if (star.z <= 5) {
-        star.x = (Math.random() - 0.5) * 60;
-        star.y = (Math.random() - 0.5) * 60;
-        star.z = 60;
-      }
-
-      // Simple 3D to 2D projection
-      const scale = 100 / star.z;
-      const x = Math.floor(32 + star.x * scale);
-      const y = Math.floor(32 + star.y * scale);
-
-      // Simple brightness: closer = brighter
-      const brightness = Math.floor(150 + (60 - star.z));
-
-      // Draw star if on screen
-      if (x >= 0 && x < 64 && y >= 0 && y < 64) {
-        await device.drawPixel(
-          [x, y],
-          [brightness, brightness, brightness, 255],
-        );
-      }
-    }
-
-    // Save updated stars
-    setState('stars3d', stars);
-
-    // Title
-    await device.drawText('STARS 3D', [32, 2], [255, 255, 255, 255], 'center');
+    // Draw a few static white pixels to test drawPixel
+    await device.drawPixel([10, 10], [255, 255, 255, 255]);
+    await device.drawPixel([20, 20], [255, 255, 255, 255]);
+    await device.drawPixel([30, 30], [255, 255, 255, 255]);
+    await device.drawPixel([40, 40], [255, 255, 255, 255]);
+    await device.drawPixel([50, 50], [255, 255, 255, 255]);
   },
 
   // ============================================================================
