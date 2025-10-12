@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- System Status Header -->
-    <system-status />
+    <system-status @navigate="handleNavigation" />
 
     <!-- Main Content -->
     <v-main class="bg-grey-lighten-4">
@@ -32,36 +32,42 @@
           <strong>Error:</strong> {{ error }}
         </v-alert>
 
-        <!-- No Devices State -->
-        <v-card v-if="dataLoaded && deviceStore.devices.length === 0">
-          <v-card-title class="text-h5">
-            <v-icon icon="mdi-alert-circle-outline" class="mr-2" />
-            No Devices Configured
-          </v-card-title>
-          <v-card-text>
-            <p class="mb-2">
-              No Pixoo devices are currently configured in the daemon.
-            </p>
-            <p class="text-caption text-medium-emphasis">
-              Configure devices in your daemon settings (environment variables or
-              config file) to get started.
-            </p>
-          </v-card-text>
-        </v-card>
+        <!-- Settings View -->
+        <settings-view v-if="currentView === 'settings'" />
 
-        <!-- Device Grid -->
-        <v-row v-if="dataLoaded && deviceStore.devices.length > 0">
-          <v-col
-            v-for="device in deviceStore.devices"
-            :key="device.ip"
-            cols="12"
-            md="12"
-            lg="12"
-            xl="6"
-          >
-            <device-card :device="device" @refresh="loadData" />
-          </v-col>
-        </v-row>
+        <!-- Device View -->
+        <template v-else>
+          <!-- No Devices State -->
+          <v-card v-if="dataLoaded && deviceStore.devices.length === 0">
+            <v-card-title class="text-h5">
+              <v-icon icon="mdi-alert-circle-outline" class="mr-2" />
+              No Devices Configured
+            </v-card-title>
+            <v-card-text>
+              <p class="mb-2">
+                No Pixoo devices are currently configured in the daemon.
+              </p>
+              <p class="text-caption text-medium-emphasis">
+                Configure devices in your daemon settings (environment variables
+                or config file) to get started.
+              </p>
+            </v-card-text>
+          </v-card>
+
+          <!-- Device Grid -->
+          <v-row v-if="dataLoaded && deviceStore.devices.length > 0">
+            <v-col
+              v-for="device in deviceStore.devices"
+              :key="device.ip"
+              cols="12"
+              md="12"
+              lg="12"
+              xl="6"
+            >
+              <device-card :device="device" @refresh="loadData" />
+            </v-col>
+          </v-row>
+        </template>
       </v-container>
     </v-main>
 
@@ -84,6 +90,7 @@ import SystemStatus from './components/SystemStatus.vue';
 import DeviceCard from './components/DeviceCard.vue';
 import ToastNotifications from './components/ToastNotifications.vue';
 import AppFooter from './components/AppFooter.vue';
+import SettingsView from './views/Settings.vue';
 
 const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
@@ -96,6 +103,11 @@ const error = ref(null);
 const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
+const currentView = ref('devices'); // 'devices' or 'settings'
+
+const handleNavigation = (view) => {
+  currentView.value = view;
+};
 
 async function loadData() {
   try {

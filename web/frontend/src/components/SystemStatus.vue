@@ -32,8 +32,36 @@
 
       <v-spacer></v-spacer>
 
-      <!-- Right: Daemon Restart Button -->
-      <div class="d-flex align-center">
+      <!-- Right: Settings + Daemon Restart Buttons -->
+      <div class="d-flex align-center" style="gap: 8px;">
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="primary"
+          @click="emit('navigate', 'devices')"
+          class="settings-btn"
+        >
+          <v-icon size="small" class="mr-1">mdi-view-dashboard</v-icon>
+          <span class="text-caption">Devices</span>
+          <v-tooltip activator="parent" location="bottom">
+            View devices
+          </v-tooltip>
+        </v-btn>
+
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="primary"
+          @click="emit('navigate', 'settings')"
+          class="settings-btn"
+        >
+          <v-icon size="small" class="mr-1">mdi-cog</v-icon>
+          <span class="text-caption">Settings</span>
+          <v-tooltip activator="parent" location="bottom">
+            Configure devices and settings
+          </v-tooltip>
+        </v-btn>
+
         <v-btn
           size="small"
           variant="outlined"
@@ -61,6 +89,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
 import ConfirmDialog from './ConfirmDialog.vue';
+
+const emit = defineEmits(['navigate']);
 
 const api = useApi();
 const toast = useToast();
