@@ -433,11 +433,17 @@ module.exports = {
     // Black space background
     device.fillRect([0, 0], [64, 64], [0, 0, 10, 255]);
 
-    // Simple 2D scrolling stars - much faster
-    const stars = getState('stars', []);
+    // Simple 2D scrolling stars
+    let stars = getState('stars', []);
 
-    // Draw stars (larger, brighter, more visible)
-    for (const star of stars) {
+    // If no stars, initialize them
+    if (stars.length === 0) {
+      stars = this.initStars(50);
+      setState('stars', stars);
+    }
+
+    // Update stars
+    stars.forEach((star) => {
       // Move stars across screen
       star.x -= star.z * 0.3; // speed based on z (depth)
 
@@ -446,7 +452,10 @@ module.exports = {
         star.x = 68;
         star.y = Math.random() * 64;
       }
+    });
 
+    // Draw stars (larger, brighter, more visible)
+    for (const star of stars) {
       // Draw star and glow (FIXED: clamp brightness to 0-255)
       const brightness = Math.min(255, Math.floor(star.z * 80 + 100));
       const size = Math.floor(star.z * 1.5);
@@ -480,6 +489,7 @@ module.exports = {
       }
     }
 
+    // Save updated stars
     setState('stars', stars);
 
     // Title
@@ -493,7 +503,13 @@ module.exports = {
     // Black space background
     device.fillRect([0, 0], [64, 64], [0, 0, 5, 255]);
 
-    const stars = getState('stars3d', this.initStars3D(20)); // Fewer stars for performance
+    let stars = getState('stars3d', []);
+
+    // If no stars, initialize them
+    if (stars.length === 0) {
+      stars = this.initStars3D(25);
+      setState('stars3d', stars);
+    }
 
     // Update and draw stars
     for (const star of stars) {
@@ -533,6 +549,7 @@ module.exports = {
       }
     }
 
+    // Save updated stars
     setState('stars3d', stars);
 
     // Title
