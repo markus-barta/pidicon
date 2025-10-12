@@ -96,10 +96,10 @@ export function useApi() {
     });
   }
 
-  async function setDeviceLogging(ip, enabled) {
+  async function setDeviceLogging(ip, level) {
     return await request(`/devices/${ip}/logging`, {
       method: 'POST',
-      body: JSON.stringify({ enabled }),
+      body: JSON.stringify({ level }),
     });
   }
 

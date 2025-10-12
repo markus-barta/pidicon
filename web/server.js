@@ -237,17 +237,20 @@ function startWebServer(container, logger) {
     }
   });
 
-  // POST /api/devices/:ip/logging - Enable/disable debug logging
+  // POST /api/devices/:ip/logging - Set device logging level
   app.post('/api/devices/:ip/logging', async (req, res) => {
     try {
-      const { enabled } = req.body;
+      const { level } = req.body;
 
-      if (typeof enabled !== 'boolean') {
-        return res.status(400).json({ error: 'enabled must be a boolean' });
+      const validLevels = ['debug', 'warn', 'none'];
+      if (!level || !validLevels.includes(level)) {
+        return res.status(400).json({
+          error: `level must be one of: ${validLevels.join(', ')}`
+        });
       }
 
       logger.ok(
-        `[WEB UI] ${enabled ? 'Enabling' : 'Disabling'} logging for ${req.params.ip}`,
+        `[WEB UI] Setting ${level} logging for ${req.params.ip}`,
         {
           source: 'web-ui',
         },
@@ -255,13 +258,13 @@ function startWebServer(container, logger) {
 
       const result = await deviceService.setDeviceLogging(
         req.params.ip,
-        enabled,
+        level,
       );
       res.json(result);
     } catch (error) {
       logger.error(`[WEB UI] Failed to set logging on ${req.params.ip}:`, {
         error: error.message,
-        enabled: req.body.enabled,
+        level: req.body.level,
       });
       res.status(500).json({ error: error.message });
     }

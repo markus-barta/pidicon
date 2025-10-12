@@ -9,7 +9,6 @@
  * @license MIT
  */
 
-const logger = require('../lib/logger');
 const { isValidColor } = require('../lib/performance-utils');
 
 const name = 'fill';
@@ -28,7 +27,7 @@ function getRandomColor() {
 }
 
 function init() {
-  logger.debug(`🚀 [FILL] Scene initialized`);
+  // No logging in init - use render context for device-specific logging
 }
 
 async function render(context) {
@@ -40,8 +39,9 @@ async function render(context) {
 
   // Validate color format using shared utility
   if (!isValidColor(color)) {
-    logger.error(
-      `❌ [FILL] Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
+    context.log(
+      `Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
+      'error'
     );
     // Fallback to default color
     color = defaultColor;
@@ -51,21 +51,21 @@ async function render(context) {
   try {
     await device.fillRectangleRgba([0, 0], [64, 64], color);
   } catch (err) {
-    logger.error(`Error in fill scene: ${err}`);
+    context.log(`Render error: ${err.message}`, 'error');
     return;
   }
 
   // Push the filled frame to the device
   await device.push(name, publishOk);
 
-  logger.debug(`🎨 [FILL] Screen filled with color: [${color.join(',')}]`);
+  context.log(`Screen filled with color: [${color.join(',')}]`, 'debug');
 
   // Static scene - signal completion by returning null
   return null;
 }
 
 function cleanup() {
-  logger.debug(`🧹 [FILL] Scene cleaned up`);
+  // No logging in cleanup - cleanup is usually silent
 }
 
 const wantsLoop = false;

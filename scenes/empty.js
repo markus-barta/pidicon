@@ -9,12 +9,10 @@
  * @license MIT
  */
 
-const logger = require('../lib/logger');
-
 const name = 'empty';
 
 function init() {
-  logger.debug(`🚀 [EMPTY] Scene initialized`);
+  // No logging in init - use render context for device-specific logging
 }
 
 async function render(context) {
@@ -26,14 +24,14 @@ async function render(context) {
   // Push the cleared frame to actually update the device
   await device.push(name, publishOk);
 
-  logger.debug(`🖤 [EMPTY] Screen cleared to black`);
+  context.log(`Screen cleared to black`, 'debug');
 
   // Static scene - signal completion by returning null
   return null;
 }
 
 function cleanup() {
-  logger.debug(`🧹 [EMPTY] Scene cleaned up`);
+  // No logging in cleanup - cleanup is usually silent
 }
 
 const wantsLoop = false;

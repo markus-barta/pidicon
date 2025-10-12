@@ -74,6 +74,7 @@ module.exports = {
       ];
       context.log(
         `Phase transition: ${phaseNames[phase]} → ${phaseNames[nextPhase]} (frame ${frame})`,
+        'info'
       );
       setState('phase', nextPhase);
 

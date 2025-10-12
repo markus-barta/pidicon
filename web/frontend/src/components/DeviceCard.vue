@@ -140,16 +140,16 @@
         </v-btn>
 
         <div class="control-item ml-4">
-          <span 
-            class="text-body-2 font-weight-medium" 
+          <span
+            class="text-body-2 font-weight-medium"
             style="cursor: pointer; user-select: none;"
-            @click="toggleLogging"
+            @click="cycleLogging"
           >
-            <v-icon size="small" class="mr-1">{{ loggingEnabled ? 'mdi-console' : 'mdi-console-line' }}</v-icon>
+            <v-icon size="small" class="mr-1">{{ getLoggingIcon(loggingLevel) }}</v-icon>
             Logging
           </span>
           <v-tooltip activator="parent" location="bottom">
-            {{ loggingEnabled ? 'Click to disable debug logging' : 'Click to enable debug logging' }}
+            {{ getLoggingTooltip(loggingLevel) }}
           </v-tooltip>
         </div>
 
@@ -535,7 +535,7 @@ const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
 const previousBrightness = ref(75); // Store brightness before power off
-const loggingEnabled = ref(props.device.driver === 'real'); // Real devices: logging ON, Mock devices: logging OFF
+const loggingLevel = ref(props.device.driver === 'real' ? 'warn' : 'none'); // Real: warn+error, Mock: none
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
@@ -1416,21 +1416,49 @@ async function setBrightness() {
   }
 }
 
-async function toggleLogging() {
-  loggingEnabled.value = !loggingEnabled.value;
+// Cycle through logging levels: debug -> warn -> none -> debug...
+async function cycleLogging() {
+  const levels = ['debug', 'warn', 'none'];
+  const currentIndex = levels.indexOf(loggingLevel.value);
+  const nextIndex = (currentIndex + 1) % levels.length;
+  const newLevel = levels[nextIndex];
+
+  const oldLevel = loggingLevel.value;
+  loggingLevel.value = newLevel;
+
   try {
-    await api.setDeviceLogging(props.device.ip, loggingEnabled.value);
-    toast.success(
-      loggingEnabled.value 
-        ? 'Debug logging enabled' 
-        : 'Debug logging disabled',
-      2000
-    );
+    await api.setDeviceLogging(props.device.ip, newLevel);
+    const levelDescriptions = {
+      debug: 'Debug logging enabled',
+      warn: 'Warning & error logging enabled',
+      none: 'Logging disabled'
+    };
+    toast.success(levelDescriptions[newLevel], 2000);
   } catch (err) {
     // Revert on error
-    loggingEnabled.value = !loggingEnabled.value;
-    toast.error(`Failed to toggle logging: ${err.message}`);
+    loggingLevel.value = oldLevel;
+    toast.error(`Failed to set logging level: ${err.message}`);
   }
+}
+
+// Get appropriate icon for logging level
+function getLoggingIcon(level) {
+  const icons = {
+    debug: 'mdi-console',
+    warn: 'mdi-alert-circle-outline',
+    none: 'mdi-console-line'
+  };
+  return icons[level] || 'mdi-console-line';
+}
+
+// Get tooltip text for logging level
+function getLoggingTooltip(level) {
+  const tooltips = {
+    debug: 'Click to cycle: Debug logs → Warn/Error only → No logs → Debug logs',
+    warn: 'Click to cycle: Warn/Error only → No logs → Debug logs → Warn/Error only',
+    none: 'Click to cycle: No logs → Debug logs → Warn/Error only → No logs'
+  };
+  return tooltips[level] || 'Click to cycle logging levels';
 }
 
 async function handleReset() {
