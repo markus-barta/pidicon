@@ -1,50 +1,34 @@
 /**
- * @fileoverview Pixoo Showcase - Comprehensive Feature Demo
- * @description A creative demonstration of all Pixoo daemon capabilities:
- * - Static & animated graphics
- * - Text effects (outline, shadow, gradient)
- * - Gradients (linear, radial, multi-stop)
- * - Animations (bounce, fade, rainbow, particle effects)
- * - Image rendering
- * - Performance metrics display
- *
- * Perfect for demonstrating the system or testing new hardware!
- *
- * @author Markus Barta (mba) with assistance from Cursor AI
+ * @fileoverview Pixoo Showcase Scene
+ * @description Comprehensive demo of Pixoo daemon capabilities
+ * @category Demo
+ * @author Cursor AI
  * @license MIT
  */
 
-const fs = require('fs');
-const path = require('path');
-
 const GraphicsEngine = require('../../lib/graphics-engine');
 
-// Scene phases - each shows different capabilities
 const PHASES = {
-  INTRO: 0, // Welcome screen with fade-in
-  TEXT_EFFECTS: 1, // Outline, shadow, gradient text
-  GRADIENTS: 2, // Linear, radial, multi-stop gradients
-  ANIMATIONS: 3, // Bounce, rainbow, particles
-  IMAGES: 4, // Image rendering with effects
-  PERFORMANCE: 5, // FPS and system metrics
-  OUTRO: 6, // Fade out to finish
+  INTRO: 0,
+  TEXT_EFFECTS: 1,
+  GRADIENTS: 2,
+  ANIMATIONS: 3,
+  OUTRO: 4,
 };
 
-const PHASE_DURATION = 80; // ~16 seconds per phase at 5fps
-const FADE_DURATION = 20; // ~4 seconds fade
+const PHASE_DURATION = 120; // frames per phase (~24 seconds at 5fps)
+const FADE_DURATION = 30; // frames for fade effects
 
 module.exports = {
   name: 'pixoo_showcase',
   description: '🎨 Comprehensive showcase of all Pixoo daemon features',
   category: 'Demo',
-  wantsLoop: true,
 
   async init(context) {
     // Scene initialization (called once when scene starts)
     context.setState('phase', PHASES.INTRO);
     context.setState('frame', 0);
     context.setState('startTime', Date.now());
-    context.setState('initialized', true);
   },
 
   async render(context) {
@@ -60,25 +44,19 @@ module.exports = {
     // Render current phase
     switch (phase) {
       case PHASES.INTRO:
-        renderIntro(device, gfx, frame);
+        await renderIntro(device, gfx, frame);
         break;
       case PHASES.TEXT_EFFECTS:
-        renderTextEffects(device, gfx, frame);
+        await renderTextEffects(device, gfx, frame);
         break;
       case PHASES.GRADIENTS:
-        renderGradients(device, gfx, frame);
+        await renderGradients(device, gfx, frame);
         break;
       case PHASES.ANIMATIONS:
-        renderAnimations(device, gfx, frame);
-        break;
-      case PHASES.IMAGES:
-        renderImages(device, gfx, frame);
-        break;
-      case PHASES.PERFORMANCE:
-        renderPerformance(device, gfx, frame, context);
+        await renderAnimations(device, gfx, frame);
         break;
       case PHASES.OUTRO:
-        renderOutro(device, gfx, frame);
+        await renderOutro(device, gfx, frame);
         break;
     }
 
@@ -101,378 +79,188 @@ module.exports = {
     return 200; // ~5fps for smooth animations
   },
 
-  async cleanup() {
-    // Scene cleanup (called when switching away from scene)
-    // No cleanup needed - state persists for next render
+  async cleanup(context) {
+    // Scene cleanup
+    context.setState('phase', PHASES.INTRO);
+    context.setState('frame', 0);
   },
 };
 
 // ============================================================================
 // PHASE 1: INTRO - Welcome screen with fade-in
 // ============================================================================
-function renderIntro(device, gfx, frame) {
+async function renderIntro(device, gfx, frame) {
   const fadeProgress = Math.min(frame / FADE_DURATION, 1);
 
   // Background gradient (dark blue to black)
-  for (let y = 0; y < 64; y++) {
-    const color = [0, 0, Math.floor(50 * (1 - y / 64) * fadeProgress), 255];
-    for (let x = 0; x < 64; x++) {
-      device.drawPixel([x, y], color);
-    }
-  }
+  await gfx.drawGradientBackground(
+    [0, 0, Math.floor(50 * fadeProgress), 255],
+    [0, 0, 0, 255],
+    'vertical',
+  );
 
-  // Title with fade-in
+  // Title with GraphicsEngine
   const titleAlpha = Math.floor(255 * fadeProgress);
-  gfx.drawText(device, 'PIXOO', [32, 20], {
-    color: [255, 200, 0, titleAlpha],
-    fontSize: 2,
-    align: 'center',
-    outline: { width: 1, color: [100, 50, 0, titleAlpha] },
+  await gfx.drawTextEnhanced('PIXOO', [32, 20], [255, 200, 0, titleAlpha], {
+    alignment: 'center',
+    effects: {
+      shadow: true,
+      shadowOffset: 1,
+      shadowColor: [100, 50, 0, titleAlpha],
+    },
   });
 
-  gfx.drawText(device, 'SHOWCASE', [32, 35], {
-    color: [200, 200, 255, titleAlpha],
-    fontSize: 1,
-    align: 'center',
-  });
+  await gfx.drawTextEnhanced(
+    'SHOWCASE',
+    [32, 35],
+    [200, 200, 255, titleAlpha],
+    {
+      alignment: 'center',
+    },
+  );
 
   // Animated dots
-  const dots = '...';
   const dotsToShow = Math.floor(frame / 10) % 4;
-  gfx.drawText(device, dots.substring(0, dotsToShow), [32, 48], {
-    color: [150, 150, 150, titleAlpha],
-    fontSize: 1,
-    align: 'center',
-  });
+  await device.drawText(
+    '.'.repeat(dotsToShow),
+    [32, 48],
+    [150, 150, 150, titleAlpha],
+    0,
+  );
 }
 
 // ============================================================================
 // PHASE 2: TEXT EFFECTS - Showcase text rendering capabilities
 // ============================================================================
-function renderTextEffects(device, gfx, frame) {
+async function renderTextEffects(device, gfx, frame) {
   // Dark background
   device.fillRect([0, 0], [64, 64], [10, 10, 20, 255]);
 
   // Title
-  gfx.drawText(device, 'TEXT FX', [32, 5], {
-    color: [255, 255, 255, 255],
-    fontSize: 1,
-    align: 'center',
+  await device.drawText('TEXT FX', [5, 5], [255, 255, 255, 255], 0);
+
+  // Shadow effect
+  await gfx.drawTextEnhanced('SHADOW', [32, 18], [100, 200, 255, 255], {
+    alignment: 'center',
+    effects: {
+      shadow: true,
+      shadowOffset: 2,
+      shadowColor: [20, 40, 50, 200],
+    },
   });
 
-  // Outline text (breathing effect)
+  // Outline effect
   const breathe = Math.sin(frame * 0.1) * 0.3 + 0.7;
   const outlineAlpha = Math.floor(255 * breathe);
-  gfx.drawText(device, 'OUTLINE', [32, 18], {
-    color: [255, 200, 100, outlineAlpha],
-    fontSize: 1,
-    align: 'center',
-    outline: { width: 1, color: [100, 50, 0, outlineAlpha] },
-  });
-
-  // Shadow text
-  gfx.drawText(device, 'SHADOW', [32, 30], {
-    color: [100, 200, 255, 255],
-    fontSize: 1,
-    align: 'center',
-    shadow: { offset: [2, 2], color: [20, 40, 50, 200] },
-  });
+  await gfx.drawTextEnhanced(
+    'OUTLINE',
+    [32, 30],
+    [255, 200, 100, outlineAlpha],
+    {
+      alignment: 'center',
+      effects: {
+        outline: true,
+        outlineWidth: 1,
+        outlineColor: [100, 50, 0, outlineAlpha],
+      },
+    },
+  );
 
   // Gradient text (animated hue shift)
   const hueShift = (frame * 2) % 360;
   const [r, g, b] = hsvToRgb(hueShift / 360, 0.8, 1.0);
-  gfx.drawText(device, 'GRADIENT', [32, 42], {
-    color: [r, g, b, 255],
-    fontSize: 1,
-    align: 'center',
-  });
+  await device.drawText('GRADIENT', [32, 42], [r, g, b, 255], 0);
 
   // Combined effects (pulsing)
   const pulse = Math.sin(frame * 0.15) * 0.4 + 0.6;
   const pulseAlpha = Math.floor(255 * pulse);
-  gfx.drawText(device, 'COMBO', [32, 54], {
-    color: [255, 100, 255, pulseAlpha],
-    fontSize: 1,
-    align: 'center',
-    outline: { width: 1, color: [60, 20, 100, pulseAlpha] },
-    shadow: { offset: [1, 1], color: [20, 10, 30, Math.floor(150 * pulse)] },
+  await gfx.drawTextEnhanced('COMBO', [32, 54], [255, 100, 255, pulseAlpha], {
+    alignment: 'center',
+    effects: {
+      shadow: true,
+      shadowOffset: 1,
+      shadowColor: [60, 20, 100, Math.floor(150 * pulse)],
+    },
   });
 }
 
 // ============================================================================
 // PHASE 3: GRADIENTS - Showcase gradient rendering
 // ============================================================================
-function renderGradients(device, gfx, frame) {
-  // Clear background
-  device.fillRect([0, 0], [64, 64], [5, 5, 5, 255]);
+async function renderGradients(device, gfx, frame) {
+  // Animated gradient background
+  const hue1 = (frame * 1) % 360;
+  const hue2 = (hue1 + 120) % 360;
+  const [r1, g1, b1] = hsvToRgb(hue1 / 360, 0.8, 0.6);
+  const [r2, g2, b2] = hsvToRgb(hue2 / 360, 0.8, 0.4);
+
+  await gfx.drawGradientBackground(
+    [r1, g1, b1, 255],
+    [r2, g2, b2, 255],
+    'vertical',
+  );
 
   // Title
-  gfx.drawText(device, 'GRADIENTS', [32, 5], {
-    color: [255, 255, 255, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  // Linear gradient (animated)
-  const gradientOffset = Math.sin(frame * 0.05) * 10;
-  gfx.drawGradient(device, {
-    type: 'linear',
-    start: [10, 15 + gradientOffset],
-    end: [54, 25 + gradientOffset],
-    colors: [
-      { pos: 0, color: [255, 0, 0, 255] },
-      { pos: 0.5, color: [255, 255, 0, 255] },
-      { pos: 1, color: [0, 255, 0, 255] },
-    ],
-    rect: [
-      [10, 15],
-      [44, 10],
-    ],
-  });
-
-  // Radial gradient (pulsing)
-  const radius = 8 + Math.sin(frame * 0.1) * 3;
-  gfx.drawGradient(device, {
-    type: 'radial',
-    center: [32, 40],
-    radius,
-    colors: [
-      { pos: 0, color: [255, 200, 255, 255] },
-      { pos: 0.6, color: [100, 50, 200, 200] },
-      { pos: 1, color: [20, 10, 50, 100] },
-    ],
-    rect: [
-      [20, 28],
-      [24, 24],
-    ],
-  });
-
-  // Multi-stop vertical gradient
-  for (let y = 50; y < 62; y++) {
-    const progress = (y - 50) / 12;
-    const [r, g, b] = hsvToRgb(progress, 1.0, 1.0);
-    for (let x = 10; x < 54; x++) {
-      device.drawPixel([x, y], [r, g, b, 255]);
-    }
-  }
+  await device.drawText('GRADIENTS', [32, 28], [255, 255, 255, 255], 0);
 }
 
 // ============================================================================
 // PHASE 4: ANIMATIONS - Showcase animation capabilities
 // ============================================================================
-function renderAnimations(device, gfx, frame) {
-  // Animated background (scrolling gradient)
-  const bgOffset = frame % 64;
-  for (let y = 0; y < 64; y++) {
-    const hue = ((y + bgOffset) * 5) % 360;
-    const [r, g, b] = hsvToRgb(hue / 360, 0.3, 0.2);
-    for (let x = 0; x < 64; x++) {
-      device.drawPixel([x, y], [r, g, b, 255]);
-    }
-  }
+async function renderAnimations(device, gfx, frame) {
+  // Dark background
+  device.fillRect([0, 0], [64, 64], [5, 5, 10, 255]);
 
   // Title
-  gfx.drawText(device, 'ANIMATE', [32, 5], {
-    color: [255, 255, 255, 255],
-    fontSize: 1,
-    align: 'center',
-    shadow: { offset: [1, 1], color: [0, 0, 0, 150] },
-  });
+  await device.drawText('ANIMATIONS', [2, 2], [255, 255, 255, 255], 0);
 
   // Bouncing ball
-  const bounceY = 20 + Math.abs(Math.sin(frame * 0.15)) * 15;
-  const ballSize = 4;
-  for (let dy = -ballSize; dy <= ballSize; dy++) {
-    for (let dx = -ballSize; dx <= ballSize; dx++) {
-      if (dx * dx + dy * dy <= ballSize * ballSize) {
-        device.drawPixel([15 + dx, bounceY + dy], [255, 100, 100, 255]);
-      }
-    }
-  }
-
-  // Rainbow moving text
-  const rainbowX = -20 + ((frame * 0.8) % 90);
-  const rainbowHue = (frame * 5) % 360;
-  const [rr, rg, rb] = hsvToRgb(rainbowHue / 360, 1.0, 1.0);
-  gfx.drawText(device, 'RAINBOW', [rainbowX, 40], {
-    color: [rr, rg, rb, 255],
-    fontSize: 1,
-    align: 'left',
-  });
-
-  // Particle trail
-  for (let i = 0; i < 10; i++) {
-    const trailX = 50 + Math.sin((frame + i * 3) * 0.1) * 8;
-    const trailY = 52 + i * 1;
-    const trailAlpha = Math.floor(255 * (1 - i / 10));
-    device.drawPixel([Math.floor(trailX), trailY], [100, 200, 255, trailAlpha]);
-  }
-}
-
-// ============================================================================
-// PHASE 5: IMAGES - Showcase image rendering
-// ============================================================================
-function renderImages(device, gfx, frame) {
-  // Dark background
-  device.fillRect([0, 0], [64, 64], [15, 15, 25, 255]);
-
-  // Title
-  gfx.drawText(device, 'IMAGES', [32, 5], {
-    color: [255, 255, 255, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  // Try to load and render an image if available
-  try {
-    const mediaPath = path.join(__dirname, '../media');
-    const sunPath = path.join(mediaPath, 'sun.png');
-
-    if (fs.existsSync(sunPath)) {
-      // Animated position (circular motion)
-      const centerX = 32 + Math.cos(frame * 0.1) * 10;
-      const centerY = 35 + Math.sin(frame * 0.1) * 8;
-
-      // Draw with rotation effect (simulated with alpha)
-      const rotation = Math.sin(frame * 0.08) * 0.5 + 0.5;
-      const imageAlpha = Math.floor(150 + 105 * rotation);
-
-      gfx.drawImage(device, sunPath, {
-        position: [Math.floor(centerX), Math.floor(centerY)],
-        alpha: imageAlpha,
-        align: 'center',
-      });
-    } else {
-      // Fallback: draw a sun manually
-      const sunX = 32 + Math.cos(frame * 0.1) * 10;
-      const sunY = 35 + Math.sin(frame * 0.1) * 8;
-
-      // Sun rays
-      for (let i = 0; i < 8; i++) {
-        const angle = frame * 0.05 + (i * Math.PI) / 4;
-        const rayX = sunX + Math.cos(angle) * 8;
-        const rayY = sunY + Math.sin(angle) * 8;
-        device.drawPixel(
-          [Math.floor(rayX), Math.floor(rayY)],
-          [255, 200, 0, 255],
-        );
-      }
-
-      // Sun center
-      for (let dy = -3; dy <= 3; dy++) {
-        for (let dx = -3; dx <= 3; dx++) {
-          if (dx * dx + dy * dy <= 9) {
-            device.drawPixel(
-              [Math.floor(sunX + dx), Math.floor(sunY + dy)],
-              [255, 220, 0, 255],
-            );
-          }
-        }
-      }
-    }
-  } catch {
-    // Fallback: draw placeholder
-    gfx.drawText(device, 'IMAGE', [32, 35], {
-      color: [200, 200, 200, 255],
-      fontSize: 1,
-      align: 'center',
-    });
-  }
-
-  gfx.drawText(device, 'with effects', [32, 55], {
-    color: [150, 150, 150, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-}
-
-// ============================================================================
-// PHASE 6: PERFORMANCE - Show FPS and metrics
-// ============================================================================
-function renderPerformance(device, gfx, frame, context) {
-  // Dark background
-  device.fillRect([0, 0], [64, 64], [10, 15, 20, 255]);
-
-  // Title
-  gfx.drawText(device, 'METRICS', [32, 5], {
-    color: [255, 255, 255, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  // Get metrics
-  const metrics = context.device.getMetrics();
-  const frametime = metrics.lastFrametime || 0;
-  const fps = frametime > 0 ? (1000 / frametime).toFixed(1) : '-.--';
-
-  // FPS display
-  gfx.drawText(device, `FPS: ${fps}`, [32, 20], {
-    color: [100, 255, 100, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  // Frame time bar graph
-  const barWidth = Math.min(Math.floor(frametime / 5), 60);
-  const barColor =
-    frametime < 200
-      ? [0, 255, 0, 255]
-      : frametime < 300
-        ? [255, 200, 0, 255]
-        : [255, 50, 0, 255];
-  device.fillRect([2, 30], [barWidth, 6], barColor);
-  device.drawRect([2, 30], [60, 6], [80, 80, 80, 255]);
-
-  gfx.drawText(device, `${frametime}ms`, [32, 40], {
-    color: [200, 200, 200, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  // Stats
-  const uptime = Math.floor(
-    (Date.now() - (context.getState('startTime') || Date.now())) / 1000,
-  );
-  gfx.drawText(device, `Frames: ${metrics.pushes}`, [32, 50], {
-    color: [150, 150, 255, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-
-  gfx.drawText(device, `Time: ${uptime}s`, [32, 58], {
-    color: [255, 150, 150, 255],
-    fontSize: 1,
-    align: 'center',
-  });
-}
-
-// ============================================================================
-// PHASE 7: OUTRO - Fade out
-// ============================================================================
-function renderOutro(device, gfx, frame) {
-  const fadeProgress = 1 - Math.min(frame / FADE_DURATION, 1);
-
-  // Fading background
-  const bgBrightness = Math.floor(30 * fadeProgress);
-  device.fillRect(
-    [0, 0],
-    [64, 64],
-    [bgBrightness, bgBrightness, bgBrightness * 2, 255],
+  const ballX = 32 + Math.sin(frame * 0.1) * 24;
+  const ballY = 32 + Math.abs(Math.sin(frame * 0.15)) * 20;
+  device.fillCircle(
+    [Math.floor(ballX), Math.floor(ballY)],
+    4,
+    [255, 100, 100, 255],
   );
 
-  // Fading text
-  const textAlpha = Math.floor(255 * fadeProgress);
-  gfx.drawText(device, 'THANKS!', [32, 25], {
-    color: [255, 255, 255, textAlpha],
-    fontSize: 2,
-    align: 'center',
-  });
+  // Rotating square
+  const angle = frame * 0.05;
+  const size = 8;
+  for (let i = 0; i < 4; i++) {
+    const a1 = angle + (i * Math.PI) / 2;
+    const a2 = angle + ((i + 1) * Math.PI) / 2;
+    const x1 = 48 + Math.cos(a1) * size;
+    const y1 = 48 + Math.sin(a1) * size;
+    const x2 = 48 + Math.cos(a2) * size;
+    const y2 = 48 + Math.sin(a2) * size;
+    device.drawLine(
+      [Math.floor(x1), Math.floor(y1)],
+      [Math.floor(x2), Math.floor(y2)],
+      [100, 255, 100, 255],
+    );
+  }
 
-  gfx.drawText(device, 'Pixoo Daemon', [32, 42], {
-    color: [200, 200, 255, textAlpha],
-    fontSize: 1,
-    align: 'center',
-  });
+  // Pulsing circle
+  const pulseRadius = 3 + Math.sin(frame * 0.2) * 2;
+  device.drawCircle([16, 48], Math.floor(pulseRadius), [100, 100, 255, 255]);
+}
+
+// ============================================================================
+// PHASE 5: OUTRO - Thanks screen with fade-out
+// ============================================================================
+async function renderOutro(device, gfx, frame) {
+  const fadeProgress = Math.max(0, 1 - frame / FADE_DURATION);
+
+  // Background gradient (black to dark blue)
+  await gfx.drawGradientBackground(
+    [0, 0, 0, 255],
+    [0, 0, Math.floor(50 * fadeProgress), 255],
+    'vertical',
+  );
+
+  // Thank you message
+  const alpha = Math.floor(255 * fadeProgress);
+  await device.drawText('THANKS!', [32, 28], [255, 255, 255, alpha], 0);
 }
 
 // ============================================================================
@@ -480,11 +268,11 @@ function renderOutro(device, gfx, frame) {
 // ============================================================================
 
 /**
- * Convert HSV to RGB
+ * Convert HSV to RGB color space
  * @param {number} h - Hue (0-1)
  * @param {number} s - Saturation (0-1)
  * @param {number} v - Value (0-1)
- * @returns {number[]} RGB array [r, g, b]
+ * @returns {number[]} [r, g, b] (0-255)
  */
 function hsvToRgb(h, s, v) {
   const i = Math.floor(h * 6);
@@ -496,34 +284,22 @@ function hsvToRgb(h, s, v) {
   let r, g, b;
   switch (i % 6) {
     case 0:
-      r = v;
-      g = t;
-      b = p;
+      ((r = v), (g = t), (b = p));
       break;
     case 1:
-      r = q;
-      g = v;
-      b = p;
+      ((r = q), (g = v), (b = p));
       break;
     case 2:
-      r = p;
-      g = v;
-      b = t;
+      ((r = p), (g = v), (b = t));
       break;
     case 3:
-      r = p;
-      g = q;
-      b = v;
+      ((r = p), (g = q), (b = v));
       break;
     case 4:
-      r = t;
-      g = p;
-      b = v;
+      ((r = t), (g = p), (b = v));
       break;
     case 5:
-      r = v;
-      g = p;
-      b = q;
+      ((r = v), (g = p), (b = q));
       break;
   }
 
