@@ -68,22 +68,6 @@
             </span>
           </div>
 
-          <!-- Daemon Restart Button -->
-          <v-btn
-            size="small"
-            variant="outlined"
-            color="grey"
-            @click="handleDaemonReset"
-            :loading="daemonResetLoading"
-            class="control-btn-compact mr-2"
-          >
-            <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
-            <span class="text-caption">Daemon</span>
-            <v-tooltip activator="parent" location="bottom">
-              Restart entire daemon
-            </v-tooltip>
-          </v-btn>
-          
           <v-btn
             :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
             variant="text"
@@ -121,17 +105,16 @@
           <v-btn-toggle
             v-model="displayOn"
             mandatory
-            color="success"
             variant="outlined"
             density="compact"
-            class="flip-switch"
+            class="flip-switch power-flip-switch"
             @update:model-value="toggleDisplay"
           >
-            <v-btn :value="true" size="small" class="flip-btn">
+            <v-btn :value="true" size="small" class="flip-btn" :color="displayOn ? 'success' : 'grey'">
               <v-icon size="small" class="mr-1">mdi-power-on</v-icon>
               <span class="text-caption">ON</span>
             </v-btn>
-            <v-btn :value="false" size="small" class="flip-btn">
+            <v-btn :value="false" size="small" class="flip-btn flip-btn-off" :color="!displayOn ? 'error' : 'grey'">
               <v-icon size="small" class="mr-1">mdi-power-off</v-icon>
               <span class="text-caption">OFF</span>
             </v-btn>
@@ -622,7 +605,6 @@ const selectedScene = ref(props.device.currentScene || '');
 const loading = ref(false);
 const toggleLoading = ref(false);
 const resetLoading = ref(false);
-const daemonResetLoading = ref(false);
 const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 const displayOn = ref(true);
@@ -1618,35 +1600,6 @@ async function handleReset() {
     toast.error(`Failed to reset device: ${err.message}`);
   } finally {
     resetLoading.value = false;
-  }
-}
-
-async function handleDaemonReset() {
-  // Use Vue confirm dialog
-  const confirmed = await confirmDialog.value?.show({
-    title: 'Restart Daemon',
-    message: 'This will restart the entire Pixoo daemon process, reconnecting all devices and reinitializing all services. This may take a few seconds.',
-    confirmText: 'Restart Daemon',
-    cancelText: 'Cancel',
-    confirmColor: 'warning',
-    icon: 'mdi-restart-alert',
-    iconColor: 'warning'
-  });
-
-  if (!confirmed) return;
-
-  daemonResetLoading.value = true;
-  try {
-    await api.restartDaemon();
-    toast.success('Daemon restart initiated - reconnecting...', 3000);
-    
-    // Wait a bit for daemon to restart, then refresh
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    emit('refresh');
-  } catch (err) {
-    toast.error(`Failed to restart daemon: ${err.message}`);
-  } finally {
-    daemonResetLoading.value = false;
   }
 }
 

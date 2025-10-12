@@ -13,7 +13,12 @@
           <div class="text-caption d-flex align-center">
             <span class="d-inline-flex align-center">
               <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor, marginRight: '6px' }"></span>
-              <span style="color: #6b7280;">{{ status }}</span>
+              <span style="color: #6b7280;">Daemon: {{ statusLabel }}</span>
+            </span>
+            <span class="mx-2" style="color: #d1d5db;">•</span>
+            <span class="d-inline-flex align-center">
+              <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: mqttStatusColor, marginRight: '6px' }"></span>
+              <span style="color: #6b7280;">MQTT: {{ mqttStatus }}</span>
             </span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
@@ -27,36 +32,20 @@
 
       <v-spacer></v-spacer>
 
-      <!-- Right: Connection + Restart -->
+      <!-- Right: Daemon Restart Button -->
       <div class="d-flex align-center">
-        <v-chip
+        <v-btn
           size="small"
           variant="outlined"
-          class="mr-4"
-          style="border-color: #d1d5db;"
-        >
-          <v-tooltip activator="parent" location="bottom">
-            <span>Connected to MQTT broker</span>
-          </v-tooltip>
-          <span style="display: inline-flex; align-items: center;">
-            <span 
-              style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #10b981; margin-right: 6px;"
-              title="Connected to MQTT broker"
-            ></span>
-            <span style="color: #6b7280;">MQTT: {{ mqttBroker }}</span>
-          </span>
-        </v-chip>
-        <v-btn
-          variant="tonal"
-          prepend-icon="mdi-restart"
+          color="grey"
           @click="handleRestart"
           :loading="restarting"
-          size="small"
-          class="action-button-danger"
+          class="daemon-restart-btn"
         >
-          <span style="color: #dc2626; font-weight: 600;">Daemon</span>
+          <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
+          <span class="text-caption">Daemon</span>
           <v-tooltip activator="parent" location="bottom">
-            Restart daemon process (all displays briefly show startup)
+            Restart entire daemon
           </v-tooltip>
         </v-btn>
       </div>
@@ -81,22 +70,34 @@ const gitCommit = ref(null);
 const hostname = ref('');
 const nodeVersion = ref('Unknown');
 const mqttBroker = ref('localhost');
-const status = ref('Active');
+const mqttConnected = ref(true);
+const status = ref('running');
 const startTime = ref(null);
 const uptime = ref('');
 const restarting = ref(false);
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
+const lastSuccessfulLoad = ref(Date.now());
+const connectionFailed = ref(false);
 
 const statusColor = computed(() => {
-  if (status.value === 'Active' || status.value === 'Running') return '#10b981'; // green
-  if (status.value === 'Restarting') return '#f59e0b'; // yellow
+  if (connectionFailed.value) return '#ef4444'; // red - daemon not responding
+  if (status.value === 'running') return '#10b981'; // green
+  if (status.value === 'restarting') return '#f59e0b'; // yellow
   return '#ef4444'; // red
 });
 
-const statusIcon = computed(() => {
-  if (status.value === 'Running') return 'mdi-circle';
-  if (status.value === 'Restarting') return 'mdi-refresh';
-  return 'mdi-alert-circle';
+const statusLabel = computed(() => {
+  if (connectionFailed.value) return 'unresponsive';
+  if (status.value === 'restarting') return 'restarting';
+  return 'running';
+});
+
+const mqttStatusColor = computed(() => {
+  return mqttConnected.value ? '#10b981' : '#ef4444';
+});
+
+const mqttStatus = computed(() => {
+  return mqttConnected.value ? 'connected' : 'disconnected';
 });
 
 let uptimeInterval = null;
@@ -123,12 +124,18 @@ function updateUptime() {
 async function loadStatus() {
   try {
     const data = await api.getSystemStatus();
+    
+    // Successful load - update last successful time
+    lastSuccessfulLoad.value = Date.now();
+    connectionFailed.value = false;
+    
     buildNumber.value = data.buildNumber;
     gitCommit.value = data.gitCommit;
     hostname.value = data.hostname || 'Unknown';
     nodeVersion.value = data.nodeVersion || 'Unknown';
     mqttBroker.value = data.mqttBroker || 'localhost';
-    status.value = data.status || 'Running';
+    mqttConnected.value = data.mqttConnected !== false; // Default to true
+    status.value = data.status?.toLowerCase() || 'running';
 
     if (data.startTime) {
       startTime.value = new Date(data.startTime).getTime();
@@ -139,7 +146,20 @@ async function loadStatus() {
 
     updateUptime();
   } catch (err) {
-    console.error('Failed to load system status:', err);
+    // Check if we've been down for more than 5 seconds
+    const downtime = Date.now() - lastSuccessfulLoad.value;
+    
+    if (downtime > 5000) {
+      // More than 5 seconds - show as unresponsive
+      connectionFailed.value = true;
+      
+      // Only show error toast once per failure
+      if (!connectionFailed.value) {
+        console.error('Daemon unresponsive:', err);
+        // No toast for short downtimes
+      }
+    }
+    // Otherwise, just silently wait (could be a restart)
   }
 }
 
@@ -159,7 +179,7 @@ async function handleRestart() {
 
   try {
     restarting.value = true;
-    status.value = 'Restarting';
+    status.value = 'restarting';
     await api.restartDaemon();
     toast.warning('Daemon restarting... Will reconnect in ~5 seconds', 8000);
 
@@ -170,7 +190,7 @@ async function handleRestart() {
   } catch (err) {
     toast.error(`Failed to restart: ${err.message}`);
     restarting.value = false;
-    status.value = 'Running';
+    status.value = 'running';
   }
 }
 
@@ -190,36 +210,22 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+/* Daemon restart button styling */
+.daemon-restart-btn {
+  min-width: 80px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
-.pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Danger action buttons with hover effects */
-.action-button-danger {
-  background-color: #fee2e2 !important;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
-  transition: all 0.2s ease !important;
-}
-
-.action-button-danger:hover {
-  background-color: #fecaca !important;
-  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3) !important;
+.daemon-restart-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15) !important;
 }
 
-.action-button-danger:active {
+.daemon-restart-btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
 }
 </style>
 
