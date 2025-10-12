@@ -16,7 +16,7 @@ const PHASES = {
   OUTRO: 4,
 };
 
-const PHASE_DURATION = 120; // frames per phase (~24 seconds at 5fps)
+const PHASE_DURATION = 60; // frames per phase (~12 seconds at 5fps)
 const FADE_DURATION = 15; // frames for fade effects (doubled speed)
 
 module.exports = {
