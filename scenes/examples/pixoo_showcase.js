@@ -132,7 +132,7 @@ module.exports = {
         await this.renderStarfield2D(device, gfx, getState, setState);
         break;
       case PHASES.STARFIELD_3D:
-        await this.renderStarfield3D(device);
+        await this.renderStarfield3D(device, getState, setState);
         break;
       case PHASES.TUNNEL:
         await this.renderTunnel(device, getState, setState, phaseFrame);
@@ -499,19 +499,65 @@ module.exports = {
   // ============================================================================
   // 🎬 PHASE 7: STARFIELD 3D - Perspective Starfield
   // ============================================================================
-  async renderStarfield3D(device) {
-    // MASSIVE RED RECTANGLE TO TEST IF THIS EVEN RENDERS
-    await device.fillRect([0, 0], [64, 64], [255, 0, 0, 255]);
+  async renderStarfield3D(device, getState, setState) {
+    // Deep space background
+    await device.fillRect([0, 0], [64, 64], [0, 0, 10, 255]);
 
-    // Title in huge white
-    await device.drawText('3D STARS', [32, 30], [255, 255, 255, 255], 'center');
+    // Get or initialize stars
+    let stars = getState('stars3d', []);
+    if (stars.length === 0) {
+      stars = this.initStars3D(25);
+      setState('stars3d', stars);
+    }
 
-    // Draw a few static white pixels to test drawPixel
-    await device.drawPixel([10, 10], [255, 255, 255, 255]);
-    await device.drawPixel([20, 20], [255, 255, 255, 255]);
-    await device.drawPixel([30, 30], [255, 255, 255, 255]);
-    await device.drawPixel([40, 40], [255, 255, 255, 255]);
-    await device.drawPixel([50, 50], [255, 255, 255, 255]);
+    // Move stars toward camera and draw them
+    const speed = 1.5; // Speed of star movement
+    const newStars = [];
+
+    for (const star of stars) {
+      // Move star toward camera
+      let z = star.z - speed;
+
+      // Reset star if it passes the camera
+      if (z < 1) {
+        z = 90;
+        star.x = (Math.random() - 0.5) * 100;
+        star.y = (Math.random() - 0.5) * 100;
+      }
+
+      // 3D to 2D projection
+      const scale = 512 / z; // Perspective projection
+      const screenX = Math.floor(32 + star.x * scale);
+      const screenY = Math.floor(32 + star.y * scale);
+
+      // Only draw if within screen bounds
+      if (screenX >= 0 && screenX < 64 && screenY >= 0 && screenY < 64) {
+        // Brightness and size based on depth
+        const brightness = Math.floor(100 + (90 - z) * 1.7); // 100-255
+        const size = Math.max(1, Math.floor((90 - z) / 30)); // 1-3 pixels
+
+        // Draw star with size
+        for (let dy = 0; dy < size; dy++) {
+          for (let dx = 0; dx < size; dx++) {
+            const px = screenX + dx;
+            const py = screenY + dy;
+            if (px < 64 && py < 64) {
+              await device.drawPixel(
+                [px, py],
+                [brightness, brightness, brightness, 255],
+              );
+            }
+          }
+        }
+      }
+
+      newStars.push({ x: star.x, y: star.y, z });
+    }
+
+    setState('stars3d', newStars);
+
+    // Title
+    await device.drawText('3D STARS', [32, 2], [255, 255, 255, 255], 'center');
   },
 
   // ============================================================================
@@ -639,14 +685,8 @@ module.exports = {
     const moonY = Math.floor(32 + Math.sin(orbitAngle) * 20);
 
     try {
-      // Draw sun in center (larger, square size to avoid distortion)
-      await gfx.drawImageBlended(
-        sunPath,
-        [sunX, sunY],
-        [16, 16],
-        255,
-        'normal',
-      );
+      // Draw sun in center (9x9 px original size)
+      await gfx.drawImageBlended(sunPath, [sunX, sunY], [9, 9], 255, 'normal');
 
       // Draw moon rotating around sun
       await gfx.drawImageBlended(

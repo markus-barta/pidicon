@@ -51,10 +51,18 @@
           </v-chip>
         </div>
         <div class="d-flex align-center">
-          <!-- Device Responsiveness (for looping scenes only) -->
+          <!-- Device Responsiveness (for looping scenes only) - compact in collapsed mode -->
           <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="d-flex align-center text-caption mr-4">
-            <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
-            <span :style="{ color: '#6b7280' }">Device: {{ deviceResponsiveLabel }}</span>
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <span v-bind="tooltipProps" class="d-flex align-center" style="cursor: help;">
+                  <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
+                  <span v-if="!isCollapsed" :style="{ color: '#6b7280' }">Device: {{ deviceResponsiveLabel }}</span>
+                  <span v-else :style="{ color: '#6b7280' }">Device</span>
+                </span>
+              </template>
+              <span>Device: {{ deviceResponsiveLabel }}</span>
+            </v-tooltip>
           </div>
 
           <!-- IP and Last Seen -->
@@ -88,18 +96,24 @@
       <div v-if="false" class="d-flex align-center text-medium-emphasis">
         <!-- Moved to header -->
       </div>
-      <!-- Show scene info when collapsed -->
+      <!-- Show scene info when collapsed - compact with just icon -->
       <div v-if="isCollapsed && selectedScene" class="d-flex align-center mt-2">
-        <span class="text-body-2 mr-2">{{ formatSceneName(selectedScene) }}</span>
-        <v-chip
-          :color="combinedStateColor"
-          size="x-small"
-          variant="flat"
-          :title="combinedStateHint"
-        >
-          <v-icon start size="x-small">{{ combinedStateIcon }}</v-icon>
-          {{ combinedStateLabel }}
-        </v-chip>
+        <span class="text-body-2 mr-3">{{ formatSceneName(selectedScene) }}</span>
+        
+        <!-- Compact play state indicator -->
+        <v-tooltip location="bottom">
+          <template v-slot:activator="{ props: tooltipProps }">
+            <v-icon 
+              v-bind="tooltipProps"
+              :color="playStateIconColor"
+              size="small"
+              style="cursor: help;"
+            >
+              {{ playStateIcon }}
+            </v-icon>
+          </template>
+          <span>{{ combinedStateLabel }}: {{ combinedStateHint }}</span>
+        </v-tooltip>
       </div>
     </v-card-subtitle>
 
@@ -188,12 +202,15 @@
 
         <!-- Logging Level Controls -->
         <div class="control-item">
-          <span class="text-caption font-weight-medium mr-2" style="color: #6b7280;">
+          <span class="text-caption font-weight-medium mr-2 logging-label-full" style="color: #6b7280;">
             Logging
           </span>
+          <span class="text-caption font-weight-medium mr-2 logging-label-compact" style="color: #6b7280;">
+            Log
+          </span>
           
-          <!-- 5 tiny toggle buttons -->
-          <div class="logging-buttons">
+          <!-- Full mode: 5 tiny toggle buttons -->
+          <div class="logging-buttons logging-buttons-full">
             <v-btn
               :variant="loggingLevel === 'debug' ? 'tonal' : 'outlined'"
               :color="loggingLevel === 'debug' ? 'primary' : 'grey'"
@@ -271,6 +288,39 @@
               <v-icon size="small">mdi-cancel</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 Silent mode (no logs)
+              </v-tooltip>
+            </v-btn>
+          </div>
+
+          <!-- Compact mode: selected button + next button -->
+          <div class="logging-buttons logging-buttons-compact">
+            <v-btn
+              :variant="'tonal'"
+              :color="currentLoggingColor"
+              size="x-small"
+              @click="cycleLogging"
+              class="logging-btn logging-btn-pressed"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">{{ currentLoggingIcon }}</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                {{ getLoggingTooltip }}
+              </v-tooltip>
+            </v-btn>
+            
+            <v-btn
+              variant="outlined"
+              color="grey"
+              size="x-small"
+              @click="cycleLogging"
+              class="logging-btn"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-chevron-right</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                Cycle to next logging level
               </v-tooltip>
             </v-btn>
           </div>
@@ -1022,6 +1072,10 @@ const combinedStateIcon = computed(() => {
   return icons[state] || 'mdi-help-circle';
 });
 
+// Aliases for collapsed view
+const playStateIcon = computed(() => combinedStateIcon.value);
+const playStateIconColor = computed(() => combinedStateColor.value);
+
 const combinedStateHint = computed(() => {
   const sceneState = props.device?.sceneState;
   const isAnimated = currentSceneInfo.value?.wantsLoop;
@@ -1672,6 +1726,37 @@ const getLoggingTooltip = computed(() => {
   return tooltips[loggingLevel.value];
 });
 
+// Computed properties for compact logging mode
+const currentLoggingIcon = computed(() => {
+  const icons = {
+    debug: 'mdi-bug',
+    info: 'mdi-information-outline',
+    warning: 'mdi-alert-outline',
+    error: 'mdi-alert-circle',
+    silent: 'mdi-cancel'
+  };
+  return icons[loggingLevel.value];
+});
+
+const currentLoggingColor = computed(() => {
+  const colors = {
+    debug: 'primary',
+    info: 'blue',
+    warning: 'warning',
+    error: 'error',
+    silent: 'grey-darken-2'
+  };
+  return colors[loggingLevel.value];
+});
+
+// Cycle to next logging level
+function cycleLogging() {
+  const levels = ['silent', 'error', 'warning', 'info', 'debug'];
+  const currentIndex = levels.indexOf(loggingLevel.value);
+  const nextIndex = (currentIndex + 1) % levels.length;
+  setLogging(levels[nextIndex]);
+}
+
 // Brightness icon opacity based on brightness level (20-255 mapped from 0-100%)
 const brightnessIconOpacity = computed(() => {
   return (20 + (brightness.value / 100) * 235) / 255;
@@ -2090,6 +2175,53 @@ onUnmounted(() => {
   display: inline-flex;
   gap: 2px;
   align-items: center;
+}
+
+/* Responsive logging modes */
+.logging-buttons-compact {
+  display: none; /* Hidden by default */
+}
+
+.logging-label-compact {
+  display: none; /* Hidden by default */
+}
+
+/* Switch to compact mode when card is narrow (< 900px) */
+@container (max-width: 900px) {
+  .logging-buttons-full {
+    display: none !important;
+  }
+  
+  .logging-buttons-compact {
+    display: inline-flex !important;
+  }
+  
+  .logging-label-full {
+    display: none !important;
+  }
+  
+  .logging-label-compact {
+    display: inline !important;
+  }
+}
+
+/* Fallback for browsers without container queries */
+@media (max-width: 1200px) {
+  .logging-buttons-full {
+    display: none !important;
+  }
+  
+  .logging-buttons-compact {
+    display: inline-flex !important;
+  }
+  
+  .logging-label-full {
+    display: none !important;
+  }
+  
+  .logging-label-compact {
+    display: inline !important;
+  }
 }
 
 /* Tiny logging buttons */
