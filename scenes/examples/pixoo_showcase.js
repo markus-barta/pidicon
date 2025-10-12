@@ -278,9 +278,18 @@ module.exports = {
 
       for (let x = 0; x < 64; x++) {
         const xWave = Math.sin((x + frame) * 0.1) * 0.2 + 0.8;
-        const r = Math.floor(rgb[0] * xWave * wave2);
-        const g = Math.floor(rgb[1] * xWave * wave2);
-        const b = Math.floor(rgb[2] * xWave * wave2);
+        const r = Math.max(
+          0,
+          Math.min(255, Math.floor(rgb[0] * xWave * wave2)),
+        );
+        const g = Math.max(
+          0,
+          Math.min(255, Math.floor(rgb[1] * xWave * wave2)),
+        );
+        const b = Math.max(
+          0,
+          Math.min(255, Math.floor(rgb[2] * xWave * wave2)),
+        );
         await device.drawPixel([x, y], [r, g, b, 255]);
       }
     }
@@ -330,40 +339,43 @@ module.exports = {
     // Dark background
     device.fillRect([0, 0], [64, 64], [5, 5, 15, 255]);
 
-    // Gradient circle (pulsing)
-    const radius1 = 8 + Math.sin(frame * 0.2) * 3;
+    // Title first (so circles draw over it)
+    await device.drawText('GEOMETRY', [32, 58], [255, 255, 255, 200], 'center');
+
+    // Gradient circle (pulsing) - top left
+    const radius1 = 6 + Math.sin(frame * 0.2) * 2;
     await drawGradientCircle(
       device,
-      [16, 16],
+      [14, 20],
       Math.floor(radius1),
       [255, 200, 0, 255],
       [255, 0, 0, 100],
     );
 
-    // Outlined circle (rotating)
-    const radius2 = 6 + Math.sin(frame * 0.15) * 2;
+    // Outlined circle (rotating) - top right
+    const radius2 = 5 + Math.sin(frame * 0.15) * 2;
     await drawCircleOutline(
       device,
-      [48, 16],
+      [50, 20],
       Math.floor(radius2),
       [0, 255, 255, 255],
       2,
     );
 
-    // Glow circle (breathing)
-    const radius3 = 5 + Math.sin(frame * 0.25) * 2;
+    // Glow circle (breathing) - bottom left
+    const radius3 = 4 + Math.sin(frame * 0.25) * 2;
     await drawGlowCircle(
       device,
-      [16, 48],
+      [14, 44],
       Math.floor(radius3),
-      Math.floor(radius3 + 4),
+      Math.floor(radius3 + 3),
       [100, 100, 255, 255],
     );
 
-    // Filled circle (bouncing color)
+    // Filled circle (bouncing color) - bottom right
     const hue = (frame * 5) % 360;
     const rgb = this.hslToRgb(hue / 360, 1, 0.5);
-    await drawFilledCircle(device, [48, 48], 7, [...rgb, 255]);
+    await drawFilledCircle(device, [50, 44], 6, [...rgb, 255]);
 
     // Rotating line
     const angle = frame * 0.1;
@@ -374,9 +386,6 @@ module.exports = {
       [Math.floor(x1), Math.floor(y1)],
       [255, 255, 0, 255],
     );
-
-    // Title
-    await device.drawText('GEOMETRY', [32, 2], [255, 255, 255, 255], 'center');
   },
 
   // ============================================================================
@@ -451,8 +460,10 @@ module.exports = {
         const tunnelDist = 32 / (dist + 1);
         const tunnelAngle = a * 5;
 
-        const hue =
-          ((tunnelDist * 100 + tunnelAngle * 50 + frame * 5) % 360) / 360;
+        // Ensure hue is always positive (JS modulo keeps sign)
+        const hueValue =
+          (tunnelDist * 100 + tunnelAngle * 50 + frame * 5) % 360;
+        const hue = (hueValue < 0 ? hueValue + 360 : hueValue) / 360;
         const brightness = Math.sin(tunnelDist * 2 + frame * 0.1) * 0.5 + 0.5;
         const rgb = this.hslToRgb(hue, 1, brightness * 0.5);
 
