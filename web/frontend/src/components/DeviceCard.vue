@@ -67,6 +67,22 @@
               </v-tooltip>
             </span>
           </div>
+
+          <!-- Daemon Restart Button -->
+          <v-btn
+            size="small"
+            variant="outlined"
+            color="grey"
+            @click="handleDaemonReset"
+            :loading="daemonResetLoading"
+            class="control-btn-compact mr-2"
+          >
+            <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
+            <span class="text-caption">Daemon</span>
+            <v-tooltip activator="parent" location="bottom">
+              Restart entire daemon
+            </v-tooltip>
+          </v-btn>
           
           <v-btn
             :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
@@ -100,39 +116,51 @@
     <v-card-text v-if="!isCollapsed" class="pt-0">
       <!-- Power / Simulated Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
-        <!-- Power Button -->
-        <v-btn
-          size="small"
-          :variant="displayOn ? 'tonal' : 'outlined'"
-          :color="displayOn ? 'success' : 'grey'"
-          @click="toggleDisplay"
-          :loading="toggleLoading"
-          class="control-btn-compact"
-        >
-          <v-icon size="small" class="mr-1">mdi-power</v-icon>
-          <span class="text-caption">Power</span>
-          <v-tooltip activator="parent" location="bottom">
-            {{ displayOn ? 'Power off display' : 'Power on display' }}
-          </v-tooltip>
-        </v-btn>
+        <!-- Power Flip Switch (ON/OFF) -->
+        <div class="control-group">
+          <v-btn-toggle
+            v-model="displayOn"
+            mandatory
+            color="success"
+            variant="outlined"
+            density="compact"
+            class="flip-switch"
+            @update:model-value="toggleDisplay"
+          >
+            <v-btn :value="true" size="small" class="flip-btn">
+              <v-icon size="small" class="mr-1">mdi-power-on</v-icon>
+              <span class="text-caption">ON</span>
+            </v-btn>
+            <v-btn :value="false" size="small" class="flip-btn">
+              <v-icon size="small" class="mr-1">mdi-power-off</v-icon>
+              <span class="text-caption">OFF</span>
+            </v-btn>
+          </v-btn-toggle>
+        </div>
 
-        <!-- Simulated Button -->
-        <v-btn
-          size="small"
-          :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
-          :color="device.driver === 'mock' ? 'warning' : 'grey'"
-          @click="toggleDriver"
-          :loading="driverLoading"
-          class="control-btn-compact"
-        >
-          <v-icon size="small" class="mr-1">{{ device.driver === 'mock' ? 'mdi-chip' : 'mdi-lan-connect' }}</v-icon>
-          <span class="text-caption">Mock</span>
-          <v-tooltip activator="parent" location="bottom">
-            {{ device.driver === 'mock' ? 'Switch to real hardware' : 'Switch to simulated mode' }}
-          </v-tooltip>
-        </v-btn>
+        <!-- Driver Flip Switch (Real/Mock) -->
+        <div class="control-group">
+          <v-btn-toggle
+            :model-value="device.driver"
+            mandatory
+            color="warning"
+            variant="outlined"
+            density="compact"
+            class="flip-switch"
+            @update:model-value="toggleDriver"
+          >
+            <v-btn value="real" size="small" class="flip-btn">
+              <v-icon size="small" class="mr-1">mdi-lan-connect</v-icon>
+              <span class="text-caption">Real</span>
+            </v-btn>
+            <v-btn value="mock" size="small" class="flip-btn">
+              <v-icon size="small" class="mr-1">mdi-chip</v-icon>
+              <span class="text-caption">Mock</span>
+            </v-btn>
+          </v-btn-toggle>
+        </div>
 
-        <!-- Device Restart Button -->
+        <!-- Device Reset Button -->
         <v-btn
           size="small"
           variant="outlined"
@@ -142,25 +170,9 @@
           class="control-btn-compact"
         >
           <v-icon size="small" color="error" class="mr-1">mdi-restart</v-icon>
-          <span class="text-caption">Device</span>
+          <span class="text-caption">Reset</span>
           <v-tooltip activator="parent" location="bottom">
-            Restart hardware device
-          </v-tooltip>
-        </v-btn>
-
-        <!-- Daemon Restart Button -->
-        <v-btn
-          size="small"
-          variant="outlined"
-          color="grey"
-          @click="handleDaemonReset"
-          :loading="daemonResetLoading"
-          class="control-btn-compact"
-        >
-          <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
-          <span class="text-caption">Daemon</span>
-          <v-tooltip activator="parent" location="bottom">
-            Restart entire daemon
+            Reset device display
           </v-tooltip>
         </v-btn>
 
@@ -169,8 +181,7 @@
         <!-- Logging Level Controls -->
         <div class="control-item">
           <span class="text-caption font-weight-medium mr-2" style="color: #6b7280;">
-            <v-icon size="x-small" class="mr-1">{{ getLoggingIcon }}</v-icon>
-            {{ getLoggingLabel }}
+            Logging
           </span>
           
           <!-- 3 tiny toggle buttons -->
@@ -1577,13 +1588,13 @@ const brightnessIconOpacity = computed(() => {
 async function handleReset() {
   // Use Vue confirm dialog instead of browser confirm (UI-512)
   const confirmed = await confirmDialog.value?.show({
-    title: 'Reset Device',
-    message: `This will restart the device (${props.device.ip}) and reconnect it to WiFi. The Pixoo will briefly show the initialization screen during the restart process.`,
-    confirmText: 'Reset Device',
+    title: 'Reset Device Display',
+    message: `This will clear the display, reset the device settings, and load the startup scene. Note: This does not perform a hardware restart of the Pixoo device itself.`,
+    confirmText: 'Reset Display',
     cancelText: 'Cancel',
     confirmColor: 'warning',
-    icon: 'mdi-restart-alert',
-    iconColor: 'warning'
+    icon: 'mdi-restart',
+    iconColor: 'error'
   });
 
   if (!confirmed) return;
@@ -1594,14 +1605,14 @@ async function handleReset() {
     await api.switchScene(props.device.ip, 'empty', { clear: true });
     await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause
     
-    // Perform the reset
+    // Perform the reset (API call to reset device settings)
     await api.resetDevice(props.device.ip);
     
     // Wait a bit, then switch to startup scene
     await new Promise(resolve => setTimeout(resolve, 2000));
     await api.switchScene(props.device.ip, 'startup', { clear: true });
     
-    toast.success('Device reset successfully', 2000);
+    toast.success('Device display reset', 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to reset device: ${err.message}`);
@@ -1639,8 +1650,9 @@ async function handleDaemonReset() {
   }
 }
 
-async function toggleDriver() {
-  const newDriver = props.device.driver === 'real' ? 'mock' : 'real';
+async function toggleDriver(newDriver) {
+  // newDriver comes from the flip switch: 'real' or 'mock'
+  if (!newDriver || newDriver === props.device.driver) return;
 
   // Use Vue confirm dialog instead of browser confirm (UI-512)
   const confirmed = await confirmDialog.value?.show({
@@ -1653,7 +1665,11 @@ async function toggleDriver() {
     iconColor: 'primary'
   });
 
-  if (!confirmed) return;
+  if (!confirmed) {
+    // Force Vue to re-render the toggle if user cancels
+    emit('refresh');
+    return;
+  }
 
   driverLoading.value = true;
   try {
@@ -1662,6 +1678,7 @@ async function toggleDriver() {
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to switch driver: ${err.message}`);
+    emit('refresh');
   } finally {
     driverLoading.value = false;
   }
@@ -1953,6 +1970,28 @@ onUnmounted(() => {
 .info-btn-pressed {
   /* When pressed: has frame and shadow */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Control group container */
+.control-group {
+  display: inline-flex;
+}
+
+/* Flip switch styling */
+.flip-switch {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+.flip-btn {
+  min-width: 60px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  transition: all 0.15s ease !important;
+}
+
+.flip-btn.v-btn--active {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Compact control buttons with icon + caption */
