@@ -13,15 +13,15 @@
 
 const SunCalc = require('suncalc');
 
-const { drawVerticalGradientLine } = require('../lib/gradient-renderer');
-const GraphicsEngine = require('../lib/graphics-engine');
-const logger = require('../lib/logger');
+const { drawVerticalGradientLine } = require('../../../lib/gradient-renderer');
+const GraphicsEngine = require('../../../lib/graphics-engine');
+const logger = require('../../../lib/logger');
 const {
   BaseSceneState,
   FrameCounter,
   SceneUtils,
-} = require('../lib/scene-base');
-const { AnimatedScene } = require('../lib/scene-framework');
+} = require('../../../lib/scene-base');
+const { AnimatedScene } = require('../../../lib/scene-framework');
 
 // Scene configuration - migrated from DisplayConfig
 const SCENE_CONFIG = {

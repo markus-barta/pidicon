@@ -29,7 +29,21 @@ const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
-const versionInfo = require('./version.json');
+
+// Load version info (with fallback if not yet generated)
+let versionInfo;
+try {
+  versionInfo = require('./version.json');
+} catch {
+  // Fallback for development/testing when version.json doesn't exist yet
+  const packageJson = require('./package.json');
+  versionInfo = {
+    version: packageJson.version,
+    buildNumber: 0,
+    gitCommit: 'dev',
+    environment: 'development',
+  };
+}
 
 // Create a logger instance
 

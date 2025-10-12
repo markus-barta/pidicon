@@ -10,8 +10,8 @@
  */
 
 const name = 'startup-static';
-const logger = require('../lib/logger');
-const { validateSceneContext } = require('../lib/performance-utils');
+const logger = require('../../../lib/logger');
+const { validateSceneContext } = require('../../../lib/performance-utils');
 
 const COLORS = Object.freeze({
   BACKGROUND: [20, 20, 40, 255],

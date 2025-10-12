@@ -21,8 +21,8 @@
 const SCENE_NAME = 'advanced_chart';
 
 // Import shared utilities
-const logger = require('../lib/logger');
-const { validateSceneContext } = require('../lib/performance-utils');
+const logger = require('../../../lib/logger');
+const { validateSceneContext } = require('../../../lib/performance-utils');
 
 /**
  * Advanced Chart Scene - Professional data visualization
@@ -45,7 +45,9 @@ async function render(ctx) {
   // Advanced chart is always available
 
   // Initialize advanced chart renderer
-  const { createAdvancedChartRenderer } = require('../lib/advanced-chart');
+  const {
+    createAdvancedChartRenderer,
+  } = require('../../../lib/advanced-chart');
   const chartRenderer = createAdvancedChartRenderer(device);
 
   // Configuration

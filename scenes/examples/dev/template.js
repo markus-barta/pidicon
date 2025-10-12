@@ -40,9 +40,9 @@ const name = 'template';
 /**
  * Import required modules
  */
-const logger = require('../lib/logger');
-// const { validateSceneContext } = require('../lib/performance-utils');
-// const { validateColor } = require('../lib/validation');
+const logger = require('../../../lib/logger');
+// const { validateSceneContext } = require('../../../lib/performance-utils');
+// const { validateColor } = require('../../../lib/validation');
 
 /**
  * Color constants (optional - customize as needed)
