@@ -137,7 +137,7 @@ async function renderTextEffects(device, gfx, frame) {
   device.fillRect([0, 0], [64, 64], [10, 10, 20, 255]);
 
   // Title
-  await device.drawText('TEXT FX', [5, 5], [255, 255, 255, 255], 0);
+  await device.drawText('TEXT FX', [5, 5], [255, 255, 255, 255]);
 
   // Shadow effect
   await gfx.drawTextEnhanced('SHADOW', [32, 18], [100, 200, 255, 255], {
@@ -169,7 +169,7 @@ async function renderTextEffects(device, gfx, frame) {
   // Gradient text (animated hue shift)
   const hueShift = (frame * 2) % 360;
   const [r, g, b] = hsvToRgb(hueShift / 360, 0.8, 1.0);
-  await device.drawText('GRADIENT', [32, 42], [r, g, b, 255], 0);
+  await device.drawText('GRADIENT', [32, 42], [r, g, b, 255]);
 
   // Combined effects (pulsing)
   const pulse = Math.sin(frame * 0.15) * 0.4 + 0.6;
@@ -212,7 +212,7 @@ async function renderAnimations(device, gfx, frame) {
   device.fillRect([0, 0], [64, 64], [5, 5, 10, 255]);
 
   // Title
-  await device.drawText('ANIMATIONS', [2, 2], [255, 255, 255, 255], 0);
+  await device.drawText('ANIMATIONS', [2, 2], [255, 255, 255, 255]);
 
   // Bouncing ball
   const ballX = 32 + Math.sin(frame * 0.1) * 24;
@@ -260,7 +260,7 @@ async function renderOutro(device, gfx, frame) {
 
   // Thank you message
   const alpha = Math.floor(255 * fadeProgress);
-  await device.drawText('THANKS!', [32, 28], [255, 255, 255, alpha], 0);
+  await device.drawText('THANKS!', [32, 28], [255, 255, 255, alpha]);
 }
 
 // ============================================================================
