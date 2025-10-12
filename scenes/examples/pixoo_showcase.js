@@ -65,6 +65,16 @@ module.exports = {
     if (frame >= PHASE_DURATION) {
       setState('frame', 0);
       const nextPhase = (phase + 1) % Object.keys(PHASES).length;
+      const phaseNames = [
+        'INTRO',
+        'TEXT_EFFECTS',
+        'GRADIENTS',
+        'ANIMATIONS',
+        'OUTRO',
+      ];
+      context.log(
+        `Phase transition: ${phaseNames[phase]} → ${phaseNames[nextPhase]} (frame ${frame})`,
+      );
       setState('phase', nextPhase);
 
       // Loop back to intro after outro
