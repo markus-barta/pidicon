@@ -100,57 +100,138 @@
     <v-card-text v-if="!isCollapsed" class="pt-0">
       <!-- Power / Simulated Mode / Reset / Brightness Controls -->
       <div class="controls-row mb-6">
+        <!-- Power Toggle -->
         <div class="control-item">
           <v-icon icon="mdi-power" size="small" class="mr-2" />
-          <span class="text-body-2 font-weight-medium mr-3">Power</span>
-          <v-switch
-            v-model="displayOn"
-            color="success"
-            hide-details
-            density="compact"
-            :loading="toggleLoading"
-            @change="toggleDisplay"
-          ></v-switch>
+          <span 
+            class="toggle-text"
+            :class="{ 'toggle-text-active': displayOn }"
+            @click="toggleDisplay"
+          >
+            Power
+            <v-icon 
+              size="x-small" 
+              :color="displayOn ? 'success' : 'grey'"
+              class="ml-1"
+            >
+              {{ displayOn ? 'mdi-power-on' : 'mdi-power-off' }}
+            </v-icon>
+          </span>
+          <v-tooltip activator="parent" location="bottom">
+            {{ displayOn ? 'Click to power off display' : 'Click to power on display' }}
+          </v-tooltip>
         </div>
 
+        <!-- Simulated Toggle -->
         <div class="control-item">
-          <span class="text-body-2 font-weight-medium mr-3">Simulated</span>
-          <v-switch
-            :model-value="device.driver === 'mock'"
-            color="warning"
-            hide-details
-            density="compact"
-            :loading="driverLoading"
-            @change="toggleDriver"
-          ></v-switch>
+          <span 
+            class="toggle-text"
+            :class="{ 'toggle-text-active': device.driver === 'mock' }"
+            @click="toggleDriver"
+          >
+            Simulated
+            <v-icon 
+              size="x-small" 
+              :color="device.driver === 'mock' ? 'warning' : 'grey'"
+              class="ml-1"
+            >
+              {{ device.driver === 'mock' ? 'mdi-chip' : 'mdi-lan-connect' }}
+            </v-icon>
+          </span>
+          <v-tooltip activator="parent" location="bottom">
+            {{ device.driver === 'mock' ? 'Click to switch to real hardware' : 'Click to switch to simulated mode' }}
+          </v-tooltip>
         </div>
 
+        <!-- Device Restart Button -->
         <v-btn
-          variant="tonal"
+          :variant="'outlined'"
+          :color="'grey'"
           size="small"
-          prepend-icon="mdi-restart"
           :loading="resetLoading"
           @click="handleReset"
-          class="action-button-danger"
+          class="control-btn-restart"
+          icon
         >
-          <span style="color: #dc2626; font-weight: 600;">Device</span>
+          <v-icon color="error">mdi-restart</v-icon>
           <v-tooltip activator="parent" location="bottom">
             Restart hardware device (briefly shows init screen)
           </v-tooltip>
         </v-btn>
 
+        <!-- Daemon Restart Button -->
+        <v-btn
+          :variant="'outlined'"
+          :color="'grey'"
+          size="small"
+          :loading="daemonResetLoading"
+          @click="handleDaemonReset"
+          class="control-btn-restart"
+          icon
+        >
+          <v-icon color="warning">mdi-restart-alert</v-icon>
+          <v-tooltip activator="parent" location="bottom">
+            Restart entire daemon (reconnects all devices)
+          </v-tooltip>
+        </v-btn>
+
+        <!-- Logging Level Controls -->
         <div class="control-item ml-4">
-          <span
-            class="text-body-2 font-weight-medium"
-            style="cursor: pointer; user-select: none;"
-            @click="cycleLogging"
-          >
+          <span class="text-body-2 font-weight-medium mr-2">
             <v-icon size="small" class="mr-1">{{ getLoggingIcon }}</v-icon>
             {{ getLoggingLabel }}
           </span>
-          <v-tooltip activator="parent" location="bottom">
-            {{ getLoggingTooltip }}
-          </v-tooltip>
+          
+          <!-- 3 tiny toggle buttons -->
+          <div class="logging-buttons">
+            <v-btn
+              :variant="loggingLevel === 'debug' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'debug' ? 'primary' : 'grey'"
+              size="x-small"
+              @click="setLogging('debug')"
+              class="logging-btn"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'debug' }"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-bug</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                All logs (debug, info, warn, error)
+              </v-tooltip>
+            </v-btn>
+
+            <v-btn
+              :variant="loggingLevel === 'warn' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'warn' ? 'warning' : 'grey'"
+              size="x-small"
+              @click="setLogging('warn')"
+              class="logging-btn"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'warn' }"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-alert-circle-outline</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                Warnings and errors only
+              </v-tooltip>
+            </v-btn>
+
+            <v-btn
+              :variant="loggingLevel === 'none' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'none' ? 'grey-darken-2' : 'grey'"
+              size="x-small"
+              @click="setLogging('none')"
+              class="logging-btn"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'none' }"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-cancel</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                Silent mode (no logs)
+              </v-tooltip>
+            </v-btn>
+          </div>
         </div>
 
         <v-spacer></v-spacer>
@@ -530,6 +611,7 @@ const selectedScene = ref(props.device.currentScene || '');
 const loading = ref(false);
 const toggleLoading = ref(false);
 const resetLoading = ref(false);
+const daemonResetLoading = ref(false);
 const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 const displayOn = ref(true);
@@ -1416,24 +1498,21 @@ async function setBrightness() {
   }
 }
 
-// Cycle through logging levels: debug -> warn -> none -> debug...
-async function cycleLogging() {
-  const levels = ['debug', 'warn', 'none'];
-  const currentIndex = levels.indexOf(loggingLevel.value);
-  const nextIndex = (currentIndex + 1) % levels.length;
-  const newLevel = levels[nextIndex];
+// Set logging level directly (called by the 3 logging buttons)
+async function setLogging(level) {
+  if (loggingLevel.value === level) return; // Already at this level
 
   const oldLevel = loggingLevel.value;
-  loggingLevel.value = newLevel;
+  loggingLevel.value = level;
 
   try {
-    await api.setDeviceLogging(props.device.ip, newLevel);
+    await api.setDeviceLogging(props.device.ip, level);
     const levelDescriptions = {
-      debug: 'Debug logging enabled',
-      warn: 'Warning & error logging enabled',
+      debug: 'All logs enabled',
+      warn: 'Warnings & errors only',
       none: 'Logging disabled'
     };
-    toast.success(levelDescriptions[newLevel], 2000);
+    toast.success(levelDescriptions[level], 2000);
   } catch (err) {
     // Revert on error
     loggingLevel.value = oldLevel;
@@ -1467,7 +1546,7 @@ const getLoggingTooltip = computed(() => {
     warn: 'Scene logging: Warnings and errors only',
     none: 'Scene logging: Disabled (silent mode)'
   };
-  return tooltips[loggingLevel.value] + ' • Click to cycle';
+  return tooltips[loggingLevel.value];
 });
 
 async function handleReset() {
@@ -1503,6 +1582,35 @@ async function handleReset() {
     toast.error(`Failed to reset device: ${err.message}`);
   } finally {
     resetLoading.value = false;
+  }
+}
+
+async function handleDaemonReset() {
+  // Use Vue confirm dialog
+  const confirmed = await confirmDialog.value?.show({
+    title: 'Restart Daemon',
+    message: 'This will restart the entire Pixoo daemon process, reconnecting all devices and reinitializing all services. This may take a few seconds.',
+    confirmText: 'Restart Daemon',
+    cancelText: 'Cancel',
+    confirmColor: 'warning',
+    icon: 'mdi-restart-alert',
+    iconColor: 'warning'
+  });
+
+  if (!confirmed) return;
+
+  daemonResetLoading.value = true;
+  try {
+    await api.restartDaemon();
+    toast.success('Daemon restart initiated - reconnecting...', 3000);
+    
+    // Wait a bit for daemon to restart, then refresh
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    emit('refresh');
+  } catch (err) {
+    toast.error(`Failed to restart daemon: ${err.message}`);
+  } finally {
+    daemonResetLoading.value = false;
   }
 }
 
@@ -1820,5 +1928,85 @@ onUnmounted(() => {
 .info-btn-pressed {
   /* When pressed: has frame and shadow */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Toggle text styling (Power, Simulated) */
+.toggle-text {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #6b7280;
+}
+
+.toggle-text:hover {
+  color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.05);
+}
+
+.toggle-text-active {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.toggle-text-active:hover {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+/* Logging buttons container */
+.logging-buttons {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+
+/* Tiny logging buttons */
+.logging-btn {
+  min-width: 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.logging-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15) !important;
+}
+
+.logging-btn:active {
+  transform: translateY(0);
+}
+
+/* Pressed state for logging buttons - inset shadow */
+.logging-btn-pressed {
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(1px);
+}
+
+.logging-btn-pressed:hover {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Restart buttons (Device & Daemon) */
+.control-btn-restart {
+  min-width: 36px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+.control-btn-restart:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16) !important;
+}
+
+.control-btn-restart:active {
+  transform: translateY(0);
 }
 </style>
