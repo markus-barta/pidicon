@@ -361,7 +361,14 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
           data: deviceInfo,
           timestamp: Date.now(),
         });
-        logger.info(`📡 Broadcast device_update for ${deviceIp}`);
+
+        // Log at debug level for mock devices to reduce noise
+        const driver = deviceInfo.driver || 'unknown';
+        if (driver === 'mock') {
+          logger.debug(`📡 Broadcast device_update for ${deviceIp} (mock)`);
+        } else {
+          logger.info(`📡 Broadcast device_update for ${deviceIp}`);
+        }
       } catch (error) {
         // Log errors even in production
         logger.warn('WebSocket broadcast failed:', {
