@@ -49,7 +49,7 @@ module.exports = {
 
   async render(context) {
     const { device, getState, setState } = context;
-    const gfx = new GraphicsEngine();
+    const gfx = new GraphicsEngine(device);
 
     const phase = getState('phase', PHASES.INTRO);
     const frame = getState('frame', 0);
