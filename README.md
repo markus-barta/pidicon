@@ -14,7 +14,8 @@
 
 </p>
 
-**MQTT-driven scene renderer for Divoom Pixoo 64** with clean architecture, smart scheduling, and beautiful visuals. Control your display with simple MQTT messages or through the built-in Web UI.
+**MQTT-driven scene renderer for Divoom Pixoo 64** with clean architecture, smart scheduling, and
+beautiful visuals. Control your display with simple MQTT messages or through the built-in Web UI.
 
 ---
 
@@ -35,7 +36,7 @@
 ## 🌐 Web UI - Vue 3 + Vuetify 3
 
 <p align="center">
-  <strong>Modern Material Design control panel built with Vue 3</strong>
+  **Modern Material Design control panel built with Vue 3**
 </p>
 
 **Technology Stack:**
@@ -241,7 +242,8 @@ module.exports = {
 };
 ```
 
-See `scenes/examples/dev/template.js` for a complete starter template and [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) for the full guide.
+See `scenes/examples/dev/template.js` for a complete starter template and
+[docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) for the full guide.
 
 ### **Scene Organization**
 
@@ -347,7 +349,8 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment guide.
 A: Copy `scenes/template.js`, customize it, and restart the daemon. Follow the pure-render contract.
 
 **Q: Why return a number or null from render()?**  
-A: The number is the delay (ms) before next frame. `null` signals completion. This lets the central scheduler manage timing cleanly.
+A: The number is the delay (ms) before next frame. `null` signals completion. This lets the central
+scheduler manage timing cleanly.
 
 **Q: Can I run multiple devices?**  
 A: Yes! Each device has its own scheduler and state machine. Fully isolated.
@@ -365,7 +368,8 @@ Monitor MQTT: `mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#'`
 Use mock driver to isolate issues.
 
 **Q: What if scenes don't update?**  
-A: Check `await device.push()` is called, `wantsLoop: true` for animated scenes, and verify scene exports `name`, `render`, etc.
+A: Check `await device.push()` is called, `wantsLoop: true` for animated scenes, and verify scene
+exports `name`, `render`, etc.
 
 ---
 
@@ -431,4 +435,4 @@ MIT License — do good things, be kind, and give credit where due.
 
 ---
 
-**Made with ❤️ and lots of pixels**
+### Made with ❤️ and lots of pixels
