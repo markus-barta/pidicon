@@ -51,6 +51,12 @@
           </v-chip>
         </div>
         <div class="d-flex align-center">
+          <!-- Device Responsiveness (for looping scenes only) -->
+          <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="d-flex align-center text-caption mr-4">
+            <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
+            <span :style="{ color: '#6b7280' }">Device: {{ deviceResponsiveLabel }}</span>
+          </div>
+
           <!-- IP and Last Seen -->
           <div class="d-flex align-center text-caption mr-4" style="color: #6b7280;">
             <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
@@ -731,6 +737,51 @@ const lastSeenTooltip = computed(() => {
     second: '2-digit',
     hour12: true
   });
+});
+
+// Device responsiveness indicator (for looping scenes only)
+const deviceResponsiveColor = computed(() => {
+  // Only for real devices with looping scenes
+  if (props.device.driver !== 'real' || !currentSceneInfo.value?.wantsLoop) {
+    return '#10b981'; // green (not applicable)
+  }
+  
+  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  if (!lastSeenTs) {
+    return '#ef4444'; // red - never seen
+  }
+  
+  const now = Date.now();
+  const diff = now - lastSeenTs;
+  
+  // If >5 seconds since last seen, device is unresponsive
+  if (diff > 5000) {
+    return '#ef4444'; // red
+  }
+  
+  return '#10b981'; // green - responsive
+});
+
+const deviceResponsiveLabel = computed(() => {
+  // Only for real devices with looping scenes
+  if (props.device.driver !== 'real' || !currentSceneInfo.value?.wantsLoop) {
+    return 'N/A';
+  }
+  
+  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  if (!lastSeenTs) {
+    return 'unresponsive';
+  }
+  
+  const now = Date.now();
+  const diff = now - lastSeenTs;
+  
+  // If >5 seconds since last seen, device is unresponsive
+  if (diff > 5000) {
+    return 'unresponsive';
+  }
+  
+  return 'responsive';
 });
 
 const fpsDisplay = computed(() => {
@@ -1715,7 +1766,7 @@ onUnmounted(() => {
 .controls-row {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
   padding: 16px;
   background: #f9fafb;
   border-radius: 12px;
