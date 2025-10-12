@@ -57,6 +57,13 @@ function startWebServer(container, logger) {
   const deviceService = container.resolve('deviceService');
   const systemService = container.resolve('systemService');
 
+  // Device configuration store (TODO: Add to DI container)
+  const { DeviceConfigStore } = require('../lib/device-config-store');
+  const deviceConfigStore = new DeviceConfigStore();
+  deviceConfigStore.load().catch((err) => {
+    logger.warn(`Failed to load device config: ${err.message}`);
+  });
+
   // =========================================================================
   // API ENDPOINTS
   // =========================================================================
@@ -344,6 +351,132 @@ function startWebServer(container, logger) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // =========================================================================
+  // DEVICE CONFIGURATION API
+  // =========================================================================
+
+  // GET /api/config/devices - List all configured devices
+  app.get('/api/config/devices', async (req, res) => {
+    try {
+      const devices = deviceConfigStore.getAllDevices();
+      const deviceList = Array.from(devices.values()).map((d) => d.toJSON());
+      res.json({ devices: deviceList });
+    } catch (error) {
+      logger.error('API /api/config/devices error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/config/devices/:ip - Get single device config
+  app.get('/api/config/devices/:ip', async (req, res) => {
+    try {
+      const device = deviceConfigStore.getDevice(req.params.ip);
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+      res.json(device.toJSON());
+    } catch (error) {
+      logger.error(`API /api/config/devices/${req.params.ip} error:`, {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/config/devices - Add new device
+  app.post('/api/config/devices', async (req, res) => {
+    try {
+      const device = await deviceConfigStore.addDevice(req.body);
+      logger.ok(`[WEB UI] Added device config: ${device.ip} (${device.name})`);
+      res.json(device.toJSON());
+    } catch (error) {
+      logger.error('API /api/config/devices POST error:', {
+        error: error.message,
+      });
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/config/devices/:ip - Update device config
+  app.put('/api/config/devices/:ip', async (req, res) => {
+    try {
+      const device = await deviceConfigStore.updateDevice(
+        req.params.ip,
+        req.body,
+      );
+      logger.ok(
+        `[WEB UI] Updated device config: ${device.ip} (${device.name})`,
+      );
+      res.json(device.toJSON());
+    } catch (error) {
+      logger.error(`API /api/config/devices/${req.params.ip} PUT error:`, {
+        error: error.message,
+      });
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // DELETE /api/config/devices/:ip - Remove device config
+  app.delete('/api/config/devices/:ip', async (req, res) => {
+    try {
+      await deviceConfigStore.removeDevice(req.params.ip);
+      logger.ok(`[WEB UI] Removed device config: ${req.params.ip}`);
+      res.json({ success: true });
+    } catch (error) {
+      logger.error(`API /api/config/devices/${req.params.ip} DELETE error:`, {
+        error: error.message,
+      });
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // GET /api/scenes/list - List scenes with device type filtering
+  app.get('/api/scenes/list', async (req, res) => {
+    try {
+      const { deviceType } = req.query;
+      const scenes = await sceneService.listScenes();
+
+      // TODO: Filter scenes by device type once scene organization is complete
+      // For now, return all scenes
+      const filtered = scenes.filter((_scene) => {
+        if (!deviceType) return true;
+        // Future: Check scene compatibility with device type
+        return true;
+      });
+
+      res.json({ scenes: filtered });
+    } catch (error) {
+      logger.error('API /api/scenes/list error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/config/devices/:ip/test - Test device connection
+  app.post('/api/config/devices/:ip/test', async (req, res) => {
+    try {
+      // Try to get device info to test connectivity
+      const deviceInfo = await deviceService.getDeviceInfo(req.params.ip);
+      res.json({
+        success: true,
+        connected: true,
+        deviceInfo,
+      });
+    } catch (error) {
+      logger.warn(`[WEB UI] Device test failed for ${req.params.ip}:`, {
+        error: error.message,
+      });
+      res.json({
+        success: false,
+        connected: false,
+        error: error.message,
+      });
+    }
+  });
+
+  // =========================================================================
+  // DAEMON MANAGEMENT
+  // =========================================================================
 
   // POST /api/daemon/restart - Restart daemon
   app.post('/api/daemon/restart', async (req, res) => {
