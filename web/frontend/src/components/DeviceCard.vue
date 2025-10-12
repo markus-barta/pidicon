@@ -56,8 +56,15 @@
             <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
             <span>{{ device.ip }}</span>
             <span v-if="lastSeen !== 'N/A'" class="ml-3">
-              <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-              {{ lastSeen }}
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" style="cursor: help;">
+                    <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+                    {{ lastSeen }}
+                  </span>
+                </template>
+                <span>{{ lastSeenTooltip }}</span>
+              </v-tooltip>
             </span>
           </div>
           
@@ -562,6 +569,25 @@ const lastSeen = computed(() => {
       return `${hours}h ago`;
     }
   }
+});
+
+const lastSeenTooltip = computed(() => {
+  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  if (!lastSeenTs) {
+    return 'Device has not responded yet';
+  }
+  
+  // Format as local time: "October 11, 2025 at 5:23:45 PM"
+  const date = new Date(lastSeenTs);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
 });
 
 const fpsDisplay = computed(() => {
