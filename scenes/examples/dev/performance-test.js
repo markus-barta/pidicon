@@ -21,7 +21,6 @@ const LINE_ALPHA = 178; // ~70%
 // Import external dependencies
 
 // Import internal modules
-const logger = require('../../../lib/logger');
 const {
   CHART_CONFIG,
   getPerformanceColor,
@@ -553,11 +552,13 @@ async function renderFrame(context, config) {
   return Math.max(0, (config.interval || 0) - timeTaken);
 }
 
-async function init() {
-  logger.debug(`🚀 [PERF V3] Scene initialized`);
+async function init(context) {
+  const { log } = context;
+  log?.(`🚀 Scene initialized`, 'debug');
 }
 
 async function cleanup(context) {
+  const { log } = context;
   try {
     const { getState, setState } = context;
     const loopTimer = getState?.('loopTimer');
@@ -575,9 +576,9 @@ async function cleanup(context) {
     setState?.('testCompleted', true);
     setState?.('config', null);
   } catch (e) {
-    logger.warn(`⚠️ [PERF V3] Cleanup encountered an issue:`, e?.message);
+    log?.(`⚠️ Cleanup encountered an issue: ${e?.message}`, 'warning');
   }
-  logger.debug(`🧹 [PERF V3] Scene cleaned up`);
+  log?.(`🧹 Scene cleaned up`, 'debug');
 }
 
 async function updateStatistics(frametime, getState, setState) {
