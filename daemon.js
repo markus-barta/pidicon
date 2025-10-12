@@ -87,6 +87,7 @@ container.register(
       deviceAdapter: { getContext, getDevice, deviceDrivers },
       mqttService,
       versionInfo,
+      publishOk, // Pass global publishOk callback for WebSocket broadcasts
     }),
 );
 
