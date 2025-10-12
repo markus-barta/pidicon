@@ -937,13 +937,8 @@ watch(
       sceneTimeInterval = setInterval(updateSceneTime, 1000);
       updateSceneTime(); // Immediate update
       
-      // Restart metrics polling if it was stopped
-      if (!metricsInterval && !isCollapsed.value) {
-        console.log('[DEBUG] Scene changed - restarting metrics polling');
-        metricsInterval = setInterval(() => {
-          loadMetrics();
-        }, 200);
-      }
+      // Metrics update via WebSocket - no polling needed
+      console.log('[DEBUG] Scene changed - metrics will update via WebSocket');
     }
   },
 );
@@ -975,14 +970,9 @@ watch(
         updateSceneTime(); // Immediate update
       }
       
-      // Resume metrics polling
-      if (!metricsInterval && !isCollapsed.value) {
-        console.log('[DEBUG] Resuming metrics polling');
-        loadMetrics();
-        metricsInterval = setInterval(() => {
-          loadMetrics();
-        }, 200);
-      }
+      // Resume metrics updates (WebSocket will trigger them)
+      console.log('[DEBUG] Resumed - metrics will update via WebSocket');
+      loadMetrics(); // Immediate update
     } else if (newState === 'stopped') {
       // On stop, update display but keep interval running (will show "Stopped")
       updateSceneTime();
@@ -1443,13 +1433,9 @@ onMounted(async () => {
   console.log('[DEBUG] onMounted - Initial loadMetrics call');
   loadMetrics();
   
-  // Poll every 200ms (5 times per second) for faster chart updates
-  console.log('[DEBUG] Starting metrics polling at 200ms intervals');
-  metricsInterval = setInterval(() => {
-    console.log('[DEBUG] Interval tick - calling loadMetrics');
-    loadMetrics();
-  }, 200);
-  console.log('[DEBUG] Metrics interval started:', metricsInterval);
+  // NO POLLING! WebSocket updates trigger the watch on props.device.metrics
+  // which calls loadMetrics() automatically when new data arrives
+  console.log('[DEBUG] Metrics will update via WebSocket events (no polling)');
 });
 
 onUnmounted(() => {
