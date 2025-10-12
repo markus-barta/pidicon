@@ -121,12 +121,13 @@ async function renderIntro(device, gfx, frame) {
 
   // Animated dots
   const dotsToShow = Math.floor(frame / 10) % 4;
-  await device.drawText(
-    '.'.repeat(dotsToShow),
-    [32, 48],
-    [150, 150, 150, titleAlpha],
-    0,
-  );
+  if (dotsToShow > 0) {
+    await device.drawText(
+      '.'.repeat(dotsToShow),
+      [32, 48],
+      [150, 150, 150, titleAlpha],
+    );
+  }
 }
 
 // ============================================================================
@@ -201,7 +202,7 @@ async function renderGradients(device, gfx, frame) {
   );
 
   // Title
-  await device.drawText('GRADIENTS', [32, 28], [255, 255, 255, 255], 0);
+  await device.drawText('GRADIENTS', [32, 28], [255, 255, 255, 255]);
 }
 
 // ============================================================================
