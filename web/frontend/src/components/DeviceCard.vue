@@ -2019,12 +2019,22 @@ onUnmounted(() => {
 /* Control group container */
 .control-group {
   display: inline-flex;
+  align-items: center;
+  height: 28px;
 }
 
 /* Flip switch styling - no frame around combined buttons */
 .flip-switch {
   box-shadow: none !important;
   border: none !important;
+  height: 28px !important;
+  display: inline-flex !important;
+}
+
+/* Remove any extra padding/margin from v-btn-toggle */
+.flip-switch :deep(.v-btn-group) {
+  height: 28px !important;
+  box-shadow: none !important;
 }
 
 .flip-btn {
@@ -2032,6 +2042,7 @@ onUnmounted(() => {
   height: 28px !important;
   padding: 0 6px !important;
   transition: all 0.15s ease !important;
+  line-height: 28px !important;
 }
 
 .flip-btn.v-btn--active {
