@@ -127,7 +127,18 @@ async function loadStatus() {
     
     // Successful load - update last successful time
     lastSuccessfulLoad.value = Date.now();
-    connectionFailed.value = false;
+    
+    // Only clear connection failed if we've had stable connection
+    if (connectionFailed.value) {
+      // Wait a bit to ensure connection is stable before clearing error
+      setTimeout(() => {
+        if (Date.now() - lastSuccessfulLoad.value < 1000) {
+          connectionFailed.value = false;
+        }
+      }, 500);
+    } else {
+      connectionFailed.value = false;
+    }
     
     buildNumber.value = data.buildNumber;
     gitCommit.value = data.gitCommit;
@@ -135,7 +146,11 @@ async function loadStatus() {
     nodeVersion.value = data.nodeVersion || 'Unknown';
     mqttBroker.value = data.mqttBroker || 'localhost';
     mqttConnected.value = data.mqttConnected !== false; // Default to true
-    status.value = data.status?.toLowerCase() || 'running';
+    
+    // Only update status if not manually restarting
+    if (!restarting.value) {
+      status.value = data.status?.toLowerCase() || 'running';
+    }
 
     if (data.startTime) {
       startTime.value = new Date(data.startTime).getTime();
@@ -149,17 +164,17 @@ async function loadStatus() {
     // Check if we've been down for more than 5 seconds
     const downtime = Date.now() - lastSuccessfulLoad.value;
     
-    if (downtime > 5000) {
-      // More than 5 seconds - show as unresponsive
+    if (downtime > 5000 && !restarting.value) {
+      // More than 5 seconds - show as unresponsive (unless we're restarting)
+      const wasConnected = !connectionFailed.value;
       connectionFailed.value = true;
       
-      // Only show error toast once per failure
-      if (!connectionFailed.value) {
+      // Only log once per failure
+      if (wasConnected) {
         console.error('Daemon unresponsive:', err);
-        // No toast for short downtimes
       }
     }
-    // Otherwise, just silently wait (could be a restart)
+    // Otherwise, just silently wait (could be a restart or brief network issue)
   }
 }
 

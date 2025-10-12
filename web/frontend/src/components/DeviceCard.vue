@@ -1937,9 +1937,9 @@ onUnmounted(() => {
 }
 
 .flip-btn {
-  min-width: 60px !important;
-  height: 32px !important;
-  padding: 0 8px !important;
+  min-width: 50px !important;
+  height: 28px !important;
+  padding: 0 6px !important;
   transition: all 0.15s ease !important;
 }
 
@@ -1949,9 +1949,9 @@ onUnmounted(() => {
 
 /* Compact control buttons with icon + caption */
 .control-btn-compact {
-  min-width: 80px !important;
-  height: 32px !important;
-  padding: 0 12px !important;
+  min-width: 70px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
   transition: all 0.15s ease !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
@@ -1973,9 +1973,9 @@ onUnmounted(() => {
 /* Control divider */
 .control-divider {
   width: 1px;
-  height: 32px;
+  height: 28px;
   background-color: #e5e7eb;
-  margin: 0 8px;
+  margin: 0 12px;
 }
 
 /* Brightness control */

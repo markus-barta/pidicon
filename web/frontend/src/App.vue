@@ -93,12 +93,12 @@ const ws = useGlobalWebSocket();
 
 const dataLoaded = ref(false);
 const error = ref(null);
+const lastSuccessfulLoad = ref(Date.now());
+const errorShown = ref(false);
 let pollInterval = null;
 
 async function loadData() {
   try {
-    error.value = null;
-
     // Load scenes first (devices need this)
     const scenesData = await api.getScenes();
     sceneStore.setScenes(scenesData);
@@ -107,15 +107,39 @@ async function loadData() {
     const devicesData = await api.getDevices();
     deviceStore.setDevices(devicesData);
 
+    // Successful load - update timestamp and clear error state
+    lastSuccessfulLoad.value = Date.now();
+    
+    // Only clear error after 2 consecutive successful loads to avoid flickering
+    if (error.value) {
+      // Wait a bit to ensure connection is stable
+      setTimeout(() => {
+        if (Date.now() - lastSuccessfulLoad.value < 1000) {
+          error.value = null;
+          errorShown.value = false;
+        }
+      }, 500);
+    }
+
     if (!dataLoaded.value) {
       dataLoaded.value = true;
       toast.success('Pixoo Control Panel loaded!', 3000);
     }
   } catch (err) {
-    error.value = `Failed to load data: ${err.message}`;
-    if (!dataLoaded.value) {
-      toast.error(`Failed to load: ${err.message}`);
+    // Check if we've been down for more than 5 seconds
+    const downtime = Date.now() - lastSuccessfulLoad.value;
+    
+    if (downtime > 5000) {
+      // More than 5 seconds - show error
+      error.value = `Failed to load data: ${err.message}`;
+      
+      // Only show error toast once per failure
+      if (!errorShown.value && !dataLoaded.value) {
+        toast.error(`Failed to load: ${err.message}`);
+        errorShown.value = true;
+      }
     }
+    // Otherwise, silently wait (could be a restart or brief network issue)
   }
 }
 
