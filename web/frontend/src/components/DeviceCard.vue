@@ -2029,20 +2029,32 @@ onUnmounted(() => {
   border: none !important;
   height: 28px !important;
   display: inline-flex !important;
+  align-items: center !important;
 }
 
 /* Remove any extra padding/margin from v-btn-toggle */
 .flip-switch :deep(.v-btn-group) {
   height: 28px !important;
   box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Force the v-btn-toggle itself to be 28px */
+.flip-switch :deep(.v-btn-toggle) {
+  height: 28px !important;
 }
 
 .flip-btn {
   min-width: 50px !important;
   height: 28px !important;
+  max-height: 28px !important;
   padding: 0 6px !important;
   transition: all 0.15s ease !important;
-  line-height: 28px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .flip-btn.v-btn--active {
