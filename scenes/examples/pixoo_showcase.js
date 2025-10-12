@@ -36,7 +36,16 @@ const FADE_DURATION = 20; // ~4 seconds fade
 module.exports = {
   name: 'pixoo_showcase',
   description: '🎨 Comprehensive showcase of all Pixoo daemon features',
+  category: 'Demo',
   wantsLoop: true,
+
+  async init(context) {
+    // Scene initialization (called once when scene starts)
+    context.setState('initialized', false);
+    context.setState('phase', PHASES.INTRO);
+    context.setState('frame', 0);
+    context.setState('startTime', Date.now());
+  },
 
   async render(context) {
     const { device, getState, setState } = context;
@@ -98,6 +107,11 @@ module.exports = {
     await device.push('pixoo_showcase', context.publishOk);
 
     return 200; // ~5fps for smooth animations
+  },
+
+  async cleanup(context) {
+    // Scene cleanup (called when switching away from scene)
+    context.setState('initialized', false);
   },
 };
 
