@@ -167,7 +167,7 @@
             Logging
           </span>
           
-          <!-- 3 tiny toggle buttons -->
+          <!-- 5 tiny toggle buttons -->
           <div class="logging-buttons">
             <v-btn
               :variant="loggingLevel === 'debug' ? 'tonal' : 'outlined'"
@@ -181,33 +181,65 @@
             >
               <v-icon size="small">mdi-bug</v-icon>
               <v-tooltip activator="parent" location="bottom">
-                All logs (debug, info, warn, error)
+                All logs (debug, info, warning, error)
               </v-tooltip>
             </v-btn>
 
             <v-btn
-              :variant="loggingLevel === 'warn' ? 'tonal' : 'outlined'"
-              :color="loggingLevel === 'warn' ? 'warning' : 'grey'"
+              :variant="loggingLevel === 'info' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'info' ? 'blue' : 'grey'"
               size="x-small"
-              @click="setLogging('warn')"
+              @click="setLogging('info')"
               class="logging-btn"
-              :class="{ 'logging-btn-pressed': loggingLevel === 'warn' }"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'info' }"
               icon
               density="compact"
             >
-              <v-icon size="small">mdi-alert-circle-outline</v-icon>
+              <v-icon size="small">mdi-information-outline</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                Info, warnings, and errors
+              </v-tooltip>
+            </v-btn>
+
+            <v-btn
+              :variant="loggingLevel === 'warning' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'warning' ? 'warning' : 'grey'"
+              size="x-small"
+              @click="setLogging('warning')"
+              class="logging-btn"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'warning' }"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-alert-outline</v-icon>
               <v-tooltip activator="parent" location="bottom">
                 Warnings and errors only
               </v-tooltip>
             </v-btn>
 
             <v-btn
-              :variant="loggingLevel === 'none' ? 'tonal' : 'outlined'"
-              :color="loggingLevel === 'none' ? 'grey-darken-2' : 'grey'"
+              :variant="loggingLevel === 'error' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'error' ? 'error' : 'grey'"
               size="x-small"
-              @click="setLogging('none')"
+              @click="setLogging('error')"
               class="logging-btn"
-              :class="{ 'logging-btn-pressed': loggingLevel === 'none' }"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'error' }"
+              icon
+              density="compact"
+            >
+              <v-icon size="small">mdi-alert-circle</v-icon>
+              <v-tooltip activator="parent" location="bottom">
+                Errors only
+              </v-tooltip>
+            </v-btn>
+
+            <v-btn
+              :variant="loggingLevel === 'silent' ? 'tonal' : 'outlined'"
+              :color="loggingLevel === 'silent' ? 'grey-darken-2' : 'grey'"
+              size="x-small"
+              @click="setLogging('silent')"
+              class="logging-btn"
+              :class="{ 'logging-btn-pressed': loggingLevel === 'silent' }"
               icon
               density="compact"
             >
@@ -610,7 +642,7 @@ const brightnessLoading = ref(false);
 const displayOn = ref(true);
 const brightness = ref(75);
 const previousBrightness = ref(75); // Store brightness before power off
-const loggingLevel = ref(props.device.driver === 'real' ? 'warn' : 'none'); // Real: warn+error, Mock: none
+const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent'); // Real: warning+error, Mock: silent
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
@@ -1511,7 +1543,7 @@ async function setBrightness() {
   }
 }
 
-// Set logging level directly (called by the 3 logging buttons)
+// Set logging level directly (called by the 5 logging buttons)
 async function setLogging(level) {
   if (loggingLevel.value === level) return; // Already at this level
 
@@ -1521,9 +1553,11 @@ async function setLogging(level) {
   try {
     await api.setDeviceLogging(props.device.ip, level);
     const levelDescriptions = {
-      debug: 'All logs enabled',
-      warn: 'Warnings & errors only',
-      none: 'Logging disabled'
+      debug: 'All logs enabled (debug, info, warning, error)',
+      info: 'Info, warnings, and errors',
+      warning: 'Warnings and errors only',
+      error: 'Errors only',
+      silent: 'Logging disabled'
     };
     toast.success(levelDescriptions[level], 2000);
   } catch (err) {
@@ -1538,26 +1572,32 @@ async function setLogging(level) {
 const getLoggingIcon = computed(() => {
   const icons = {
     debug: 'mdi-bug',
-    warn: 'mdi-alert-circle-outline',
-    none: 'mdi-cancel'
+    info: 'mdi-information-outline',
+    warning: 'mdi-alert-outline',
+    error: 'mdi-alert-circle',
+    silent: 'mdi-cancel'
   };
   return icons[loggingLevel.value] || 'mdi-cancel';
 });
 
 const getLoggingLabel = computed(() => {
   const labels = {
-    debug: 'All Logs',
-    warn: 'Warnings',
-    none: 'Silent'
+    debug: 'Debug',
+    info: 'Info',
+    warning: 'Warning',
+    error: 'Error',
+    silent: 'Silent'
   };
   return labels[loggingLevel.value] || 'Silent';
 });
 
 const getLoggingTooltip = computed(() => {
   const tooltips = {
-    debug: 'Scene logging: All messages (debug, info, warn, error)',
-    warn: 'Scene logging: Warnings and errors only',
-    none: 'Scene logging: Disabled (silent mode)'
+    debug: 'Scene logging: All messages (debug, info, warning, error)',
+    info: 'Scene logging: Info, warnings, and errors',
+    warning: 'Scene logging: Warnings and errors only',
+    error: 'Scene logging: Errors only',
+    silent: 'Scene logging: Disabled (silent mode)'
   };
   return tooltips[loggingLevel.value];
 });
