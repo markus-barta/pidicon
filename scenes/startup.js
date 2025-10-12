@@ -77,7 +77,11 @@ async function render(ctx) {
 
 function logDebugInfo(ctx, state) {
   // Get deployment info from state or use defaults
-  ctx.log(`Deployment ${state.get('deploymentId')} (build ${state.get('buildNumber')}) loaded`, 'info');
+  ctx.log(
+    `Deployment ${state.get('deploymentId')} (build ${state.get('buildNumber')}) loaded`,
+    'info',
+  );
+}
 
 function getStateValue(state, key, defaultValue) {
   return state.get(key) || defaultValue;
@@ -102,7 +106,10 @@ function buildVersionInfo(ctx, state) {
         gitCommit: versionData.gitCommit,
         buildTime: versionData.buildTime,
       };
-      ctx.log(`Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`, 'info');
+      ctx.log(
+        `Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
+        'info',
+      );
     }
   } catch (error) {
     ctx.log(`Failed to read version.json: ${error.message}`, 'warn');
@@ -246,5 +253,4 @@ module.exports = {
   wantsLoop,
   description,
   category,
-};
 };
