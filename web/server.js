@@ -242,24 +242,18 @@ function startWebServer(container, logger) {
     try {
       const { level } = req.body;
 
-      const validLevels = ['debug', 'warn', 'none'];
+      const validLevels = ['debug', 'info', 'warning', 'error', 'silent'];
       if (!level || !validLevels.includes(level)) {
         return res.status(400).json({
-          error: `level must be one of: ${validLevels.join(', ')}`
+          error: `level must be one of: ${validLevels.join(', ')}`,
         });
       }
 
-      logger.ok(
-        `[WEB UI] Setting ${level} logging for ${req.params.ip}`,
-        {
-          source: 'web-ui',
-        },
-      );
+      logger.ok(`[WEB UI] Setting ${level} logging for ${req.params.ip}`, {
+        source: 'web-ui',
+      });
 
-      const result = await deviceService.setDeviceLogging(
-        req.params.ip,
-        level,
-      );
+      const result = await deviceService.setDeviceLogging(req.params.ip, level);
       res.json(result);
     } catch (error) {
       logger.error(`[WEB UI] Failed to set logging on ${req.params.ip}:`, {

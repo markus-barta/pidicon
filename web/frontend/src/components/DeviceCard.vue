@@ -8,23 +8,21 @@
             {{ deviceName }}
           </h3>
           <v-chip
-            :color="device.driver === 'real' ? 'success-darken-2' : undefined"
+            :color="playStateChipColor"
             size="small"
-            :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            :style="device.driver === 'real' ? { backgroundColor: '#0f5132 !important' } : { borderColor: '#d1d5db' }"
+            variant="flat"
             class="mr-2 status-badge"
           >
             <span style="display: inline-flex; align-items: center;">
-              <span :style="{ 
-                display: 'inline-block', 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
-                backgroundColor: device.driver === 'real' ? '#fff' : '#10b981', 
-                marginRight: '6px' 
-              }"></span>
-              <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
-                {{ device.driver === 'real' ? 'Online' : 'Idle' }}
+              <v-icon 
+                :color="playStateIconColorForBadge"
+                size="x-small"
+                style="margin-right: 6px;"
+              >
+                {{ playStateIcon }}
+              </v-icon>
+              <span :style="{ color: playStateTextColor }">
+                {{ selectedScene ? formatSceneName(selectedScene) : 'No Scene' }}
               </span>
             </span>
           </v-chip>
@@ -93,28 +91,7 @@
     </v-card-title>
 
     <v-card-subtitle class="pt-0 pb-2">
-      <div v-if="false" class="d-flex align-center text-medium-emphasis">
-        <!-- Moved to header -->
-      </div>
-      <!-- Show scene info when collapsed - compact with just icon -->
-      <div v-if="isCollapsed && selectedScene" class="d-flex align-center mt-2">
-        <span class="text-body-2 mr-3">{{ formatSceneName(selectedScene) }}</span>
-        
-        <!-- Compact play state indicator -->
-        <v-tooltip location="bottom">
-          <template v-slot:activator="{ props: tooltipProps }">
-            <v-icon 
-              v-bind="tooltipProps"
-              :color="playStateIconColor"
-              size="small"
-              style="cursor: help;"
-            >
-              {{ playStateIcon }}
-            </v-icon>
-          </template>
-          <span>{{ combinedStateLabel }}: {{ combinedStateHint }}</span>
-        </v-tooltip>
-      </div>
+      <!-- Scene info moved to badge in header -->
     </v-card-subtitle>
 
     <v-card-text v-if="!isCollapsed" class="pt-0">
@@ -1075,6 +1052,34 @@ const combinedStateIcon = computed(() => {
 // Aliases for collapsed view
 const playStateIcon = computed(() => combinedStateIcon.value);
 const playStateIconColor = computed(() => combinedStateColor.value);
+
+// Badge styling for scene name + play state
+const playStateChipColor = computed(() => {
+  const sceneState = props.device?.sceneState;
+  if (sceneState?.testCompleted) return 'success-darken-2';
+  
+  const state = playState.value;
+  const colors = {
+    playing: 'success-darken-2',  // Green for playing
+    paused: 'warning-darken-2',    // Orange for paused
+    stopped: 'grey-darken-1',      // Gray for stopped
+  };
+  return colors[state] || 'grey-darken-1';
+});
+
+const playStateIconColorForBadge = computed(() => {
+  const state = playState.value;
+  // White icon for active states (playing/paused), grey for stopped
+  if (state === 'playing' || state === 'paused') return '#fff';
+  return '#9ca3af'; // Gray for stopped
+});
+
+const playStateTextColor = computed(() => {
+  const state = playState.value;
+  // White text for active states (playing/paused), grey for stopped
+  if (state === 'playing' || state === 'paused') return '#fff';
+  return '#6b7280'; // Gray for stopped
+});
 
 const combinedStateHint = computed(() => {
   const sceneState = props.device?.sceneState;
