@@ -29,9 +29,9 @@ const PHASES = {
   FINALE: 9, // Epic goodbye
 };
 
-const PHASE_DURATION = 38; // frames per phase (~7.5 seconds at 5fps) - 50% longer
+const PHASE_DURATION = 45; // frames per phase (~9 seconds at 5fps) - Total ~90s demo
 const FADE_DURATION = 5; // frames for fades
-const IMAGE_PHASE_DURATION = 60; // images phase gets 2x time
+const IMAGE_PHASE_DURATION = 70; // images phase gets extra time
 
 module.exports = {
   name: 'pixoo_showcase',
@@ -75,9 +75,9 @@ module.exports = {
     const stars = [];
     for (let i = 0; i < count; i++) {
       stars.push({
-        x: (Math.random() - 0.5) * 200,
-        y: (Math.random() - 0.5) * 200,
-        z: Math.random() * 100 + 10,
+        x: Math.random() * 64,
+        y: Math.random() * 64,
+        z: Math.random() * 2 + 0.5, // 0.5-2.5 range for speed/brightness
       });
     }
     return stars;
@@ -338,103 +338,100 @@ module.exports = {
   // 🎬 PHASE 5: GEOMETRY - Circle Functions Showcase
   // ============================================================================
   async renderGeometry(device, gfx, frame) {
-    // Slightly lighter background for better visibility
-    device.fillRect([0, 0], [64, 64], [8, 8, 18, 255]);
-
-    // Title first (so circles draw over it)
-    await device.drawText('GEOMETRY', [32, 58], [255, 255, 255, 220], 'center');
-
-    // Gradient circle (pulsing) - top left - more visible
-    const radius1 = 7 + Math.sin(frame * 0.2) * 2;
-    await drawGradientCircle(
-      device,
-      [16, 22],
-      Math.floor(radius1),
-      [255, 220, 0, 255],
-      [255, 100, 0, 200],
+    // Gradient background
+    await gfx.drawGradientBackground(
+      [10, 10, 25, 255],
+      [5, 5, 15, 255],
+      'vertical',
     );
 
-    // Outlined circle (pulsing thickness) - top right
-    const radius2 = 6 + Math.sin(frame * 0.15) * 2;
-    const thickness = Math.floor(Math.abs(Math.sin(frame * 0.1)) * 2) + 1;
+    // Title
+    await device.drawText('CIRCLES', [32, 2], [255, 255, 255, 255], 'center');
+
+    // Single large gradient circle in center - pulsing
+    const radius = 12 + Math.sin(frame * 0.15) * 4;
+    await drawGradientCircle(
+      device,
+      [32, 32],
+      Math.floor(radius),
+      [255, 200, 0, 255],
+      [255, 0, 100, 150],
+    );
+
+    // Outline circle overlay - pulsing thickness
+    const outlineRadius = 18 + Math.cos(frame * 0.12) * 3;
+    const thickness = Math.floor(Math.abs(Math.sin(frame * 0.2)) * 2) + 1;
     await drawCircleOutline(
       device,
-      [48, 22],
-      Math.floor(radius2),
+      [32, 32],
+      Math.floor(outlineRadius),
       [0, 255, 255, 255],
       thickness,
     );
 
-    // Glow circle (breathing) - bottom left
-    const radius3 = 5 + Math.sin(frame * 0.25) * 2;
-    await drawGlowCircle(
-      device,
-      [16, 42],
-      Math.floor(radius3),
-      Math.floor(radius3 + 4),
-      [150, 150, 255, 255],
-    );
-
-    // Filled circle (bouncing color) - bottom right
-    const hue = (frame * 5) % 360;
-    const rgb = this.hslToRgb(hue / 360, 1, 0.6);
-    await drawFilledCircle(device, [48, 42], 7, [...rgb, 255]);
-
-    // Rotating line from center
-    const angle = frame * 0.1;
-    const x1 = 32 + Math.cos(angle) * 22;
-    const y1 = 32 + Math.sin(angle) * 22;
-    await device.drawLine(
-      [32, 32],
-      [Math.floor(x1), Math.floor(y1)],
-      [255, 255, 100, 255],
-    );
+    // Small orbiting circles
+    for (let i = 0; i < 4; i++) {
+      const angle = frame * 0.08 + (i * Math.PI) / 2;
+      const orbitX = 32 + Math.cos(angle) * 22;
+      const orbitY = 32 + Math.sin(angle) * 22;
+      const hue = ((frame * 5 + i * 90) % 360) / 360;
+      const rgb = this.hslToRgb(hue, 1, 0.6);
+      await drawFilledCircle(
+        device,
+        [Math.floor(orbitX), Math.floor(orbitY)],
+        3,
+        [...rgb, 255],
+      );
+    }
   },
 
   // ============================================================================
-  // 🎬 PHASE 6: STARFIELD - 3D Starfield Effect
+  // 🎬 PHASE 6: STARFIELD - Simplified 2D Starfield
   // ============================================================================
   async renderStarfield(device, gfx, getState, setState) {
-    // Black background
-    device.fillRect([0, 0], [64, 64], [0, 0, 5, 255]);
+    // Black space background
+    device.fillRect([0, 0], [64, 64], [0, 0, 10, 255]);
 
+    // Simple 2D scrolling stars - much faster
     const stars = getState('stars', []);
 
-    // Update and draw stars
+    // Draw stars (larger, brighter, more visible)
     for (const star of stars) {
-      star.z -= 2; // Move towards viewer
+      // Move stars across screen
+      star.x -= star.z * 0.3; // speed based on z (depth)
 
-      // Reset if too close
-      if (star.z <= 1) {
-        star.x = (Math.random() - 0.5) * 200;
-        star.y = (Math.random() - 0.5) * 200;
-        star.z = 100;
+      // Wrap around when off screen
+      if (star.x < -5) {
+        star.x = 68;
+        star.y = Math.random() * 64;
       }
 
-      // Project 3D to 2D
-      const scale = 200 / star.z;
-      const x2d = Math.floor(32 + star.x * scale);
-      const y2d = Math.floor(32 + star.y * scale);
+      // Draw star and glow
+      const brightness = Math.floor(star.z * 80 + 100); // Much brighter!
+      const size = Math.floor(star.z * 1.5); // Bigger stars for closer ones
 
-      // Draw star (brighter when closer)
-      const brightness = Math.floor((1 - star.z / 100) * 255);
-      if (x2d >= 0 && x2d < 64 && y2d >= 0 && y2d < 64) {
+      // Main star pixel
+      const x = Math.floor(star.x);
+      const y = Math.floor(star.y);
+      if (x >= 0 && x < 64 && y >= 0 && y < 64) {
         await device.drawPixel(
-          [x2d, y2d],
+          [x, y],
           [brightness, brightness, brightness, 255],
         );
 
-        // Trail effect for close stars
-        if (star.z < 30) {
-          const trailLen = Math.floor((30 - star.z) / 10);
-          for (let t = 1; t <= trailLen; t++) {
-            const tz = star.z + t * 2;
-            const tscale = 200 / tz;
-            const tx = Math.floor(32 + star.x * tscale);
-            const ty = Math.floor(32 + star.y * tscale);
-            const tb = Math.floor(brightness * (1 - t / trailLen));
-            if (tx >= 0 && tx < 64 && ty >= 0 && ty < 64) {
-              await device.drawPixel([tx, ty], [tb, tb, tb, 150]);
+        // Add glow pixels around it for visibility
+        if (size >= 1) {
+          for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+              if (dx === 0 && dy === 0) continue;
+              const gx = x + dx;
+              const gy = y + dy;
+              if (gx >= 0 && gx < 64 && gy >= 0 && gy < 64) {
+                await device.drawPixel(
+                  [gx, gy],
+                  [brightness / 2, brightness / 2, brightness / 2, 150],
+                );
+              }
             }
           }
         }
@@ -444,7 +441,7 @@ module.exports = {
     setState('stars', stars);
 
     // Title
-    await device.drawText('STARFIELD', [32, 2], [255, 255, 255, 255], 'center');
+    await device.drawText('STARS', [32, 2], [255, 255, 255, 255], 'center');
   },
 
   // ============================================================================
@@ -484,44 +481,42 @@ module.exports = {
   // 🎬 PHASE 8: ANIMATION FEST - Everything Moving!
   // ============================================================================
   async renderAnimationFest(device, gfx, getState, setState, frame) {
-    // Lighter background for better visibility
-    device.fillRect([0, 0], [64, 64], [10, 10, 20, 255]);
-
-    // Title at top center
-    await device.drawText(
-      'ANIMATIONS',
-      [32, 2],
-      [255, 255, 255, 255],
-      'center',
+    // Nice gradient background
+    await gfx.drawGradientBackground(
+      [30, 30, 50, 255],
+      [15, 15, 30, 255],
+      'vertical',
     );
 
-    // Bouncing ball with glow
+    // Title at top center
+    await device.drawText('MOVEMENT', [32, 2], [255, 255, 255, 255], 'center');
+
+    // Bouncing ball - large and visible
     let bounceY = getState('bounceY', 32);
     let bounceDir = getState('bounceDir', 1);
 
     bounceY += bounceDir * 2;
-    if (bounceY >= 52 || bounceY <= 15) bounceDir *= -1;
+    if (bounceY >= 50 || bounceY <= 18) bounceDir *= -1;
 
     setState('bounceY', bounceY);
     setState('bounceDir', bounceDir);
 
-    await drawGlowCircle(
+    await drawFilledCircle(
       device,
       [16, Math.floor(bounceY)],
-      5,
-      8,
-      [255, 120, 120, 255],
+      6,
+      [255, 150, 150, 255],
     );
 
-    // Rotating square - brighter
-    const angle = frame * 0.08;
-    const size = 8;
+    // Rotating square - bright and visible
+    const angle = frame * 0.1;
+    const size = 10;
     for (let i = 0; i < 4; i++) {
       const a1 = angle + (i * Math.PI) / 2;
       const a2 = angle + ((i + 1) * Math.PI) / 2;
-      const x1 = 48 + Math.cos(a1) * size;
+      const x1 = 32 + Math.cos(a1) * size;
       const y1 = 32 + Math.sin(a1) * size;
-      const x2 = 48 + Math.cos(a2) * size;
+      const x2 = 32 + Math.cos(a2) * size;
       const y2 = 32 + Math.sin(a2) * size;
       await device.drawLine(
         [Math.floor(x1), Math.floor(y1)],
@@ -530,19 +525,19 @@ module.exports = {
       );
     }
 
-    // Rainbow text moving
-    const textX = ((frame * 3) % 80) - 10;
-    const hue = getState('hue', 0);
-    setState('hue', (hue + 5) % 360);
-    const rgb = this.hslToRgb(hue / 360, 1, 0.7);
+    // Pulsing circle on right
+    const pulseRadius = 5 + Math.sin(frame * 0.2) * 3;
+    await drawFilledCircle(
+      device,
+      [48, 32],
+      Math.floor(pulseRadius),
+      [150, 150, 255, 255],
+    );
 
-    await gfx.drawTextEnhanced('ANIMATE!', [textX, 52], [...rgb, 255], {
-      alignment: 'left',
-      effects: {
-        outline: true,
-        outlineColor: [0, 0, 0, 255],
-      },
-    });
+    // Rainbow text at bottom
+    const hue = (frame * 8) % 360;
+    const rgb = this.hslToRgb(hue / 360, 1, 0.7);
+    await device.drawText('MOTION!', [32, 56], [...rgb, 255], 'center');
   },
 
   // ============================================================================
