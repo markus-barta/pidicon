@@ -722,6 +722,11 @@ let metricsInterval = null;
 
 // Computed
 const deviceName = computed(() => {
+  // Use configured device name from backend, fallback to IP-based name
+  if (props.device.name) {
+    return props.device.name;
+  }
+  // Legacy hardcoded names (can be removed later)
   if (props.device.ip.includes('150')) return 'Office Display';
   if (props.device.ip.includes('151')) return 'Conference Room';
   return `Device ${props.device.ip.split('.').pop()}`;
