@@ -370,7 +370,7 @@ const DRIVER_REGISTRY = {
 ```bash
 # Environment variables (backward compatible):
 PIDICON_DEVICE_TARGETS="192.168.1.100=pixoo64:real;192.168.1.200=awtrix3:real"
-PIDICO_DEVICE_TARGETS="..." # Legacy v3.0 (deprecated)
+PIDICON_DEVICE_TARGETS="..." # Legacy v3.0 (deprecated)
 PIXOO_DEVICE_TARGETS="..."  # Legacy v2.x (still supported)
 
 # Format: ip=deviceType:driver

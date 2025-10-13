@@ -1,4 +1,4 @@
-# PIDICO → PIDICON Migration Plan
+# PIDICON → PIDICON Migration Plan
 
 **Date**: 2025-10-13  
 **Reason**: International branding considerations  
@@ -6,7 +6,7 @@
 
 ## Summary
 
-Rename **PIDICO** to **PIDICON** (Pixel Display Controller) across entire codebase.
+Rename **PIDICON** to **PIDICON** (Pixel Display Controller) across entire codebase.
 
 ---
 
@@ -15,9 +15,9 @@ Rename **PIDICO** to **PIDICON** (Pixel Display Controller) across entire codeba
 ### Phase 1: Code & Configuration
 
 - [ ] `package.json` - Update `name` field
-- [ ] Environment variables (`PIDICO_*` → `PIDICON_*`)
-- [ ] All JavaScript/Vue files (PIDICO → PIDICON)
-- [ ] All documentation files (PIDICO → PIDICON)
+- [ ] Environment variables (`PIDICON_*` → `PIDICON_*`)
+- [ ] All JavaScript/Vue files (PIDICON → PIDICON)
+- [ ] All documentation files (PIDICON → PIDICON)
 - [ ] HTML title tags
 
 ### Phase 2: Folder & Repository
@@ -30,7 +30,7 @@ Rename **PIDICO** to **PIDICON** (Pixel Display Controller) across entire codeba
 ### Phase 3: Backward Compatibility
 
 - [ ] Keep `PIXOO_*` env vars working (already done)
-- [ ] Add `PIDICO_*` → `PIDICON_*` fallback
+- [ ] Add `PIDICON_*` → `PIDICON_*` fallback
 - [ ] Document migration path for existing users
 
 ---
@@ -54,7 +54,7 @@ lib/device-config-store.js
 
 ```
 README.md
-docs/PIDICO_REFACTOR_STATUS.md
+docs/PIDICON_REFACTOR_STATUS.md
 config/README.md
 docs/VERSIONING.md
 docs/ARCHITECTURE.md (future)
@@ -75,13 +75,13 @@ config/devices.example.json
 ### Step 1: Update Code References
 
 ```bash
-# Find all PIDICO references
-grep -r "PIDICO" --include="*.js" --include="*.vue" --include="*.json" --include="*.md" --include="*.html" .
+# Find all PIDICON references
+grep -r "PIDICON" --include="*.js" --include="*.vue" --include="*.json" --include="*.md" --include="*.html" .
 
-# Replace PIDICO → PIDICON
+# Replace PIDICON → PIDICON
 find . -type f \( -name "*.js" -o -name "*.vue" -o -name "*.json" -o -name "*.md" -o -name "*.html" \) \
   -not -path "./node_modules/*" -not -path "./.git/*" \
-  -exec sed -i '' 's/PIDICO/PIDICON/g' {} +
+  -exec sed -i '' 's/PIDICON/PIDICON/g' {} +
 
 # Replace pidico → pidicon (lowercase)
 find . -type f \( -name "*.js" -o -name "*.vue" -o -name "*.json" -o -name "*.md" -o -name "*.html" \) \
@@ -124,7 +124,7 @@ git remote set-url origin git@github.com:markus-barta/pidicon.git
 npm test
 npm run lint
 grep -r "pidico" . --exclude-dir=node_modules  # Should return 0 results
-grep -r "PIDICO" . --exclude-dir=node_modules  # Should return 0 results
+grep -r "PIDICON" . --exclude-dir=node_modules  # Should return 0 results
 ```
 
 ---
@@ -137,7 +137,7 @@ grep -r "PIDICO" . --exclude-dir=node_modules  # Should return 0 results
 // In lib/device-adapter.js
 const targets =
   process.env.PIDICON_DEVICE_TARGETS || // New name
-  process.env.PIDICO_DEVICE_TARGETS || // Fallback (deprecate in v4.0)
+  process.env.PIDICON_DEVICE_TARGETS || // Fallback (deprecate in v4.0)
   process.env.PIXOO_DEVICE_TARGETS || // Legacy (keep forever)
   '';
 ```
@@ -147,15 +147,15 @@ const targets =
 Add to README.md:
 
 ```markdown
-## ⚠️ Migrating from PIDICO v3.0
+## ⚠️ Migrating from PIDICON v3.0
 
-PIDICO has been renamed to **PIDICON** as of v3.1 for international branding.
+PIDICON has been renamed to **PIDICON** as of v3.1 for international branding.
 
 **Action Required**:
 
-1. Rename environment variables: `PIDICO_*` → `PIDICON_*`
-2. Update any scripts/configs referencing "PIDICO"
-3. Old `PIDICO_*` vars still work but are deprecated
+1. Rename environment variables: `PIDICON_*` → `PIDICON_*`
+2. Update any scripts/configs referencing "PIDICON"
+3. Old `PIDICON_*` vars still work but are deprecated
 
 **No changes needed if using**:
 
@@ -170,7 +170,7 @@ PIDICO has been renamed to **PIDICON** as of v3.1 for international branding.
 ### Zero Breaking Changes
 
 - ✅ `PIXOO_*` env vars continue working
-- ✅ `PIDICO_*` env vars continue working (with deprecation)
+- ✅ `PIDICON_*` env vars continue working (with deprecation)
 - ✅ Web UI config file format unchanged
 - ✅ MQTT commands unchanged
 - ✅ Scene files unchanged

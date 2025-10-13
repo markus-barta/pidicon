@@ -8,7 +8,7 @@
 
 ## ✅ What's Done
 
-All code, documentation, and configuration files have been renamed from PIDICO → PIDICON:
+All code, documentation, and configuration files have been renamed from PIDICON → PIDICON:
 
 - ✅ package.json updated (pidicon v3.1.0)
 - ✅ All .js, .vue, .json, .md, .html files updated
@@ -92,13 +92,13 @@ If you have any external references, update them:
 export PIDICON_DEVICE_TARGETS="192.168.1.100=pixoo64:real"
 
 # Legacy v3.0 (deprecated but works)
-export PIDICO_DEVICE_TARGETS="192.168.1.100=pixoo64:real"
+export PIDICON_DEVICE_TARGETS="192.168.1.100=pixoo64:real"
 
 # Legacy v2.x (still fully supported)
 export PIXOO_DEVICE_TARGETS="192.168.1.100=real"
 ```
 
-**Priority**: PIDICON → PIDICO → PIXOO  
+**Priority**: PIDICON → PIDICON → PIXOO  
 **Action**: Update to `PIDICON_*` at your convenience.
 
 ### Web UI Configuration
@@ -141,8 +141,8 @@ git push origin main
 head -5 package.json
 # Should show: "name": "pidicon"
 
-# 5. Verify no PIDICO references (except in migration docs)
-grep -r "PIDICO" --include="*.js" . --exclude-dir=node_modules | grep -v "PIDICON" | grep -v "MIGRATION"
+# 5. Verify no PIDICON references (except in migration docs)
+grep -r "PIDICON" --include="*.js" . --exclude-dir=node_modules | grep -v "PIDICON" | grep -v "MIGRATION"
 # Should return: (empty)
 ```
 
@@ -175,7 +175,7 @@ git remote set-url origin git@github.com:markus-barta/pidicon.git
 | -------------------------- | ------------- | ------------------------ |
 | Code references            | ✅ Complete   | All files updated        |
 | Documentation              | ✅ Complete   | README, guides, examples |
-| Env vars (backward compat) | ✅ Complete   | PIDICO/PIXOO still work  |
+| Env vars (backward compat) | ✅ Complete   | PIDICON/PIXOO still work |
 | Local folder rename        | ⏳ **Manual** | Step 1 above             |
 | GitHub repo rename         | ⏳ **Manual** | Step 2 above             |
 | Git remote update          | ⏳ **Manual** | Step 3 above             |
