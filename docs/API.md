@@ -1,9 +1,11 @@
-# Pixoo Daemon API Documentation
+# PIDICON API Documentation
 
-**Version**: 2.1.0  
-**Last Updated**: 2025-10-11 (Build 603)
+**Version**: 3.1.0  
+**Last Updated**: 2025-10-13 (Build #697+)
 
-Complete API reference for Pixoo Daemon services, commands, and integrations.
+Complete API reference for PIDICON (Pixel Display Controller) services, commands, and integrations.
+
+**Multi-Device Support**: v3.0+ supports multiple device types (Pixoo 64x64, AWTRIX 32x8, etc.)
 
 ---
 
@@ -14,8 +16,12 @@ Complete API reference for Pixoo Daemon services, commands, and integrations.
   - [SceneService](#sceneservice)
   - [SystemService](#systemservice)
 - [Web REST API](#web-rest-api)
+  - [Device Configuration API (v3.0+)](#device-configuration-api-v30)
+  - [Scene Control API](#scene-control-api)
+  - [System API](#system-api)
 - [WebSocket API](#websocket-api)
 - [MQTT Protocol](#mqtt-protocol)
+  - [Multi-Device MQTT Topics (v3.0+)](#multi-device-mqtt-topics-v30)
 - [Scene Development API](#scene-development-api)
 - [Graphics Engine API](#graphics-engine-api)
 
@@ -218,7 +224,171 @@ Restart the daemon process.
 
 All endpoints return JSON. Errors return `{error: string}`.
 
-### Devices
+---
+
+### Device Configuration API (v3.0+)
+
+Manage device configurations, startup scenes, brightness, and watchdog settings via Web UI.
+
+**New in v3.0**: Device configurations are stored in `config/devices.json` (gitignored) and can be managed via REST API without editing environment variables or restarting the daemon.
+
+#### `GET /api/config/devices`
+
+List all configured devices.
+
+**Response:**
+
+```json
+[
+  {
+    "id": "pidicon-1697123456789",
+    "name": "Living Room Pixoo",
+    "ip": "192.168.1.100",
+    "deviceType": "pixoo64",
+    "driver": "real",
+    "startupScene": "startup",
+    "brightness": 80,
+    "watchdog": {
+      "enabled": true,
+      "unresponsiveThresholdHours": 4,
+      "action": "restart",
+      "fallbackScene": "empty",
+      "mqttCommandSequence": []
+    }
+  }
+]
+```
+
+#### `GET /api/config/devices/:ip`
+
+Get configuration for a specific device.
+
+**Parameters:**
+
+- `ip` (path) - Device IP address
+
+**Response:** Single device configuration object (see above)
+
+#### `POST /api/config/devices`
+
+Add a new device configuration.
+
+**Request Body:**
+
+```json
+{
+  "name": "Office AWTRIX",
+  "ip": "192.168.1.200",
+  "deviceType": "awtrix3",
+  "driver": "real",
+  "startupScene": "clock",
+  "brightness": 60,
+  "watchdog": {
+    "enabled": true,
+    "unresponsiveThresholdHours": 2,
+    "action": "mqtt-command",
+    "mqttCommandSequence": [
+      { "topic": "awtrix_abc123/reboot", "payload": "true" }
+    ]
+  }
+}
+```
+
+**Response:** Created device configuration with generated `id`
+
+#### `PUT /api/config/devices/:ip`
+
+Update an existing device configuration.
+
+**Parameters:**
+
+- `ip` (path) - Device IP address
+
+**Request Body:** Partial or full device configuration (same as POST)
+
+**Response:** Updated device configuration
+
+#### `DELETE /api/config/devices/:ip`
+
+Remove a device configuration.
+
+**Parameters:**
+
+- `ip` (path) - Device IP address
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Device 192.168.1.100 removed"
+}
+```
+
+#### `POST /api/config/devices/:ip/test`
+
+Test connectivity to a device without adding it to the configuration.
+
+**Parameters:**
+
+- `ip` (path) - Device IP address
+
+**Query Parameters (optional):**
+
+- `deviceType` - Device type to test (default: `pixoo64`)
+- `driver` - Driver to use (`real` or `mock`, default: `real`)
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Device is reachable",
+  "latency": 45
+}
+```
+
+Or error response:
+
+```json
+{
+  "success": false,
+  "error": "Connection timeout"
+}
+```
+
+#### `GET /api/scenes/list`
+
+List available scenes, optionally filtered by device type.
+
+**Query Parameters (optional):**
+
+- `deviceType` - Filter scenes compatible with device type (e.g., `pixoo64`, `awtrix3`)
+
+**Response:**
+
+```json
+{
+  "scenes": [
+    {
+      "name": "startup",
+      "path": "scenes/startup.js",
+      "compatibleWith": ["pixoo64", "awtrix3"]
+    },
+    {
+      "name": "pixoo_showcase",
+      "path": "scenes/examples/pixoo_showcase.js",
+      "compatibleWith": ["pixoo64"]
+    }
+  ]
+}
+```
+
+---
+
+### Scene Control API
+
+#### Devices
 
 #### `GET /api/devices`
 
@@ -523,6 +693,59 @@ Scene state updates (published on every change).
   "timestamp": 1697040000000
 }
 ```
+
+---
+
+### Multi-Device MQTT Topics (v3.0+)
+
+**Device Type Prefix**: MQTT topics remain `/home/pixoo/` for backward compatibility, but device type information is now available in device state messages.
+
+#### Device Configuration via MQTT (Planned)
+
+Future versions will support device-type-specific MQTT topics:
+
+```
+/home/pidicon/<deviceType>/<ip>/<command>
+```
+
+Examples:
+
+```bash
+# Pixoo device
+mosquitto_pub -t "/home/pidicon/pixoo64/192.168.1.100/scene/switch" -m '{"scene":"startup"}'
+
+# AWTRIX device
+mosquitto_pub -t "/home/pidicon/awtrix3/192.168.1.200/scene/switch" -m '{"scene":"clock"}'
+```
+
+#### Device State Messages (Enhanced in v3.0+)
+
+Scene state messages now include device type and capabilities:
+
+**Payload:**
+
+```json
+{
+  "currentScene": "startup",
+  "status": "running",
+  "generationId": 42,
+  "playState": "playing",
+  "deviceType": "pixoo64",
+  "capabilities": {
+    "width": 64,
+    "height": 64,
+    "hasAudio": false
+  },
+  "timestamp": 1697040000000
+}
+```
+
+#### Backward Compatibility
+
+- ✅ All v2.x MQTT commands continue to work
+- ✅ Topic base `/home/pixoo/` unchanged
+- ✅ Existing automations require no changes
+- ✅ Device type auto-detected or defaults to `pixoo64`
 
 ---
 
