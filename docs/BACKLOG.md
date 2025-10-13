@@ -2,8 +2,9 @@
 
 **Active backlog for PIDICON (Pixel Display Controller). Completed items moved to BACKLOG_DONE.md.**
 
-**Last Updated**: 2025-10-13 (Build #700)  
-**Status**: Production | **Version**: 3.1.0
+**Last Updated**: 2025-10-13 (Build #697)  
+**Status**: Production | **Version**: 3.1.0  
+**Recent**: ✅ Persistent config storage, ✅ GitHub rename complete
 
 ---
 
@@ -31,6 +32,8 @@
 - ✅ Watchdog service
 - ✅ Device-agnostic Graphics Engine
 - ✅ Scene framework supports capabilities
+- ✅ Persistent config storage (/data mount) - Build #697
+- ✅ GitHub repository renamed (pidicon) - Build #695
 
 ### ROADMAP-001: AWTRIX Driver Implementation (P1)
 
@@ -733,47 +736,51 @@ Consider implementing if there's demand from users.
 
 ---
 
-### CFG-501: Config Persistence (P2) 🟢
+### CFG-501: Config Persistence (P2) ✅
 
-- **Status**: proposed
-- **Priority**: P2 (Nice to have)
-- **Effort**: 1-2 days
+- **Status**: completed (Build #697)
+- **Priority**: P2
+- **Effort**: 1 day (actual)
 - **Risk**: Low
 
-**Summary**: Add `/data` volume for persistent configuration.
+**Summary**: Persistent device configuration via `/data` volume mount.
 
-**Current State**: Configuration via environment variables only. Lost on container restart.
+**Implementation Complete**:
 
-**Implementation** (if needed):
+1. ✅ `/data` directory in Dockerfile
+2. ✅ Auto-detect `/data` mount at runtime
+3. ✅ Priority: explicit > env var > /data > fallback
+4. ✅ Documentation: `docs/CONFIG_PERSISTENCE.md`
+5. ✅ Logging of config path on startup
 
-1. Add `/data` directory in Docker image
-2. Load config from `/data/config.json` (if exists)
-3. Merge with environment variables (env overrides)
-4. Document volume mount in README
-5. Migration guide for existing users
+**Files Changed**:
 
-**Recommendation**: Not critical. Current env var approach works well.
+- `lib/device-config-store.js` - Auto-detection logic
+- `Dockerfile` - Create /data directory
+- `docs/CONFIG_PERSISTENCE.md` - Complete guide
+
+**Migration**: See `docs/CONFIG_PERSISTENCE.md` for deployment guide.
 
 ---
 
-### CFG-502: Config API (P2) 🟢
+### CFG-502: Config API (P2) ✅
 
-- **Status**: proposed
-- **Priority**: P2 (Depends on CFG-501)
-- **Effort**: 1 day
+- **Status**: completed (Build #600s)
+- **Priority**: P2
+- **Effort**: Done
 - **Risk**: Low
-- **Dependencies**: CFG-501
 
-**Summary**: REST API for config management.
+**Summary**: REST API for device configuration management.
 
-**Endpoints**:
+**Implementation**: Already exists in `web/server.js`:
 
-- `GET /api/config` - Get current config (passwords masked)
-- `POST /api/config` - Update config
-- `POST /api/config/test` - Test config without saving
-- `POST /api/config/reset` - Reset to defaults
+- ✅ `GET /api/config/devices` - List devices
+- ✅ `POST /api/config/devices` - Add device
+- ✅ `PUT /api/config/devices/:ip` - Update device
+- ✅ `DELETE /api/config/devices/:ip` - Remove device
+- ✅ Web UI for device management (Settings page)
 
-**Recommendation**: Only if config persistence (CFG-501) is implemented.
+**Note**: This was already implemented as part of Phase 9 (Web UI).
 
 ---
 
