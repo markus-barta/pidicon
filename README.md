@@ -1,35 +1,69 @@
-# Pixoo Daemon
+# PIDICO: Pixel Display Controller
 
-🎨✨
+🎨✨ **Universal daemon for pixel displays** - Pixoo, AWTRIX, and more
 
 <p align="center">
-  <img src="pixxo_opener.png" alt="Pixoo Daemon" width="600">
+  <img src="pixxo_opener.png" alt="PIDICO" width="600">
 </p>
 
 <p align="center">
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pixoo-daemon)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-[![Release](https://img.shields.io/badge/release-stable-green)](https://github.com/markus-barta/pixoo-daemon)
+[![Release](https://img.shields.io/badge/release-v3.0.0-green)](https://github.com/markus-barta/pixoo-daemon)
+[![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pixoo-daemon)
 
 </p>
 
-**MQTT-driven scene renderer for Divoom Pixoo 64** with clean architecture, smart scheduling, and
-beautiful visuals. Control your display with simple MQTT messages or through the built-in Web UI.
+**Multi-device, MQTT-driven scene renderer** for pixel displays with clean architecture, smart scheduling, and
+beautiful visuals. Control your displays with simple MQTT messages, through the built-in Web UI, or via persistent configuration.
 
 ---
 
 ## ✨ Highlights
 
-- **🌐 Web UI Control Panel** - Modern Vue 3 interface with real-time WebSocket updates
-- **⚡ WebSocket Integration** - Instant state updates with < 100ms latency (v2.1)
-- **📡 MQTT Integration** - Full control via MQTT messages for automation
-- **🎬 Smart Scene System** - Hot-swappable scenes with play/pause/stop controls
-- **🔄 Self-Restarting** - In-container restart with clean Docker networking
-- **🎨 Advanced Graphics** - Professional rendering with gradients, charts, and smooth animations
-- **🔍 Full Observability** - Real-time metrics, FPS monitoring, and deployment tracking
-- **🚀 Production Ready** - Robust error handling, comprehensive logging, and 152/152 tests passing
+### Core Features
+
+- **🎮 Multi-Device Support** - Manage multiple displays (Pixoo 64, AWTRIX) from one daemon
+- **⚙️ Web-Based Configuration** - Add/edit devices, set startup scenes, configure watchdog via UI
+- **🌐 Modern Web UI** - Vue 3 + Vuetify 3 control panel with real-time WebSocket updates
+- **📡 MQTT Integration** - Full control via MQTT messages for home automation
+- **🎬 Smart Scene System** - Hot-swappable scenes with play/pause/stop controls per device
+- **🐕 Watchdog Monitoring** - Auto-restart, fallback scenes, or MQTT commands on device failure
 - **💨 Hot-Swap Drivers** - Switch between real and mock drivers on the fly
+
+### Graphics & Performance
+
+- **🎨 Advanced Graphics Engine** - Device-agnostic rendering (gradients, charts, animations)
+- **📊 Real-Time Metrics** - FPS display, frametime monitoring, performance tracking
+- **🔍 Full Observability** - Comprehensive logging with 5 levels (debug, info, warning, error, silent)
+- **🚀 Production Ready** - Robust error handling, comprehensive testing, deployment tracking
+- **🔄 Self-Restarting** - In-container restart with clean Docker networking
+
+### Supported Devices
+
+- **✅ Divoom Pixoo 64** (64x64, HTTP) - Stable, full support
+- **🚧 AWTRIX 3** (32x8, MQTT) - Driver ready, implementation in progress
+
+---
+
+## 🤔 Why PIDICO?
+
+**PIDICO (Pixel Display Controller)** started as `pixoo-daemon` for the Divoom Pixoo 64, but grew into a universal
+platform for managing any pixel display device. Version 3.0 introduces multi-device support, enabling you to control
+Pixoo, AWTRIX, and future devices from a single daemon with a unified API.
+
+**Key Advantages:**
+
+- **Unified Control**: One daemon, one API, multiple devices
+- **Device-Agnostic Scenes**: Scenes adapt to different display sizes automatically
+- **Persistent Configuration**: Web-based device management with startup scenes
+- **Production-Ready**: Battle-tested code, comprehensive logging, robust error handling
+- **Extensible Architecture**: Clean driver interface for adding new device types
+
+**Backward Compatible:** Existing `pixoo-daemon` installations work out-of-the-box. Environment variables,
+MQTT commands, and scenes continue to function as before. The rebranding to PIDICO reflects the expanded
+scope while maintaining 100% compatibility.
 
 ---
 
@@ -72,20 +106,43 @@ npm start          # Backend on port 10829
 
 ## 🚀 Quick Start
 
-**Prerequisites:** Node.js 18+, MQTT broker, Pixoo 64 on your network
+**Prerequisites:** Node.js 18+, MQTT broker (optional), pixel display on your network
+
+### Option 1: Web UI Configuration (Recommended)
 
 ```bash
 git clone https://github.com/markus-barta/pixoo-daemon.git
 cd pixoo-daemon
 npm install
 
-# Configure environment variables
+# Configure MQTT (optional, for automation)
 export MOSQITTO_HOST_MS24="your-mqtt-broker"
 export MOSQITTO_USER_MS24="your-username"
 export MOSQITTO_PASS_MS24="your-password"
-export PIXOO_DEVICE_TARGETS="192.168.1.159=real;192.168.1.189=mock"
 
 # Start the daemon
+npm start
+
+# Open Web UI and add devices
+open http://localhost:10829
+```
+
+1. Click **"Settings"** → **"Devices"** tab
+2. Click **"Add Device"**
+3. Enter device IP, name, type (Pixoo 64 / AWTRIX)
+4. Set startup scene and brightness
+5. Configure watchdog (optional)
+6. Click **"Test Connection"** → **"Add"**
+
+### Option 2: Environment Variables (Legacy)
+
+```bash
+# Configure devices via environment variables
+export PIDICO_DEVICE_TARGETS="192.168.1.159=pixoo64:real;192.168.1.189=pixoo64:mock"
+
+# Or use legacy format (still supported)
+export PIXOO_DEVICE_TARGETS="192.168.1.159=real;192.168.1.189=mock"
+
 npm start
 ```
 
