@@ -12,6 +12,9 @@ ARG GIT_COMMIT_COUNT
 # Set working directory
 WORKDIR /app
 
+# Create /data directory for persistent config (mount as volume)
+RUN mkdir -p /data && chmod 755 /data
+
 # Copy package files
 COPY package*.json ./
 
