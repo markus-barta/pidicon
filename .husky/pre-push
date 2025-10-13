@@ -12,6 +12,6 @@ $SSH "$REMOTE" "test -x $REMOTE_SCRIPT" >/dev/null 2>&1 || exit 0
 $SSH "$REMOTE" "test -f $REMOTE_COMPOSE" >/dev/null 2>&1 || exit 0
 
 # Fire-and-forget on server; log to file
-$SSH "$REMOTE" "nohup $REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pixoo-daemon --interval 5 --timeout 300 --stop-timeout 5 >> /home/mba/scripts/watchtower-pixoo-run.log 2>&1 </dev/null &" >/dev/null 2>&1 || true
+$SSH "$REMOTE" "nohup $REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pixoo --target pidicon --interval 5 --timeout 300 --stop-timeout 5 >> /home/mba/scripts/watchtower-pixoo-run.log 2>&1 </dev/null &" >/dev/null 2>&1 || true
 
 exit 0

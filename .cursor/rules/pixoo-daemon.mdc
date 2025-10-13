@@ -1,7 +1,7 @@
 ---
 version: 2.0.0
 lastUpdated: 2025-10-08
-scope: pixoo-daemon
+scope: pidicon
 
 rules:
   - description: Timeout after 30 minutes
@@ -99,9 +99,9 @@ rules:
     reference: "./STANDARDS.md#deployment-references"
 ---
 
-# Cursor Rules for Pixoo Daemon
+# Cursor Rules for PIDICON
 
-**Official Location**: `.cursor/rules/pixoo-daemon.mdc`  
+**Official Location**: `.cursor/rules/pixoo-daemon.mdc` (legacy filename, scope updated to `pidicon`)  
 **Format**: YAML frontmatter + Markdown documentation  
 **Created by**: Cursor UI (New → Rule)
 
