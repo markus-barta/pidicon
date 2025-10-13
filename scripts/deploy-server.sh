@@ -5,7 +5,7 @@ set -e
 # This script is called by GitHub Actions to deploy the application
 
 # Configuration
-DEPLOYMENT_PATH="$HOME/Code/pixoo-daemon"
+DEPLOYMENT_PATH="$HOME/Code/pidicon"
 DOCKER_COMPOSE_PATH="$HOME/docker"
 
 # Colors for output
@@ -31,20 +31,20 @@ main() {
     cd "$DOCKER_COMPOSE_PATH"
     
     log "Pulling latest Docker image..."
-    docker compose pull pixoo-daemon
+    docker compose pull pidicon
 
-    log "Restarting pixoo-daemon container..."
-    docker compose up -d pixoo-daemon
+    log "Restarting pidicon container..."
+    docker compose up -d pidicon
     
     log "Waiting for container to settle..."
     sleep 10
     
     log "Checking container status..."
-    if docker compose ps pixoo-daemon | grep -q "Up"; then
+    if docker compose ps pidicon | grep -q "Up"; then
         echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
     else
         echo -e "${RED}❌ Container failed to start. Check logs:${NC}"
-        docker compose logs --tail=50 pixoo-daemon
+        docker compose logs --tail=50 pidicon
         exit 1
     fi
 }
