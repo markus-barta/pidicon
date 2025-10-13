@@ -56,17 +56,24 @@
 
 ## 🔄 IN PROGRESS / NOT STARTED
 
-### Phase 4: Scene Framework Abstraction ❌
+### Phase 4: Scene Framework Abstraction ✅
 
-- ❌ Update `lib/scene-base.js` - Add capabilities to scenes
-- ❌ Update `lib/graphics-engine.js` - Accept capabilities, remove hardcoded 64x64
-- ❌ Reorganize scenes: `scenes/pixoo/`, `scenes/awtrix/`, `scenes/shared/`
-- ❌ Update scene-loader to support multi-directory structure
+- ✅ Update `lib/graphics-engine.js` - Accept capabilities, remove hardcoded 64x64
+  - Accept optional `capabilities` parameter in constructor
+  - Store width/height from capabilities
+  - Update `drawGradientBackground()` to use dynamic dimensions
+  - Backward compatible with Pixoo64 defaults
+- ✅ `lib/scene-base.js` - Already device-agnostic (no hardcoded dimensions)
+- ⏸️ Scene reorganization (`scenes/pixoo/`, `scenes/awtrix/`) - Deferred to Phase 10
 
-### Phase 6: Documentation Updates ❌
+### Phase 6: Documentation Updates 🔄
 
+- ✅ Update `README.md` - PIDICO branding, supported devices
+  - Renamed to "PIDICO: Pixel Display Controller"
+  - Added "Why PIDICO?" section
+  - Updated Quick Start with Web UI and env var options
+  - New highlights structure (Core, Graphics, Devices)
 - ❌ Update `docs/ARCHITECTURE.md` - Multi-device section
-- ❌ Update `README.md` - PIDICO branding, supported devices
 - ❌ Update `docs/SCENE_DEVELOPMENT.md` - Multi-device scenes, capabilities
 - ❌ Rename `MQTT_COMMANDS.md` → `API.md`
 - ❌ Create `docs/DRIVER_DEVELOPMENT.md`
@@ -167,18 +174,18 @@
 | Phase 1: Rename          | ✅ Complete    | ~1h        | -         |
 | Phase 2: Core            | ✅ Complete    | ~2h        | -         |
 | Phase 3: Pixoo Driver    | ✅ Complete    | ~2h        | -         |
-| Phase 4: Scene Framework | ❌ Not Started | -          | ~3-4h     |
+| Phase 4: Scene Framework | ✅ Complete    | ~1h        | -         |
 | Phase 5: AWTRIX Stub     | ✅ Complete    | ~1h        | -         |
-| Phase 6: Documentation   | ❌ Not Started | -          | ~2-3h     |
+| Phase 6: Documentation   | 🔄 In Progress | ~1h        | ~1-2h     |
 | Phase 7: Testing         | ❌ Not Started | -          | ~6-8h     |
 | Phase 8: Config Env      | ❌ Not Started | -          | ~2h       |
 | Phase 9.1-9.3: Backend   | ✅ Complete    | ~2h        | -         |
 | Phase 9.4-9.6: Frontend  | ✅ Complete    | ~3h        | -         |
-| Phase 9.7-9.9: Backend   | ❌ Not Started | -          | ~2-3h     |
+| Phase 9.7-9.9: Backend   | ✅ Complete    | ~2h        | -         |
 | Phase 10: Migration      | ❌ Not Started | -          | ~2h       |
 
-**Total Progress**: ~55% complete (13h / ~24h estimated for critical path)  
-**Critical Path Remaining**: ~12-16 hours
+**Total Progress**: ~75% complete (19h / ~25h estimated for critical path)  
+**Critical Path Remaining**: ~6-8 hours
 
 ---
 
