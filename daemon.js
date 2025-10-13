@@ -20,7 +20,7 @@ const {
   deviceDrivers,
 } = require('./lib/device-adapter');
 const { setStateStore } = require('./lib/device-adapter');
-const DeviceConfigStore = require('./lib/device-config-store');
+const { DeviceConfigStore } = require('./lib/device-config-store');
 const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
 const MqttService = require('./lib/mqtt-service');
@@ -81,7 +81,6 @@ const deploymentTracker = container.resolve('deploymentTracker');
 const deviceConfigStore = container.resolve('deviceConfigStore');
 const sceneManager = container.resolve('sceneManager');
 const mqttService = container.resolve('mqttService');
-const watchdogService = container.resolve('watchdogService');
 
 // Register services in DI container
 container.register(
@@ -362,6 +361,7 @@ async function initializeDeployment() {
 
         // Start watchdog monitoring
         logger.info('Starting watchdog service...');
+        const watchdogService = container.resolve('watchdogService');
         watchdogService.start();
         logger.ok('Watchdog service started');
       } else {
