@@ -39,7 +39,7 @@ running the latest version with minimal manual intervention.
 
 2. **Watchtower-Pixoo Service**: On-demand container monitoring (not continuous)
    - Dedicated watchtower service that runs only when triggered
-   - Monitors pixoo-daemon container for image updates
+   - Monitors pidicon container for image updates
    - Stops automatically after detecting update or timeout
 
 3. **Husky Pre-commit Hook**: Prevents excessive GitHub Actions usage
@@ -51,7 +51,7 @@ running the latest version with minimal manual intervention.
 #### How It Works
 
 1. **Developer commits code** → Husky pre-commit hook triggers watchtower-pixoo service
-2. **Watchtower-pixoo starts** → Monitors pixoo-daemon container for 5 minutes max
+2. **Watchtower-pixoo starts** → Monitors pidicon container for 5 minutes max
 3. **GitHub Actions builds** → New container image pushed to registry
 4. **Watchtower detects new image** → Pulls and restarts daemon, then stops itself
 5. **Startup scene displays** → Build number and git hash for verification
@@ -83,7 +83,7 @@ This service:
 
 The pre-commit hook runs `other-code/watchtower-pixoo-run.sh` to ensure container updates during development:
 
-1. **Starts watchtower-pixoo service** → Monitors pixoo-daemon container
+1. **Starts watchtower-pixoo service** → Monitors pidicon container
 2. **Runs for maximum 5 minutes (300 seconds)** → Timeout prevents hanging commits
 3. **Checks every 5 seconds** → Detects when GitHub Actions pushes new image
 4. **Stops watchtower-pixoo** → When update detected or timeout reached
@@ -108,18 +108,18 @@ If you need to deploy manually, you can use the provided Docker setup.
 ### Build the Image
 
 ```bash
-docker build -t pixoo-daemon:local .
+docker build -t pidicon:local .
 ```
 
 ### Run the Container
 
 ```bash
-docker run --rm -d --name pixoo-daemon \
+docker run --rm -d --name pidicon \
   -e MOSQITTO_HOST_MS24=your_broker_host \
   -e MOSQITTO_USER_MS24=your_mqtt_user \
   -e MOSQITTO_PASS_MS24=your_mqtt_pass \
   -e PIXOO_DEVICE_TARGETS="192.168.1.159=real" \
-  pixoo-daemon:local
+  pidicon:local
 ```
 
 For a more robust setup, refer to the example `docker-compose.yml` located in

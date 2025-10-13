@@ -3218,7 +3218,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/integration/command-handlers-integration.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/integration/command-handlers-integration.test.js",
       "functions": [
         {
           "functionName": "",
@@ -10338,7 +10338,7 @@
     },
     {
       "scriptId": "449",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/commands/driver-command-handler.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/commands/driver-command-handler.js",
       "functions": [
         {
           "functionName": "",
@@ -10393,7 +10393,7 @@
     },
     {
       "scriptId": "450",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/commands/command-handler.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/commands/command-handler.js",
       "functions": [
         {
           "functionName": "",
@@ -10442,7 +10442,7 @@
     },
     {
       "scriptId": "451",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/errors.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/errors.js",
       "functions": [
         {
           "functionName": "",
@@ -10558,7 +10558,7 @@
     },
     {
       "scriptId": "452",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/logger.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/logger.js",
       "functions": [
         {
           "functionName": "",
@@ -10947,7 +10947,7 @@
     },
     {
       "scriptId": "458",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/commands/reset-command-handler.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/commands/reset-command-handler.js",
       "functions": [
         {
           "functionName": "",
@@ -10983,7 +10983,7 @@
     },
     {
       "scriptId": "459",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/commands/scene-command-handler.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/commands/scene-command-handler.js",
       "functions": [
         {
           "functionName": "",
@@ -11018,7 +11018,7 @@
     },
     {
       "scriptId": "460",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/commands/state-command-handler.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/commands/state-command-handler.js",
       "functions": [
         {
           "functionName": "",

@@ -3152,7 +3152,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/lib/scene-manager-di.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/lib/scene-manager-di.test.js",
       "functions": [
         {
           "functionName": "",
@@ -9974,7 +9974,7 @@
     },
     {
       "scriptId": "449",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/scene-manager.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/scene-manager.js",
       "functions": [
         {
           "functionName": "",
@@ -10845,7 +10845,7 @@
     },
     {
       "scriptId": "460",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/logger.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/logger.js",
       "functions": [
         {
           "functionName": "",

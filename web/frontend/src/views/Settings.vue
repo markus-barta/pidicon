@@ -346,7 +346,7 @@ export default {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `pidico-config-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `pidicon-config-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         URL.revokeObjectURL(url);
 

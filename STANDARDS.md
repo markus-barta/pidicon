@@ -341,7 +341,7 @@ This is the **official** Cursor location. Trust what the UI creates!
 
 ### Current Rules File
 
-- **`.cursor/rules/pixoo-daemon.mdc`** - Main project rules (10 rules)
+- **`.cursor/rules/pidicon.mdc`** - Main project rules (10 rules)
 
 ### Validation
 

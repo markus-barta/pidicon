@@ -2,7 +2,7 @@
 
 ## 🎯 Your Current Setup
 
-Your `pixoo-daemon` uses `network_mode: host`, which means:
+Your `pidicon` uses `network_mode: host`, which means:
 
 - ✅ **No port mapping needed** - Container binds directly to host ports
 - ✅ Port 10829 will be accessible on your server IP
@@ -12,12 +12,12 @@ Your `pixoo-daemon` uses `network_mode: host`, which means:
 
 ## 📝 Update Your docker-compose.yml
 
-Add these environment variables to your `pixoo-daemon` service:
+Add these environment variables to your `pidicon` service:
 
 ```yaml
-pixoo-daemon:
-  image: ghcr.io/markus-barta/pixoo-daemon:latest
-  container_name: pixoo-daemon
+pidicon:
+  image: ghcr.io/markus-barta/pidicon:latest
+  container_name: pidicon
   network_mode: host # ← Already using host network!
   restart: no
   environment:
@@ -109,7 +109,7 @@ Use Nginx or Caddy to add HTTPS if exposing externally.
 ### **Check Logs**
 
 ```bash
-docker logs pixoo-daemon | grep "Web UI"
+docker logs pidicon | grep "Web UI"
 ```
 
 **Expected output**:
@@ -163,13 +163,13 @@ authentication. For production, use a reverse proxy with HTTPS.
 
 ### **Web UI not starting**
 
-1. Check logs: `docker logs pixoo-daemon`
+1. Check logs: `docker logs pidicon`
 2. Verify port is free: `lsof -i :10829`
 3. Check Express is installed: Should be in `package.json` dependencies
 
 ### **Cannot access from browser**
 
-1. Verify daemon is running: `docker ps | grep pixoo-daemon`
+1. Verify daemon is running: `docker ps | grep pidicon`
 2. Check firewall: `telnet your-server-ip 10829`
 3. Verify network mode: Should be `host` in docker-compose.yml
 

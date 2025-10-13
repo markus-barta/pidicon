@@ -40,7 +40,7 @@ Additional context and examples can go here.
 
 ## Current Rules
 
-- **`pixoo-daemon.mdc`** - Main project rules (10 rules total)
+- **`pidicon.mdc`** - Main project rules (10 rules total)
 
 ## Validation
 

@@ -3141,7 +3141,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/lib/scene-manager-statestore.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/lib/scene-manager-statestore.test.js",
       "functions": [
         {
           "functionName": "",
@@ -9915,7 +9915,7 @@
     },
     {
       "scriptId": "450",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/scene-manager.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/scene-manager.js",
       "functions": [
         {
           "functionName": "",
@@ -10414,7 +10414,7 @@
     },
     {
       "scriptId": "456",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/state-store.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/state-store.js",
       "functions": [
         {
           "functionName": "",

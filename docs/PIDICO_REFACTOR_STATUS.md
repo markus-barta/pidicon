@@ -1,4 +1,4 @@
-# PIDICO Multi-Device Refactor - Implementation Status
+# PIDICON Multi-Device Refactor - Implementation Status
 
 **Last Updated**: 2025-10-12  
 **Version**: 3.0.0-dev  
@@ -10,9 +10,9 @@
 
 ### Phase 1: Rename & Rebrand ✅
 
-- ✅ Package renamed: `pixoo-daemon` → `pidico` v3.0.0
-- ✅ UI updated: "PIDICO: Pixel Display Controller"
-- ✅ Environment variables: `PIDICO_DEVICE_TARGETS`, `PIDICO_DEFAULT_DRIVER`
+- ✅ Package renamed: `pidicon` → `pidicon` v3.0.0
+- ✅ UI updated: "PIDICON: Pixel Display Controller"
+- ✅ Environment variables: `PIDICON_DEVICE_TARGETS`, `PIDICON_DEFAULT_DRIVER`
 - ✅ Backward compatibility maintained for `PIXOO_*` env vars
 - ✅ ESLint config updated to allow `_` prefixed unused vars
 
@@ -68,9 +68,9 @@
 
 ### Phase 6: Documentation Updates 🔄
 
-- ✅ Update `README.md` - PIDICO branding, supported devices
-  - Renamed to "PIDICO: Pixel Display Controller"
-  - Added "Why PIDICO?" section
+- ✅ Update `README.md` - PIDICON branding, supported devices
+  - Renamed to "PIDICON: Pixel Display Controller"
+  - Added "Why PIDICON?" section
   - Updated Quick Start with Web UI and env var options
   - New highlights structure (Core, Graphics, Devices)
 - ❌ Update `docs/ARCHITECTURE.md` - Multi-device section
@@ -122,7 +122,7 @@
 ### Phase 10: Backlog & Migration ❌
 
 - ❌ Update `docs/BACKLOG.md` with multi-device roadmap
-- ❌ Create `scripts/migrate-to-pidico.js`
+- ❌ Create `scripts/migrate-to-pidicon.js`
 - ❌ Create deployment checklist
 - ❌ Tag `v2.1.0-pixoo-final` for rollback
 
@@ -224,7 +224,7 @@
    - Will be activated in Phase 9.7 integration
 
 3. **Configuration Priority**:
-   - Config file (`config/devices.json`) → Env vars (PIDICO\_\*) → Defaults
+   - Config file (`config/devices.json`) → Env vars (PIDICON\_\*) → Defaults
    - Backward compat with PIXOO\_\* env vars maintained
 
 ### Future Improvements

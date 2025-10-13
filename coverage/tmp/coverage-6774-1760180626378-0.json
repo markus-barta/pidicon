@@ -3168,7 +3168,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/lib/state-store.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/lib/state-store.test.js",
       "functions": [
         {
           "functionName": "",
@@ -10115,7 +10115,7 @@
     },
     {
       "scriptId": "449",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/state-store.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/state-store.js",
       "functions": [
         {
           "functionName": "",
@@ -11061,7 +11061,7 @@
     },
     {
       "scriptId": "460",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/logger.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/logger.js",
       "functions": [
         {
           "functionName": "",

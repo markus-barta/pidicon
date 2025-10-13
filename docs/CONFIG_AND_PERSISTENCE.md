@@ -150,7 +150,7 @@ async switchDriver(deviceIp, newDriver) {
 **Goal**: Web UI config page with persistent storage
 
 ```yaml
-# /data/pixoo-daemon/config.yaml (example)
+# /data/pidicon/config.yaml (example)
 mqtt:
   host: miniserver24
   username: smarthome
@@ -190,7 +190,7 @@ logging:
 
 ```yaml
 volumes:
-  - ./data/pixoo-daemon:/data # Config persistence
+  - ./data/pidicon:/data # Config persistence
 ```
 
 ---
@@ -222,13 +222,13 @@ PIXOO_DEVICE_TARGETS="192.168.1.159=mock"
 
 # Restart container
 cd /home/mba/docker
-docker compose restart pixoo-daemon
+docker compose restart pidicon
 ```
 
 **Docker Compose:**
 
 ```yaml
-pixoo-daemon:
+pidicon:
   environment:
     - PIXOO_DEVICE_TARGETS=192.168.1.159=real;192.168.1.189=mock
     - PIXOO_DEFAULT_DRIVER=mock

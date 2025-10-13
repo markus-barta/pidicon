@@ -48,9 +48,9 @@ For Docker deployments, choose one of the following networking modes:
 Use standard Docker networking with port mapping:
 
 ```yaml
-pixoo-daemon:
-  image: ghcr.io/markus-barta/pixoo-daemon:latest
-  container_name: pixoo-daemon
+pidicon:
+  image: ghcr.io/markus-barta/pidicon:latest
+  container_name: pidicon
   restart: unless-stopped
   ports:
     - '10829:10829' # Web UI port
@@ -82,9 +82,9 @@ networks:
 Container uses host's network stack directly:
 
 ```yaml
-pixoo-daemon:
-  image: ghcr.io/markus-barta/pixoo-daemon:latest
-  container_name: pixoo-daemon
+pidicon:
+  image: ghcr.io/markus-barta/pidicon:latest
+  container_name: pidicon
   network_mode: host
   restart: unless-stopped
   environment:
@@ -295,7 +295,7 @@ authentication. For production with external access, use a reverse proxy with HT
 ### **Check Logs**
 
 ```bash
-docker logs pixoo-daemon | grep "Web UI"
+docker logs pidicon | grep "Web UI"
 ```
 
 **Expected output**:
@@ -373,7 +373,7 @@ curl http://localhost:10829/api/status
 1. **Is daemon running?**
 
    ```bash
-   docker ps | grep pixoo-daemon
+   docker ps | grep pidicon
 
    # Should show: CONTAINER ID   IMAGE   ...   Up X minutes
    ```
@@ -392,7 +392,7 @@ curl http://localhost:10829/api/status
 
    ```bash
    # Check networking mode
-   docker inspect pixoo-daemon | grep -A 5 -B 5 NetworkMode
+   docker inspect pidicon | grep -A 5 -B 5 NetworkMode
 
    # Bridge networking: "NetworkMode": "bridge" (requires port mapping)
    # Host networking: "NetworkMode": "host" (no port mapping needed)
@@ -401,7 +401,7 @@ curl http://localhost:10829/api/status
    If using bridge networking, verify port is mapped:
 
    ```bash
-   docker port pixoo-daemon
+   docker port pidicon
    # Should show: 10829/tcp -> 0.0.0.0:10829
    ```
 
@@ -463,7 +463,7 @@ curl http://localhost:10829/api/status
 
    ```bash
    # Check logs for startup message
-   docker logs pixoo-daemon | grep "Web UI"
+   docker logs pidicon | grep "Web UI"
    ```
 
 3. **Port conflicts**
@@ -551,4 +551,4 @@ Edit `web/public/style.css` to customize the look and feel.
 
 ---
 
-**Need Help?** Check the logs in `docker logs pixoo-daemon` or open an issue.
+**Need Help?** Check the logs in `docker logs pidicon` or open an issue.

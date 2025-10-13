@@ -1,6 +1,6 @@
-# PIDICO Device Configuration
+# PIDICON Device Configuration
 
-This directory contains the device configuration file for PIDICO.
+This directory contains the device configuration file for PIDICON.
 
 ## Configuration File
 
@@ -9,10 +9,10 @@ This directory contains the device configuration file for PIDICO.
 
 ### Priority
 
-PIDICO loads devices in the following order:
+PIDICON loads devices in the following order:
 
 1. **`config/devices.json`** (if exists) - Web UI managed configuration
-2. **Environment Variables** - `PIDICO_DEVICE_TARGETS` (legacy/fallback)
+2. **Environment Variables** - `PIDICON_DEVICE_TARGETS` (legacy/fallback)
 3. **Default** - No devices configured
 
 ### Configuration Structure
@@ -23,7 +23,7 @@ PIDICO loads devices in the following order:
   "lastModified": "2025-10-13T00:00:00Z",
   "devices": [
     {
-      "id": "pidico-1728888000000",
+      "id": "pidicon-1728888000000",
       "name": "Living Room Pixoo",
       "ip": "192.168.1.100",
       "deviceType": "pixoo64",
@@ -63,7 +63,7 @@ PIDICO loads devices in the following order:
 
 #### Via Web UI (Recommended)
 
-1. Open PIDICO Web UI (default: `http://localhost:10829`)
+1. Open PIDICON Web UI (default: `http://localhost:10829`)
 2. Click **"Settings"** in the top navigation
 3. Go to **"Devices"** tab
 4. Click **"Add Device"** or edit existing devices
@@ -101,11 +101,11 @@ From the Web UI Settings page, you can:
 
 ### Backward Compatibility
 
-If no `devices.json` is found, PIDICO falls back to environment variables:
+If no `devices.json` is found, PIDICON falls back to environment variables:
 
 ```bash
 # Legacy format (still supported)
-export PIDICO_DEVICE_TARGETS="192.168.1.100=real"
+export PIDICON_DEVICE_TARGETS="192.168.1.100=real"
 export PIXOO_DEVICE_TARGETS="192.168.1.100=real"  # Also supported
 ```
 
@@ -117,7 +117,7 @@ To migrate from environment variables to `devices.json`:
 
 1. Open the Web UI
 2. Add your devices via the Settings page
-3. (Optional) Remove `PIDICO_DEVICE_TARGETS` from `.env`
+3. (Optional) Remove `PIDICON_DEVICE_TARGETS` from `.env`
 
 ### Troubleshooting
 
@@ -157,4 +157,4 @@ If you need to share configuration:
 ---
 
 **Last Updated**: 2025-10-13  
-**Version**: 3.0.0 (PIDICO Multi-Device Support)
+**Version**: 3.0.0 (PIDICON Multi-Device Support)

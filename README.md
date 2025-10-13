@@ -1,17 +1,17 @@
-# PIDICO: Pixel Display Controller
+# PIDICON: Pixel Display Controller
 
 🎨✨ **Universal daemon for pixel displays** - Pixoo, AWTRIX, and more
 
 <p align="center">
-  <img src="pixxo_opener.png" alt="PIDICO" width="600">
+  <img src="pixxo_opener.png" alt="PIDICON" width="600">
 </p>
 
 <p align="center">
 
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pixoo-daemon)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pidicon)
 [![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v3.0.0-green)](https://github.com/markus-barta/pixoo-daemon)
-[![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pixoo-daemon)
+[![Release](https://img.shields.io/badge/release-v3.0.0-green)](https://github.com/markus-barta/pidicon)
+[![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pidicon)
 
 </p>
 
@@ -47,9 +47,9 @@ beautiful visuals. Control your displays with simple MQTT messages, through the 
 
 ---
 
-## 🤔 Why PIDICO?
+## 🤔 Why PIDICON?
 
-**PIDICO (Pixel Display Controller)** started as `pixoo-daemon` for the Divoom Pixoo 64, but grew into a universal
+**PIDICON (Pixel Display Controller)** started as `pidicon` for the Divoom Pixoo 64, but grew into a universal
 platform for managing any pixel display device. Version 3.0 introduces multi-device support, enabling you to control
 Pixoo, AWTRIX, and future devices from a single daemon with a unified API.
 
@@ -61,8 +61,8 @@ Pixoo, AWTRIX, and future devices from a single daemon with a unified API.
 - **Production-Ready**: Battle-tested code, comprehensive logging, robust error handling
 - **Extensible Architecture**: Clean driver interface for adding new device types
 
-**Backward Compatible:** Existing `pixoo-daemon` installations work out-of-the-box. Environment variables,
-MQTT commands, and scenes continue to function as before. The rebranding to PIDICO reflects the expanded
+**Backward Compatible:** Existing `pidicon` installations work out-of-the-box. Environment variables,
+MQTT commands, and scenes continue to function as before. The rebranding to PIDICON reflects the expanded
 scope while maintaining 100% compatibility.
 
 ---
@@ -111,8 +111,8 @@ npm start          # Backend on port 10829
 ### Option 1: Web UI Configuration (Recommended)
 
 ```bash
-git clone https://github.com/markus-barta/pixoo-daemon.git
-cd pixoo-daemon
+git clone https://github.com/markus-barta/pidicon.git
+cd pidicon
 npm install
 
 # Configure MQTT (optional, for automation)
@@ -138,7 +138,7 @@ open http://localhost:10829
 
 ```bash
 # Configure devices via environment variables
-export PIDICO_DEVICE_TARGETS="192.168.1.159=pixoo64:real;192.168.1.189=pixoo64:mock"
+export PIDICON_DEVICE_TARGETS="192.168.1.159=pixoo64:real;192.168.1.189=pixoo64:mock"
 
 # Or use legacy format (still supported)
 export PIXOO_DEVICE_TARGETS="192.168.1.159=real;192.168.1.189=mock"
@@ -375,9 +375,9 @@ node scripts/live_test_perf_once.js    # Performance benchmark
 **Docker Compose:**
 
 ```yaml
-pixoo-daemon:
-  image: ghcr.io/markus-barta/pixoo-daemon:latest
-  container_name: pixoo-daemon
+pidicon:
+  image: ghcr.io/markus-barta/pidicon:latest
+  container_name: pidicon
   restart: unless-stopped # or 'no' - daemon can self-restart
   ports:
     - '10829:10829' # Web UI
@@ -439,7 +439,7 @@ exports `name`, `render`, etc.
 | **Device unreachable**    | Ping device. Check IP in `PIXOO_DEVICE_TARGETS`. Try mock driver first        |
 | **Performance issues**    | Use `LOG_LEVEL=debug` to profile. Check `cleanup()` is implemented properly   |
 | **Web UI empty**          | Hard refresh browser (Cmd+Shift+R). Check console for errors                  |
-| **Container won't start** | Check logs with: `docker logs pixoo-daemon --tail 100`                        |
+| **Container won't start** | Check logs with: `docker logs pidicon --tail 100`                             |
 
 **Debug Commands:**
 
@@ -454,7 +454,7 @@ mosquitto_sub -h $MOSQITTO_HOST_MS24 -t 'pixoo/+/#' -v
 mosquitto_sub -h $MOSQITTO_HOST_MS24 -t '/home/pixoo/+/scene/state'
 
 # Docker logs
-docker logs pixoo-daemon -f --timestamps --tail 100
+docker logs pidicon -f --timestamps --tail 100
 ```
 
 ---

@@ -3148,7 +3148,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/lib/di-container.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/lib/di-container.test.js",
       "functions": [
         {
           "functionName": "",
@@ -10253,7 +10253,7 @@
     },
     {
       "scriptId": "449",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/di-container.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/di-container.js",
       "functions": [
         {
           "functionName": "",

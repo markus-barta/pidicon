@@ -1853,7 +1853,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/scenes/examples/performance-test.js",
+      "url": "file:///Users/markus/Code/pidicon/scenes/examples/performance-test.js",
       "functions": [
         {
           "functionName": "",
@@ -1964,7 +1964,7 @@
     },
     {
       "scriptId": "392",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/logger.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/logger.js",
       "functions": [
         {
           "functionName": "",
@@ -2353,7 +2353,7 @@
     },
     {
       "scriptId": "398",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/performance-utils.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/performance-utils.js",
       "functions": [
         {
           "functionName": "",
@@ -2389,7 +2389,7 @@
     },
     {
       "scriptId": "399",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/rendering-utils.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/rendering-utils.js",
       "functions": [
         {
           "functionName": "",
@@ -2435,7 +2435,7 @@
     },
     {
       "scriptId": "400",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/font.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/font.js",
       "functions": [
         {
           "functionName": "",

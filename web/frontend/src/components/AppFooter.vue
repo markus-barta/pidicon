@@ -12,10 +12,10 @@
         <div class="d-flex align-center">
           <v-icon size="x-small" class="mr-1" style="vertical-align: middle;">mdi-source-commit</v-icon>
           <span v-if="buildNumber && gitCommit">
-            <a :href="`https://github.com/markus-barta/pixoo-daemon/commit/${gitCommit}`" target="_blank" class="text-decoration-none text-primary">{{ gitCommit.slice(0, 7) }}</a>
+            <a :href="`https://github.com/markus-barta/pidicon/commit/${gitCommit}`" target="_blank" class="text-decoration-none text-primary">{{ gitCommit.slice(0, 7) }}</a>
             (Build #{{ buildNumber}}) •
           </span>
-          <a href="https://github.com/markus-barta/pixoo-daemon" target="_blank" class="text-decoration-none text-primary ml-1">
+          <a href="https://github.com/markus-barta/pidicon" target="_blank" class="text-decoration-none text-primary ml-1">
             <v-icon size="x-small" style="vertical-align: middle;">mdi-github</v-icon>
             View on GitHub
           </a>

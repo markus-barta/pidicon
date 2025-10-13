@@ -3,7 +3,7 @@
   "lastModified": "2025-10-13T00:00:00Z",
   "devices": [
     {
-      "id": "pidico-1728888000000",
+      "id": "pidicon-1728888000000",
       "name": "Living Room Pixoo",
       "ip": "192.168.1.100",
       "deviceType": "pixoo64",
@@ -19,7 +19,7 @@
       }
     },
     {
-      "id": "pidico-1728888000001",
+      "id": "pidicon-1728888000001",
       "name": "Office AWTRIX (Coming Soon)",
       "ip": "192.168.1.200",
       "deviceType": "awtrix3",

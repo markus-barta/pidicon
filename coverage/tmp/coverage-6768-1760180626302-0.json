@@ -3138,7 +3138,7 @@
     },
     {
       "scriptId": "391",
-      "url": "file:///Users/markus/Code/pixoo-daemon/test/lib/logger.test.js",
+      "url": "file:///Users/markus/Code/pidicon/test/lib/logger.test.js",
       "functions": [
         {
           "functionName": "",
@@ -9906,7 +9906,7 @@
     },
     {
       "scriptId": "449",
-      "url": "file:///Users/markus/Code/pixoo-daemon/lib/logger.js",
+      "url": "file:///Users/markus/Code/pidicon/lib/logger.js",
       "functions": [
         {
           "functionName": "",

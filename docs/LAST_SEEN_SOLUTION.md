@@ -148,7 +148,7 @@ const lastSeen = computed(() => {
 3. **Check Logs**:
 
    ```bash
-   docker logs pixoo-daemon | grep "LAST SEEN"
+   docker logs pidicon | grep "LAST SEEN"
    ```
 
    **Expected**: `[LAST SEEN] Real device 192.168.1.159 ACKed at 1760252198954`

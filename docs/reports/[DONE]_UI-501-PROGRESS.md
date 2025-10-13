@@ -270,10 +270,10 @@ npm start
 
 ```bash
 # Build
-docker build -t pixoo-daemon .
+docker build -t pidicon .
 
 # Run
-docker run -p 10829:10829 -e MQTT_HOST=... pixoo-daemon
+docker run -p 10829:10829 -e MQTT_HOST=... pidicon
 
 # Open http://localhost:10829
 ```
