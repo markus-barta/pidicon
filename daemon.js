@@ -18,6 +18,7 @@ const {
   getDriverForDevice,
   devices,
   deviceDrivers,
+  registerDevicesFromConfig,
 } = require('./lib/device-adapter');
 const { setStateStore } = require('./lib/device-adapter');
 const { DeviceConfigStore } = require('./lib/device-config-store');
@@ -292,6 +293,9 @@ async function initializeDeployment() {
       const configuredDevices = Array.from(
         deviceConfigStore.getAllDevices().values(),
       );
+
+      // Register devices in device adapter (populates deviceDrivers map)
+      registerDevicesFromConfig(configuredDevices);
 
       // Load user custom scenes from settings
       const settings = deviceConfigStore.getSettings();
