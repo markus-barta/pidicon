@@ -99,7 +99,7 @@ container.register(
 
 container.register(
   'deviceService',
-  ({ logger, sceneManager, stateStore }) =>
+  ({ logger, sceneManager, stateStore, deviceConfigStore }) =>
     new DeviceService({
       logger,
       deviceAdapter: {
@@ -112,6 +112,7 @@ container.register(
       sceneManager,
       stateStore,
       softReset,
+      deviceConfigStore,
     }),
 );
 

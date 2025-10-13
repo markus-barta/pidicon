@@ -383,6 +383,16 @@ function startWebServer(container, logger) {
     try {
       const device = await deviceConfigStore.addDevice(req.body);
       logger.ok(`[WEB UI] Added device config: ${device.ip} (${device.name})`);
+
+      // Activate the device immediately
+      try {
+        await deviceService.activateDevice(device.ip);
+      } catch (activationError) {
+        logger.warn(
+          `Device config saved but activation failed: ${activationError.message}`,
+        );
+      }
+
       res.json(device.toJSON());
     } catch (error) {
       logger.error('API /api/config/devices POST error:', {
@@ -402,6 +412,16 @@ function startWebServer(container, logger) {
       logger.ok(
         `[WEB UI] Updated device config: ${device.ip} (${device.name})`,
       );
+
+      // Re-activate device with updated config
+      try {
+        await deviceService.activateDevice(device.ip);
+      } catch (activationError) {
+        logger.warn(
+          `Device config updated but activation failed: ${activationError.message}`,
+        );
+      }
+
       res.json(device.toJSON());
     } catch (error) {
       logger.error(`API /api/config/devices/${req.params.ip} PUT error:`, {
@@ -414,6 +434,13 @@ function startWebServer(container, logger) {
   // DELETE /api/config/devices/:ip - Remove device config
   app.delete('/api/config/devices/:ip', async (req, res) => {
     try {
+      // Deactivate device first
+      try {
+        await deviceService.deactivateDevice(req.params.ip);
+      } catch (deactivationError) {
+        logger.warn(`Device deactivation failed: ${deactivationError.message}`);
+      }
+
       await deviceConfigStore.removeDevice(req.params.ip);
       logger.ok(`[WEB UI] Removed device config: ${req.params.ip}`);
       res.json({ success: true });
