@@ -1,9 +1,9 @@
 # Development Backlog
 
-**Active backlog for Pixoo Daemon project. Completed items moved to BACKLOG_DONE.md.**
+**Active backlog for PIDICON (Pixel Display Controller). Completed items moved to BACKLOG_DONE.md.**
 
-**Last Updated**: 2025-10-11 (Build 601)  
-**Status**: Production | **Version**: 2.0.0
+**Last Updated**: 2025-10-13 (Build #700)  
+**Status**: Production | **Version**: 3.1.0
 
 ---
 
@@ -11,10 +11,367 @@
 
 | Priority          | Count | Status                  |
 | ----------------- | ----- | ----------------------- |
-| P0 (Critical)     | 1     | 🔴 High priority        |
-| P1 (Important)    | 4     | 🟡 Should have          |
-| P2 (Nice to Have) | 5     | 🟢 Future consideration |
-| Total Active      | 10    |                         |
+| P0 (Critical)     | 0     | ✅ All resolved         |
+| P1 (Important)    | 6     | 🟡 Multi-device roadmap |
+| P2 (Nice to Have) | 8     | 🟢 Future consideration |
+| Total Active      | 14    |                         |
+
+---
+
+## 🌐 Multi-Device Roadmap (v3.0+)
+
+**Context**: PIDICON v3.0 introduced multi-device support with abstract DeviceDriver interface, DisplayCapabilities system, and web-based device configuration.
+
+**Current Status**:
+
+- ✅ Core architecture complete (DeviceDriver, DisplayCapabilities)
+- ✅ Pixoo driver fully functional (100% feature parity)
+- ✅ AWTRIX driver stub prepared (interface ready)
+- ✅ Web UI for device management
+- ✅ Watchdog service
+- ✅ Device-agnostic Graphics Engine
+- ✅ Scene framework supports capabilities
+
+### ROADMAP-001: AWTRIX Driver Implementation (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 10-15 hours
+- **Risk**: Medium (MQTT complexity)
+- **Status**: Not Started (stub ready)
+
+**Goal**: Full AWTRIX 3 device support via MQTT protocol
+
+**Tasks**:
+
+1. MQTT client integration (`mqtt` package)
+2. Topic structure implementation (`awtrix_<id>/notify`, `/custom/<app>`)
+3. CustomApp API (text + icon rendering)
+4. Icon library mapping (8-bit icons)
+5. Audio/RTTTL support (beeper, melodies)
+6. Settings API (brightness, sleep mode)
+7. Notification API (temporary text overlays)
+8. State synchronization (device → daemon)
+
+**Acceptance Criteria**:
+
+- [ ] MQTT connection established
+- [ ] Text rendering works via CustomApp
+- [ ] Icons display correctly
+- [ ] Audio/RTTTL playback functional
+- [ ] Brightness control works
+- [ ] Scenes run on AWTRIX hardware
+- [ ] Watchdog integration
+- [ ] Web UI shows AWTRIX device status
+
+**References**:
+
+- AWTRIX 3 API: https://github.com/Blueforcer/awtrix3
+- Driver stub: `lib/drivers/awtrix/awtrix-driver.js`
+- Constants: `lib/drivers/awtrix/constants.js`
+
+---
+
+### ROADMAP-002: Scene Dimension Adapter (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 3-5 hours
+- **Risk**: Low
+- **Status**: Not Started
+
+**Goal**: Auto-adapt existing Pixoo scenes to AWTRIX and other display sizes
+
+**Features**:
+
+- Auto-scale graphics to fit different resolutions
+- Crop/letterbox options for aspect ratio mismatch
+- Font size adaptation (smaller displays = smaller text)
+- Layout compression (reduce margins for small displays)
+- Optional scene compatibility matrix UI
+
+**Tasks**:
+
+1. Create `SceneDimensionAdapter` class
+2. Implement scaling algorithms (nearest-neighbor, bilinear)
+3. Add crop/letterbox modes
+4. Font size auto-adjustment
+5. Test with Pixoo 64x64 → AWTRIX 32x8 conversion
+6. Add compatibility matrix to Web UI
+
+**Use Cases**:
+
+- Run `pixoo_showcase` on AWTRIX (scaled down)
+- Run `power_price` chart on smaller displays
+- Universal scenes work on any device
+
+---
+
+### ROADMAP-003: Device Auto-Discovery (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 5-8 hours
+- **Risk**: Medium (network scanning)
+- **Status**: Not Started
+
+**Goal**: Automatically detect pixel displays on the network
+
+**Features**:
+
+- Pixoo device discovery (mDNS/SSDP)
+- AWTRIX device discovery (MQTT broker scan)
+- Network scanner for unknown devices
+- "Add Discovered Device" button in Web UI
+- Auto-detect device type and capabilities
+
+**Tasks**:
+
+1. Implement mDNS scanner for Pixoo
+2. Implement MQTT discovery for AWTRIX
+3. Create discovery service (`lib/services/discovery-service.js`)
+4. Add REST API endpoint `/api/devices/discover`
+5. Add "Discover Devices" button to Web UI
+6. Show discovered devices in modal with "Add" button
+
+**Security**:
+
+- Only scan local network (192.168.x.x, 10.x.x.x)
+- User must manually approve before adding device
+- No automatic configuration changes
+
+---
+
+### ROADMAP-004: Enhanced Watchdog Features (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 3-5 hours
+- **Risk**: Low
+- **Status**: Partially Complete (basic watchdog exists)
+
+**Goal**: More robust device health monitoring and recovery
+
+**Current Features** (v3.0):
+
+- ✅ Track `lastSeenTs` per device
+- ✅ Configurable timeout thresholds
+- ✅ Actions: restart, fallback-scene, mqtt-command, notify
+
+**New Features**:
+
+- Email/SMS notifications on device failure
+- Webhook support (POST to external URL)
+- Retry logic with exponential backoff
+- Historical failure tracking (last 100 events)
+- Failure pattern detection (flapping devices)
+- Auto-disable watchdog if device offline >24h
+- Recovery success metrics
+
+**Tasks**:
+
+1. Add notification channels (email, SMS, webhook)
+2. Implement retry logic with backoff
+3. Create failure history store
+4. Add pattern detection (flapping alerts)
+5. Add metrics dashboard to Web UI
+6. Email/webhook configuration UI
+
+---
+
+### ROADMAP-005: Multi-Device Scene Manager (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 3-5 hours
+- **Risk**: Low
+- **Status**: Not Started
+
+**Goal**: Run different scenes on different devices simultaneously
+
+**Current Limitation**: All devices run the same scene (or manually switch)
+
+**Features**:
+
+- Per-device scene selection in Web UI
+- Scene compatibility matrix (which scenes work on which devices)
+- Scene recommendations based on device capabilities
+- Bulk scene switching (set all devices at once)
+- Scene groups (living room, bedroom, kitchen)
+
+**Use Cases**:
+
+- Pixoo in living room shows `power_price`
+- AWTRIX in kitchen shows `clock`
+- Pixoo in bedroom shows `pixoo_showcase`
+
+**Tasks**:
+
+1. Update state management to support per-device scenes
+2. Add scene compatibility checks
+3. Create scene recommendation engine
+4. Update Web UI for per-device scene control
+5. Add scene groups feature
+
+---
+
+### ROADMAP-006: Device Profiles & Testing UI (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 2-3 hours
+- **Risk**: Low
+- **Status**: Not Started
+
+**Goal**: Visual device capability display and per-device testing
+
+**Features**:
+
+- Visual capability matrix (table showing all devices + features)
+- Device type switcher (test scenes on different virtual devices)
+- Test mode per device (preview scenes before deploying)
+- Capability comparison tool (compare 2 devices side-by-side)
+- Scene simulator (render scene to PNG without hardware)
+
+**Tasks**:
+
+1. Create `DeviceProfilesView.vue`
+2. Add capability visualization component
+3. Implement device simulator
+4. Add test mode toggle
+5. Scene preview/simulator
+
+---
+
+### ROADMAP-007: Configuration Backup & Sync (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 2-3 hours
+- **Risk**: Low
+- **Status**: Not Started
+
+**Goal**: Backup and restore device configurations
+
+**Features**:
+
+- Automatic config backups (daily, weekly)
+- Export config as JSON (download)
+- Import config from JSON (upload)
+- Cloud sync (optional, via user's S3/Dropbox)
+- Config versioning (rollback to previous version)
+- Migration tool (v2.x → v3.x config conversion)
+
+**Tasks**:
+
+1. Implement backup service
+2. Add export/import to Web UI
+3. Create config versioning system
+4. Optional: Cloud sync integration
+5. Migration tool for old configs
+
+---
+
+### ROADMAP-008: Additional Device Support (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: Varies (5-15 hours per device)
+- **Risk**: Medium to High (device-specific)
+- **Status**: Not Started
+
+**Goal**: Support more pixel display devices
+
+**Candidates**:
+
+1. **WS2812B LED Strips** (variable dimensions)
+   - Protocol: SPI/Serial
+   - Driver complexity: Medium
+   - Use case: Ambient lighting, signs
+
+2. **MAX7219 Matrix Displays** (8x8, 16x16, 32x8)
+   - Protocol: SPI
+   - Driver complexity: Low
+   - Use case: DIY displays, cheap matrices
+
+3. **Generic MQTT Displays**
+   - Protocol: MQTT (configurable topics)
+   - Driver complexity: Low
+   - Use case: Custom displays, ESP32 projects
+
+4. **HUB75 RGB Panels** (64x32, 128x64)
+   - Protocol: Parallel GPIO (via Raspberry Pi)
+   - Driver complexity: High
+   - Use case: Large outdoor displays
+
+**Priority Order**:
+
+1. Generic MQTT (low effort, high flexibility)
+2. WS2812B (popular, medium effort)
+3. MAX7219 (simple, low effort)
+4. HUB75 (complex, high effort, low demand)
+
+---
+
+### ROADMAP-009: Plugin System (P2)
+
+- **Priority**: P2 (Future)
+- **Effort**: 8-12 hours
+- **Risk**: High (architecture change)
+- **Status**: Not Started
+
+**Goal**: Dynamic driver loading and community contributions
+
+**Features**:
+
+- NPM package-based drivers (`pidicon-driver-<device>`)
+- Driver registry and discovery
+- Automatic driver installation via Web UI
+- Driver marketplace (list community drivers)
+- Version management and updates
+- Security: sandboxed driver execution
+
+**Architecture**:
+
+```javascript
+// Dynamic driver loading
+const MyDriver = require('pidicon-driver-mydevice');
+deviceAdapter.registerDriver('mydevice', MyDriver);
+```
+
+**Community Benefits**:
+
+- Anyone can add device support
+- No need to fork PIDICON
+- Faster ecosystem growth
+- Share drivers on npm
+
+---
+
+### ROADMAP-010: Scene Marketplace (P2)
+
+- **Priority**: P2 (Future)
+- **Effort**: 10-15 hours
+- **Risk**: Medium (moderation required)
+- **Status**: Not Started
+
+**Goal**: Community scene sharing and discovery
+
+**Features**:
+
+- Browse public scenes by category
+- One-click install scene from marketplace
+- Scene ratings and reviews
+- Upload your own scenes
+- Device compatibility filters
+- Scene preview GIFs/videos
+
+**Categories**:
+
+- Productivity (clocks, timers, counters)
+- Home Automation (sensors, energy, weather)
+- Entertainment (animations, games, art)
+- Information (news, stocks, crypto)
+- Ambient (colors, gradients, effects)
+
+**Moderation**:
+
+- Manual review before publishing
+- Report inappropriate scenes
+- DMCA takedown process
+- Terms of use enforcement
 
 ---
 
