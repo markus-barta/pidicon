@@ -1,17 +1,95 @@
 #!/usr/bin/env sh
+# Pre-push Hook: Trigger Watchtower on Server
+# ==============================================
+# Notifies the server's watchtower service to check for new PIDICON images
+# after CI builds complete. This enables fast auto-deployment during development.
+#
+# Flow:
+#   1. Git push → GitHub Actions builds new image
+#   2. This hook triggers watchtower on server (fire-and-forget)
+#   3. Watchtower polls for ~2 minutes, pulls new image when available
+#   4. Container restarts with new build
+#
+# Non-blocking: If server is unreachable, push continues without error.
+
 set -eu
 
+# ============================================================================
+# SERVER CONFIGURATION
+# ============================================================================
 REMOTE="mba@miniserver24"
-REMOTE_SCRIPT="/home/mba/scripts/watchtower-pidicon-run.sh"
-REMOTE_COMPOSE="/home/mba/docker/docker-compose.yml"
+WATCHTOWER_SCRIPT="/home/mba/scripts/watchtower-pidicon-run.sh"
+COMPOSE_FILE="/home/mba/docker/docker-compose.yml"
+LOG_FILE="/home/mba/scripts/watchtower-pidicon-run.log"
+
+# SSH configuration (fast timeout to avoid blocking)
 SSH="ssh -o BatchMode=yes -o ConnectTimeout=5"
 
-# Non-blocking: warn-only checks
-$SSH "$REMOTE" 'echo OK_SSH >/dev/null' >/dev/null 2>&1 || exit 0
-$SSH "$REMOTE" "test -x $REMOTE_SCRIPT" >/dev/null 2>&1 || exit 0
-$SSH "$REMOTE" "test -f $REMOTE_COMPOSE" >/dev/null 2>&1 || exit 0
+# ============================================================================
+# WATCHTOWER PARAMETERS (see below for explanation)
+# ============================================================================
+WATCHTOWER_SERVICE="watchtower-pidicon"  # Docker Compose service name
+TARGET_CONTAINER="pidicon"                # Container to monitor
+CHECK_INTERVAL=5                          # Seconds between image checks
+MAX_RUNTIME=120                           # Max seconds to wait for new image
+STOP_TIMEOUT=8                            # Seconds to wait for graceful stop
 
-# Fire-and-forget on server; log to file
-$SSH "$REMOTE" "nohup $REMOTE_SCRIPT --compose $REMOTE_COMPOSE --service watchtower-pidicon --target pidicon --interval 10 --timeout 500 --stop-timeout 5 >> /home/mba/scripts/watchtower-pidicon-run.log 2>&1 </dev/null &" >/dev/null 2>&1 || true
+# ============================================================================
+# PARAMETER EXPLANATION
+# ============================================================================
+# --interval $CHECK_INTERVAL
+#   How often watchtower checks for new images (in seconds)
+#   5s = responsive without hammering the registry
+#   Too low: unnecessary API calls
+#   Too high: slower deployment
+#
+# --timeout $MAX_RUNTIME
+#   Maximum time watchtower runs before giving up (in seconds)
+#   120s = ~2 minutes (enough for CI build to complete and propagate)
+#   CI typically takes 60-90s, registry propagation ~10-30s
+#
+# --stop-timeout $STOP_TIMEOUT
+#   How long to wait for PIDICON to stop gracefully (in seconds)
+#   8s = allows scenes to cleanup, MQTT disconnect, state save
+#   Too low: forced kill, potential state loss
+#   Too high: unnecessarily delays restart
+#
+# ============================================================================
 
+# Validate server connectivity (non-blocking - warn only)
+$SSH "$REMOTE" 'echo "SSH OK" >/dev/null' >/dev/null 2>&1 || {
+  echo "⚠️  Server unreachable, skipping watchtower trigger" >&2
+  exit 0
+}
+
+# Validate watchtower script exists (non-blocking)
+$SSH "$REMOTE" "test -x $WATCHTOWER_SCRIPT" >/dev/null 2>&1 || {
+  echo "⚠️  Watchtower script not found, skipping trigger" >&2
+  exit 0
+}
+
+# Validate docker-compose file exists (non-blocking)
+$SSH "$REMOTE" "test -f $COMPOSE_FILE" >/dev/null 2>&1 || {
+  echo "⚠️  Docker Compose file not found, skipping trigger" >&2
+  exit 0
+}
+
+# ============================================================================
+# TRIGGER WATCHTOWER (fire-and-forget)
+# ============================================================================
+echo "🚀 Triggering watchtower on $REMOTE..." >&2
+
+$SSH "$REMOTE" "nohup $WATCHTOWER_SCRIPT \
+  --compose $COMPOSE_FILE \
+  --service $WATCHTOWER_SERVICE \
+  --target $TARGET_CONTAINER \
+  --interval $CHECK_INTERVAL \
+  --timeout $MAX_RUNTIME \
+  --stop-timeout $STOP_TIMEOUT \
+  >> $LOG_FILE 2>&1 </dev/null &" >/dev/null 2>&1 || {
+  echo "⚠️  Failed to trigger watchtower (non-fatal)" >&2
+  exit 0
+}
+
+echo "✅ Watchtower triggered (will auto-deploy in ~1-2 minutes)" >&2
 exit 0
