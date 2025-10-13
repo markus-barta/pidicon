@@ -7,7 +7,7 @@
 # Flow:
 #   1. Git push → GitHub Actions builds new image
 #   2. This hook triggers watchtower on server (fire-and-forget)
-#   3. Watchtower polls for ~2 minutes, pulls new image when available
+#   3. Watchtower polls for ~10 minutes, pulls new image when available
 #   4. Container restarts with new build
 #
 # Non-blocking: If server is unreachable, push continues without error.
@@ -28,10 +28,10 @@ SSH="ssh -o BatchMode=yes -o ConnectTimeout=5"
 # ============================================================================
 # WATCHTOWER PARAMETERS (see below for explanation)
 # ============================================================================
-WATCHTOWER_SERVICE="watchtower-pidicon"  # Docker Compose service name
+WATCHTOWER_SERVICE="watchtower-pidicon"   # Docker Compose service name
 TARGET_CONTAINER="pidicon"                # Container to monitor
-CHECK_INTERVAL=5                          # Seconds between image checks
-MAX_RUNTIME=120                           # Max seconds to wait for new image
+CHECK_INTERVAL=10                         # Seconds between image checks
+MAX_RUNTIME=500                           # Max seconds to wait for new image
 STOP_TIMEOUT=8                            # Seconds to wait for graceful stop
 
 # ============================================================================
@@ -45,8 +45,8 @@ STOP_TIMEOUT=8                            # Seconds to wait for graceful stop
 #
 # --timeout $MAX_RUNTIME
 #   Maximum time watchtower runs before giving up (in seconds)
-#   120s = ~2 minutes (enough for CI build to complete and propagate)
-#   CI typically takes 60-90s, registry propagation ~10-30s
+#   600s = ~10 minutes (enough for CI build to complete and propagate)
+#   CI typically takes 90-120s, registry propagation ~30s
 #
 # --stop-timeout $STOP_TIMEOUT
 #   How long to wait for PIDICON to stop gracefully (in seconds)

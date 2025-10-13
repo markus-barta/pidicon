@@ -1,7 +1,26 @@
-FROM node:18-alpine
+# ============================================================================
+# Stage 1: Build Stage (with all dev dependencies)
+# ============================================================================
+FROM node:18-alpine AS builder
 
-# Install git for versioning (fallback for local builds)
+# Install git for version detection
 RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copy package files first (for better layer caching)
+COPY package*.json ./
+
+# Install ALL dependencies (including dev for build tools)
+RUN npm ci --include=dev
+
+# Copy only files needed for building
+COPY daemon.js start-daemon.sh ./
+COPY lib/ ./lib/
+COPY scenes/ ./scenes/
+COPY web/ ./web/
+COPY vite.config.mjs ./
+COPY scripts/build-version.js ./scripts/
 
 # Build arguments for version info
 ARG GITHUB_SHA
@@ -9,28 +28,7 @@ ARG GITHUB_REF
 ARG BUILD_DATE
 ARG GIT_COMMIT_COUNT
 
-# Set working directory
-WORKDIR /app
-
-# Create /data directory for persistent config (mount as volume)
-RUN mkdir -p /data && chmod 755 /data
-
-# Copy package files
-COPY package*.json ./
-
-# Install ALL dependencies (including dev for build script)
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Make wrapper script executable
-RUN chmod +x start-daemon.sh
-
-# Ensure node is in PATH for the wrapper script
-ENV PATH="/usr/local/bin:$PATH"
-
-# Set environment variables for version info from build args
+# Set environment variables for build
 ENV GITHUB_SHA=${GITHUB_SHA}
 ENV GITHUB_REF=${GITHUB_REF}
 ENV BUILD_DATE=${BUILD_DATE}
@@ -40,9 +38,51 @@ ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 RUN npm run build:version
 RUN npm run ui:build
 
-# Prune dev dependencies for a smaller final image
-# (keeps built assets in web/public/)
-RUN npm prune --production
+# ============================================================================
+# Stage 2: Production Stage (minimal runtime image)
+# ============================================================================
+FROM node:18-alpine
 
-# Start via wrapper script (allows in-container restarts)
+# Install only runtime system dependencies
+# git: fallback version detection
+# wget: health check
+RUN apk add --no-cache git wget
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ONLY production dependencies
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy built artifacts from builder stage
+COPY --from=builder /app/version.json ./version.json
+COPY --from=builder /app/web/public/ ./web/public/
+
+# Copy runtime application code
+COPY daemon.js start-daemon.sh ./
+COPY lib/ ./lib/
+COPY scenes/*.js ./scenes/
+COPY scenes/media/ ./scenes/media/
+
+# Exclude dev scenes (examples/dev/) - not needed in production
+COPY scenes/examples/pixoo_showcase.js ./scenes/examples/
+
+# Make wrapper script executable
+RUN chmod +x start-daemon.sh
+
+# Create /data directory for persistent config
+RUN mkdir -p /data && chmod 755 /data
+
+# Set PATH
+ENV PATH="/usr/local/bin:$PATH"
+ENV NODE_ENV=production
+
+# Health check (checks if Web UI is responding)
+# Note: Disabled by default - enable if needed
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+#   CMD wget --no-verbose --tries=1 --spider http://localhost:${PIDICON_WEB_PORT:-10829}/ || exit 1
+
+# Start via wrapper script
 CMD ["./start-daemon.sh"]

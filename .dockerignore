@@ -1,13 +1,53 @@
-node_modules
-npm-debug.log
+# Git and version control
 .git
 .gitignore
-README.md
-.env
-.nyc_output
-coverage
-.DS_Store
-*.log
-legacy-code/
-docs/
 .github/
+
+# Node modules (we install fresh in container)
+node_modules
+
+# Environment and config
+.env
+.env.*
+config/devices.json
+
+# Development files
+*.log
+npm-debug.log*
+.DS_Store
+
+# Test files
+test/
+coverage/
+.nyc_output
+
+# Documentation
+docs/
+README.md
+*.md
+!version.json
+
+# Development scripts
+scripts/
+!scripts/build-version.js
+
+# CI/CD files
+.husky/
+
+# Legacy and other code
+legacy-code/
+other-code/
+
+# IDE files
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Dev scenes (large demo files)
+scenes/examples/dev/
+
+# Built files (rebuilt in container)
+web/public/
