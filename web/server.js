@@ -56,13 +56,7 @@ function startWebServer(container, logger) {
   const sceneService = container.resolve('sceneService');
   const deviceService = container.resolve('deviceService');
   const systemService = container.resolve('systemService');
-
-  // Device configuration store (TODO: Add to DI container)
-  const { DeviceConfigStore } = require('../lib/device-config-store');
-  const deviceConfigStore = new DeviceConfigStore();
-  deviceConfigStore.load().catch((err) => {
-    logger.warn(`Failed to load device config: ${err.message}`);
-  });
+  const deviceConfigStore = container.resolve('deviceConfigStore'); // Use shared instance from DI container
 
   // =========================================================================
   // API ENDPOINTS

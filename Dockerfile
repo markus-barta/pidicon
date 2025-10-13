@@ -65,6 +65,7 @@ COPY daemon.js start-daemon.sh ./
 COPY lib/ ./lib/
 COPY scenes/*.js ./scenes/
 COPY scenes/media/ ./scenes/media/
+COPY config/ ./config/
 
 # Exclude dev scenes (examples/dev/) - not needed in production
 COPY scenes/examples/pixoo_showcase.js ./scenes/examples/
