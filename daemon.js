@@ -20,6 +20,7 @@ const {
   deviceDrivers,
 } = require('./lib/device-adapter');
 const { setStateStore } = require('./lib/device-adapter');
+const DeviceConfigStore = require('./lib/device-config-store');
 const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
 const MqttService = require('./lib/mqtt-service');
@@ -29,6 +30,7 @@ const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
+const WatchdogService = require('./lib/services/watchdog-service');
 const versionInfo = require('./version.json');
 
 // Create a logger instance
@@ -63,6 +65,7 @@ container.register('stateStore', ({ logger }) => {
   return new StateStore({ logger });
 });
 container.register('deploymentTracker', () => new DeploymentTracker());
+container.register('deviceConfigStore', () => new DeviceConfigStore());
 container.register(
   'sceneManager',
   ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
@@ -75,8 +78,10 @@ container.register(
 // Resolve services from container
 const stateStore = container.resolve('stateStore');
 const deploymentTracker = container.resolve('deploymentTracker');
+const deviceConfigStore = container.resolve('deviceConfigStore');
 const sceneManager = container.resolve('sceneManager');
 const mqttService = container.resolve('mqttService');
+const watchdogService = container.resolve('watchdogService');
 
 // Register services in DI container
 container.register(
@@ -119,6 +124,18 @@ container.register(
       deploymentTracker,
       mqttConfig,
     }),
+);
+
+container.register(
+  'watchdogService',
+  ({ deviceConfigStore }) =>
+    new WatchdogService(
+      {
+        getDevice,
+        getDriverForDevice,
+      },
+      deviceConfigStore,
+    ),
 );
 
 // Register command handlers in DI container
@@ -269,26 +286,140 @@ async function initializeDeployment() {
     logger.ok('Deployment tracker initialized.');
     logger.ok(deploymentTracker.getLogString());
 
-    // Auto-load startup scene for all configured devices
-    const deviceTargets = Array.from(deviceDrivers.keys());
-    if (deviceTargets.length > 0) {
-      logger.info('Auto-loading startup scene for configured devices...');
-      for (const deviceIp of deviceTargets) {
-        if (deviceIp.trim()) {
+    // Load device configuration from JSON
+    logger.info('Loading device configuration...');
+    try {
+      await deviceConfigStore.init();
+      const configuredDevices = deviceConfigStore.listDevices();
+
+      if (configuredDevices.length > 0) {
+        logger.ok(
+          `Loaded ${configuredDevices.length} device(s) from configuration file`,
+        );
+
+        // Apply device configurations (driver, brightness, startup scene)
+        for (const deviceConfig of configuredDevices) {
+          const { ip, name, driver, brightness, startupScene, deviceType } =
+            deviceConfig;
+
+          logger.info(`Initializing device: ${name} (${ip}) [${deviceType}]`);
+
           try {
-            const ctx = getContext(
-              deviceIp.trim(),
-              'startup',
-              deploymentTracker.getSceneContext(),
-              publishOk,
-            );
-            await sceneManager.switchScene('startup', ctx);
-            await sceneManager.renderActiveScene(ctx);
-            logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
+            // Set driver if specified
+            if (driver) {
+              await setDriverForDevice(ip, driver);
+              logger.debug(`Set driver for ${ip}: ${driver}`);
+            }
+
+            // Apply brightness if specified
+            if (brightness !== undefined && brightness !== null) {
+              const device = getDevice(ip);
+              if (device && device.setBrightness) {
+                try {
+                  await device.setBrightness(brightness);
+                  logger.debug(`Set brightness for ${ip}: ${brightness}%`);
+                } catch (error) {
+                  logger.warn(
+                    `Failed to set brightness for ${ip}: ${error.message}`,
+                  );
+                }
+              }
+            }
+
+            // Load startup scene if specified
+            if (startupScene) {
+              logger.info(
+                `Loading startup scene "${startupScene}" for ${name} (${ip})`,
+              );
+              const ctx = getContext(
+                ip,
+                startupScene,
+                deploymentTracker.getSceneContext(),
+                publishOk,
+              );
+              await sceneManager.switchScene(startupScene, ctx);
+              await sceneManager.renderActiveScene(ctx);
+              logger.ok(`Startup scene "${startupScene}" loaded for ${ip}`);
+            } else {
+              // Default to 'startup' scene if no custom scene specified
+              logger.info(`Loading default startup scene for ${name} (${ip})`);
+              const ctx = getContext(
+                ip,
+                'startup',
+                deploymentTracker.getSceneContext(),
+                publishOk,
+              );
+              await sceneManager.switchScene('startup', ctx);
+              await sceneManager.renderActiveScene(ctx);
+              logger.ok(`Default startup scene loaded for ${ip}`);
+            }
           } catch (error) {
             logger.warn(
-              `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+              `Failed to initialize device ${name} (${ip}): ${error.message}`,
             );
+          }
+        }
+
+        // Start watchdog monitoring
+        logger.info('Starting watchdog service...');
+        watchdogService.start();
+        logger.ok('Watchdog service started');
+      } else {
+        logger.info(
+          'No devices in configuration file, falling back to environment variables',
+        );
+
+        // Fallback to environment variable configuration
+        const deviceTargets = Array.from(deviceDrivers.keys());
+        if (deviceTargets.length > 0) {
+          logger.info('Auto-loading startup scene for configured devices...');
+          for (const deviceIp of deviceTargets) {
+            if (deviceIp.trim()) {
+              try {
+                const ctx = getContext(
+                  deviceIp.trim(),
+                  'startup',
+                  deploymentTracker.getSceneContext(),
+                  publishOk,
+                );
+                await sceneManager.switchScene('startup', ctx);
+                await sceneManager.renderActiveScene(ctx);
+                logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
+              } catch (error) {
+                logger.warn(
+                  `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+                );
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.warn(
+        `Failed to load device configuration: ${error.message}. Falling back to environment variables.`,
+      );
+
+      // Fallback to environment variable configuration
+      const deviceTargets = Array.from(deviceDrivers.keys());
+      if (deviceTargets.length > 0) {
+        logger.info('Auto-loading startup scene for configured devices...');
+        for (const deviceIp of deviceTargets) {
+          if (deviceIp.trim()) {
+            try {
+              const ctx = getContext(
+                deviceIp.trim(),
+                'startup',
+                deploymentTracker.getSceneContext(),
+                publishOk,
+              );
+              await sceneManager.switchScene('startup', ctx);
+              await sceneManager.renderActiveScene(ctx);
+              logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
+            } catch (error) {
+              logger.warn(
+                `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+              );
+            }
           }
         }
       }

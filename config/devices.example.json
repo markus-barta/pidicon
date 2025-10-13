@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "lastModified": "2025-10-13T00:00:00Z",
+  "devices": [
+    {
+      "id": "pidico-1728888000000",
+      "name": "Living Room Pixoo",
+      "ip": "192.168.1.100",
+      "deviceType": "pixoo64",
+      "driver": "real",
+      "startupScene": "startup",
+      "brightness": 80,
+      "watchdog": {
+        "enabled": true,
+        "unresponsiveThresholdHours": 4,
+        "action": "restart",
+        "fallbackScene": "",
+        "mqttCommandSequence": []
+      }
+    },
+    {
+      "id": "pidico-1728888000001",
+      "name": "Office AWTRIX (Coming Soon)",
+      "ip": "192.168.1.200",
+      "deviceType": "awtrix3",
+      "driver": "mock",
+      "startupScene": "clock",
+      "brightness": 60,
+      "watchdog": {
+        "enabled": true,
+        "unresponsiveThresholdHours": 2,
+        "action": "mqtt-command",
+        "fallbackScene": "",
+        "mqttCommandSequence": [
+          {
+            "topic": "awtrix_abc123/reboot",
+            "payload": "true"
+          }
+        ]
+      }
+    }
+  ]
+}
