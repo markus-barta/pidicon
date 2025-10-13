@@ -63,6 +63,7 @@ COPY --from=builder /app/web/public/ ./web/public/
 # Copy runtime application code
 COPY daemon.js start-daemon.sh ./
 COPY lib/ ./lib/
+COPY web/server.js ./web/
 COPY scenes/*.js ./scenes/
 COPY scenes/media/ ./scenes/media/
 COPY config/ ./config/

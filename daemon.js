@@ -389,7 +389,7 @@ async function initializeDeployment() {
         // Start watchdog monitoring
         logger.info('Starting watchdog service...');
         const watchdogService = container.resolve('watchdogService');
-        watchdogService.start();
+        watchdogService.startAll();
         logger.ok('Watchdog service started');
       } else {
         logger.info(
