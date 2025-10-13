@@ -46,12 +46,13 @@ const MOVEMENT_LIMITS = Object.freeze({
 });
 
 // Imports
-const {
-  CHART_CONFIG,
-  getPerformanceColor,
-  validateSceneContext,
-} = require('../../../lib/performance-utils');
-const { drawText, BACKGROUND_COLORS } = require('../../../lib/rendering-utils');
+const path = require('path');
+const { CHART_CONFIG, getPerformanceColor, validateSceneContext } = require(
+  path.join(__dirname, '../../../lib/performance-utils'),
+);
+const { drawText, BACKGROUND_COLORS } = require(
+  path.join(__dirname, '../../../lib/rendering-utils'),
+);
 
 // --- FPS/frametime overlay utilities (lightweight copies from performance test) ---
 function estimateTextWidth(str) {

@@ -1,6 +1,10 @@
 {
   "version": "1.0",
   "lastModified": "2025-10-13T00:00:00Z",
+  "settings": {
+    "mediaPath": "/data/media",
+    "scenesPath": "/data/scenes"
+  },
   "devices": [
     {
       "id": "pidicon-1728888000000",

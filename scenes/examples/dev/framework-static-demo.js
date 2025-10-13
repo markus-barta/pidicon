@@ -9,7 +9,10 @@
 
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
-const { StaticScene } = require('../../../lib/scene-framework');
+const path = require('path');
+const { StaticScene } = require(
+  path.join(__dirname, '../../../lib/scene-framework'),
+);
 
 const name = 'framework_static_demo';
 

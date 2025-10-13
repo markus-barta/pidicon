@@ -19,17 +19,15 @@ const MODE_COLORS = Object.freeze({
 const LINE_ALPHA = 178; // ~70%
 
 // Import external dependencies
+const path = require('path');
 
 // Import internal modules
-const {
-  CHART_CONFIG,
-  getPerformanceColor,
-} = require('../../../lib/performance-utils');
-const {
-  drawTextRgbaAlignedWithBg,
-  drawLine,
-  BACKGROUND_COLORS,
-} = require('../../../lib/rendering-utils');
+const { CHART_CONFIG, getPerformanceColor } = require(
+  path.join(__dirname, '../../../lib/performance-utils'),
+);
+const { drawTextRgbaAlignedWithBg, drawLine, BACKGROUND_COLORS } = require(
+  path.join(__dirname, '../../../lib/rendering-utils'),
+);
 
 // Default configuration
 const DEFAULT_FRAMES = 100;

@@ -9,7 +9,10 @@
  * @license MIT
  */
 
-const { validateSceneContext } = require('../../../lib/performance-utils');
+const path = require('path');
+const { validateSceneContext } = require(
+  path.join(__dirname, '../../../lib/performance-utils'),
+);
 
 const name = 'draw_api';
 

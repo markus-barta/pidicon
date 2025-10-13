@@ -9,7 +9,10 @@
 
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "^(render|init|cleanup)$" }] */
 
-const { DataScene } = require('../../../lib/scene-framework');
+const path = require('path');
+const { DataScene } = require(
+  path.join(__dirname, '../../../lib/scene-framework'),
+);
 
 const name = 'framework_data_demo';
 

@@ -9,11 +9,12 @@ This directory contains the device configuration file for PIDICON.
 
 ### Priority
 
-PIDICON loads devices in the following order:
+PIDICON loads configuration in the following order:
 
-1. **`config/devices.json`** (if exists) - Web UI managed configuration
-2. **Environment Variables** - `PIDICON_DEVICE_TARGETS` (legacy/fallback)
-3. **Default** - No devices configured
+1. **`/data/devices.json`** (Docker volume mount) - Primary for production
+2. **`config/devices.json`** (Local file) - Development/manual configuration
+3. **Environment Variables** - `PIDICON_CONFIG_PATH` to override path
+4. **Default** - No devices configured (add via Web UI)
 
 ### Configuration Structure
 
@@ -21,6 +22,10 @@ PIDICON loads devices in the following order:
 {
   "version": "1.0",
   "lastModified": "2025-10-13T00:00:00Z",
+  "settings": {
+    "mediaPath": "/data/media",
+    "scenesPath": "/data/scenes"
+  },
   "devices": [
     {
       "id": "pidicon-1728888000000",
@@ -41,6 +46,13 @@ PIDICON loads devices in the following order:
   ]
 }
 ```
+
+### Settings Fields
+
+| Field        | Type   | Required | Description                          |
+| ------------ | ------ | -------- | ------------------------------------ |
+| `mediaPath`  | string | Yes      | Path to media files directory        |
+| `scenesPath` | string | Yes      | Path to custom user scenes directory |
 
 ### Device Fields
 
@@ -99,17 +111,23 @@ From the Web UI Settings page, you can:
 | `pixoo64` | 64x64      | ✅ Stable  | Divoom Pixoo 64       |
 | `awtrix3` | 32x8       | 🚧 Planned | AWTRIX 3 (MQTT-based) |
 
-### Backward Compatibility
+### Directory Structure (Docker)
 
-If no `devices.json` is found, PIDICON falls back to environment variables:
+When using Docker with `/data` mount:
 
-```bash
-# Legacy format (still supported)
-export PIDICON_DEVICE_TARGETS="192.168.1.100=real"
-export PIXOO_DEVICE_TARGETS="192.168.1.100=real"  # Also supported
+```
+/data/
+  ├── devices.json         # Device configuration (auto-created)
+  ├── media/               # Media files for scenes
+  │   ├── logo.png
+  │   └── animation.gif
+  └── scenes/              # Custom user scenes
+      ├── my-scene.js
+      └── work/
+          └── dashboard.js
 ```
 
-**Note**: Web UI configuration takes precedence over environment variables.
+The `media/` and `scenes/` directories are automatically created on first run.
 
 ### Migration
 

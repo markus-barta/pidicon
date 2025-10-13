@@ -9,8 +9,11 @@
  * @license MIT
  */
 
+const path = require('path');
 const name = 'startup';
-const { validateSceneContext } = require('../lib/performance-utils');
+const { validateSceneContext } = require(
+  path.join(__dirname, '../lib/performance-utils'),
+);
 
 const COLORS = Object.freeze({
   BACKGROUND: [20, 20, 40, 255],

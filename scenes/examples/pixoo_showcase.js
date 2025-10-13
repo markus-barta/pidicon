@@ -7,13 +7,16 @@
  * @license MIT
  */
 
-const GraphicsEngine = require('../../lib/graphics-engine');
+const path = require('path');
+const GraphicsEngine = require(
+  path.join(__dirname, '../../lib/graphics-engine'),
+);
 const {
   drawFilledCircle,
   drawCircleOutline,
   drawGradientCircle,
   drawGlowCircle,
-} = require('../../lib/rendering-utils');
+} = require(path.join(__dirname, '../../lib/rendering-utils'));
 
 // 🎬 EPIC DEMO PHASES - Inspired by C64 legends
 const PHASES = {

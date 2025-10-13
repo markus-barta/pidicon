@@ -35,7 +35,7 @@ const versionInfo = require('./version.json');
 
 // Create a logger instance
 
-// MQTT connection config (devices discovered dynamically via PIXOO_DEVICE_TARGETS)
+// MQTT connection config (devices loaded from config file or environment)
 const mqttConfig = {
   brokerUrl: `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`,
   username: process.env.MOSQITTO_USER_MS24,
@@ -271,7 +271,7 @@ if (deviceDrivers.size > 0) {
   });
 } else {
   logger.warn(
-    'No device targets configured. Use PIXOO_DEVICE_TARGETS env var or override in code.',
+    'No device targets configured. Add devices via Web UI or create config/devices.json from example.',
   );
 }
 logger.info('Loaded scenes:', { scenes: sceneManager.getRegisteredScenes() });
@@ -288,8 +288,31 @@ async function initializeDeployment() {
     // Load device configuration from JSON
     logger.info('Loading device configuration...');
     try {
-      await deviceConfigStore.init();
-      const configuredDevices = deviceConfigStore.listDevices();
+      await deviceConfigStore.load();
+      const configuredDevices = Array.from(
+        deviceConfigStore.getAllDevices().values(),
+      );
+
+      // Load user custom scenes from settings
+      const settings = deviceConfigStore.getSettings();
+      if (settings.scenesPath) {
+        logger.info(`Loading user custom scenes from: ${settings.scenesPath}`);
+        const userSceneResults = SceneRegistration.registerFromStructure(
+          sceneManager,
+          null, // Don't reload built-in scenes
+          settings.scenesPath,
+        );
+        if (userSceneResults.scenes.size > 0) {
+          logger.ok(
+            `Loaded ${userSceneResults.scenes.size} user custom scene(s)`,
+          );
+        }
+        if (userSceneResults.errors.length > 0) {
+          logger.warn(
+            `Failed to load ${userSceneResults.errors.length} user scene(s)`,
+          );
+        }
+      }
 
       if (configuredDevices.length > 0) {
         logger.ok(

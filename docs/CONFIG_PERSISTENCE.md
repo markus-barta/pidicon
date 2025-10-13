@@ -1,19 +1,48 @@
-# Device Configuration Persistence
+# Configuration Persistence
 
-**PIDICON** supports persistent device configuration storage via a `/data` volume mount in Docker.
+**PIDICON** supports persistent storage for device configuration, media files, and custom user scenes via a `/data` volume mount in Docker.
 
 ## Overview
 
-Device configurations (IP addresses, names, device types, watchdog settings, etc.) are stored in a JSON file. When running in Docker, you should mount a persistent volume to `/data` to ensure configurations survive container restarts and redeployments.
+PIDICON stores all user data in a single `/data` directory:
+
+- **`/data/devices.json`** - Device configurations (IP, name, type, watchdog settings)
+- **`/data/media/`** - Media files (images, GIFs) used by scenes
+- **`/data/scenes/`** - Custom user scenes (JavaScript files)
+
+When running in Docker, mount a persistent volume to `/data` to ensure all configurations and custom content survive container restarts and redeployments.
+
+## Directory Structure
+
+```
+/data/                      # Docker volume mount point
+  ├── devices.json         # Device configuration file
+  ├── media/               # Media files for scenes
+  │   ├── logo.png
+  │   ├── icon.gif
+  │   └── ...
+  └── scenes/              # Custom user scenes
+      ├── my-custom.js
+      ├── work/
+      │   └── dashboard.js
+      └── ...
+```
 
 ## Configuration Priority
 
-The configuration file location is determined by this priority:
+The configuration locations are determined by these priorities:
+
+### Config File (`devices.json`)
 
 1. **Explicit path** (passed to constructor) - highest priority
 2. **Environment variable**: `PIDICON_CONFIG_PATH`
 3. **/data mount**: `/data/devices.json` (if `/data` directory exists)
 4. **Fallback**: `./config/devices.json` (local development)
+
+### Media and Scenes Paths
+
+- **Media**: `PIDICON_MEDIA_PATH` env var or `/data/media` (default)
+- **Scenes**: `PIDICON_SCENES_PATH` env var or `/data/scenes` (default)
 
 ## Docker Deployment (Recommended)
 
@@ -27,20 +56,23 @@ services:
     image: ghcr.io/markus-barta/pidicon:latest
     container_name: pidicon
     restart: unless-stopped
+    network_mode: host
 
-    # Mount persistent volume for device config
+    # Mount persistent volume for all user data
     volumes:
-      - ./pidicon-data:/data
+      - ./mounts/pidicon/data:/data
+      - ./mounts/shared/tmp:/shared-tmp # Optional: shared temp files
 
-    # Optional: Override config path
     environment:
+      - TZ=Europe/Vienna
       - PIDICON_CONFIG_PATH=/data/devices.json
+      - PIDICON_MEDIA_PATH=/data/media
+      - PIDICON_SCENES_PATH=/data/scenes
+      - PIDICON_WEB_PORT=10829
+      - PIDICON_WEB_AUTH=admin:secret
 
-    ports:
-      - '10829:10829' # Web UI
-
-    networks:
-      - smart-home
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
 ```
 
 ### Volume Mount
@@ -61,30 +93,46 @@ docker run -d \
 1. **Create host directory**:
 
    ```bash
-   mkdir -p /home/mba/docker/mounts/pidicon-data
-   chmod 755 /home/mba/docker/mounts/pidicon-data
+   mkdir -p ./mounts/pidicon/data/{media,scenes}
+   chmod -R 755 ./mounts/pidicon
    ```
 
-2. **Optional: Pre-populate config**:
+2. **Optional: Pre-populate config from example**:
 
    ```bash
-   cat > /home/mba/docker/mounts/pidicon-data/devices.json << 'EOF'
+   cp config/devices.example.json ./mounts/pidicon/data/devices.json
+   # Edit the file to match your devices
+   ```
+
+   Or create manually:
+
+   ```bash
+   cat > ./mounts/pidicon/data/devices.json << 'EOF'
    {
-     "devices": {
-       "192.168.1.100": {
-         "ip": "192.168.1.100",
+     "version": "1.0",
+     "lastModified": "2025-10-13T00:00:00Z",
+     "settings": {
+       "mediaPath": "/data/media",
+       "scenesPath": "/data/scenes"
+     },
+     "devices": [
+       {
+         "id": "pidicon-001",
          "name": "Living Room Display",
+         "ip": "192.168.1.100",
          "deviceType": "pixoo64",
          "driver": "real",
          "startupScene": "startup",
          "brightness": 80,
          "watchdog": {
            "enabled": true,
-           "timeoutMinutes": 120,
-           "action": "restart"
+           "unresponsiveThresholdHours": 4,
+           "action": "restart",
+           "fallbackScene": "",
+           "mqttCommandSequence": []
          }
        }
-     }
+     ]
    }
    EOF
    ```
@@ -93,6 +141,8 @@ docker run -d \
    ```bash
    docker compose up -d pidicon
    ```
+
+The container will automatically create `/data/media` and `/data/scenes` directories if they don't exist.
 
 ## Local Development
 

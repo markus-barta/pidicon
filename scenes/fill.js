@@ -9,7 +9,10 @@
  * @license MIT
  */
 
-const { isValidColor } = require('../lib/performance-utils');
+const path = require('path');
+const { isValidColor } = require(
+  path.join(__dirname, '../lib/performance-utils'),
+);
 
 const name = 'fill';
 
@@ -41,7 +44,7 @@ async function render(context) {
   if (!isValidColor(color)) {
     context.log(
       `Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
-      'error'
+      'error',
     );
     // Fallback to default color
     color = defaultColor;

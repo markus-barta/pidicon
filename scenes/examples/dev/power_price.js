@@ -11,16 +11,21 @@
  * @license MIT
  */
 
+const path = require('path');
 const SunCalc = require('suncalc');
 
-const { drawVerticalGradientLine } = require('../../../lib/gradient-renderer');
-const GraphicsEngine = require('../../../lib/graphics-engine');
-const {
-  BaseSceneState,
-  FrameCounter,
-  SceneUtils,
-} = require('../../../lib/scene-base');
-const { AnimatedScene } = require('../../../lib/scene-framework');
+const { drawVerticalGradientLine } = require(
+  path.join(__dirname, '../../../lib/gradient-renderer'),
+);
+const GraphicsEngine = require(
+  path.join(__dirname, '../../../lib/graphics-engine'),
+);
+const { BaseSceneState, FrameCounter, SceneUtils } = require(
+  path.join(__dirname, '../../../lib/scene-base'),
+);
+const { AnimatedScene } = require(
+  path.join(__dirname, '../../../lib/scene-framework'),
+);
 
 // Scene configuration - migrated from DisplayConfig
 const SCENE_CONFIG = {
@@ -283,7 +288,7 @@ class PowerPriceScene extends AnimatedScene {
       device,
       frameCount,
       elapsedMs,
-      loopDriven: _loopDriven, // eslint-disable-line no-unused-vars
+      loopDriven: _loopDriven,
       ...baseContext
     } = context;
 

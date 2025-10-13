@@ -6,7 +6,10 @@
  * @license MIT
  */
 
-const ConfigValidator = require('../../../lib/config-validator');
+const path = require('path');
+const ConfigValidator = require(
+  path.join(__dirname, '../../../lib/config-validator'),
+);
 
 class ConfigValidatorDemoScene {
   constructor() {

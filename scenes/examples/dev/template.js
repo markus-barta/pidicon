@@ -40,8 +40,9 @@ const name = 'template';
 /**
  * Import required modules
  */
-// const { validateSceneContext } = require('../../../lib/performance-utils');
-// const { validateColor } = require('../../../lib/validation');
+// const path = require('path');
+// const { validateSceneContext } = require(path.join(__dirname, '../../../lib/performance-utils'));
+// const { validateColor } = require(path.join(__dirname, '../../../lib/validation'));
 
 /**
  * Color constants (optional - customize as needed)

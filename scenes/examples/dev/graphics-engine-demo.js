@@ -6,7 +6,10 @@
  * @license MIT
  */
 
-const GraphicsEngine = require('../../../lib/graphics-engine');
+const path = require('path');
+const GraphicsEngine = require(
+  path.join(__dirname, '../../../lib/graphics-engine'),
+);
 
 // Configuration constants
 const GFX_DEMO_CONFIG = {
