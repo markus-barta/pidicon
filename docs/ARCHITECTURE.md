@@ -1,9 +1,9 @@
-# 🏗️ Architecture Analysis - Pro-Senior-Level Review
+# 🏗️ PIDICON Architecture - Multi-Device Universal Controller
 
-**Date**: 2025-09-30  
-**Version**: v2.0.0  
-**Last Updated**: 2025-09-30 (Phase 1 Complete ✅)  
-**Codebase Size**: 26 lib modules, ~9,200 lines, 115 exported entities
+**Date**: 2025-10-13  
+**Version**: v3.1.0  
+**Last Updated**: 2025-10-13 (Multi-Device Refactor Complete ✅)  
+**Codebase Size**: 35+ lib modules, ~12,000 lines, 150+ exported entities
 
 ---
 
@@ -53,6 +53,373 @@ critical architectural issues have been resolved.
 - ✅ Command handlers extracted (ARC-304 complete, 107/107 tests)
 - ⏳ Service layer abstraction (planned: ARC-305)
 - ⏳ Test coverage could reach 80%+ (planned: TST-301)
+
+**Phase 3 Progress** (Multi-Device Refactor):
+
+- ✅ Core device abstraction layer implemented
+- ✅ Driver interface and capability system
+- ✅ Pixoo driver fully extracted and functional
+- ✅ AWTRIX driver stub prepared
+- ✅ Web-based device configuration system
+- ✅ Watchdog service for device monitoring
+- ✅ Device-agnostic graphics engine
+
+---
+
+## 🌐 Multi-Device Architecture (v3.0+)
+
+### Overview
+
+PIDICON (formerly Pixoo Daemon) has been refactored from a Pixoo-specific controller to a **universal pixel display daemon** supporting multiple device types with different dimensions, protocols, and capabilities.
+
+### Core Principles
+
+1. **Device Abstraction**: All device-specific logic isolated in drivers
+2. **Capability-Based**: Scenes query device capabilities instead of hardcoding
+3. **Protocol Agnostic**: Supports HTTP (Pixoo), MQTT (AWTRIX), or custom protocols
+4. **Plug-and-Play**: New devices added by implementing DeviceDriver interface
+5. **Backward Compatible**: Pixoo 64x64 functionality fully preserved
+
+---
+
+### Architecture Diagram
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                        APPLICATION LAYER                             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Daemon Entry Point (daemon.js)                                     │
+│    ├── DI Container (manages all services)                          │
+│    ├── MQTT Service (command bus)                                   │
+│    ├── Web Server (REST API + UI)                                   │
+│    └── Scene Manager (scene lifecycle)                              │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                               ↕
+┌─────────────────────────────────────────────────────────────────────┐
+│                         CORE ABSTRACTION LAYER                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Device Driver Interface (DeviceDriver)                             │
+│    ├── async init(), clear(), push()                                │
+│    ├── async drawPixel(), drawText(), drawLine(), fillRect()        │
+│    └── async setBrightness(), playTone(), setIcon() [optional]      │
+│                                                                      │
+│  Display Capabilities (DisplayCapabilities)                         │
+│    ├── width, height, colorDepth                                    │
+│    ├── hasAudio, hasTextRendering, hasImageRendering                │
+│    ├── hasPrimitiveDrawing, hasCustomApps, hasIconSupport           │
+│    └── minBrightness, maxBrightness                                 │
+│                                                                      │
+│  Device Profiles (DEVICE_PROFILES)                                  │
+│    ├── PIXOO64: { width: 64, height: 64, ... }                      │
+│    ├── AWTRIX3: { width: 32, height: 8, hasAudio: true, ... }       │
+│    └── [extensible for future devices]                              │
+│                                                                      │
+│  Device Configuration Store (DeviceConfigStore)                     │
+│    ├── Persistent JSON storage (config/devices.json)                │
+│    ├── CRUD operations for device configs                           │
+│    ├── Startup scenes, brightness, watchdog settings                │
+│    └── Web UI integration                                           │
+│                                                                      │
+│  Watchdog Service (WatchdogService)                                 │
+│    ├── Monitor device responsiveness (lastSeenTs)                   │
+│    ├── Actions: restart, fallback-scene, mqtt-command, notify       │
+│    └── Per-device timeout thresholds                                │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                               ↕
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DRIVER IMPLEMENTATIONS                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────────────┐          ┌──────────────────────┐         │
+│  │   Pixoo Driver       │          │   AWTRIX Driver      │         │
+│  │  (lib/drivers/pixoo) │          │  (lib/drivers/awtrix)│         │
+│  ├──────────────────────┤          ├──────────────────────┤         │
+│  │ • HTTP Protocol      │          │ • MQTT Protocol      │         │
+│  │ • 64x64 resolution   │          │ • 32x8 resolution    │         │
+│  │ • RGB888 color       │          │ • Audio support      │         │
+│  │ • Canvas buffer      │          │ • Icon library       │         │
+│  │ • Real/Mock modes    │          │ • Custom apps        │         │
+│  │ Status: ✅ Complete  │          │ Status: 🚧 Stub     │         │
+│  └──────────────────────┘          └──────────────────────┘         │
+│                                                                      │
+│  Future: WS2812B, MAX7219, Generic MQTT, Custom Drivers             │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                               ↕
+┌─────────────────────────────────────────────────────────────────────┐
+│                         SCENE FRAMEWORK                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Scene Base (scene-base.js)                                         │
+│    ├── Access to context.device.capabilities                        │
+│    ├── Adapt to width/height from capabilities                      │
+│    └── Device compatibility checks                                  │
+│                                                                      │
+│  Graphics Engine (graphics-engine.js)                               │
+│    ├── Accepts capabilities in constructor                          │
+│    ├── Dynamic dimensions (no hardcoded 64x64)                      │
+│    └── Gradient backgrounds adapt to display size                   │
+│                                                                      │
+│  Scene Organization:                                                │
+│    scenes/                  # Root-level scenes (Pixoo legacy)      │
+│    scenes/examples/         # Example scenes                        │
+│    scenes/examples/dev/     # Development/test scenes               │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                               ↕
+┌─────────────────────────────────────────────────────────────────────┐
+│                         PHYSICAL DEVICES                             │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Pixoo 64             AWTRIX Clock         Future Devices           │
+│  (192.168.1.100)      (192.168.1.200)      (...)                    │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Device Driver Interface Contract
+
+All device drivers must implement the `DeviceDriver` abstract class:
+
+```javascript
+class DeviceDriver {
+  constructor(host, driverType, capabilities) {
+    this.host = host;
+    this.driverType = driverType; // 'real' or 'mock'
+    this.capabilities = capabilities; // DisplayCapabilities instance
+  }
+
+  // ===== CORE METHODS (Required) =====
+  async init()            // Initialize connection to device
+  async isReady()         // Check if device is ready for commands
+  async clear()           // Clear the display buffer
+  async push()            // Push buffer to physical device
+  async drawPixel(pos, color)              // Draw single pixel
+  async drawText(text, pos, color, align)  // Draw text
+  async drawLine(start, end, color)        // Draw line
+  async fillRect(topLeft, bottomRight, color) // Draw rectangle
+
+  // ===== OPTIONAL METHODS (Device-Specific) =====
+  async setBrightness(level)     // Set display brightness (0-100)
+  async playTone(frequency, duration) // Play audio tone (if supported)
+  async setIcon(iconId)          // Set icon (AWTRIX)
+
+  // ===== METRICS =====
+  getMetrics()            // Return { pushCount, errorCount, frametime, lastSeenTs }
+}
+```
+
+---
+
+### Display Capabilities System
+
+Defines what a device can and cannot do:
+
+```javascript
+class DisplayCapabilities {
+  width: number;                  // Display width in pixels
+  height: number;                 // Display height in pixels
+  colorDepth: number;             // Bits per pixel (24 for RGB888)
+  hasAudio: boolean;              // Device has speaker
+  hasTextRendering: boolean;      // Can render text directly
+  hasImageRendering: boolean;     // Can display images
+  hasPrimitiveDrawing: boolean;   // Supports pixel/line/rect
+  hasCustomApps: boolean;         // AWTRIX-style custom apps
+  hasIconSupport: boolean;        // Built-in icon library
+  minBrightness: number;          // Minimum brightness (0-100)
+  maxBrightness: number;          // Maximum brightness (0-100)
+}
+```
+
+**Usage in Scenes**:
+
+```javascript
+class MyScene extends SceneBase {
+  async render(context) {
+    const { width, height } = context.device.capabilities;
+
+    // Adapt layout to display dimensions
+    const centerX = Math.floor(width / 2);
+    const centerY = Math.floor(height / 2);
+
+    // Draw centered text
+    context.device.drawText('Hello', [centerX, centerY], [255, 255, 255]);
+  }
+}
+```
+
+---
+
+### Device Profiles
+
+Pre-defined capability configurations:
+
+```javascript
+const DEVICE_PROFILES = {
+  PIXOO64: new DisplayCapabilities({
+    width: 64,
+    height: 64,
+    colorDepth: 24,
+    hasAudio: false,
+    hasTextRendering: true,
+    hasImageRendering: true,
+    hasPrimitiveDrawing: true,
+    hasCustomApps: false,
+    hasIconSupport: false,
+  }),
+
+  AWTRIX3: new DisplayCapabilities({
+    width: 32,
+    height: 8,
+    colorDepth: 24,
+    hasAudio: true,
+    hasTextRendering: true,
+    hasImageRendering: true,
+    hasPrimitiveDrawing: false, // No direct pixel access
+    hasCustomApps: true,
+    hasIconSupport: true,
+  }),
+};
+```
+
+---
+
+### Device Configuration System
+
+**Storage**: `config/devices.json` (gitignored, managed via Web UI)
+
+**Example Configuration**:
+
+```json
+{
+  "192.168.1.100": {
+    "id": "pidicon-1697123456789",
+    "name": "Living Room Pixoo",
+    "ip": "192.168.1.100",
+    "deviceType": "pixoo64",
+    "driver": "real",
+    "startupScene": "startup",
+    "brightness": 80,
+    "watchdog": {
+      "enabled": true,
+      "unresponsiveThresholdHours": 4,
+      "action": "restart",
+      "fallbackScene": "empty",
+      "mqttCommandSequence": []
+    }
+  }
+}
+```
+
+**REST API Endpoints**:
+
+```
+GET    /api/config/devices          - List all devices
+POST   /api/config/devices          - Add new device
+GET    /api/config/devices/:ip      - Get device config
+PUT    /api/config/devices/:ip      - Update device config
+DELETE /api/config/devices/:ip      - Remove device
+POST   /api/config/devices/:ip/test - Test device connection
+GET    /api/scenes/list             - List scenes (optionally filter by device type)
+```
+
+---
+
+### Watchdog Service
+
+Monitors device health and triggers actions when devices become unresponsive.
+
+**Features**:
+
+- Tracks `lastSeenTs` per device (updated on each successful `push()`)
+- Configurable timeout thresholds (e.g., 4 hours for looping scenes)
+- Only monitors devices running looping scenes (not static ones)
+- Actions on timeout:
+  - `restart`: Call device reset
+  - `fallback-scene`: Switch to safe scene (e.g., "empty")
+  - `mqtt-command`: Execute custom MQTT command sequence
+  - `notify`: Log warning only (no automated action)
+
+**UI Indicator**:
+
+- Green dot: "Device: responsive"
+- Red dot: "Device: unresponsive" (only for looping scenes)
+
+---
+
+### Driver Registry
+
+Maps device types to driver implementations:
+
+```javascript
+const DRIVER_REGISTRY = {
+  [DEVICE_TYPES.PIXOO64]: PixooDriver,
+  [DEVICE_TYPES.AWTRIX3]: AwtrixDriver,
+  // Add more drivers here
+};
+```
+
+**Device Type Resolution**:
+
+```bash
+# Environment variables (backward compatible):
+PIDICON_DEVICE_TARGETS="192.168.1.100=pixoo64:real;192.168.1.200=awtrix3:real"
+PIDICO_DEVICE_TARGETS="..." # Legacy v3.0 (deprecated)
+PIXOO_DEVICE_TARGETS="..."  # Legacy v2.x (still supported)
+
+# Format: ip=deviceType:driver
+# Default deviceType: pixoo64
+# Default driver: mock
+```
+
+**Web UI Configuration** (preferred over env vars):
+
+- Add devices via settings page
+- Store in `config/devices.json`
+- No restart required (hot-reload)
+
+---
+
+### Backward Compatibility
+
+**100% Compatibility with v2.x**:
+
+- ✅ All `PIXOO_*` environment variables work
+- ✅ Existing scenes run without modification
+- ✅ MQTT commands unchanged
+- ✅ Web UI paths unchanged
+- ✅ Deployment scripts unchanged
+
+**Migration Path from v2.x → v3.x**:
+
+1. **No action required**: Everything continues to work
+2. **Optional**: Update env vars `PIXOO_*` → `PIDICON_*`
+3. **Optional**: Move to Web UI device configuration
+4. **Optional**: Add AWTRIX or other devices when drivers available
+
+---
+
+### Implementation Status
+
+| Component                  | Status         | Notes                                      |
+| -------------------------- | -------------- | ------------------------------------------ |
+| Core Abstractions          | ✅ Complete    | DeviceDriver, DisplayCapabilities          |
+| Pixoo Driver               | ✅ Complete    | Full feature parity with v2.x              |
+| AWTRIX Driver              | 🚧 Stub        | Interface ready, MQTT impl pending         |
+| Device Config Store        | ✅ Complete    | JSON persistence + CRUD API                |
+| Watchdog Service           | ✅ Complete    | Health monitoring + actions                |
+| Web UI (Device Mgmt)       | ✅ Complete    | Add/Edit/Delete devices, test connections  |
+| Graphics Engine (Agnostic) | ✅ Complete    | Dynamic dimensions                         |
+| Scene Framework            | ✅ Complete    | Capabilities-aware                         |
+| REST API                   | ✅ Complete    | 7 device management endpoints              |
+| Documentation              | 🚧 In Progress | Architecture, scene dev, driver dev guides |
+| Tests                      | 🚧 Partial     | Core + integration tests pending           |
 
 ---
 
