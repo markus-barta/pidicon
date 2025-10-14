@@ -498,13 +498,13 @@ function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
   const loggingLevel = stateStore.getDeviceState(deviceIp, '__logging_level');
   const { getDriverForDevice } = require('./lib/device-adapter');
   const driver = getDriverForDevice(deviceIp);
-  const defaultLevel = driver === 'real' ? 'warn' : 'none';
+  const defaultLevel = driver === 'real' ? 'warning' : 'silent';
   const effectiveLevel =
     loggingLevel !== null && loggingLevel !== undefined
       ? loggingLevel
       : defaultLevel;
 
-  // Only log if device logging allows it (debug = all, warn = warn/error only, none = silent)
+  // Only log if device logging allows it (debug = all, info = info+, warning = warning/error, error = error, silent = none)
   if (effectiveLevel === 'debug') {
     logger.ok(`OK [${deviceIp}]`, {
       scene: sceneName,
