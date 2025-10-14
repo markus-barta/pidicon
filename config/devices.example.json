@@ -26,7 +26,7 @@
       "id": "pidicon-1728888000001",
       "name": "Office AWTRIX (Coming Soon)",
       "ip": "192.168.1.200",
-      "deviceType": "awtrix3",
+      "deviceType": "awtrix",
       "driver": "mock",
       "startupScene": "clock",
       "brightness": 60,

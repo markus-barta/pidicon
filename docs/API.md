@@ -279,7 +279,7 @@ Add a new device configuration.
 {
   "name": "Office AWTRIX",
   "ip": "192.168.1.200",
-  "deviceType": "awtrix3",
+  "deviceType": "awtrix",
   "driver": "real",
   "startupScene": "clock",
   "brightness": 60,
@@ -363,7 +363,7 @@ List available scenes, optionally filtered by device type.
 
 **Query Parameters (optional):**
 
-- `deviceType` - Filter scenes compatible with device type (e.g., `pixoo64`, `awtrix3`)
+- `deviceType` - Filter scenes compatible with device type (e.g., `pixoo64`, `awtrix`)
 
 **Response:**
 
@@ -373,7 +373,7 @@ List available scenes, optionally filtered by device type.
     {
       "name": "startup",
       "path": "scenes/startup.js",
-      "compatibleWith": ["pixoo64", "awtrix3"]
+      "compatibleWith": ["pixoo64", "awtrix"]
     },
     {
       "name": "pixoo_showcase",
@@ -715,7 +715,7 @@ Examples:
 mosquitto_pub -t "/home/pidicon/pixoo64/192.168.1.100/scene/switch" -m '{"scene":"startup"}'
 
 # AWTRIX device
-mosquitto_pub -t "/home/pidicon/awtrix3/192.168.1.200/scene/switch" -m '{"scene":"clock"}'
+mosquitto_pub -t "/home/pidicon/awtrix/192.168.1.200/scene/switch" -m '{"scene":"clock"}'
 ```
 
 #### Device State Messages (Enhanced in v3.0+)

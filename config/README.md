@@ -61,7 +61,7 @@ PIDICON loads configuration in the following order:
 | `id`                                  | string  | Yes      | Unique device identifier (auto-generated)     |
 | `name`                                | string  | Yes      | Human-readable device name                    |
 | `ip`                                  | string  | Yes      | Device IP address                             |
-| `deviceType`                          | string  | Yes      | Device type: `pixoo64`, `awtrix3`             |
+| `deviceType`                          | string  | Yes      | Device type: `pixoo64`, `awtrix`              |
 | `driver`                              | string  | Yes      | Driver mode: `real`, `mock`                   |
 | `startupScene`                        | string  | No       | Scene to load on daemon startup               |
 | `brightness`                          | number  | No       | Default brightness (0-100)                    |
@@ -106,10 +106,10 @@ From the Web UI Settings page, you can:
 
 ### Device Types
 
-| Type      | Resolution | Status     | Notes                 |
-| --------- | ---------- | ---------- | --------------------- |
-| `pixoo64` | 64x64      | ✅ Stable  | Divoom Pixoo 64       |
-| `awtrix3` | 32x8       | 🚧 Planned | AWTRIX 3 (MQTT-based) |
+| Type      | Resolution | Status       | Notes                 |
+| --------- | ---------- | ------------ | --------------------- |
+| `pixoo64` | 64x64      | ✅ Stable    | Divoom Pixoo 64       |
+| `awtrix`  | 32x8       | ✅ Supported | AWTRIX 3 (HTTP-based) |
 
 ### Directory Structure (Docker)
 

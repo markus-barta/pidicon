@@ -376,7 +376,7 @@ const testCapabilities = {
 
 ```bash
 # Simulate different devices (planned feature)
-npm run scene-simulator my_scene --device=awtrix3
+npm run scene-simulator my_scene --device=awtrix
 npm run scene-simulator my_scene --device=pixoo64
 ```
 

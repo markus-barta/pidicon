@@ -308,7 +308,7 @@ Edit `lib/core/constants.js`:
 ```javascript
 const DEVICE_TYPES = {
   PIXOO64: 'pixoo64',
-  AWTRIX3: 'awtrix3',
+  AWTRIX: 'awtrix',
   MY_DEVICE: 'mydevice', // ADD THIS
 };
 ```
