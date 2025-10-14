@@ -2,90 +2,98 @@
   <v-card elevation="1" class="device-card">
     <!-- Device Header -->
     <v-card-title class="pb-2">
-      <div class="device-header">
-        <h3 class="text-h5 font-weight-bold device-name">
-          {{ deviceName }}
-        </h3>
-        <div class="device-badges">
-          <v-chip
-            :color="playStateChipColor"
-            size="small"
-            variant="flat"
-            class="mr-2 status-badge"
-          >
-            <span style="display: inline-flex; align-items: center;">
-              <v-icon 
-                :color="playStateIconColorForBadge"
-                size="x-small"
-                style="margin-right: 6px;"
-              >
-                {{ playStateIcon }}
-              </v-icon>
-              <span :style="{ color: playStateTextColor }">
-                {{ selectedScene ? formatSceneName(selectedScene) : 'No Scene' }}
+      <div class="device-header-container">
+        <!-- First row: Name + Badges (no breakpoint) -->
+        <div class="device-header-top">
+          <div class="device-name-and-badges">
+            <h3 class="text-h5 font-weight-bold device-name">
+              {{ deviceName }}
+            </h3>
+            <v-chip
+              :color="playStateChipColor"
+              size="small"
+              variant="flat"
+              class="status-badge"
+            >
+              <span style="display: inline-flex; align-items: center;">
+                <v-icon 
+                  :color="playStateIconColorForBadge"
+                  size="x-small"
+                  style="margin-right: 6px;"
+                >
+                  {{ playStateIcon }}
+                </v-icon>
+                <span :style="{ color: playStateTextColor }">
+                  {{ selectedScene ? formatSceneName(selectedScene) : 'No Scene' }}
+                </span>
               </span>
-            </span>
-          </v-chip>
-          <v-chip
-            :color="device.driver === 'real' ? 'info-darken-2' : undefined"
-            size="small"
-            :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-            :style="device.driver === 'real' ? { backgroundColor: '#0c4a6e !important' } : { borderColor: '#d1d5db' }"
-            class="status-badge"
-          >
-            <span style="display: inline-flex; align-items: center;">
-              <span :style="{ 
-                display: 'inline-block', 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
-                backgroundColor: device.driver === 'real' ? '#fff' : '#f59e0b', 
-                marginRight: '6px' 
-              }"></span>
-              <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
-                {{ device.driver === 'real' ? 'Hardware' : 'Simulated' }}
+            </v-chip>
+            <v-chip
+              :color="device.driver === 'real' ? 'info-darken-2' : undefined"
+              size="small"
+              :variant="device.driver === 'real' ? 'flat' : 'outlined'"
+              :style="device.driver === 'real' ? { backgroundColor: '#0c4a6e !important' } : { borderColor: '#d1d5db' }"
+              class="status-badge"
+            >
+              <span style="display: inline-flex; align-items: center;">
+                <span :style="{ 
+                  display: 'inline-block', 
+                  width: '6px', 
+                  height: '6px', 
+                  borderRadius: '50%', 
+                  backgroundColor: device.driver === 'real' ? '#fff' : '#f59e0b', 
+                  marginRight: '6px' 
+                }"></span>
+                <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
+                  {{ device.driver === 'real' ? 'Hardware' : 'Simulated' }}
+                </span>
               </span>
-            </span>
-          </v-chip>
+            </v-chip>
+          </div>
+          
+          <!-- Always top right: collapse button -->
+          <v-btn
+            :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
+            variant="text"
+            size="small"
+            @click="isCollapsed = !isCollapsed"
+            class="collapse-btn"
+          ></v-btn>
         </div>
-        <div class="device-header-right">
-          <!-- Device Responsiveness (for looping scenes only) - compact in collapsed mode -->
-          <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="d-flex align-center text-caption mr-4">
+
+        <!-- Second row: Info items (responsive, device info, IP, last seen) -->
+        <div class="device-header-bottom">
+          <!-- Device Responsiveness -->
+          <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="header-info-item">
             <v-tooltip location="bottom">
               <template v-slot:activator="{ props: tooltipProps }">
-                <span v-bind="tooltipProps" class="d-flex align-center" style="cursor: help;">
+                <span v-bind="tooltipProps" class="info-content">
                   <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
-                  <span v-if="!isCollapsed" :style="{ color: '#6b7280' }">Device: {{ deviceResponsiveLabel }}</span>
-                  <span v-else :style="{ color: '#6b7280' }">Device</span>
+                  <span>Device: {{ deviceResponsiveLabel }}</span>
                 </span>
               </template>
               <span>Device: {{ deviceResponsiveLabel }}</span>
             </v-tooltip>
           </div>
 
-          <!-- IP and Last Seen -->
-          <div class="d-flex align-center text-caption mr-4" style="color: #6b7280;">
+          <!-- IP -->
+          <div class="header-info-item">
             <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
             <span>{{ device.ip }}</span>
-            <span v-if="lastSeen !== 'N/A'" class="ml-3">
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <span v-bind="tooltipProps" style="cursor: help;">
-                    <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-                    {{ lastSeen }}
-                  </span>
-                </template>
-                <span>{{ lastSeenTooltip }}</span>
-              </v-tooltip>
-            </span>
           </div>
 
-          <v-btn
-            :icon="isCollapsed ? 'mdi-chevron-down' : 'mdi-chevron-up'"
-            variant="text"
-            size="small"
-            @click="isCollapsed = !isCollapsed"
-          ></v-btn>
+          <!-- Last Seen -->
+          <div v-if="lastSeen !== 'N/A'" class="header-info-item">
+            <v-tooltip location="bottom">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <span v-bind="tooltipProps" class="info-content">
+                  <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+                  {{ lastSeen }}
+                </span>
+              </template>
+              <span>{{ lastSeenTooltip }}</span>
+            </v-tooltip>
+          </div>
         </div>
       </div>
     </v-card-title>
@@ -177,8 +185,24 @@
 
         <div class="control-divider"></div>
 
-        <!-- Logging Level Controls -->
+        <!-- Dev Scenes + Logging Level Controls -->
         <div class="control-item">
+          <!-- Dev Scenes Toggle Button -->
+          <v-btn
+            :variant="showDevScenes ? 'tonal' : 'outlined'"
+            :color="showDevScenes ? 'warning' : 'grey'"
+            size="x-small"
+            @click="showDevScenes = !showDevScenes"
+            class="logging-btn dev-toggle-btn mr-2"
+            icon
+            density="compact"
+          >
+            <v-icon size="small">mdi-code-braces</v-icon>
+            <v-tooltip activator="parent" location="bottom">
+              {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
+            </v-tooltip>
+          </v-btn>
+
           <span class="text-caption font-weight-medium mr-2 logging-label-full" style="color: #6b7280;">
             Logging
           </span>
@@ -333,21 +357,8 @@
 
       <!-- Scene Control -->
       <div class="scene-control-section mb-4">
-        <h4 
-          class="text-subtitle-1 font-weight-bold mb-3 scene-control-title"
-          @click="showDevScenes = !showDevScenes"
-        >
-          <span>Scene Control</span>
-          <v-icon 
-            size="small" 
-            :color="showDevScenes ? 'warning' : 'grey'"
-            class="ml-2"
-          >
-            {{ showDevScenes ? 'mdi-code-braces' : 'mdi-code-braces-box' }}
-          </v-icon>
-          <v-tooltip activator="parent" location="bottom">
-            {{ showDevScenes ? 'Click to hide dev scenes' : 'Click to show dev scenes' }}
-          </v-tooltip>
+        <h4 class="text-subtitle-1 font-weight-bold mb-3">
+          Scene Control
         </h4>
         
         <!-- Scene Selector with inline controls -->
@@ -2196,43 +2207,60 @@ onUnmounted(() => {
   display: none; /* Hidden by default */
 }
 
-/* Device header responsive layout */
-.device-header {
+/* Device header responsive layout - CLEAN RESTART */
+.device-header-container {
+  width: 100%;
+}
+
+.device-header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  flex-wrap: wrap;
-  row-gap: 3px; /* Actual 50% reduction: was 6px before */
-  column-gap: 12px;
+  margin-bottom: 2px; /* Minimal vertical gap */
+}
+
+.device-name-and-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Very tight spacing between name and badges */
+  flex-wrap: nowrap; /* No wrapping - badges stay next to name */
 }
 
 .device-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-right: 12px;
+  margin: 0;
 }
 
-.device-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* Tighter gap between badges (was 8px in old device-header-left) */
+.status-badge {
+  flex-shrink: 0; /* Badges don't shrink */
 }
 
-.device-header-right {
+.collapse-btn {
+  flex-shrink: 0;
+  margin-left: auto; /* Always push to right */
+}
+
+.device-header-bottom {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-/* Break device name to new line if header gets too narrow */
-@container (max-width: 1100px) {
-  .device-name {
-    flex-basis: 100%; /* Force name to take full width, breaking to new line */
-    margin-right: 0;
-  }
+.header-info-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.info-content {
+  display: flex;
+  align-items: center;
+  cursor: help;
 }
 
 /* Switch to compact logging mode when card is narrow (LATER than before - less space) */
