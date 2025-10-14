@@ -371,6 +371,7 @@
               :disabled="loading"
               :loading="loading"
               :show-dev-scenes="showDevScenes"
+              :device-type="device.deviceType"
               @change="handleSceneChange"
             />
           </div>

@@ -57,6 +57,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  deviceType: {
+    type: String,
+    default: null, // e.g., 'pixoo64', 'awtrix', etc.
+  },
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
@@ -73,13 +77,25 @@ watch(
 );
 
 const sceneItems = computed(() => {
-  // Filter scenes based on showDevScenes prop
+  // Filter scenes based on showDevScenes prop and device type
   let filteredScenes = sceneStore.scenes;
   
   if (!props.showDevScenes) {
     // Hide scenes in examples/dev/ folder
     filteredScenes = filteredScenes.filter(scene => {
       return !scene.filePath?.includes('examples/dev/');
+    });
+  }
+
+  // Filter by device type if specified
+  if (props.deviceType) {
+    filteredScenes = filteredScenes.filter(scene => {
+      // If scene has no deviceTypes specified, show it for all devices
+      if (!scene.deviceTypes || scene.deviceTypes.length === 0) {
+        return true;
+      }
+      // Check if scene supports this device type
+      return scene.deviceTypes.includes(props.deviceType);
     });
   }
   
@@ -96,6 +112,7 @@ const sceneItems = computed(() => {
       wantsLoop: scene.wantsLoop || false,
       category: scene.category || 'General',
       filePath: scene.filePath,
+      deviceTypes: scene.deviceTypes,
     };
   });
 });
