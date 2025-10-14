@@ -3,10 +3,10 @@
     <!-- Device Header -->
     <v-card-title class="pb-2">
       <div class="device-header">
-        <div class="device-header-left">
-          <h3 class="text-h5 font-weight-bold mr-3 device-name">
-            {{ deviceName }}
-          </h3>
+        <h3 class="text-h5 font-weight-bold device-name">
+          {{ deviceName }}
+        </h3>
+        <div class="device-badges">
           <v-chip
             :color="playStateChipColor"
             size="small"
@@ -2203,16 +2203,21 @@ onUnmounted(() => {
   justify-content: space-between;
   width: 100%;
   flex-wrap: wrap;
-  row-gap: 6px; /* Reduced from 12px (50% less) */
+  row-gap: 3px; /* Actual 50% reduction: was 6px before */
   column-gap: 12px;
 }
 
-.device-header-left {
+.device-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 12px;
+}
+
+.device-badges {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0; /* Allow flex shrinking */
+  gap: 6px; /* Tighter gap between badges (was 8px in old device-header-left) */
 }
 
 .device-header-right {
@@ -2222,24 +2227,17 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.device-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
 /* Break device name to new line if header gets too narrow */
 @container (max-width: 1100px) {
   .device-name {
     flex-basis: 100%; /* Force name to take full width, breaking to new line */
-    margin-bottom: 0; /* Badges will wrap naturally with gap */
+    margin-right: 0;
   }
 }
 
 /* Switch to compact logging mode when card is narrow (LATER than before - less space) */
-/* Changed from 1150px to 650px - collapses only when really narrow */
-@container (max-width: 650px) {
+/* Changed from 650px to 675px (+25px more space before collapsing) */
+@container (max-width: 675px) {
   .logging-buttons-full {
     display: none !important;
   }
@@ -2258,8 +2256,8 @@ onUnmounted(() => {
 }
 
 /* Fallback for browsers without container queries */
-/* Changed from 1450px to 950px - collapses only when really narrow */
-@media (max-width: 950px) {
+/* Changed from 950px to 975px (+25px more space before collapsing) */
+@media (max-width: 975px) {
   .logging-buttons-full {
     display: none !important;
   }
