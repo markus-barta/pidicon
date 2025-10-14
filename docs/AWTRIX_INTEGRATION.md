@@ -1,103 +1,209 @@
 # Awtrix/Ulanzi Integration Guide
 
+**PIDICON support for Awtrix 3 / Ulanzi TC001 (32x8 pixel displays)**
+
+---
+
 ## Overview
 
-PIDICON now supports **Awtrix (Ulanzi TC001)** 32x8 pixel LED matrix displays via MQTT protocol. This guide explains how to use Awtrix devices with PIDICON.
+PIDICON now supports [Awtrix 3](https://github.com/Blueforcer/awtrix3) devices (like the Ulanzi TC001) via **HTTP API**. This allows you to:
 
-## Device Specifications
+- Display time, weather, home automation stats
+- Send notifications
+- Control brightness, sleep mode
+- Use custom apps with scrolling text and icons
+- Draw primitives (text, lines, rectangles)
 
-- **Display**: 32x8 pixels (256 total)
-- **Protocol**: MQTT (primary), HTTP (supported)
-- **Color**: RGB565 (16-bit) or HTML hex colors
-- **Audio**: RTTTL tones supported
-- **Special Features**: Icon library, scrolling text, rainbow effects
+**Key Differences from Pixoo:**
+
+| Feature          | Pixoo (64x64) | Awtrix (32x8)    |
+| ---------------- | ------------- | ---------------- |
+| Resolution       | 64x64 pixels  | 32x8 pixels      |
+| Protocol         | HTTP          | **HTTP**         |
+| Text             | Bitmap font   | Native scrolling |
+| Icons            | None          | 10,000+ built-in |
+| Audio            | Basic tones   | RTTTL/DFPlayer   |
+| Pixel-level draw | ✅ Full       | ⚠️ Draw commands |
+
+---
 
 ## Quick Start
 
-### 1. Add Awtrix Device
+### 1. Add Awtrix Device to Config
 
-```bash
-# Via MQTT
-mosquitto_pub -h $MQTT_HOST -t "pixoo/add/device" -m '{
-  "name": "Kitchen Display",
-  "ip": "awtrix_58197c",  # Device ID, not IP!
-  "deviceType": "awtrix",
-  "driver": "real",
-  "startupScene": "awtrix_startup"
-}'
+```json
+{
+  "devices": [
+    {
+      "ip": "192.168.1.100",
+      "name": "Kitchen Display",
+      "deviceType": "awtrix",
+      "driver": "real",
+      "startupScene": "awtrix_startup",
+      "brightness": 80,
+      "watchdog": { "enabled": false }
+    }
+  ]
+}
 ```
 
 Or via Web UI:
 
 1. Open Device Management
 2. Click "Add Device"
-3. Set Device Type: `awtrix`
-4. Enter Device ID (e.g., `awtrix_58197c`)
+3. Select "Awtrix" as device type
+4. Enter device IP address (e.g., `192.168.1.100`)
+5. Set driver to "real"
 
-### 2. Configure MQTT
+**Note:** Awtrix uses HTTP communication, so you only need the IP address.
 
-The Awtrix driver requires MQTT. Ensure your daemon has:
-
-```bash
-export MQTT_BROKER_URL="mqtt://your-broker:1883"
-export MQTT_USERNAME="your_user"
-export MQTT_PASSWORD="your_pass"
-```
-
-### 3. Available Scenes
-
-When an Awtrix device is selected, only compatible scenes appear:
-
-- **awtrix_startup** - Simple PIDICON branding
-- **awtrix_timestats** - Time + home automation status
-
-## Creating Awtrix Scenes
-
-### Scene Template
+### 2. Create an Awtrix Scene
 
 ```javascript
+// scenes/my_awtrix_scene.js
 const name = 'my_awtrix_scene';
-
-// Required metadata
-const description = 'My Awtrix scene';
-const category = 'Custom';
-const wantsLoop = true; // true for animated, false for static
-const deviceTypes = ['awtrix']; // IMPORTANT: Declares Awtrix-only
+const wantsLoop = true;
+const deviceTypes = ['awtrix']; // Only show for Awtrix devices
 
 async function render(ctx) {
   const { device } = ctx;
 
-  // Create custom app with draw commands
-  const drawCommands = {
-    text: 'HELLO',
+  // Use Awtrix's native scrolling text
+  await device.createCustomApp('my_app', {
+    text: 'Hello Awtrix!',
     color: '#00FF00',
-    // Or use draw array for pixel-level control
-    // draw: [
-    //   { dt: [x, y, 'text', '#color'] },
-    //   { dl: [x1, y1, x2, y2, '#color'] },
-    //   { dr: [x, y, width, height, '#color'] },
-    // ],
-  };
+    scrollSpeed: 50,
+  });
 
-  await device.createCustomApp('my_app', drawCommands);
-
-  // Return delay in ms for next frame (null for static)
-  return 1000;
+  return 1000; // Update every second
 }
 
-module.exports = {
-  name,
-  description,
-  category,
-  wantsLoop,
-  deviceTypes, // Critical for filtering!
-  render,
-};
+module.exports = { name, wantsLoop, deviceTypes, render };
 ```
 
-### Draw Commands
+### 3. Assign Scene to Device
 
-Awtrix supports the following draw command types:
+Via Web UI or MQTT command:
+
+```bash
+mosquitto_pub -t 'pidicon/cmd/scene' -m '{
+  "device": "192.168.1.100",
+  "scene": "my_awtrix_scene"
+}'
+```
+
+---
+
+## Architecture
+
+### Communication Flow
+
+```
+PIDICON (HTTP client)
+    ↓
+Awtrix Device (HTTP API @ http://{ip}/api)
+    - POST /api/custom/{appName}    → Persistent apps
+    - POST /api/notify              → Temporary notifications
+    - POST /api/settings            → Device settings
+    - GET  /api/stats               → Device status
+```
+
+### Driver Stack
+
+```
+DeviceDriver (abstract base)
+    ↑
+AwtrixDriver (HTTP client)
+    ↑
+AwtrixCanvas (compatibility layer)
+```
+
+The `AwtrixDriver` provides HTTP-based communication, while `AwtrixCanvas` provides a Pixoo-like API for scenes.
+
+---
+
+## Scene Development
+
+### Basic Scene Structure
+
+```javascript
+const name = 'awtrix_example';
+const wantsLoop = true; // true = updates periodically
+const deviceTypes = ['awtrix']; // ⚠️ REQUIRED for Awtrix-only scenes
+
+async function render(ctx) {
+  const { device, state } = ctx;
+
+  // Get data from state store (set via MQTT/API)
+  const temp = state.get('home_temp') || 22;
+
+  // Create custom app with text
+  await device.createCustomApp('temp_display', {
+    text: `${temp}°C`,
+    color: '#FFD700',
+    icon: 2422, // Weather icon from Awtrix library
+  });
+
+  return 5000; // Update every 5 seconds
+}
+
+module.exports = { name, wantsLoop, deviceTypes, render };
+```
+
+### Awtrix-Specific Features
+
+#### 1. Native Scrolling Text
+
+```javascript
+await device.createCustomApp('scroller', {
+  text: 'This text will scroll across the display',
+  color: '#00FF00',
+  scrollSpeed: 50, // Pixels per second
+});
+```
+
+#### 2. Icons (10,000+ Built-in)
+
+```javascript
+await device.createCustomApp('weather', {
+  text: '24°C',
+  color: '#FFD700',
+  icon: 2422, // Cloud icon
+  duration: 10000, // Show for 10 seconds
+});
+```
+
+Browse icons: https://developer.lametric.com/icons
+
+#### 3. Draw Commands (Raw Pixel Control)
+
+```javascript
+const drawCommands = {
+  draw: [
+    // Draw text at position
+    { dt: [x, y, 'Text', '#FFFFFF'] },
+
+    // Draw line
+    { dl: [x1, y1, x2, y2, '#FF0000'] },
+
+    // Draw rectangle
+    { dr: [x, y, width, height, '#00FF00'] },
+
+    // Draw filled rectangle
+    { df: [x, y, width, height, '#0000FF'] },
+
+    // Draw circle
+    { dc: [x, y, radius, '#FFFF00'] },
+
+    // Draw filled circle
+    { dfc: [x, y, radius, '#FF00FF'] },
+  ],
+};
+
+await device.createCustomApp('custom_draw', drawCommands);
+```
+
+**Draw Command Reference:**
 
 #### 1. Draw Text (`dt`)
 
@@ -133,11 +239,33 @@ Awtrix supports the following draw command types:
 
 - `x, y`: Top-left corner
 - Width, height: Rectangle dimensions
-- Color: Hex color (filled)
+- Color: Hex color
 
-### Example: Time Display
+#### 4. Notifications (Temporary Overlays)
 
 ```javascript
+await device.showNotification({
+  text: 'Alert!',
+  color: '#FF0000',
+  duration: 5000,
+  icon: 7,
+  rainbow: true, // Rainbow text effect
+});
+```
+
+#### 5. Brightness Control
+
+```javascript
+await device.setBrightness(128); // 0-255
+```
+
+### Example: Time + Status Display
+
+```javascript
+const name = 'awtrix_time_status';
+const wantsLoop = true;
+const deviceTypes = ['awtrix'];
+
 async function render(ctx) {
   const { device } = ctx;
 
@@ -163,17 +291,21 @@ async function render(ctx) {
 
   return 1000; // Update every second
 }
+
+module.exports = { name, wantsLoop, deviceTypes, render };
 ```
 
-## MQTT Topics
+---
 
-Awtrix uses the following MQTT structure:
+## HTTP API Reference
+
+Awtrix communicates via HTTP REST API at `http://{ip}/api`.
+
+Official docs: https://blueforcer.github.io/awtrix3/#/api
 
 ### Custom Apps (Scene Rendering)
 
-```
-awtrix_{deviceId}/custom/{appName}
-```
+**Endpoint:** `POST /api/custom/{appName}`
 
 **Payload:**
 
@@ -189,17 +321,11 @@ awtrix_{deviceId}/custom/{appName}
 }
 ```
 
-**To remove an app:**
-
-```json
-{}
-```
+**To remove an app:** Send empty object `{}`
 
 ### Notifications (Temporary Overlays)
 
-```
-awtrix_{deviceId}/notify
-```
+**Endpoint:** `POST /api/notify`
 
 **Payload:**
 
@@ -207,83 +333,81 @@ awtrix_{deviceId}/notify
 {
   "text": "Alert!",
   "color": "#FF0000",
+  "icon": 7,
   "duration": 5000,
-  "repeat": 2,
-  "icon": 456
+  "rainbow": true
 }
 ```
 
 ### Settings
 
-```
-awtrix_{deviceId}/settings
-```
+**Endpoint:** `POST /api/settings`
 
 **Payload:**
 
 ```json
 {
-  "BRI": 128, // Brightness 0-255
-  "ABRI": true, // Auto-brightness
-  "TEFF": "fade", // Transition effect
-  "ATIME": 10000 // App display time (ms)
+  "BRI": 128,
+  "ABRI": true,
+  "TEFF": "fade",
+  "ATIME": 10000
 }
 ```
 
-### App Control
+### Device Stats
 
-```
-awtrix_{deviceId}/switch
-```
+**Endpoint:** `GET /api/stats`
 
-**Payload:**
+**Response:**
 
 ```json
 {
-  "name": "timestats" // Switch to specific app
+  "bat": 85,
+  "lux": 123,
+  "temp": 24.5
 }
 ```
+
+---
 
 ## Device Type Filtering
 
-### How It Works
+Scenes can declare which device types they support:
+
+```javascript
+const deviceTypes = ['awtrix']; // Awtrix-only
+```
+
+**Rules:**
 
 1. **Scene Declaration**
 
    ```javascript
    const deviceTypes = ['awtrix']; // Awtrix-only
-   // or
-   const deviceTypes = ['pixoo64', 'pixoo']; // Pixoo-only
-   // or
+   const deviceTypes = ['pixoo64']; // Pixoo-only
    const deviceTypes = ['awtrix', 'pixoo64']; // Both
    ```
 
-2. **Backend** (`scene-service.js`)
-   - `listScenes()` includes `deviceTypes` in metadata
-   - Default: `['pixoo64', 'pixoo']` if not specified
-
-3. **Frontend** (`SceneSelector.vue`)
-   - Receives `:device-type="device.deviceType"`
-   - Filters scenes: `scene.deviceTypes.includes(props.deviceType)`
-   - Shows all scenes if `deviceTypes` is empty/null
-
-### Backward Compatibility
+2. **UI Filtering**  
+   When you select an Awtrix device in the Web UI, only scenes with `deviceTypes: ['awtrix']` appear in the scene selector.
 
 Existing scenes without `deviceTypes` work on all devices:
 
 - If `deviceTypes` is undefined/empty → shown for all devices
 - Default for legacy scenes: `['pixoo64', 'pixoo']`
 
-## Integrating with Home Automation
+---
 
-### Example: Home Assistant → Awtrix Scene
+## Home Automation Integration
+
+### Updating Scene State via MQTT
 
 **1. Update Scene State via MQTT**
 
 ```javascript
 // In your Home Assistant automation
-mqtt.publish('pidicon/state/update', {
-  deviceIp: 'awtrix_58197c',
+mqttService.publishSceneState({
+  deviceIp: '192.168.1.100',
   sceneName: 'awtrix_timestats',
   stateKey: 'home_vr_smartlock_statusColor',
   value: '#00FF00', // Door unlocked = green
@@ -300,8 +424,8 @@ async function render(ctx) {
 
   const drawCommands = {
     draw: [
-      { dt: [3, 0, getTime(), '#FFFFD5'] },
-      { dl: [29, 7, 31, 7, doorColor] }, // Door status
+      { dt: [0, 0, 'Door', '#FFFFFF'] },
+      { dl: [29, 7, 31, 7, doorColor] },
     ],
   };
 
@@ -310,9 +434,9 @@ async function render(ctx) {
 }
 ```
 
-### Node-RED Integration
+### Example: Node-RED → PIDICON → Awtrix
 
-The `awtrix_timestats` scene is ported from Node-RED. To integrate:
+**Flow:**
 
 1. **In Node-RED**: Publish status to MQTT
 
@@ -328,7 +452,7 @@ The `awtrix_timestats` scene is ported from Node-RED. To integrate:
    mqttClient.on('message', (topic, message) => {
      if (topic === 'home/vr/smartlock/statusColor') {
        stateStore.setSceneState(
-         deviceIp,
+         '192.168.1.100',
          'awtrix_timestats',
          'home_vr_smartlock_statusColor',
          message.toString(),
@@ -337,73 +461,31 @@ The `awtrix_timestats` scene is ported from Node-RED. To integrate:
    });
    ```
 
-3. **Scene Uses State**: Automatically picks up changes
+3. **In Scene**: Read state and render
 
-## API Reference
+   ```javascript
+   const doorColor = state.get('home_vr_smartlock_statusColor');
+   ```
 
-### AwtrixDriver Methods
-
-```javascript
-// Custom apps
-await device.createCustomApp(appName, {
-  text: 'Hello',
-  color: '#00FF00',
-  draw: [...],
-  lifetime: 0, // 0 = permanent
-});
-
-await device.removeCustomApp(appName);
-
-// Notifications
-await device.showNotification({
-  text: 'Alert',
-  color: '#FF0000',
-  duration: 5000,
-  icon: 123,
-});
-
-// Settings
-await device.setBrightness(128); // 0-255
-await device.updateSettings({ BRI: 128, ABRI: true });
-await device.setSleepMode(true);
-
-// Audio
-await device.playRTTTL('tone:d=4,o=5,b=100:c,d,e');
-await device.playTone(440, 1000); // 440Hz for 1s
-```
-
-### Dimensions
-
-```javascript
-const AWTRIX_CONSTANTS = {
-  WIDTH: 32,
-  HEIGHT: 8,
-  TOTAL_PIXELS: 256,
-};
-```
+---
 
 ## Troubleshooting
 
-### Scene Not Appearing in Selector
+### Common Issues
 
 **Problem**: Awtrix scene doesn't show up
 **Solution**: Check `deviceTypes` declaration:
 
 ```javascript
 const deviceTypes = ['awtrix']; // Must be present!
-module.exports = { ..., deviceTypes };
 ```
-
-### MQTT Not Working
 
 **Problem**: Commands not reaching device
 **Solution**:
 
-1. Check MQTT broker connection
-2. Verify device ID: `awtrix_58197c` (not IP!)
-3. Check MQTT topic: `awtrix_{deviceId}/custom/{appName}`
-
-### Display Shows Wrong Content
+1. Check device IP is reachable: `curl http://192.168.1.100/api/stats`
+2. Verify device is powered on and connected to WiFi
+3. Check PIDICON logs for HTTP errors
 
 **Problem**: Pixoo scene appears on Awtrix
 **Solution**: Scenes without `deviceTypes` show for all devices. Add:
@@ -411,8 +493,6 @@ module.exports = { ..., deviceTypes };
 ```javascript
 const deviceTypes = ['pixoo64']; // Pixoo-only
 ```
-
-### Draw Commands Not Rendering
 
 **Problem**: `createCustomApp` does nothing
 **Solution**: Check payload format:
@@ -429,29 +509,98 @@ const deviceTypes = ['pixoo64']; // Pixoo-only
 }
 ```
 
-## Limitations
+---
 
-1. **No Direct Pixel Access**: Awtrix uses custom apps, not raw pixel buffers
-2. **32x8 Resolution**: Much smaller than Pixoo (64x64)
-3. **MQTT Required**: HTTP driver exists but MQTT is recommended
-4. **No Scene Migration**: Pixoo scenes need complete rewrite for Awtrix
-5. **Text Positioning**: Limited control over text placement (mostly centered)
-
-## Examples
+## Example Scenes
 
 See:
 
 - `scenes/awtrix_startup.js` - Simple branding
 - `scenes/awtrix_timestats.js` - Time + home stats (full Node-RED port)
 
-## References
+---
 
-- [Awtrix 3 Documentation](https://blueforcer.github.io/awtrix3/#/api)
-- [Awtrix GitHub](https://github.com/Blueforcer/awtrix3)
-- [Ulanzi TC001 Hardware](https://www.ulanzi.com/products/ulanzi-pixel-smart-clock-2882)
+## API Reference
+
+### AwtrixDriver Methods
+
+```javascript
+// Custom apps
+await driver.createCustomApp('app_name', {
+  text: 'Hello',
+  color: '#00FF00',
+  draw: [
+    /*...*/
+  ],
+});
+await driver.removeCustomApp('app_name');
+
+// Notifications
+await driver.showNotification({
+  text: 'Alert!',
+  color: '#FF0000',
+  duration: 5000,
+});
+
+// Settings
+await driver.setBrightness(128); // 0-255
+await driver.updateSettings({ BRI: 128, ABRI: true });
+await driver.setSleepMode(true);
+
+// Audio (RTTTL)
+await driver.playRTTTL('melody:d=4,o=5,b=100:8c,8d,8e');
+await driver.playTone(440, 1000); // 440Hz for 1 second
+```
+
+### AwtrixCanvas Methods
+
+Provides Pixoo-like API for compatibility:
+
+```javascript
+const canvas = new AwtrixCanvas(driver);
+
+// Drawing (accumulates operations)
+await canvas.drawText('Hello', [0, 0], [255, 255, 255]);
+await canvas.drawLine([0, 0], [31, 7], [255, 0, 0]);
+await canvas.fillRect([0, 0], [10, 10], [0, 255, 0]);
+
+// Push to device
+await canvas.push();
+
+// Control
+await canvas.clear();
+await canvas.setBrightness(128);
+```
 
 ---
 
-**Last Updated**: 2025-10-14  
-**Version**: 3.1.0  
-**Author**: mba with Cursor AI
+## MQTT Topics (For State Management Only)
+
+PIDICON uses MQTT for scene state management, NOT for device communication:
+
+```
+pidicon/state/{deviceIp}/{sceneName}/{key}
+```
+
+**Example:**
+
+```bash
+# Update scene state
+mosquitto_pub -t 'pidicon/state/192.168.1.100/awtrix_timestats/door_status' -m 'open'
+
+# Scene reads this via: state.get('door_status')
+```
+
+---
+
+## Next Steps
+
+1. **Create your first Awtrix scene** using `scenes/awtrix_startup.js` as template
+2. **Add your Awtrix device** to `config/devices.json`
+3. **Integrate with home automation** via MQTT state updates
+4. **Explore icons** at https://developer.lametric.com/icons
+5. **Read official Awtrix docs** at https://blueforcer.github.io/awtrix3
+
+---
+
+**Questions?** Check the [PIDICON documentation](../README.md) or [Awtrix official docs](https://blueforcer.github.io/awtrix3).
