@@ -129,14 +129,8 @@ container.register(
 
 container.register(
   'watchdogService',
-  ({ deviceConfigStore }) =>
-    new WatchdogService(
-      {
-        getDevice,
-        getDriverForDevice,
-      },
-      deviceConfigStore,
-    ),
+  ({ deviceConfigStore, deviceService, sceneService }) =>
+    new WatchdogService(deviceConfigStore, deviceService, sceneService),
 );
 
 // Register command handlers in DI container

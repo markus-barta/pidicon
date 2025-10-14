@@ -4,8 +4,9 @@
     <v-card-title class="pb-2">
       <div class="device-header-container">
         <div class="device-header-row">
-          <!-- Name -->
+          <!-- Device Type Icon + Name -->
           <h3 class="text-h5 font-weight-bold device-name">
+            <v-icon :icon="deviceTypeIcon" size="small" class="mr-2"></v-icon>
             {{ deviceName }}
           </h3>
           
@@ -744,6 +745,18 @@ const deviceName = computed(() => {
   if (props.device.ip.includes('150')) return 'Office Display';
   if (props.device.ip.includes('151')) return 'Conference Room';
   return `Device ${props.device.ip.split('.').pop()}`;
+});
+
+const deviceTypeIcon = computed(() => {
+  const type = props.device.deviceType;
+  switch (type) {
+    case 'pixoo64':
+      return 'mdi-television';
+    case 'awtrix':
+      return 'mdi-clock-digital';
+    default:
+      return 'mdi-devices';
+  }
 });
 
 const statusColor = computed(() => {
