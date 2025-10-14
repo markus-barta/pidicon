@@ -719,15 +719,33 @@ const toggleLoading = ref(false);
 const resetLoading = ref(false);
 const driverLoading = ref(false);
 const brightnessLoading = ref(false);
-const displayOn = ref(true);
-const brightness = ref(75);
-const previousBrightness = ref(75); // Store brightness before power off
+const displayOn = ref(props.device.hardware?.displayOn ?? true);
+const brightness = ref(props.device.hardware?.brightness ?? 75);
+const previousBrightness = ref(props.device.hardware?.brightness ?? 75); // Store brightness before power off
 const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent'); // Real: warning+error, Mock: silent
 const isCollapsed = ref(props.device.driver === 'mock'); // Collapse mock devices by default
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const showSceneDetails = ref(false); // Hide scene details by default
 const showPerfMetrics = ref(false); // Hide performance metrics by default
 const showDevScenes = ref(false); // Hide dev scenes by default
+
+// Watch for hardware state changes from backend
+watch(
+  () => props.device.hardware,
+  (newHardware) => {
+    if (newHardware) {
+      // Update displayOn if it changed
+      if (newHardware.displayOn !== undefined && newHardware.displayOn !== displayOn.value) {
+        displayOn.value = newHardware.displayOn;
+      }
+      // Update brightness if it changed
+      if (newHardware.brightness !== undefined && newHardware.brightness !== brightness.value) {
+        brightness.value = newHardware.brightness;
+      }
+    }
+  },
+  { deep: true }
+);
 
 // Metrics
 const fps = ref(0);
