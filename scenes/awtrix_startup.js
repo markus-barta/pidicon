@@ -27,22 +27,20 @@ async function init(ctx) {
 async function render(ctx) {
   const { device } = ctx;
 
-  // For Awtrix startup, use notification API (simpler than custom apps)
+  // For Awtrix startup, use persistent custom app
   // 32x8 display requires minimal design
 
-  const notification = {
+  const appData = {
     text: 'PIDICON',
     color: COLORS.PIDICON,
-    duration: 5, // Display for 5 seconds
-    rainbow: false,
-    scrollSpeed: 100,
+    duration: 5, // Time in rotation cycle
   };
 
-  // Send notification to device
-  if (device.showNotification) {
-    await device.showNotification(notification);
+  // Send to persistent custom app (stays in rotation)
+  if (device.drawCustom) {
+    await device.drawCustom('pidicon_startup', appData);
   } else {
-    ctx.log('Device does not support showNotification', 'warning');
+    ctx.log('Device does not support custom drawing', 'warning');
   }
 
   // Static scene - no loop needed

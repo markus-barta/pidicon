@@ -42,15 +42,12 @@ async function render(ctx) {
   // Build draw commands for Awtrix custom app
   const drawArray = buildDrawArray(timeString, statuses);
 
-  // Send draw commands to device via notify API
-  // Awtrix HTTP API uses notify endpoint with draw array for custom graphics
+  // Send draw commands to persistent custom app
+  // Awtrix HTTP API uses /api/custom?name=<app> for persistent apps in rotation
   if (device.drawCustom) {
-    await device.drawCustom(drawArray, 0); // 0 = permanent until next update
-  } else if (device.showNotification) {
-    // Fallback: send via showNotification with draw array
-    await device.showNotification({
+    await device.drawCustom('timestats', {
       draw: drawArray,
-      duration: 0,
+      // duration: 5, // Optional: time in rotation before next app
     });
   } else {
     ctx.log('Device does not support custom drawing', 'warning');
