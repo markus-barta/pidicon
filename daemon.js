@@ -459,7 +459,9 @@ async function initializeDeployment() {
 
 // Initialize deployment and startup scenes
 logger.info('Initializing deployment...');
-initializeDeployment();
+(async () => {
+  await initializeDeployment();
+})();
 
 // SCENE_STATE_TOPIC_BASE is provided by lib/config.js
 
