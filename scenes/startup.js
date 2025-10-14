@@ -115,7 +115,7 @@ function buildVersionInfo(ctx, state) {
       );
     }
   } catch (error) {
-    ctx.log(`Failed to read version.json: ${error.message}`, 'warn');
+    ctx.log(`Failed to read version.json: ${error.message}`, 'warning');
   }
 
   return {
@@ -154,7 +154,7 @@ async function drawStartupInfo(device, versionInfo) {
   // Header section
   // Draw title
   await device.drawTextRgbaAligned(
-    'PIXOO DAEMON',
+    `PIDICON v${versionInfo.version}`,
     [32, LAYOUT.HEADER_Y],
     COLORS.HEADER,
     'center',
