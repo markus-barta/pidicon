@@ -237,7 +237,7 @@ export default {
 
     const deviceTypes = [
       { title: 'Pixoo 64 (64x64)', value: 'pixoo64' },
-      { title: 'AWTRIX 3 (32x8) - Coming Soon', value: 'awtrix3', disabled: true },
+      { title: 'AWTRIX 3 (32x8)', value: 'awtrix' },
     ];
 
     const driverTypes = [

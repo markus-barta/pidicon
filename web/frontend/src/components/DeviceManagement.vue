@@ -35,7 +35,7 @@
             :items="[
               { title: 'All Types', value: null },
               { title: 'Pixoo 64', value: 'pixoo64' },
-              { title: 'AWTRIX', value: 'awtrix3' },
+              { title: 'AWTRIX', value: 'awtrix' },
             ]"
             variant="outlined"
             density="compact"
@@ -363,7 +363,7 @@ export default {
       switch (type) {
         case 'pixoo64':
           return 'mdi-television';
-        case 'awtrix3':
+        case 'awtrix':
           return 'mdi-clock-digital';
         default:
           return 'mdi-devices';
@@ -374,7 +374,7 @@ export default {
       switch (type) {
         case 'pixoo64':
           return 'primary';
-        case 'awtrix3':
+        case 'awtrix':
           return 'info';
         default:
           return 'grey';
@@ -385,7 +385,7 @@ export default {
       switch (type) {
         case 'pixoo64':
           return 'Pixoo 64';
-        case 'awtrix3':
+        case 'awtrix':
           return 'AWTRIX 3';
         default:
           return type;
