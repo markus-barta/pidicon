@@ -40,17 +40,20 @@ async function render(ctx) {
   const timeString = getLocalTimeString();
 
   // Build draw commands for Awtrix custom app
-  const drawCommands = {
-    draw: buildDrawArray(timeString, statuses),
-  };
+  const drawArray = buildDrawArray(timeString, statuses);
 
-  const appName = 'timestats';
-
-  // Send to device via custom app API
-  if (device.createCustomApp) {
-    await device.createCustomApp(appName, drawCommands);
+  // Send draw commands to device via notify API
+  // Awtrix HTTP API uses notify endpoint with draw array for custom graphics
+  if (device.drawCustom) {
+    await device.drawCustom(drawArray, 0); // 0 = permanent until next update
+  } else if (device.showNotification) {
+    // Fallback: send via showNotification with draw array
+    await device.showNotification({
+      draw: drawArray,
+      duration: 0,
+    });
   } else {
-    ctx.log('Device does not support createCustomApp', 'warning');
+    ctx.log('Device does not support custom drawing', 'warning');
   }
 
   // Update every second for time display
@@ -60,9 +63,9 @@ async function render(ctx) {
 async function cleanup(ctx) {
   const { device } = ctx;
 
-  // Remove custom app on cleanup
-  if (device.removeCustomApp) {
-    await device.removeCustomApp('timestats');
+  // Clear display on cleanup
+  if (device.clear) {
+    await device.clear();
   }
 
   ctx.log('Awtrix timestats scene cleaned up', 'debug');
