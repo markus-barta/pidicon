@@ -729,22 +729,28 @@ const showSceneDetails = ref(false); // Hide scene details by default
 const showPerfMetrics = ref(false); // Hide performance metrics by default
 const showDevScenes = ref(false); // Hide dev scenes by default
 
-// Watch for hardware state changes from backend
+// Watch for hardware state changes from backend (run immediately on mount)
 watch(
   () => props.device.hardware,
   (newHardware) => {
     if (newHardware) {
       // Update displayOn if it changed
-      if (newHardware.displayOn !== undefined && newHardware.displayOn !== displayOn.value) {
-        displayOn.value = newHardware.displayOn;
+      if (newHardware.displayOn !== undefined) {
+        if (displayOn.value !== newHardware.displayOn) {
+          console.log(`[${props.device.ip}] Updating displayOn: ${displayOn.value} → ${newHardware.displayOn}`);
+          displayOn.value = newHardware.displayOn;
+        }
       }
       // Update brightness if it changed
-      if (newHardware.brightness !== undefined && newHardware.brightness !== brightness.value) {
-        brightness.value = newHardware.brightness;
+      if (newHardware.brightness !== undefined) {
+        if (brightness.value !== newHardware.brightness) {
+          console.log(`[${props.device.ip}] Updating brightness: ${brightness.value} → ${newHardware.brightness}`);
+          brightness.value = newHardware.brightness;
+        }
       }
     }
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
 
 // Metrics
