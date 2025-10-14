@@ -3,12 +3,14 @@
     <!-- Device Header -->
     <v-card-title class="pb-2">
       <div class="device-header-container">
-        <!-- First row: Name + Badges (no breakpoint) -->
-        <div class="device-header-top">
-          <div class="device-name-and-badges">
-            <h3 class="text-h5 font-weight-bold device-name">
-              {{ deviceName }}
-            </h3>
+        <div class="device-header-row">
+          <!-- Name -->
+          <h3 class="text-h5 font-weight-bold device-name">
+            {{ deviceName }}
+          </h3>
+          
+          <!-- Badges -->
+          <div class="device-badges">
             <v-chip
               :color="playStateChipColor"
               size="small"
@@ -50,6 +52,41 @@
               </span>
             </v-chip>
           </div>
+
+          <!-- Info items (stay in line when space available) -->
+          <div class="device-info-items">
+            <!-- Device Responsiveness -->
+            <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="header-info-item">
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" class="info-content">
+                    <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
+                    <span>Device: {{ deviceResponsiveLabel }}</span>
+                  </span>
+                </template>
+                <span>Device: {{ deviceResponsiveLabel }}</span>
+              </v-tooltip>
+            </div>
+
+            <!-- IP -->
+            <div class="header-info-item">
+              <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
+              <span>{{ device.ip }}</span>
+            </div>
+
+            <!-- Last Seen -->
+            <div v-if="lastSeen !== 'N/A'" class="header-info-item">
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" class="info-content">
+                    <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+                    {{ lastSeen }}
+                  </span>
+                </template>
+                <span>{{ lastSeenTooltip }}</span>
+              </v-tooltip>
+            </div>
+          </div>
           
           <!-- Always top right: collapse button -->
           <v-btn
@@ -59,41 +96,6 @@
             @click="isCollapsed = !isCollapsed"
             class="collapse-btn"
           ></v-btn>
-        </div>
-
-        <!-- Second row: Info items (responsive, device info, IP, last seen) -->
-        <div class="device-header-bottom">
-          <!-- Device Responsiveness -->
-          <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="header-info-item">
-            <v-tooltip location="bottom">
-              <template v-slot:activator="{ props: tooltipProps }">
-                <span v-bind="tooltipProps" class="info-content">
-                  <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
-                  <span>Device: {{ deviceResponsiveLabel }}</span>
-                </span>
-              </template>
-              <span>Device: {{ deviceResponsiveLabel }}</span>
-            </v-tooltip>
-          </div>
-
-          <!-- IP -->
-          <div class="header-info-item">
-            <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
-            <span>{{ device.ip }}</span>
-          </div>
-
-          <!-- Last Seen -->
-          <div v-if="lastSeen !== 'N/A'" class="header-info-item">
-            <v-tooltip location="bottom">
-              <template v-slot:activator="{ props: tooltipProps }">
-                <span v-bind="tooltipProps" class="info-content">
-                  <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-                  {{ lastSeen }}
-                </span>
-              </template>
-              <span>{{ lastSeenTooltip }}</span>
-            </v-tooltip>
-          </div>
         </div>
       </div>
     </v-card-title>
@@ -185,24 +187,8 @@
 
         <div class="control-divider"></div>
 
-        <!-- Dev Scenes + Logging Level Controls -->
+        <!-- Logging Level Controls -->
         <div class="control-item">
-          <!-- Dev Scenes Toggle Button -->
-          <v-btn
-            :variant="showDevScenes ? 'tonal' : 'outlined'"
-            :color="showDevScenes ? 'warning' : 'grey'"
-            size="x-small"
-            @click="showDevScenes = !showDevScenes"
-            class="logging-btn dev-toggle-btn mr-2"
-            icon
-            density="compact"
-          >
-            <v-icon size="small">mdi-code-braces</v-icon>
-            <v-tooltip activator="parent" location="bottom">
-              {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
-            </v-tooltip>
-          </v-btn>
-
           <span class="text-caption font-weight-medium mr-2 logging-label-full" style="color: #6b7280;">
             Logging
           </span>
@@ -357,9 +343,25 @@
 
       <!-- Scene Control -->
       <div class="scene-control-section mb-4">
-        <h4 class="text-subtitle-1 font-weight-bold mb-3">
-          Scene Control
-        </h4>
+        <div class="d-flex align-center mb-3">
+          <h4 class="text-subtitle-1 font-weight-bold mr-2">
+            Scene Control
+          </h4>
+          <!-- Dev Scenes Toggle Button (subtle style like info button) -->
+          <v-btn
+            :variant="showDevScenes ? 'tonal' : 'text'"
+            :color="showDevScenes ? 'warning' : 'grey'"
+            size="small"
+            @click="showDevScenes = !showDevScenes"
+            class="dev-toggle-btn"
+            icon
+          >
+            <v-icon size="small">mdi-code-braces</v-icon>
+            <v-tooltip activator="parent" location="bottom">
+              {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
+            </v-tooltip>
+          </v-btn>
+        </div>
         
         <!-- Scene Selector with inline controls -->
         <div class="scene-control-row">
@@ -2207,23 +2209,17 @@ onUnmounted(() => {
   display: none; /* Hidden by default */
 }
 
-/* Device header responsive layout - CLEAN RESTART */
+/* Device header responsive layout - Single row with proper wrapping */
 .device-header-container {
   width: 100%;
 }
 
-.device-header-top {
+.device-header-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2px; /* Minimal vertical gap */
-}
-
-.device-name-and-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px; /* Very tight spacing between name and badges */
-  flex-wrap: nowrap; /* No wrapping - badges stay next to name */
+  gap: 12px;
+  flex-wrap: wrap;
+  row-gap: 2px; /* Minimal vertical gap when wrapping */
 }
 
 .device-name {
@@ -2231,22 +2227,27 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0;
+  margin-right: 8px; /* ~20px total spacing before badges (12px gap + 8px margin) */
+}
+
+.device-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .status-badge {
-  flex-shrink: 0; /* Badges don't shrink */
-}
-
-.collapse-btn {
   flex-shrink: 0;
-  margin-left: auto; /* Always push to right */
 }
 
-.device-header-bottom {
+.device-info-items {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  margin-left: auto; /* Push to right when space available */
+  margin-right: 8px; /* Space before collapse button */
 }
 
 .header-info-item {
@@ -2261,6 +2262,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   cursor: help;
+}
+
+.collapse-btn {
+  flex-shrink: 0;
+  margin-left: auto; /* Always push to right */
+}
+
+/* Dev toggle button - subtle style */
+.dev-toggle-btn {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.dev-toggle-btn:hover {
+  opacity: 1;
 }
 
 /* Switch to compact logging mode when card is narrow (LATER than before - less space) */
