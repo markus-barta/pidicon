@@ -738,6 +738,7 @@ watch(
       if (newHardware.displayOn !== undefined && displayOn.value !== newHardware.displayOn) {
         console.log(`[${props.device.ip}] Syncing displayOn: ${displayOn.value} → ${newHardware.displayOn}`);
         displayOn.value = newHardware.displayOn;
+        console.log(`[${props.device.ip}] After sync, displayOn.value =`, displayOn.value);
       }
       if (newHardware.brightness !== undefined && brightness.value !== newHardware.brightness) {
         console.log(`[${props.device.ip}] Syncing brightness: ${brightness.value} → ${newHardware.brightness}`);
@@ -747,6 +748,11 @@ watch(
   },
   { deep: true, immediate: true }
 );
+
+// Debug: log displayOn whenever it changes  
+watch(displayOn, (newVal, oldVal) => {
+  console.log(`[${props.device.ip}] displayOn changed: ${oldVal} → ${newVal}`);
+});
 
 // Metrics
 const fps = ref(0);
