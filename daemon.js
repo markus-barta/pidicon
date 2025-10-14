@@ -201,6 +201,15 @@ logger.debug('StateStore initialized:', stateStore.getStats());
 // Inject StateStore into device-adapter for per-device logging preferences
 setStateStore(stateStore);
 
+// Restore persisted runtime state from previous session
+(async () => {
+  try {
+    await stateStore.restore();
+  } catch (error) {
+    logger.warn('Failed to restore runtime state:', { error: error.message });
+  }
+})();
+
 // ============================================================================
 // WEB UI SERVER (OPTIONAL)
 // ============================================================================
@@ -462,6 +471,51 @@ logger.info('Initializing deployment...');
 (async () => {
   await initializeDeployment();
 })();
+
+// ============================================================================
+// GRACEFUL SHUTDOWN
+// ============================================================================
+
+/**
+ * Handle graceful shutdown
+ */
+async function gracefulShutdown(signal) {
+  logger.info(`\n🛑 Received ${signal}, shutting down gracefully...`);
+
+  try {
+    // Flush runtime state to disk
+    logger.info('💾 Flushing runtime state...');
+    await stateStore.flush();
+
+    // Stop watchdog service
+    try {
+      const watchdogService = container.resolve('watchdogService');
+      if (watchdogService) {
+        logger.info('🔴 Stopping watchdog service...');
+        watchdogService.stopAll();
+      }
+    } catch {
+      // Watchdog service may not be initialized yet
+      logger.debug('Watchdog service not available during shutdown');
+    }
+
+    // Close WebSocket connections
+    if (webServer) {
+      logger.info('🔌 Closing WebSocket connections...');
+      webServer.close();
+    }
+
+    logger.ok('✅ Graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    logger.error('Failed to shutdown gracefully:', { error: error.message });
+    process.exit(1);
+  }
+}
+
+// Register shutdown handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // SCENE_STATE_TOPIC_BASE is provided by lib/config.js
 
