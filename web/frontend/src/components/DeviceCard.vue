@@ -2,9 +2,9 @@
   <v-card elevation="1" class="device-card">
     <!-- Device Header -->
     <v-card-title class="pb-2">
-      <div class="d-flex align-center justify-space-between w-100">
-        <div class="d-flex align-center">
-          <h3 class="text-h5 font-weight-bold mr-3">
+      <div class="device-header">
+        <div class="device-header-left">
+          <h3 class="text-h5 font-weight-bold mr-3 device-name">
             {{ deviceName }}
           </h3>
           <v-chip
@@ -48,7 +48,7 @@
             </span>
           </v-chip>
         </div>
-        <div class="d-flex align-center">
+        <div class="device-header-right">
           <!-- Device Responsiveness (for looping scenes only) - compact in collapsed mode -->
           <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="d-flex align-center text-caption mr-4">
             <v-tooltip location="bottom">
@@ -2196,8 +2196,53 @@ onUnmounted(() => {
   display: none; /* Hidden by default */
 }
 
-/* Switch to compact mode when card is narrow (< 900px) */
-@container (max-width: 900px) {
+/* Device header responsive layout */
+.device-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.device-header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0; /* Allow flex shrinking */
+}
+
+.device-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.device-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Break device name to new line if header gets too narrow */
+@container (max-width: 1100px) {
+  .device-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .device-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Switch to compact logging mode when card is narrow (< 1150px - was 900px) */
+@container (max-width: 1150px) {
   .logging-buttons-full {
     display: none !important;
   }
@@ -2216,7 +2261,7 @@ onUnmounted(() => {
 }
 
 /* Fallback for browsers without container queries */
-@media (max-width: 1200px) {
+@media (max-width: 1450px) {
   .logging-buttons-full {
     display: none !important;
   }
