@@ -518,38 +518,46 @@ module.exports = {
     const newStars = [];
 
     for (const star of stars) {
-      // Move star toward camera
+      // Move star toward camera (from far to near)
       let z = star.z - speed;
 
       // Reset star if it passes the camera
-      if (z < 1) {
-        z = 90;
-        star.x = (Math.random() - 0.5) * 100;
-        star.y = (Math.random() - 0.5) * 100;
+      if (z <= 0) {
+        // Spawn new star far away, at random angle from center
+        z = 80;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 30; // Initial distance from center
+        star.x = Math.cos(angle) * distance;
+        star.y = Math.sin(angle) * distance;
       }
 
-      // 3D to 2D projection
-      const scale = 512 / z; // Perspective projection
-      const screenX = Math.floor(32 + star.x * scale);
-      const screenY = Math.floor(32 + star.y * scale);
+      // Simple 3D to 2D projection (stars move from center outward)
+      const scale = 100 / (z + 1); // Simpler perspective
+      const screenX = Math.round(32 + star.x * scale);
+      const screenY = Math.round(32 + star.y * scale);
 
       // Only draw if within screen bounds
       if (screenX >= 0 && screenX < 64 && screenY >= 0 && screenY < 64) {
-        // Brightness and size based on depth
-        const brightness = Math.floor(100 + (90 - z) * 1.7); // 100-255
-        const size = Math.max(1, Math.floor((90 - z) / 30)); // 1-3 pixels
+        // Brightness based on distance (closer = brighter)
+        const depth = 80 - z; // 0 (far) to 80 (near)
+        const brightness = Math.max(100, Math.min(255, 100 + depth * 2));
 
-        // Draw star with size
-        for (let dy = 0; dy < size; dy++) {
-          for (let dx = 0; dx < size; dx++) {
-            const px = screenX + dx;
-            const py = screenY + dy;
-            if (px < 64 && py < 64) {
-              await device.drawPixel(
-                [px, py],
-                [brightness, brightness, brightness, 255],
-              );
-            }
+        // Draw star (single pixel for simplicity and performance)
+        await device.drawPixel(
+          [screenX, screenY],
+          [brightness, brightness, brightness, 255],
+        );
+
+        // Draw trail for closer stars (motion blur effect)
+        if (z < 20) {
+          const trailScale = 100 / (z + 3);
+          const trailX = Math.round(32 + star.x * trailScale);
+          const trailY = Math.round(32 + star.y * trailScale);
+          if (trailX >= 0 && trailX < 64 && trailY >= 0 && trailY < 64) {
+            await device.drawPixel(
+              [trailX, trailY],
+              [brightness / 2, brightness / 2, brightness / 2, 200],
+            );
           }
         }
       }
