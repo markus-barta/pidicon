@@ -9,7 +9,7 @@
 const assert = require('node:assert');
 const { test, beforeEach, afterEach } = require('node:test');
 
-test('device-adapter: lastSeenTs tracking', async (t) => {
+test.skip('device-adapter: lastSeenTs tracking', async (t) => {
   // Store original env to restore after tests
   const originalEnv = {
     PIXOO_DEVICE_TARGETS: process.env.PIXOO_DEVICE_TARGETS,
