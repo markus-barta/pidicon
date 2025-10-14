@@ -87,6 +87,19 @@
                 <span>{{ lastSeenTooltip }}</span>
               </v-tooltip>
             </div>
+
+            <!-- Battery (Awtrix only) -->
+            <div v-if="device.deviceType === 'awtrix' && batteryLevel !== null" class="header-info-item">
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" class="info-content">
+                    <v-icon size="small" class="mr-1" :color="batteryColor">{{ batteryIcon }}</v-icon>
+                    {{ batteryLevel }}%
+                  </span>
+                </template>
+                <span>Battery: {{ batteryLevel }}%</span>
+              </v-tooltip>
+            </div>
           </div>
           
           <!-- Always top right: collapse button -->
@@ -860,6 +873,33 @@ const deviceResponsiveLabel = computed(() => {
   }
   
   return 'responsive';
+});
+
+// Battery indicator (Awtrix only)
+const batteryLevel = computed(() => {
+  if (props.device.deviceType !== 'awtrix' || !props.device.hardware) {
+    return null;
+  }
+  return props.device.hardware.batteryLevel || null;
+});
+
+const batteryColor = computed(() => {
+  const level = batteryLevel.value;
+  if (level === null) return undefined;
+  if (level > 50) return 'success';
+  if (level > 20) return 'warning';
+  return 'error';
+});
+
+const batteryIcon = computed(() => {
+  const level = batteryLevel.value;
+  if (level === null) return 'mdi-battery-unknown';
+  if (level > 90) return 'mdi-battery';
+  if (level > 70) return 'mdi-battery-80';
+  if (level > 50) return 'mdi-battery-60';
+  if (level > 30) return 'mdi-battery-40';
+  if (level > 10) return 'mdi-battery-20';
+  return 'mdi-battery-alert';
 });
 
 const fpsDisplay = computed(() => {

@@ -27,24 +27,22 @@ async function init(ctx) {
 async function render(ctx) {
   const { device } = ctx;
 
-  // For Awtrix, we use createCustomApp with draw commands
+  // For Awtrix startup, use notification API (simpler than custom apps)
   // 32x8 display requires minimal design
 
-  const appName = 'pidicon_startup';
-
-  // Build draw commands for Awtrix
-  const drawCommands = {
+  const notification = {
     text: 'PIDICON',
     color: COLORS.PIDICON,
-    // Center text on 32x8 display
-    // Awtrix will auto-center if no position given
+    duration: 5, // Display for 5 seconds
+    rainbow: false,
+    scrollSpeed: 100,
   };
 
-  // Send to device via custom app API
-  if (device.createCustomApp) {
-    await device.createCustomApp(appName, drawCommands);
+  // Send notification to device
+  if (device.showNotification) {
+    await device.showNotification(notification);
   } else {
-    ctx.log('Device does not support createCustomApp', 'warning');
+    ctx.log('Device does not support showNotification', 'warning');
   }
 
   // Static scene - no loop needed
@@ -54,9 +52,9 @@ async function render(ctx) {
 async function cleanup(ctx) {
   const { device } = ctx;
 
-  // Remove custom app on cleanup
-  if (device.removeCustomApp) {
-    await device.removeCustomApp('pidicon_startup');
+  // Clear display on cleanup
+  if (device.clear) {
+    await device.clear();
   }
 
   ctx.log('Awtrix startup scene cleaned up', 'debug');
