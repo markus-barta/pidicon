@@ -2203,7 +2203,8 @@ onUnmounted(() => {
   justify-content: space-between;
   width: 100%;
   flex-wrap: wrap;
-  gap: 12px;
+  row-gap: 6px; /* Reduced from 12px (50% less) */
+  column-gap: 12px;
 }
 
 .device-header-left {
@@ -2230,19 +2231,15 @@ onUnmounted(() => {
 
 /* Break device name to new line if header gets too narrow */
 @container (max-width: 1100px) {
-  .device-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .device-header-right {
-    width: 100%;
-    justify-content: space-between;
+  .device-name {
+    flex-basis: 100%; /* Force name to take full width, breaking to new line */
+    margin-bottom: 0; /* Badges will wrap naturally with gap */
   }
 }
 
-/* Switch to compact logging mode when card is narrow (< 1150px - was 900px) */
-@container (max-width: 1150px) {
+/* Switch to compact logging mode when card is narrow (LATER than before - less space) */
+/* Changed from 1150px to 650px - collapses only when really narrow */
+@container (max-width: 650px) {
   .logging-buttons-full {
     display: none !important;
   }
@@ -2261,7 +2258,8 @@ onUnmounted(() => {
 }
 
 /* Fallback for browsers without container queries */
-@media (max-width: 1450px) {
+/* Changed from 1450px to 950px - collapses only when really narrow */
+@media (max-width: 950px) {
   .logging-buttons-full {
     display: none !important;
   }
