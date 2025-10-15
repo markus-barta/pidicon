@@ -820,8 +820,8 @@ const lastSeen = computed(() => {
   // Show relative time from last hardware ACK
   const now = Date.now();
   const diff = now - lastSeenTs;
-  if (diff < 1000) {
-    return 'Just now';
+  if (diff < 5000) {
+    return 'Just now'; // Extended to 5s as requested
   } else if (diff < 60000) {
     const seconds = Math.floor(diff / 1000);
     return `${seconds}s ago`;
@@ -870,8 +870,8 @@ const deviceResponsiveColor = computed(() => {
   const now = Date.now();
   const diff = now - lastSeenTs;
   
-  // If >5 seconds since last seen, device is unresponsive
-  if (diff > 5000) {
+  // Debounced: If >6 seconds since last seen, device is unresponsive (1s debounce)
+  if (diff > 6000) {
     return '#ef4444'; // red
   }
   
@@ -892,8 +892,8 @@ const deviceResponsiveLabel = computed(() => {
   const now = Date.now();
   const diff = now - lastSeenTs;
   
-  // If >5 seconds since last seen, device is unresponsive
-  if (diff > 5000) {
+  // Debounced: If >6 seconds since last seen, device is unresponsive (1s debounce)
+  if (diff > 6000) {
     return 'unresponsive';
   }
   
@@ -1733,21 +1733,27 @@ async function toggleDisplay() {
     const newState = displayOn.value;
     
     if (!newState) {
-      // Power OFF: Store current brightness, set to 0, switch to empty scene
+      // Power OFF: Just set display power and brightness to 0
+      // Don't change the selected scene - user wants to keep their selection
       previousBrightness.value = brightness.value;
       brightness.value = 0;
       await api.setDisplayBrightness(props.device.ip, 0);
-      await api.switchScene(props.device.ip, 'empty', { clear: true });
+      await api.setDisplayPower(props.device.ip, false);
       toast.success('Display powered off', 2000);
     } else {
-      // Power ON: Restore brightness, switch to startup scene
+      // Power ON: Restore brightness, power on display, switch to configured startup scene
       brightness.value = previousBrightness.value || 75;
       await api.setDisplayBrightness(props.device.ip, brightness.value);
-      await api.switchScene(props.device.ip, 'startup', { clear: true });
+      await api.setDisplayPower(props.device.ip, true);
+      
+      // Switch to device's configured startup scene
+      const startupScene = props.device.config?.startupScene || 'startup';
+      await api.switchScene(props.device.ip, startupScene, { clear: true });
+      selectedScene.value = startupScene;
+      
       toast.success('Display powered on', 2000);
     }
     
-    await api.setDisplayPower(props.device.ip, newState);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to toggle display: ${err.message}`);
