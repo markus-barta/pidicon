@@ -129,12 +129,19 @@ container.register(
 
 container.register(
   'watchdogService',
-  ({ deviceConfigStore, deviceService, sceneService, stateStore }) =>
+  ({
+    deviceConfigStore,
+    deviceService,
+    sceneService,
+    stateStore,
+    deviceAdapter,
+  }) =>
     new WatchdogService(
       deviceConfigStore,
       deviceService,
       sceneService,
       stateStore,
+      deviceAdapter,
     ),
 );
 

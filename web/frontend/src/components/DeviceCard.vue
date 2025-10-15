@@ -56,16 +56,16 @@
 
           <!-- Info items (stay in line when space available) -->
           <div class="device-info-items">
-            <!-- Device Responsiveness -->
-            <div v-if="currentSceneInfo?.wantsLoop && device.driver === 'real'" class="header-info-item">
+            <!-- Combined Status: Responsive indicator + Last Seen -->
+            <div v-if="device.driver === 'real'" class="header-info-item">
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <span v-bind="tooltipProps" class="info-content">
                     <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
-                    <span>Device: {{ deviceResponsiveLabel }}</span>
+                    <span>{{ lastSeen }}</span>
                   </span>
                 </template>
-                <span>Device: {{ deviceResponsiveLabel }}</span>
+                <span>{{ deviceResponsiveLabel }} • {{ lastSeenTooltip }}</span>
               </v-tooltip>
             </div>
 
@@ -73,19 +73,6 @@
             <div class="header-info-item">
               <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
               <span>{{ device.ip }}</span>
-            </div>
-
-            <!-- Last Seen -->
-            <div v-if="lastSeen !== 'N/A'" class="header-info-item">
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <span v-bind="tooltipProps" class="info-content">
-                    <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-                    {{ lastSeen }}
-                  </span>
-                </template>
-                <span>{{ lastSeenTooltip }}</span>
-              </v-tooltip>
             </div>
 
             <!-- Battery (Awtrix only) -->
@@ -842,11 +829,10 @@ const lastSeenTooltip = computed(() => {
   });
 });
 
-// Device responsiveness indicator (for looping scenes only)
+// Device responsiveness indicator (all real devices)
 const deviceResponsiveColor = computed(() => {
-  // Only for real devices with looping scenes
-  if (props.device.driver !== 'real' || !currentSceneInfo.value?.wantsLoop) {
-    return '#10b981'; // green (not applicable)
+  if (props.device.driver !== 'real') {
+    return '#10b981'; // green (mock device)
   }
   
   const lastSeenTs = props.device?.metrics?.lastSeenTs;
@@ -866,14 +852,13 @@ const deviceResponsiveColor = computed(() => {
 });
 
 const deviceResponsiveLabel = computed(() => {
-  // Only for real devices with looping scenes
-  if (props.device.driver !== 'real' || !currentSceneInfo.value?.wantsLoop) {
-    return 'N/A';
+  if (props.device.driver !== 'real') {
+    return 'Mock device';
   }
   
   const lastSeenTs = props.device?.metrics?.lastSeenTs;
   if (!lastSeenTs) {
-    return 'unresponsive';
+    return 'Unresponsive';
   }
   
   const now = Date.now();
@@ -881,10 +866,10 @@ const deviceResponsiveLabel = computed(() => {
   
   // Debounced: If >6 seconds since last seen, device is unresponsive (1s debounce)
   if (diff > 6000) {
-    return 'unresponsive';
+    return 'Unresponsive';
   }
   
-  return 'responsive';
+  return 'Responsive';
 });
 
 // Battery indicator (Awtrix only)

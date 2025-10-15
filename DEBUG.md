@@ -65,13 +65,61 @@ ssh mba@miniserver24 "docker logs pidicon --tail 50 2>&1 | grep 'OK \['"
 
 ---
 
+## CI/CD & Deployment
+
+### Automated Deployment (Watchtower)
+
+**Watchtower** automatically pulls and deploys new Docker images when you push to `main`.
+
+**Process:**
+
+1. Commit and push changes to `main`
+2. GitHub Actions builds new Docker image (~2-3 minutes)
+3. Watchtower on miniserver24 auto-detects new image (~1-2 minutes polling)
+4. Watchtower pulls and restarts container automatically
+
+**Total deployment time: ~3-5 minutes**
+
+**No manual action needed!** Just push and wait.
+
+### Verifying Deployment
+
+```bash
+# Wait 3 minutes after push, then check every 30s for another 3 minutes
+
+# Check current build number
+curl -s http://miniserver24:10829/api/status | jq '.buildNumber'
+
+# Or via SSH
+ssh mba@miniserver24 "docker exec pidicon cat version.json | jq '.buildNumber'"
+
+# Check when image was last updated
+ssh mba@miniserver24 "docker inspect pidicon | jq '.[0].Created'"
+```
+
+**Expected behavior:**
+
+- Build numbers increment sequentially
+- Git commit matches your latest push
+- Container `Created` timestamp is recent
+
+### Manual Deployment (if needed)
+
+Only use if Watchtower fails or you need immediate update:
+
+```bash
+# Manually pull and restart
+ssh mba@miniserver24 "docker pull ghcr.io/markus-barta/pidicon:latest && docker restart pidicon"
+```
+
+---
+
 ## Debug Workflow
 
 1. **Check version running**: `docker exec pidicon cat version.json`
 2. **Check logs for errors**: `docker logs pidicon --tail 100 | grep -i error`
-3. **Pull latest**: `docker pull ghcr.io/markus-barta/pidicon:latest`
-4. **Restart**: `docker restart pidicon`
-5. **Verify fix**: Check logs again
+3. **If outdated, wait for Watchtower** (~5 min) or manually pull
+4. **Verify fix**: Check logs and version again
 
 ---
 
@@ -84,4 +132,4 @@ ssh mba@miniserver24 "docker logs pidicon --tail 50 2>&1 | grep 'OK \['"
 
 ---
 
-**Last Updated**: 2025-10-11 (Build 606)
+**Last Updated**: 2025-10-15 (Build 752+)
