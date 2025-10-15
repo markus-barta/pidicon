@@ -56,6 +56,7 @@ function startWebServer(container, logger) {
   const sceneService = container.resolve('sceneService');
   const deviceService = container.resolve('deviceService');
   const systemService = container.resolve('systemService');
+  const watchdogService = container.resolve('watchdogService');
   const deviceConfigStore = container.resolve('deviceConfigStore'); // Use shared instance from DI container
 
   // =========================================================================
@@ -508,6 +509,19 @@ function startWebServer(container, logger) {
       res.json(result);
     } catch (error) {
       logger.error('[WEB UI] Failed to restart daemon:', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/system/watchdog-status - Get watchdog/health status
+  app.get('/api/system/watchdog-status', (req, res) => {
+    try {
+      const status = watchdogService.getAllStatus();
+      res.json(status);
+    } catch (error) {
+      logger.error('API /api/system/watchdog-status error:', {
         error: error.message,
       });
       res.status(500).json({ error: error.message });

@@ -37,10 +37,13 @@ PIDICON loads configuration in the following order:
       "brightness": 80,
       "watchdog": {
         "enabled": true,
-        "unresponsiveThresholdHours": 4,
+        "healthCheckIntervalSeconds": 10,
+        "checkWhenOff": true,
+        "timeoutMinutes": 120,
         "action": "restart",
         "fallbackScene": "",
-        "mqttCommandSequence": []
+        "mqttCommandSequence": [],
+        "notifyOnFailure": true
       }
     }
   ]
@@ -56,20 +59,23 @@ PIDICON loads configuration in the following order:
 
 ### Device Fields
 
-| Field                                 | Type    | Required | Description                                   |
-| ------------------------------------- | ------- | -------- | --------------------------------------------- |
-| `id`                                  | string  | Yes      | Unique device identifier (auto-generated)     |
-| `name`                                | string  | Yes      | Human-readable device name                    |
-| `ip`                                  | string  | Yes      | Device IP address                             |
-| `deviceType`                          | string  | Yes      | Device type: `pixoo64`, `awtrix`              |
-| `driver`                              | string  | Yes      | Driver mode: `real`, `mock`                   |
-| `startupScene`                        | string  | No       | Scene to load on daemon startup               |
-| `brightness`                          | number  | No       | Default brightness (0-100)                    |
-| `watchdog.enabled`                    | boolean | No       | Enable watchdog monitoring                    |
-| `watchdog.unresponsiveThresholdHours` | number  | No       | Hours before device considered unresponsive   |
-| `watchdog.action`                     | string  | No       | Action: `restart`, `fallback-scene`, `notify` |
-| `watchdog.fallbackScene`              | string  | No       | Scene to show if device fails                 |
-| `watchdog.mqttCommandSequence`        | array   | No       | MQTT commands to send on failure              |
+| Field                                 | Type    | Required | Default   | Description                                      |
+| ------------------------------------- | ------- | -------- | --------- | ------------------------------------------------ |
+| `id`                                  | string  | Yes      | -         | Unique device identifier (auto-generated)        |
+| `name`                                | string  | Yes      | -         | Human-readable device name                       |
+| `ip`                                  | string  | Yes      | -         | Device IP address                                |
+| `deviceType`                          | string  | Yes      | -         | Device type: `pixoo64`, `awtrix`                 |
+| `driver`                              | string  | Yes      | -         | Driver mode: `real`, `mock`                      |
+| `startupScene`                        | string  | No       | `null`    | Scene to load on daemon startup                  |
+| `brightness`                          | number  | No       | `80`      | Default brightness (0-100)                       |
+| `watchdog.enabled`                    | boolean | No       | `false`   | Enable watchdog monitoring & health checks       |
+| `watchdog.healthCheckIntervalSeconds` | number  | No       | `10`      | How often to ping device (seconds)               |
+| `watchdog.checkWhenOff`               | boolean | No       | `true`    | Health check even when device display is OFF     |
+| `watchdog.timeoutMinutes`             | number  | No       | `120`     | Minutes before triggering recovery action        |
+| `watchdog.action`                     | string  | No       | `restart` | Action: `restart`, `fallback-scene`, `notify`    |
+| `watchdog.fallbackScene`              | string  | No       | `null`    | Scene to show if device fails                    |
+| `watchdog.mqttCommandSequence`        | array   | No       | `[]`      | MQTT commands to send on failure                 |
+| `watchdog.notifyOnFailure`            | boolean | No       | `true`    | Log warnings when recovery actions are triggered |
 
 ### Managing Configuration
 
@@ -149,7 +155,8 @@ To migrate from environment variables to `devices.json`:
 
 - Ensure `watchdog.enabled` is `true`
 - Verify device is using `real` driver (not mock)
-- Check daemon logs for watchdog messages
+- Check daemon logs for watchdog messages (`[WATCHDOG]` prefix)
+- Use API endpoint `/api/system/watchdog-status` to debug health check status
 
 **Configuration changes not applied:**
 

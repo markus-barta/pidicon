@@ -129,8 +129,13 @@ container.register(
 
 container.register(
   'watchdogService',
-  ({ deviceConfigStore, deviceService, sceneService }) =>
-    new WatchdogService(deviceConfigStore, deviceService, sceneService),
+  ({ deviceConfigStore, deviceService, sceneService, stateStore }) =>
+    new WatchdogService(
+      deviceConfigStore,
+      deviceService,
+      sceneService,
+      stateStore,
+    ),
 );
 
 // Register command handlers in DI container
