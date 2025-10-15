@@ -257,16 +257,12 @@ onUnmounted(() => {
 <style scoped>
 /* Daemon restart button styling */
 .daemon-restart-btn {
-  min-width: 80px !important;
-  height: 32px !important;
-  padding: 0 12px !important;
+  /* Remove custom height - let Vuetify handle it to match other buttons */
   transition: all 0.15s ease !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .daemon-restart-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.15) !important;
 }
 
 .daemon-restart-btn:active {

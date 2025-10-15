@@ -357,25 +357,9 @@
 
       <!-- Scene Control -->
       <div class="scene-control-section mb-4">
-        <div class="d-flex align-center mb-3">
-          <h4 class="text-subtitle-1 font-weight-bold mr-2">
-            Scene Control
-          </h4>
-          <!-- Dev Scenes Toggle Button (subtle style like info button) -->
-          <v-btn
-            :variant="showDevScenes ? 'tonal' : 'text'"
-            :color="showDevScenes ? 'warning' : 'grey'"
-            size="small"
-            @click="showDevScenes = !showDevScenes"
-            class="dev-toggle-btn"
-            icon
-          >
-            <v-icon size="small">mdi-code-braces</v-icon>
-            <v-tooltip activator="parent" location="bottom">
-              {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
-            </v-tooltip>
-          </v-btn>
-        </div>
+        <h4 class="text-subtitle-1 font-weight-bold mb-3">
+          Scene Control
+        </h4>
         
         <!-- Scene Selector with inline controls -->
         <div class="scene-control-row">
@@ -675,6 +659,28 @@
         </v-row>
       </div>
     </v-card-text>
+
+    <!-- Footer with Dev Scenes Toggle -->
+    <v-card-actions class="justify-center pa-2" style="border-top: 1px solid rgba(0,0,0,0.12);">
+      <v-btn
+        :variant="showDevScenes ? 'text' : 'text'"
+        :color="showDevScenes ? 'warning' : 'grey'"
+        size="small"
+        @click="showDevScenes = !showDevScenes"
+        class="dev-footer-toggle"
+      >
+        <span :style="{ 
+          textDecoration: showDevScenes ? 'none' : 'line-through',
+          color: showDevScenes ? '#f59e0b' : '#9ca3af',
+          fontSize: '0.75rem'
+        }">
+          {DEV}
+        </span>
+        <v-tooltip activator="parent" location="top">
+          {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
+        </v-tooltip>
+      </v-btn>
+    </v-card-actions>
   </v-card>
 
   <!-- Confirm Dialog (UI-512) -->
@@ -2297,6 +2303,8 @@ onUnmounted(() => {
 /* Device header responsive layout - Single row with proper wrapping */
 .device-header-container {
   width: 100%;
+  position: relative; /* For absolute positioning of collapse button */
+  padding-right: 48px; /* Make room for collapse button */
 }
 
 .device-header-row {
@@ -2350,8 +2358,11 @@ onUnmounted(() => {
 }
 
 .collapse-btn {
+  position: absolute !important;
+  top: 0;
+  right: 0;
   flex-shrink: 0;
-  margin-left: auto; /* Always push to right */
+  z-index: 10; /* Above everything else */
 }
 
 /* Dev toggle button - subtle style */
