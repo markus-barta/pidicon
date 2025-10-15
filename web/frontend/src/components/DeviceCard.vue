@@ -347,6 +347,19 @@
         <h4 class="text-subtitle-1 font-weight-bold mb-3">
           Scene Control
         </h4>
+
+        <!-- Scene Incompatibility Error -->
+        <v-alert
+          v-if="sceneError"
+          type="error"
+          variant="tonal"
+          closable
+          @click:close="clearSceneError"
+          class="mb-3"
+        >
+          <div class="text-subtitle-2 font-weight-bold">{{ sceneError.message }}</div>
+          <div class="text-caption">{{ sceneError.detail }}</div>
+        </v-alert>
         
         <!-- Scene Selector with inline controls -->
         <div class="scene-control-row">
@@ -1021,6 +1034,17 @@ function updateSceneTime() {
 const currentSceneInfo = computed(() => {
   return sceneStore.getSceneByName(selectedScene.value);
 });
+
+// Scene error display (incompatible scene detection)
+const sceneError = computed(() => {
+  return props.device?.sceneState?.sceneError || null;
+});
+
+const clearSceneError = () => {
+  // Clear the error by switching to a valid scene or stopping
+  // For now, just trigger a refresh which will clear stale state
+  emit('refresh');
+};
 
 // Get scene metadata/payload for the selected scene
 const selectedSceneMetadata = computed(() => {

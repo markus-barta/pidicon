@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useApi } from '../composables/useApi';
 
 const api = useApi();
@@ -60,10 +60,10 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:showDevScenes']);
+const emit = defineEmits(['update:show-dev-scenes']);
 
 const toggleDevScenes = () => {
-  emit('update:showDevScenes', !props.showDevScenes);
+  emit('update:show-dev-scenes', !props.showDevScenes);
 };
 
 onMounted(async () => {
