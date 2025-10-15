@@ -75,6 +75,15 @@ container.register(
   'mqttService',
   ({ logger }) => new MqttService({ logger, config: mqttConfig }),
 );
+container.register('deviceAdapter', () => ({
+  getContext,
+  getDevice,
+  getDriverForDevice,
+  setDriverForDevice,
+  deviceDrivers,
+  devices,
+  registerDevicesFromConfig,
+}));
 
 // Resolve services from container
 const stateStore = container.resolve('stateStore');
