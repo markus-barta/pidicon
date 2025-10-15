@@ -8,6 +8,24 @@
           <span><strong>MIT License</strong> • Created by <a href="https://x.com/markusbarta" target="_blank" class="text-decoration-none text-primary">Markus Barta</a> with Cursor AI</span>
         </div>
 
+        <!-- Center: Dev Scenes Toggle -->
+        <div class="d-flex align-center">
+          <v-btn
+            variant="text"
+            size="x-small"
+            @click="toggleDevScenes"
+            class="dev-scenes-toggle text-caption"
+          >
+            <span :style="{
+              textDecoration: showDevScenes ? 'none' : 'line-through',
+              color: showDevScenes ? '#f59e0b' : '#9ca3af',
+              fontSize: '0.75rem'
+            }">
+              {DEV}
+            </span>
+          </v-btn>
+        </div>
+
         <!-- Right: Build Info -->
         <div class="d-flex align-center">
           <v-icon size="x-small" class="mr-1" style="vertical-align: middle;">mdi-source-commit</v-icon>
@@ -34,6 +52,20 @@ const api = useApi();
 const buildNumber = ref(null);
 const gitCommit = ref(null);
 
+// Dev scenes toggle (shared via props with parent)
+const props = defineProps({
+  showDevScenes: {
+    type: Boolean,
+    default: false
+  }
+});
+
+const emit = defineEmits(['update:showDevScenes']);
+
+const toggleDevScenes = () => {
+  emit('update:showDevScenes', !props.showDevScenes);
+};
+
 onMounted(async () => {
   try {
     const status = await api.getSystemStatus();
@@ -49,6 +81,12 @@ onMounted(async () => {
 .app-footer {
   border-top: 1px solid #e5e7eb;
   margin-top: 24px;
+}
+
+.dev-scenes-toggle {
+  min-width: auto !important;
+  padding: 0 8px !important;
+  height: auto !important;
 }
 </style>
 

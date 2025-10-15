@@ -64,7 +64,7 @@
               lg="12"
               xl="6"
             >
-              <device-card :device="device" @refresh="loadData" />
+              <device-card :device="device" :show-dev-scenes="showDevScenes" @refresh="loadData" />
             </v-col>
           </v-row>
         </template>
@@ -75,7 +75,7 @@
     <toast-notifications />
 
     <!-- Footer -->
-    <app-footer />
+    <app-footer v-model:show-dev-scenes="showDevScenes" />
   </v-app>
 </template>
 
@@ -104,6 +104,7 @@ const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
 const currentView = ref('devices'); // 'devices' or 'settings'
+const showDevScenes = ref(false); // Global dev scenes toggle
 
 const handleNavigation = (view) => {
   currentView.value = view;

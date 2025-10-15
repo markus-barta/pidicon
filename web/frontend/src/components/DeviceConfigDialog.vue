@@ -102,23 +102,56 @@
 
                 <template v-if="formData.watchdog.enabled">
                   <v-text-field
-                    v-model.number="formData.watchdog.unresponsiveThresholdHours"
-                    label="Unresponsive Threshold (hours)"
+                    v-model.number="formData.watchdog.healthCheckIntervalSeconds"
+                    label="Health Check Interval (seconds)"
                     type="number"
-                    :min="1"
-                    :max="24"
+                    :min="5"
+                    :max="300"
                     variant="outlined"
                     density="compact"
-                    hint="How long before device is considered dead"
+                    hint="How often to ping device (default: 10s)"
+                    persistent-hint
+                    class="mt-2"
+                  />
+
+                  <v-switch
+                    v-model="formData.watchdog.checkWhenOff"
+                    label="Check when device display is OFF"
+                    color="primary"
+                    density="compact"
+                    hint="Continue health checks even when display is turned off"
+                    persistent-hint
+                    class="mt-2"
+                  />
+
+                  <v-text-field
+                    v-model.number="formData.watchdog.timeoutMinutes"
+                    label="Recovery Timeout (minutes)"
+                    type="number"
+                    :min="1"
+                    :max="1440"
+                    variant="outlined"
+                    density="compact"
+                    hint="Minutes of unresponsiveness before triggering recovery action"
                     persistent-hint
                     class="mt-2"
                   />
 
                   <v-select
                     v-model="formData.watchdog.action"
-                    label="Action on Device Failure"
+                    label="Recovery Action"
                     :items="watchdogActions"
                     variant="outlined"
+                    density="compact"
+                    hint="Action to take when device exceeds timeout"
+                    persistent-hint
+                    class="mt-2"
+                  />
+
+                  <v-switch
+                    v-model="formData.watchdog.notifyOnFailure"
+                    label="Log warnings on recovery"
+                    color="primary"
                     density="compact"
                     class="mt-2"
                   />
@@ -228,10 +261,13 @@ export default {
       brightness: 80,
       watchdog: {
         enabled: false,
-        unresponsiveThresholdHours: 4,
+        healthCheckIntervalSeconds: 10,
+        checkWhenOff: true,
+        timeoutMinutes: 120,
         action: 'restart',
         fallbackScene: '',
         mqttCommandSequence: '',
+        notifyOnFailure: true,
       },
     });
 
@@ -275,8 +311,10 @@ export default {
             brightness: newDevice.brightness ?? 80,
             watchdog: {
               enabled: newDevice.watchdog?.enabled || false,
-              unresponsiveThresholdHours:
-                newDevice.watchdog?.unresponsiveThresholdHours || 4,
+              healthCheckIntervalSeconds:
+                newDevice.watchdog?.healthCheckIntervalSeconds ?? 10,
+              checkWhenOff: newDevice.watchdog?.checkWhenOff !== false,
+              timeoutMinutes: newDevice.watchdog?.timeoutMinutes ?? 120,
               action: newDevice.watchdog?.action || 'restart',
               fallbackScene: newDevice.watchdog?.fallbackScene || '',
               mqttCommandSequence:
@@ -287,6 +325,7 @@ export default {
                       null,
                       2,
                     ),
+              notifyOnFailure: newDevice.watchdog?.notifyOnFailure !== false,
             },
           };
         }
@@ -412,10 +451,13 @@ export default {
           brightness: 80,
           watchdog: {
             enabled: false,
-            unresponsiveThresholdHours: 4,
+            healthCheckIntervalSeconds: 10,
+            checkWhenOff: true,
+            timeoutMinutes: 120,
             action: 'restart',
             fallbackScene: '',
             mqttCommandSequence: '',
+            notifyOnFailure: true,
           },
         };
       }

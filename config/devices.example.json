@@ -16,10 +16,13 @@
       "brightness": 80,
       "watchdog": {
         "enabled": true,
-        "unresponsiveThresholdHours": 4,
+        "healthCheckIntervalSeconds": 10,
+        "checkWhenOff": true,
+        "timeoutMinutes": 120,
         "action": "restart",
         "fallbackScene": "",
-        "mqttCommandSequence": []
+        "mqttCommandSequence": [],
+        "notifyOnFailure": true
       }
     },
     {
@@ -32,7 +35,9 @@
       "brightness": 60,
       "watchdog": {
         "enabled": true,
-        "unresponsiveThresholdHours": 2,
+        "healthCheckIntervalSeconds": 10,
+        "checkWhenOff": true,
+        "timeoutMinutes": 60,
         "action": "mqtt-command",
         "fallbackScene": "",
         "mqttCommandSequence": [
@@ -40,7 +45,8 @@
             "topic": "awtrix_abc123/reboot",
             "payload": "true"
           }
-        ]
+        ],
+        "notifyOnFailure": true
       }
     }
   ]

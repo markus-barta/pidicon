@@ -659,28 +659,6 @@
         </v-row>
       </div>
     </v-card-text>
-
-    <!-- Footer with Dev Scenes Toggle -->
-    <v-card-actions class="justify-center pa-2" style="border-top: 1px solid rgba(0,0,0,0.12);">
-      <v-btn
-        :variant="showDevScenes ? 'text' : 'text'"
-        :color="showDevScenes ? 'warning' : 'grey'"
-        size="small"
-        @click="showDevScenes = !showDevScenes"
-        class="dev-footer-toggle"
-      >
-        <span :style="{ 
-          textDecoration: showDevScenes ? 'none' : 'line-through',
-          color: showDevScenes ? '#f59e0b' : '#9ca3af',
-          fontSize: '0.75rem'
-        }">
-          {DEV}
-        </span>
-        <v-tooltip activator="parent" location="top">
-          {{ showDevScenes ? 'Hide dev scenes' : 'Show dev scenes' }}
-        </v-tooltip>
-      </v-btn>
-    </v-card-actions>
   </v-card>
 
   <!-- Confirm Dialog (UI-512) -->
@@ -710,6 +688,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  showDevScenes: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['refresh']);
@@ -734,7 +716,6 @@ const isCollapsed = ref(props.device.driver === 'mock');
 const confirmDialog = ref(null);
 const showSceneDetails = ref(false);
 const showPerfMetrics = ref(false);
-const showDevScenes = ref(false);
 
 // Sync with backend hardware state (run immediately and on changes)
 watch(
