@@ -5,8 +5,6 @@
  * @author Markus Barta (mba) with assistance from Cursor AI
  */
 
-/* eslint-disable max-lines-per-function */
-
 const fs = require('fs');
 const assert = require('node:assert');
 const { describe, it, beforeEach, afterEach } = require('node:test');

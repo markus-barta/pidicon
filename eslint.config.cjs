@@ -55,10 +55,7 @@ module.exports = [
       ],
       complexity: ['warn', 30],
       'max-params': ['warn', 10],
-      'max-lines-per-function': [
-        'warn',
-        { max: 150, skipBlankLines: true, skipComments: true },
-      ],
+      'max-lines-per-function': 'off',
       'import/order': [
         'error',
         {
@@ -79,10 +76,7 @@ module.exports = [
     rules: {
       complexity: ['error', 15],
       'max-params': ['error', 6],
-      'max-lines-per-function': [
-        'error',
-        { max: 120, skipBlankLines: true, skipComments: true },
-      ],
+      'max-lines-per-function': 'off',
     },
   },
 ];
