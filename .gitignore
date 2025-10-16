@@ -11,6 +11,7 @@ web/frontend/dist/
 # Legacy code and configuration files
 legacy-code/
 other-code/
+scenes/examples/dev/
 
 # Device configuration (contains device-specific settings)
 config/devices.json

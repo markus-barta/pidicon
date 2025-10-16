@@ -38,11 +38,9 @@ const versionInfo = require('./version.json');
 
 // MQTT connection config – will be overwritten by persisted settings if available
 const mqttConfig = {
-  brokerUrl: process.env.MOSQITTO_HOST_MS24
-    ? `mqtt://${process.env.MOSQITTO_HOST_MS24}:1883`
-    : 'mqtt://localhost:1883',
-  username: process.env.MOSQITTO_USER_MS24,
-  password: process.env.MOSQITTO_PASS_MS24,
+  brokerUrl: 'mqtt://localhost:1883',
+  username: undefined,
+  password: undefined,
 };
 
 // Default scene per device (set via MQTT)
@@ -317,6 +315,16 @@ async function initializeDeployment() {
     logger.info('Loading device configuration...');
     try {
       await deviceConfigStore.load();
+      const configSettings = deviceConfigStore.getSettings();
+      if (configSettings.mqttBrokerUrl) {
+        mqttConfig.brokerUrl = configSettings.mqttBrokerUrl;
+      }
+      if (configSettings.mqttUsername) {
+        mqttConfig.username = configSettings.mqttUsername;
+      }
+      if (configSettings.mqttPassword) {
+        mqttConfig.password = configSettings.mqttPassword;
+      }
       const configuredDevices = Array.from(
         deviceConfigStore.getAllDevices().values(),
       );
@@ -666,8 +674,21 @@ mqttService.on('connect', async () => {
 // Start MQTT service
 mqttService.connect().catch((err) => {
   logger.error('Failed to connect to MQTT broker:', { error: err.message });
-  process.exit(1);
+  reconnectMqttWithBackoff();
 });
+
+function reconnectMqttWithBackoff(attempt = 1) {
+  const delayMs = Math.min(30000, attempt * 5000);
+  logger.info(
+    `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`,
+  );
+  setTimeout(() => {
+    mqttService.connect().catch((err) => {
+      logger.error('MQTT reconnect failed:', { error: err.message, attempt });
+      reconnectMqttWithBackoff(attempt + 1);
+    });
+  }, delayMs);
+}
 
 // Global MQTT error logging
 mqttService.on('error', (err) => {

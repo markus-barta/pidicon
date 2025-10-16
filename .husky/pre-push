@@ -1,4 +1,36 @@
 #!/usr/bin/env sh
+# Strict mode
+set -eu
+
+# ==========================================================================
+# Lint check (no warnings allowed)
+# ==========================================================================
+# --------------------------------------------------------------------------
+# ESLint (Auto-fix + fail on remaining warnings)
+# --------------------------------------------------------------------------
+echo "🔧 Running eslint --fix..." >&2
+npm run lint -- --fix >/dev/null || true
+
+echo "🔍 Checking eslint (no warnings allowed)..." >&2
+npm run lint -- --max-warnings=0 >/dev/null || {
+  echo "❌ Lint still failing (errors/warnings remain). Please fix manually." >&2
+  exit 1
+}
+
+# ==========================================================================
+# Markdown lint check
+# ==========================================================================
+# --------------------------------------------------------------------------
+# Markdownlint (Auto-fix + fail if issues remain)
+# --------------------------------------------------------------------------
+echo "🔧 Running markdownlint --fix..." >&2
+npm run md:fix -- --quiet >/dev/null || true
+
+echo "🔍 Checking markdownlint..." >&2
+npm run md:lint -- --quiet >/dev/null || {
+  echo "❌ markdownlint still failing. Please fix remaining documentation issues." >&2
+  exit 1
+}
 # Pre-push Hook: Trigger Watchtower on Server
 # ==============================================
 # Notifies the server's watchtower service to check for new PIDICON images
@@ -13,6 +45,15 @@
 # Non-blocking: If server is unreachable, push continues without error.
 
 set -eu
+
+# ==========================================================================
+# Lint check (no warnings allowed)
+# ==========================================================================
+echo "🔍 Running eslint (no warnings allowed)..." >&2
+npm run lint -- --max-warnings=0 >/dev/null || {
+  echo "❌ Lint failed (errors or warnings present). Fix issues before pushing." >&2
+  exit 1
+}
 
 # ============================================================================
 # SERVER CONFIGURATION
