@@ -36,9 +36,11 @@ const versionInfo = require('./version.json');
 
 // Create a logger instance
 
-// MQTT connection config (devices loaded from config file or environment)
+// MQTT connection config – will be overwritten by persisted settings if available
 const mqttConfig = {
-  brokerUrl: `mqtt://${process.env.MOSQITTO_HOST_MS24 || 'localhost'}:1883`,
+  brokerUrl: process.env.MOSQITTO_HOST_MS24
+    ? `mqtt://${process.env.MOSQITTO_HOST_MS24}:1883`
+    : 'mqtt://localhost:1883',
   username: process.env.MOSQITTO_USER_MS24,
   password: process.env.MOSQITTO_PASS_MS24,
 };
