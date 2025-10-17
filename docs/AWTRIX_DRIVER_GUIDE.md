@@ -362,7 +362,7 @@ AWTRIX uses LaMetric's icon library:
 - **10,000+ icons** available
 - **8x8 pixel** resolution
 - **Icons by ID**: `1234`
-- **Preview**: https://developer.lametric.com/icons
+- **Preview**: <https://developer.lametric.com/icons>
 
 **Popular Icons**:
 

@@ -138,6 +138,7 @@ docker run -d \
    ```
 
 3. **Start container**:
+
    ```bash
    docker compose up -d pidicon
    ```

@@ -37,7 +37,7 @@ cd pidicon
 
 **On GitHub**:
 
-1. Go to: https://github.com/markus-barta/pixoo-daemon
+1. Go to: <https://github.com/markus-barta/pixoo-daemon>
 2. Click **Settings** (top right)
 3. Scroll to **"General"** → **"Repository name"**
 4. Change `pixoo-daemon` → `pidicon`
@@ -165,7 +165,7 @@ git remote set-url origin git@github.com:markus-barta/pidicon.git
 ### Old bookmarks don't work
 
 - GitHub redirects work automatically for 1 year
-- Update bookmarks to: https://github.com/markus-barta/pidicon
+- Update bookmarks to: <https://github.com/markus-barta/pidicon>
 
 ---
 
@@ -194,7 +194,7 @@ Once all steps are done:
    npm start
    ```
 
-2. **Verify Web UI**: http://localhost:10829
+2. **Verify Web UI**: <http://localhost:10829>
    - Title should show "PIDICON: Pixel Display Controller"
    - All functions should work normally
 

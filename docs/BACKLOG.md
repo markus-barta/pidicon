@@ -82,7 +82,7 @@
 
 **References**:
 
-- AWTRIX 3 API: https://blueforcer.github.io/awtrix3/#/api
+- AWTRIX 3 API: <https://blueforcer.github.io/awtrix3/#/api>
 - Driver implementation: `lib/drivers/awtrix/awtrix-driver.js`
 - Canvas adapter: `lib/drivers/awtrix/awtrix-canvas.js`
 - Constants: `lib/drivers/awtrix/constants.js`

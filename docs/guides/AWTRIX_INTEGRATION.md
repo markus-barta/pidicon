@@ -173,7 +173,7 @@ await device.createCustomApp('weather', {
 });
 ```
 
-Browse icons: https://developer.lametric.com/icons
+Browse icons: <https://developer.lametric.com/icons>
 
 #### 3. Draw Commands (Raw Pixel Control)
 
@@ -301,7 +301,7 @@ module.exports = { name, wantsLoop, deviceTypes, render };
 
 Awtrix communicates via HTTP REST API at `http://{ip}/api`.
 
-Official docs: https://blueforcer.github.io/awtrix3/#/api
+Official docs: <https://blueforcer.github.io/awtrix3/#/api>
 
 ### Custom Apps (Scene Rendering)
 
@@ -598,8 +598,8 @@ mosquitto_pub -t 'pidicon/state/192.168.1.100/awtrix_timestats/door_status' -m '
 1. **Create your first Awtrix scene** using `scenes/awtrix_startup.js` as template
 2. **Add your Awtrix device** to `config/devices.json`
 3. **Integrate with home automation** via MQTT state updates
-4. **Explore icons** at https://developer.lametric.com/icons
-5. **Read official Awtrix docs** at https://blueforcer.github.io/awtrix3
+4. **Explore icons** at <https://developer.lametric.com/icons>
+5. **Read official Awtrix docs** at <https://blueforcer.github.io/awtrix3>
 
 ---
 
