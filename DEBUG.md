@@ -69,16 +69,16 @@ ssh mba@miniserver24 "docker logs pidicon --tail 50 2>&1 | grep 'OK \['"
 
 ### Automated Deployment (Watchtower)
 
-**Watchtower** automatically pulls and deploys new Docker images when you push to `main`.
+Watchtower automatically pulls and deploys new Docker images when you push to `main`.
 
-**Process:**
+Process:
 
 1. Commit and push changes to `main`
 2. GitHub Actions builds new Docker image (~2-3 minutes)
 3. Watchtower on miniserver24 auto-detects new image (~1-2 minutes polling)
 4. Watchtower pulls and restarts container automatically
 
-**Total deployment time: ~3-5 minutes**
+**Total deployment time:** ~3-5 minutes
 
 **No manual action needed!** Just push and wait.
 

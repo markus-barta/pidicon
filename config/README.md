@@ -121,7 +121,7 @@ From the Web UI Settings page, you can:
 
 When using Docker with `/data` mount:
 
-```
+```text
 /data/
   ├── devices.json         # Device configuration (auto-created)
   ├── media/               # Media files for scenes
