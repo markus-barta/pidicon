@@ -8,7 +8,9 @@
 
 ## Overview
 
-The AWTRIX driver provides full support for **AWTRIX 3** (Ulanzi TC001) 32x8 pixel displays via MQTT protocol. This guide covers the driver implementation, API usage, and integration status.
+The AWTRIX driver provides full support for **AWTRIX 3** (Ulanzi TC001) 32x8
+pixel displays via MQTT protocol. This guide covers the driver implementation,
+API usage, and integration status.
 
 **AWTRIX 3 Devices**:
 
@@ -76,7 +78,7 @@ The AWTRIX driver provides full support for **AWTRIX 3** (Ulanzi TC001) 32x8 pix
 
 ### MQTT Communication Flow
 
-```
+```text
 PIDICON (via MqttService)
     ↓
 AwtrixDriver
@@ -92,7 +94,7 @@ AWTRIX Device (32x8 LED matrix)
 
 ### Driver Class Hierarchy
 
-```
+```text
 DeviceDriver (abstract base)
     ↑
 AwtrixDriver
