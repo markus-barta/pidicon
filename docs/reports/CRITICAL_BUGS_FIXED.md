@@ -242,19 +242,19 @@ MQTT message → MqttService → Handler → SceneManager → Scene → Device
 
 **SceneCommandHandler**:
 
-6. ✅ Set default scene for device (verifies MQTT publish)
+1. ✅ Set default scene for device (verifies MQTT publish)
 
 **DriverCommandHandler**:
 
-7. ✅ Switch driver and re-render (verifies full driver change flow)
+1. ✅ Switch driver and re-render (verifies full driver change flow)
 
 **ResetCommandHandler**:
 
-8. ✅ Perform soft reset (verifies reset called, state published)
+1. ✅ Perform soft reset (verifies reset called, state published)
 
 **Error Handling**:
 
-9. ✅ Publish error on scene switch failure (verifies error handling)
+1. ✅ Publish error on scene switch failure (verifies error handling)
 
 ### Test Results
 

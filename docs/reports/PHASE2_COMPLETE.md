@@ -310,21 +310,21 @@ Lint: 0 errors, 6 warnings (acceptable - long test functions)
 
 ### **Phase 3 Options**
 
-**Option A: TST-301 - Improve Test Coverage**
+#### Option A: TST-301 - Improve Test Coverage
 
 - Target: 80%+ coverage for critical modules
 - Add integration tests
 - Add performance tests
 - Estimated: 2-3 days
 
-**Option B: ARC-305 - Service Layer**
+#### Option B: ARC-305 - Service Layer
 
 - Extract business logic from handlers
 - Add service abstractions
 - Improve separation of concerns
 - Estimated: 3-4 days
 
-**Option C: Consolidation & Polish**
+#### Option C: Consolidation & Polish
 
 - Refine existing code
 - Add more documentation

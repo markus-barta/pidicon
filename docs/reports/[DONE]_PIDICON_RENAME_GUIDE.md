@@ -23,7 +23,7 @@ This file will guide you through the final steps to complete the PIDICON migrati
 
 **On GitHub**:
 
-1. Go to: https://github.com/markus-barta/pixoo-daemon/settings
+1. Go to: <https://github.com/markus-barta/pixoo-daemon/settings>
 2. Scroll to "Repository name"
 3. Change: `pixoo-daemon` → `pidicon`
 4. Click "Rename"
@@ -123,17 +123,17 @@ All documentation has been updated and is in the `docs/` folder:
 
 PIDICON now supports multiple device types:
 
-### Current Status:
+### Current Status
 
 - ✅ **Pixoo 64x64** - Full support (HTTP)
 - 🚧 **AWTRIX 3** - Interface ready, MQTT implementation pending
 - 📋 **Future**: WS2812B, MAX7219, Generic MQTT, HUB75
 
-### Device Configuration:
+### Device Configuration
 
 **Via Web UI** (Recommended):
 
-1. Open: http://localhost:10829
+1. Open: <http://localhost:10829>
 2. Click "Settings" → "Devices"
 3. Click "Add Device"
 4. Fill in IP, device type, driver mode
@@ -210,19 +210,19 @@ Check variable names:
 
 ## 🎓 Learning Resources
 
-### For Scene Development:
+### For Scene Development
 
 - Start: `docs/SCENE_DEVELOPMENT.md`
 - Example: `scenes/examples/pixoo_showcase.js`
 - Template: `scenes/template.js`
 
-### For Driver Development:
+### For Driver Development
 
 - Guide: `docs/DRIVER_DEVELOPMENT.md`
 - Example: `lib/drivers/pixoo/pixoo-driver.js`
 - Stub: `lib/drivers/awtrix/awtrix-driver.js`
 
-### For API Integration:
+### For API Integration
 
 - REST API: `docs/API.md`
 - WebSocket: `docs/API.md#websocket-api`
@@ -234,8 +234,8 @@ Check variable names:
 
 1. **Check docs**: All major topics covered in `docs/`
 2. **Check backlog**: See `docs/BACKLOG.md` for known issues
-3. **Open issue**: https://github.com/markus-barta/pidicon/issues
-4. **Start discussion**: https://github.com/markus-barta/pidicon/discussions
+3. **Open issue**: <https://github.com/markus-barta/pidicon/issues>
+4. **Start discussion**: <https://github.com/markus-barta/pidicon/discussions>
 
 ---
 
@@ -245,7 +245,7 @@ After completing the steps above, verify:
 
 - [x] Git remote points to new repo URL ✅
 - [x] `npm test` passes (156/159 tests) ✅
-- [ ] Web UI loads at http://localhost:10829 (test on server)
+- [ ] Web UI loads at <http://localhost:10829> (test on server)
 - [ ] Can add/remove devices via Web UI (needs persistent storage)
 - [ ] Scenes run on devices (test on server)
 - [ ] Docker container renamed (pending server deployment)
@@ -253,7 +253,7 @@ After completing the steps above, verify:
 
 ---
 
-## 🎉 You're Done!
+## 🎉 You're Done
 
 PIDICON (Pixel Display Controller) is now fully operational!
 

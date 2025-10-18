@@ -97,7 +97,7 @@ mkdir -p ./mounts/pidicon/data/{media,scenes}
 chmod -R 755 ./mounts/pidicon
 ```
 
-2. **Optional: Pre-populate config from example**
+1. **Optional: Pre-populate config from example**
 
 ```bash
 cp config/devices.example.json ./mounts/pidicon/data/devices.json
@@ -137,7 +137,7 @@ cat > ./mounts/pidicon/data/devices.json << 'EOF'
 EOF
 ```
 
-3. **Start container**
+1. **Start container**
 
 ```bash
 docker compose up -d pidicon
@@ -149,7 +149,7 @@ The container will automatically create `/data/media` and `/data/scenes` directo
 
 For local development (without Docker), the config file defaults to:
 
-```
+```text
 ./config/devices.json
 ```
 
@@ -257,7 +257,7 @@ docker logs pidicon | grep "\[CONFIG\]"
 
 Expected output:
 
-```
+```text
 ✓ [INFO] 📋 [CONFIG] Using config path: /data/devices.json
 ✓ [INFO] 📋 [CONFIG] Loaded 1 device configuration(s)
 ```

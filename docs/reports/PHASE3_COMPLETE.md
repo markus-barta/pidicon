@@ -444,10 +444,10 @@ handlers. Don't just test the handler in isolation.
 
 ### Phase 2: Quality ✅ **COMPLETE**
 
-4. ✅ ARC-304 - Extract Command Handlers (107 tests)
-5. ✅ BUG-012 - MQTT routing fixed (143 tests)
-6. ✅ BUG-013 - StateCommandHandler complete (152 tests)
-7. ✅ TST-302 - Integration tests (9 tests)
+1. ✅ ARC-304 - Extract Command Handlers (107 tests)
+2. ✅ BUG-012 - MQTT routing fixed (143 tests)
+3. ✅ BUG-013 - StateCommandHandler complete (152 tests)
+4. ✅ TST-302 - Integration tests (9 tests)
 
 **Status**: Complete, all critical bugs fixed
 
@@ -455,10 +455,10 @@ handlers. Don't just test the handler in isolation.
 
 ### Phase 3: Quick Wins ✅ **COMPLETE**
 
-8. ✅ TST-303 - Device-adapter tests (36 tests)
-9. ✅ REV-301 - Code quality review (⭐⭐⭐⭐⭐ 5/5)
-10. ✅ REV-302 - Performance review (⭐⭐⭐⭐ 4/5)
-11. ✅ DOC-301 - Documentation polish
+1. ✅ TST-303 - Device-adapter tests (36 tests)
+2. ✅ REV-301 - Code quality review (⭐⭐⭐⭐⭐ 5/5)
+3. ✅ REV-302 - Performance review (⭐⭐⭐⭐ 4/5)
+4. ✅ DOC-301 - Documentation polish
 
 **Status**: Complete, all quick wins delivered
 
@@ -466,11 +466,11 @@ handlers. Don't just test the handler in isolation.
 
 ### Phase 4: Advanced (Optional) 📋 **PLANNED**
 
-12. **ARC-305** - Add Service Layer (planned)
-13. **ARC-306** - Hexagonal Architecture (proposed)
-14. **ARC-307** - Repository Pattern (proposed)
-15. **TST-301** - 80% Test Coverage (planned)
-16. **PERF-301** - Performance Optimizations (proposed)
+1. **ARC-305** - Add Service Layer (planned)
+2. **ARC-306** - Hexagonal Architecture (proposed)
+3. **ARC-307** - Repository Pattern (proposed)
+4. **TST-301** - 80% Test Coverage (planned)
+5. **PERF-301** - Performance Optimizations (proposed)
 
 **Status**: Planned for future (not critical)
 

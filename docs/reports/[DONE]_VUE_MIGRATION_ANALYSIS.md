@@ -334,7 +334,9 @@ await api.switchScene(ip, scene, options); // Returns result
 
 ✅ **Migration Successful**
 
-The Vue 3 + Vuetify 3 migration is **complete and production-ready**. All functionality from the vanilla JavaScript version has been preserved and significantly enhanced with:
+The Vue 3 + Vuetify 3 migration is **complete and production-ready**. All
+functionality from the vanilla JavaScript version has been preserved and
+significantly enhanced with:
 
 - Modern Material Design UI
 - Component-based architecture
@@ -342,7 +344,8 @@ The Vue 3 + Vuetify 3 migration is **complete and production-ready**. All functi
 - Toast notification system
 - Enhanced user experience
 
-**No breaking changes** to the backend API. The Vue app is a drop-in replacement for the vanilla JS version with zero backend modifications required.
+**No breaking changes** to the backend API. The Vue app is a drop-in replacement
+for the vanilla JS version with zero backend modifications required.
 
 **Recommendation**: Deploy to production! 🚀
 

@@ -9,7 +9,8 @@
 
 ## 🎉 Summary
 
-Successfully completed the migration from `pixoo-daemon` to **PIDICON** with full rename, persistent storage, and consolidated documentation.
+Successfully completed the migration from `pixoo-daemon` to **PIDICON** with full
+rename, persistent storage, and consolidated documentation.
 
 ## 📊 Changes Overview
 
@@ -130,7 +131,7 @@ volumes:
 
 ### Test Results
 
-```
+```text
 Tests: 156/159 passing (3 skipped)
 Suites: 57
 Duration: ~700ms
@@ -183,6 +184,7 @@ When deploying to production server (miniserver24):
    ```
 
 4. **Verify**:
+
    ```bash
    docker logs pidicon | grep "\[CONFIG\]"
    # Should show: Using config path: /data/devices.json
@@ -208,7 +210,7 @@ When deploying to production server (miniserver24):
 
 ### Code Changes
 
-```
+```text
 Files changed: 14
 Insertions: 450+ lines
 Deletions: 80+ lines
@@ -217,7 +219,7 @@ Net change: +370 lines (mostly docs)
 
 ### Build Progress
 
-```
+```text
 Starting: Build #679 (CI broken)
 Ending:   Build #698 (All green ✅)
 Duration: ~2 hours
@@ -226,7 +228,7 @@ Commits:  5
 
 ### Documentation
 
-```
+```text
 New docs:     272 lines (CONFIG_PERSISTENCE.md)
 Updated docs: 50+ lines (BACKLOG.md, guides)
 Total docs:   120KB+ (entire docs/ folder)
@@ -293,7 +295,8 @@ See `docs/BACKLOG.md` for complete roadmap (10 active items).
 
 ## ✨ Conclusion
 
-The PIDICON migration is **complete and production-ready**. All naming is consistent, persistent storage is implemented, and documentation is comprehensive.
+The PIDICON migration is **complete and production-ready**. All naming is
+consistent, persistent storage is implemented, and documentation is comprehensive.
 
 **Key Achievements**:
 
