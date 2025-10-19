@@ -59,7 +59,7 @@ while true; do
   fi
 
   # Start Node.js daemon in background
-  # In Alpine Linux (node:18-alpine), node is typically at /usr/local/bin/node
+  # In Alpine Linux (node:24-alpine), node is typically at /usr/local/bin/node
   NODE_CMD="/usr/local/bin/node"
   if [ ! -x "$NODE_CMD" ]; then
     # Fallback: try to find node in PATH

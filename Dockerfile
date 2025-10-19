@@ -1,7 +1,7 @@
 # ============================================================================
 # Stage 1: Build Stage (with all dev dependencies)
 # ============================================================================
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Install git for version detection
 RUN apk add --no-cache git
@@ -41,7 +41,7 @@ RUN npm run ui:build
 # ============================================================================
 # Stage 2: Production Stage (minimal runtime image)
 # ============================================================================
-FROM node:18-alpine
+FROM node:24-alpine
 
 # Install only runtime system dependencies
 # git: fallback version detection
