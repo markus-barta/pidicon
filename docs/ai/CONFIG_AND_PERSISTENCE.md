@@ -9,8 +9,7 @@
 
 ### Current Implementation
 
-The Pixoo Daemon currently uses **environment variables** for configuration, loaded at startup.
-There is **no persistent file-based configuration** yet.
+PIDICON stores persistent configuration on disk when `/data` is mounted. Device metadata lives in `/data/devices.json`; global MQTT credentials are encrypted in `/data/secrets/global-mqtt.json` (AES-256-GCM). The secrets module generates `/data/secrets/.key` automatically if `PIDICON_SECRET_KEY` is not supplied.
 
 ### Configuration Sources (Priority Order)
 
@@ -26,18 +25,18 @@ There is **no persistent file-based configuration** yet.
 
 ## 📋 Configuration Variables
 
-| Variable                 | Description                     | Example                                 | Default       |
-| ------------------------ | ------------------------------- | --------------------------------------- | ------------- |
-| `MOSQITTO_HOST_MS24`     | MQTT broker host                | `miniserver24`                          | `localhost`   |
-| `MOSQITTO_USER_MS24`     | MQTT username                   | `smarthome`                             | (none)        |
-| `MOSQITTO_PASS_MS24`     | MQTT password                   | `your-password`                         | (none)        |
-| `PIXOO_DEVICE_TARGETS`   | Device IP to driver mapping     | `192.168.1.159=real;192.168.1.189=mock` | (none)        |
-| `PIXOO_DEFAULT_DRIVER`   | Fallback driver for new devices | `real` or `mock`                        | `mock`        |
-| `PIXOO_WEB_UI`           | Enable/disable Web UI           | `true` or `false`                       | `true`        |
-| `PIXOO_WEB_UI_PORT`      | Web UI HTTP port                | `10829`                                 | `10829`       |
-| `PIXOO_WEB_AUTH`         | Basic auth (user:pass)          | `admin:secret`                          | (disabled)    |
-| `SCENE_STATE_TOPIC_BASE` | MQTT state topic base           | `/home/pixoo`                           | `/home/pixoo` |
-| `LOG_LEVEL`              | Logging verbosity               | `debug`, `info`, `warn`, `error`        | `info`        |
+| Variable                 | Description                                  | Example                                 | Default                               |
+| ------------------------ | -------------------------------------------- | --------------------------------------- | ------------------------------------- |
+| `MOSQITTO_HOST_MS24`     | MQTT broker host                             | `miniserver24`                          | `localhost`                           |
+| `MOSQITTO_USER_MS24`     | MQTT username                                | `smarthome`                             | (none)                                |
+| `MOSQITTO_PASS_MS24`     | MQTT password (legacy; prefer secrets store) | `your-password`                         | (none)                                |
+| `PIXOO_DEVICE_TARGETS`   | Device IP to driver mapping                  | `192.168.1.159=real;192.168.1.189=mock` | (none)                                |
+| `PIXOO_DEFAULT_DRIVER`   | Fallback driver for new devices              | `real` or `mock`                        | `mock`                                |
+| `PIXOO_WEB_UI`           | Enable/disable Web UI                        | `true` or `false`                       | `true`                                |
+| `PIXOO_WEB_UI_PORT`      | Web UI HTTP port                             | `10829`                                 | `10829`                               |
+| `PIXOO_WEB_AUTH`         | Basic auth (user:pass)                       | `admin:secret`                          | (disabled) – enable to protect Web UI |
+| `SCENE_STATE_TOPIC_BASE` | MQTT state topic base                        | `/home/pixoo`                           | `/home/pixoo`                         |
+| `LOG_LEVEL`              | Logging verbosity                            | `debug`, `info`, `warn`, `error`        | `info`                                |
 
 ---
 

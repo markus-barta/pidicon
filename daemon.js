@@ -304,14 +304,11 @@ async function bootstrap() {
       try {
         await deviceConfigStore.load();
         const configSettings = deviceConfigStore.getSettings();
-        if (configSettings.mqttBrokerUrl) {
+        if (!persistedMqttConfig?.brokerUrl && configSettings.mqttBrokerUrl) {
           mqttConfig.brokerUrl = configSettings.mqttBrokerUrl;
         }
-        if (configSettings.mqttUsername) {
+        if (!persistedMqttConfig?.username && configSettings.mqttUsername) {
           mqttConfig.username = configSettings.mqttUsername;
-        }
-        if (configSettings.mqttPassword) {
-          mqttConfig.password = configSettings.mqttPassword;
         }
         const configuredDevices = Array.from(
           deviceConfigStore.getAllDevices().values(),

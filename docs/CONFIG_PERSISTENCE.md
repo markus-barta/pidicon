@@ -10,6 +10,9 @@ PIDICON stores all user data in a single `/data` directory:
 - **`/data/devices.json`** - Device configurations (IP, name, type, watchdog settings)
 - **`/data/media/`** - Media files (images, GIFs) used by scenes
 - **`/data/scenes/`** - Custom user scenes (JavaScript files)
+- **`/data/secrets/`** - Encrypted secrets (global MQTT credentials, per-device overrides)
+  - `.key` - Auto-generated 32-byte master key (if `PIDICON_SECRET_KEY` not provided)
+  - `global-mqtt.json` - Encrypted MQTT configuration envelope
 
 When running in Docker, mount a persistent volume to `/data` to ensure all
 configurations and custom content survive container restarts and redeployments.
@@ -22,10 +25,13 @@ configurations and custom content survive container restarts and redeployments.
   ├── media/               # Media files for scenes
   │   ├── logo.png
   │   └── animation.gif
-  └── scenes/              # Custom user scenes
-      ├── my-scene.js
-      └── work/
-          └── dashboard.js
+  ├── scenes/              # Custom user scenes
+  │   ├── my-scene.js
+  │   └── work/
+  │       └── dashboard.js
+  └── secrets/             # Encrypted secrets and key (auto-created)
+      ├── .key             # Auto-generated master key (if env var absent)
+      └── global-mqtt.json # Encrypted MQTT config (created on first save)
 ```
 
 ## Configuration Priority
@@ -43,6 +49,7 @@ The configuration locations are determined by these priorities:
 
 - **Media**: `PIDICON_MEDIA_PATH` env var or `/data/media` (default)
 - **Scenes**: `PIDICON_SCENES_PATH` env var or `/data/scenes` (default)
+- **Secrets**: `PIDICON_SECRETS_DIR` env var or `/data/secrets` (default)
 
 ## Docker Deployment (Recommended)
 
@@ -267,7 +274,7 @@ Expected output:
 1. **Gitignore**: `config/devices.json` is gitignored by default
 2. **File permissions**: Config file should be `644` (readable, owner writable)
 3. **Directory permissions**: `/data` should be `755` (accessible, owner writable)
-4. **No credentials**: Don't store passwords/API keys in device config (use env vars)
+4. **Secrets store**: MQTT credentials live in `/data/secrets/global-mqtt.json` (encrypted via AES-256-GCM). Provide `PIDICON_SECRET_KEY` or let PIDICON auto-create `/data/secrets/.key` (keep it 600 permissions).
 
 ## Environment Variables
 

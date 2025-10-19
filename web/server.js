@@ -25,32 +25,33 @@ function startWebServer(container, logger) {
 
   // Middleware
   app.use(express.json());
-  app.use(express.static(path.join(__dirname, 'public')));
 
-  // Basic authentication (DISABLED)
-  // if (WEB_UI_AUTH) {
-  //   app.use((req, res, next) => {
-  //     const auth = req.headers.authorization;
-  //
-  //     if (!auth) {
-  //       res.setHeader('WWW-Authenticate', 'Basic realm="Pixoo Control Panel"');
-  //       return res.status(401).json({ error: 'Authentication required' });
-  //     }
-  //
-  //     const [scheme, encoded] = auth.split(' ');
-  //     if (scheme !== 'Basic') {
-  //       return res.status(401).json({ error: 'Invalid authentication scheme' });
-  //     }
-  //
-  //     const credentials = Buffer.from(encoded, 'base64').toString('utf-8');
-  //     if (credentials !== WEB_UI_AUTH) {
-  //       res.setHeader('WWW-Authenticate', 'Basic realm="Pixoo Control Panel"');
-  //       return res.status(401).json({ error: 'Invalid credentials' });
-  //     }
-  //
-  //     next();
-  //   });
-  // }
+  if (WEB_UI_AUTH) {
+    app.use((req, res, next) => {
+      const auth = req.headers.authorization;
+
+      if (!auth) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Pixoo Control Panel"');
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const [scheme, encoded] = auth.split(' ');
+      if (scheme !== 'Basic') {
+        return res.status(401).json({ error: 'Invalid authentication scheme' });
+      }
+
+      const credentials = Buffer.from(encoded, 'base64').toString('utf-8');
+      if (credentials !== WEB_UI_AUTH) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Pixoo Control Panel"');
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      next();
+    });
+  }
+
+  // Static assets (served after auth middleware registration so UI is protected when auth enabled)
+  app.use(express.static(path.join(__dirname, 'public')));
 
   // Resolve services
   const sceneService = container.resolve('sceneService');

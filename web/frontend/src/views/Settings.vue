@@ -464,11 +464,11 @@ export default {
           clientId: mqttSettings.value.clientId,
           keepalive: Number(mqttSettings.value.keepalive),
           tls: mqttSettings.value.tls,
+          password:
+            mqttSettings.value.password === PASSWORD_PLACEHOLDER
+              ? undefined
+              : mqttSettings.value.password,
         };
-
-        if (mqttSettings.value.password && mqttSettings.value.password !== PASSWORD_PLACEHOLDER) {
-          payload.password = mqttSettings.value.password;
-        }
 
         const response = await fetch('/api/system/mqtt-config', {
           method: 'POST',
