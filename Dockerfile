@@ -64,10 +64,8 @@ COPY --from=builder /app/web/public/ ./web/public/
 COPY daemon.js start-daemon.sh ./
 COPY lib/ ./lib/
 COPY web/server.js ./web/
-# Copy bundled scenes including examples and dev helpers
-COPY scenes/*.js ./scenes/
-COPY scenes/media/ ./scenes/media/
-COPY scenes/examples/ ./scenes/examples/
+# Copy bundled scenes (recursively includes examples/dev helpers)
+COPY scenes/ ./scenes/
 COPY config/ ./config/
 
 # Make wrapper script executable
