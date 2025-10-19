@@ -40,6 +40,7 @@
           color="primary"
           @click="emit('navigate', 'devices')"
           class="settings-btn"
+          data-test="nav-devices"
         >
           <v-icon size="small" class="mr-1">mdi-view-dashboard</v-icon>
           <span class="text-caption">Devices</span>
@@ -54,6 +55,7 @@
           color="primary"
           @click="emit('navigate', 'settings')"
           class="settings-btn"
+          data-test="nav-settings"
         >
           <v-icon size="small" class="mr-1">mdi-cog</v-icon>
           <span class="text-caption">Settings</span>
@@ -69,6 +71,7 @@
           @click="handleRestart"
           :loading="restarting"
           class="daemon-restart-btn"
+          data-test="daemon-restart"
         >
           <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
           <span class="text-caption">Daemon</span>

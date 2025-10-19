@@ -15,6 +15,7 @@
             size="x-small"
             @click="toggleDevScenes"
             class="dev-scenes-toggle text-caption"
+            data-test="dev-scenes-toggle"
           >
             <span :style="{
               textDecoration: showDevScenes ? 'none' : 'line-through',

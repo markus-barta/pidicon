@@ -1,5 +1,5 @@
 <template>
-  <v-card elevation="1" class="device-card">
+  <v-card elevation="1" class="device-card" data-test="device-card" :data-device-ip="device.ip">
     <!-- Device Header -->
     <v-card-title class="pb-2">
       <div class="device-header-container">
@@ -147,6 +147,7 @@
             size="small"
             @click="device.driver === 'real' ? null : toggleDriver('real')"
             class="control-btn-compact"
+            data-test="device-driver-real"
           >
             <v-icon size="small" class="mr-1">mdi-lan-connect</v-icon>
             <span class="text-caption">Real</span>
@@ -161,6 +162,7 @@
             size="small"
             @click="device.driver === 'mock' ? null : toggleDriver('mock')"
             class="control-btn-compact"
+            data-test="device-driver-mock"
           >
             <v-icon size="small" class="mr-1">mdi-chip</v-icon>
             <span class="text-caption">Mock</span>
@@ -333,6 +335,7 @@
             color="grey-darken-1"
             hide-details
             :loading="brightnessLoading"
+            data-test="brightness-slider"
             @end="setBrightness"
             style="width: 100px"
           ></v-slider>

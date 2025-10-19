@@ -10,6 +10,7 @@
       variant="outlined"
       :disabled="disabled || loading"
       :loading="loading"
+      data-test="scene-selector"
       @update:model-value="handleSceneChange"
       hide-details
     >
