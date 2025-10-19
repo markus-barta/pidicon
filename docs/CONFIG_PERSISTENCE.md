@@ -274,7 +274,10 @@ Expected output:
 1. **Gitignore**: `config/devices.json` is gitignored by default
 2. **File permissions**: Config file should be `644` (readable, owner writable)
 3. **Directory permissions**: `/data` should be `755` (accessible, owner writable)
-4. **Secrets store**: MQTT credentials live in `/data/secrets/global-mqtt.json` (encrypted via AES-256-GCM). Provide `PIDICON_SECRET_KEY` or let PIDICON auto-create `/data/secrets/.key` (keep it 600 permissions).
+4. **Secrets store**: MQTT credentials live in `/data/secrets/global-mqtt.json`.
+   - Encryption: AES-256-GCM (managed by PIDICON)
+   - Key: set `PIDICON_SECRET_KEY` or let PIDICON auto-create `/data/secrets/.key`
+   - Permissions: keep `.key` at `600` (owner read/write only)
 
 ## Environment Variables
 
