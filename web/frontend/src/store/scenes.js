@@ -5,6 +5,13 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
+function normalizeScenePath(filePath) {
+  if (!filePath) {
+    return '';
+  }
+  return filePath.replace(/\\/g, '/');
+}
+
 export const useSceneStore = defineStore('scenes', () => {
   // State
   const scenes = ref([]);
@@ -34,6 +41,7 @@ export const useSceneStore = defineStore('scenes', () => {
     scenes.value = newScenes.map((scene, index) => ({
       ...scene,
       sceneNumber: index + 1,
+      filePath: normalizeScenePath(scene.filePath),
     }));
   }
 
