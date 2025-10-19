@@ -3,7 +3,7 @@
  * @description Comprehensive tests for CFG-204 Configuration Validator implementation
  * Tests presets, validation, schemas, and error handling
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 // const logger = require('../lib/logger'); // Not needed for unit tests

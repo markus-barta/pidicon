@@ -6,7 +6,7 @@
  * @mqtt
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup-static"}'
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const name = 'startup-static';

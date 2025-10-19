@@ -9,7 +9,7 @@
 <p align="center">
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pidicon)
-[![License](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Release](https://img.shields.io/badge/release-v3.0.0-green)](https://github.com/markus-barta/pidicon)
 [![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pidicon)
 
@@ -488,7 +488,7 @@ Open an issue or PR and let's make something great together!
 
 ## 📄 License
 
-MIT License — do good things, be kind, and give credit where due.
+GNU GPL v3.0 — free as in freedom. See LICENSE for details.
 
 ---
 

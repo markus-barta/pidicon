@@ -2,7 +2,7 @@
  * @fileoverview Scene Template - Copy this file to create new scenes
  * @description Template for creating new Pixoo scenes with all required patterns and best practices. Copy this file to start building your own scenes with proper error handling, logging, and structure.
  * @author [Your Name] ([your initials]) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  *
  * @mqtt
  * mosquitto_pub -h $MOSQITTO_HOST_MS24 -u $MOSQITTO_USER_MS24 -P $MOSQITTO_PASS_MS24 \
@@ -27,7 +27,7 @@
  * - param2: Description of parameter 2 (optional)
  *
  * @author [Your Name] ([your initials]) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 'use strict';

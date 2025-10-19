@@ -8,7 +8,7 @@
  *   -t "pixoo/192.168.1.159/state/upd" \
  *   -m '{"scene":"power_price","powerPriceData":{"data":{"2025-01-20-08":{"currentCentPrice":12.5},"2025-01-20-09":{"currentCentPrice":15.2},"2025-01-20-10":{"currentCentPrice":18.7},"2025-01-20-11":{"currentCentPrice":22.1},"2025-01-20-12":{"currentCentPrice":25.5},"2025-01-20-13":{"currentCentPrice":28.9},"2025-01-20-14":{"currentCentPrice":24.7},"2025-01-20-15":{"currentCentPrice":21.3},"2025-01-20-16":{"currentCentPrice":18.0},"2025-01-20-17":{"currentCentPrice":15.5},"2025-01-20-18":{"currentCentPrice":13.2},"2025-01-20-19":{"currentCentPrice":11.8},"2025-01-20-20":{"currentCentPrice":10.5},"2025-01-20-21":{"currentCentPrice":9.8},"2025-01-20-22":{"currentCentPrice":9.2},"2025-01-20-23":{"currentCentPrice":8.9},"2025-01-20-00":{"currentCentPrice":8.5},"2025-01-20-01":{"currentCentPrice":8.2},"2025-01-20-02":{"currentCentPrice":8.0},"2025-01-20-03":{"currentCentPrice":7.8},"2025-01-20-04":{"currentCentPrice":7.6},"2025-01-20-05":{"currentCentPrice":7.5},"2025-01-20-06":{"currentCentPrice":8.1},"2025-01-20-07":{"currentCentPrice":10.3}}},"currentCentPrice":24.7,"dailyPvDataActual":[800,1200,1600,2000,2400,2800,2400,2000,1600,1200,800,400,200,100,50,25,10,5,0,0,0,0,0,0],"pvHourlyYieldPrediction":[900,1300,1700,2100,2500,2900,2500,2100,1700,1300,900,500,300,150,75,35,15,8,0,0,0,0,0,0],"batteryStatus":{"USOC":75,"BatteryCharging":false,"BatteryDischarging":true},"uviData":{"currentUvi":[null,6.5,7.2]},"enableAnimation":true,"enableFPS":false}'
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const path = require('path');

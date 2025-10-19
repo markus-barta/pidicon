@@ -2,7 +2,7 @@
  * @fileoverview Framework Static Scene Demo
  * @description Demonstrates the StaticScene base class - renders once and completes
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 'use strict';

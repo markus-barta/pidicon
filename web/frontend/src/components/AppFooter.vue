@@ -5,7 +5,7 @@
         <!-- Left: License & Author -->
         <div class="d-flex align-center">
           <v-icon size="x-small" class="mr-1" style="vertical-align: middle;">mdi-license</v-icon>
-          <span><strong>MIT License</strong> • Created by <a href="https://x.com/markusbarta" target="_blank" class="text-decoration-none text-primary">Markus Barta</a> with Cursor AI</span>
+          <span><strong>GNU GPL v3.0</strong> • Created by <a href="https://x.com/markusbarta" target="_blank" class="text-decoration-none text-primary">Markus Barta</a> with Cursor AI</span>
         </div>
 
         <!-- Center: Dev Scenes Toggle -->

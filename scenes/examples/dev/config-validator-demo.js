@@ -3,7 +3,7 @@
  * @description Demonstrates configuration presets and validation using ConfigValidator
  * Shows how to use presets, validation, and error handling for scene configurations.
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const path = require('path');

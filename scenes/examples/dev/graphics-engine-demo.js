@@ -3,7 +3,7 @@
  * @description Demonstrates text effects, fade transitions, gradients, and animations
  * Hardware-aware implementation for 4-5fps Pixoo display
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const path = require('path');

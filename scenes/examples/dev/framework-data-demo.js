@@ -2,7 +2,7 @@
  * @fileoverview Framework Data Scene Demo
  * @description Demonstrates the DataScene base class with simulated sensor data
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 'use strict';

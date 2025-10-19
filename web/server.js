@@ -2,7 +2,7 @@
  * @fileoverview Web UI Server - Express server for Pixoo Daemon control panel
  * @description Provides REST API and web UI for managing Pixoo devices
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 'use strict';

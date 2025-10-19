@@ -4,7 +4,7 @@
  * Inspired by C64 demo scene - pushing hardware to the absolute limit!
  * @category Demo
  * @author Cursor AI - Going Above and Beyond Edition
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const path = require('path');

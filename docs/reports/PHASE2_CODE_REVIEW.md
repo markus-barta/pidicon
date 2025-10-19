@@ -232,7 +232,7 @@ constructor({ logger, mqttService, sceneManager, ... }) {
  * Contains full scene switching logic including animation gating, screen clearing,
  * and state publishing.
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 ```
 

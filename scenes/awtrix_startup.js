@@ -3,7 +3,7 @@
  * @description Simple startup scene for 32x8 pixel AWTRIX displays
  * Shows PIDICON branding with minimal pixel design
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const name = 'awtrix_startup';

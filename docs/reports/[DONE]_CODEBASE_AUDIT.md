@@ -334,7 +334,7 @@ All 47 JS files in `lib/` have complete JSDoc:
  * @description Provides service registration and resolution with automatic
  * dependency injection, lifetime management, and circular dependency detection.
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 /**

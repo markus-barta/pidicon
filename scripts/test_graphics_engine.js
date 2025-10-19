@@ -3,7 +3,7 @@
  * @description Comprehensive tests for GFX-203 Graphics Engine implementation
  * Tests text effects, fade transitions, gradients, and animations
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 // const logger = require('../lib/logger'); // Not needed for unit tests

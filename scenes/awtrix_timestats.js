@@ -4,7 +4,7 @@
  * Port of Node-RED function to PIDICON scene format
  * Shows: Time + Door lock + Sliding door + Skylights status
  * @author Markus Barta (mba) with assistance from Cursor AI
- * @license MIT
+ * @license GPL-3.0-or-later
  */
 
 const name = 'awtrix_timestats';

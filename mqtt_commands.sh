@@ -2,7 +2,7 @@
 # Common MQTT commands for Pixoo Daemon
 # @version 1.0.0
 # @author Markus Barta (mba) with assistance from Cursor AI (Gemini 2.5 Pro)
-# @license MIT
+# @license GPL-3.0-or-later
 
 echo "🚀 Pixoo Performance Test Commands"
 echo "=================================="
