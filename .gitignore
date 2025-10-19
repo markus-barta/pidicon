@@ -14,3 +14,6 @@ other-code/
 
 # Device configuration (contains device-specific settings)
 config/devices.json
+
+# UI test artifacts
+ui-test-report/

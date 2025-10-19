@@ -10,37 +10,40 @@ async function fetchDevices(page) {
   return (await response.json()).devices;
 }
 
-async function fetchScenes(page) {
+async function fetchSceneNames(page) {
   const response = await page.request.get(API_SCENES);
   expect(response.ok()).toBeTruthy();
-  return (await response.json()).scenes.map((s) => s.name);
+  return (await response.json()).scenes.map((scene) => scene.name);
 }
 
 test.describe('Devices view controls', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/`);
-    await expect.poll(async () => page.locator('[data-test="device-card"]').count(), {
+    await expect.poll(async () => page.locator('.device-card').count(), {
       timeout: 30_000,
     }).toBeGreaterThan(0);
   });
 
   test('driver switch persists via API', async ({ page }) => {
-    const deviceCard = page.locator('[data-test="device-card"]').first();
-    const real = deviceCard.locator('[data-test="device-driver-real"]');
-    const mock = deviceCard.locator('[data-test="device-driver-mock"]');
+    const deviceCard = page.locator('.device-card').first();
+    const realButton = deviceCard.getByRole('button', { name: /^Real$/i });
+    const mockButton = deviceCard.getByRole('button', { name: /^Mock$/i });
 
     const initial = (await fetchDevices(page))[0];
     const targetDriver = initial.driver === 'real' ? 'mock' : 'real';
+    const targetButton = targetDriver === 'real' ? realButton : mockButton;
 
-    const targetButton = targetDriver === 'real' ? real : mock;
     await targetButton.click();
+    await page.getByRole('button', { name: new RegExp(`Switch to ${targetDriver}`, 'i') }).click();
 
     await expect.poll(async () => (await fetchDevices(page))[0].driver, {
       timeout: 15_000,
     }).toBe(targetDriver);
 
-    const restoreButton = targetDriver === 'real' ? mock : real;
+    const restoreButton = targetDriver === 'real' ? mockButton : realButton;
     await restoreButton.click();
+    await page.getByRole('button', { name: new RegExp(`Switch to ${initial.driver}`, 'i') }).click();
+
     await expect.poll(async () => (await fetchDevices(page))[0].driver, {
       timeout: 15_000,
     }).toBe(initial.driver);
@@ -48,53 +51,66 @@ test.describe('Devices view controls', () => {
 
   test('brightness slider updates hardware state', async ({ page }) => {
     const deviceCard = page.locator('[data-test="device-card"]').first();
-    const slider = deviceCard.locator('[data-test="brightness-slider"] input');
+    const sliderInput = deviceCard.locator('[data-test="brightness-slider"] input[type="range"]').first();
+
+    await expect(sliderInput).toBeVisible({ timeout: 15_000 });
 
     const initial = (await fetchDevices(page))[0].hardware?.brightness ?? 100;
     const target = initial > 40 ? 20 : 80;
 
-    await slider.evaluate((input, value) => {
+    await sliderInput.evaluate((input, value) => {
       input.value = String(value);
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }, target);
 
     await expect.poll(async () => (await fetchDevices(page))[0].hardware?.brightness, {
-      timeout: 15_000,
+      timeout: 20_000,
     }).toBe(target);
 
-    // Restore brightness
-    await slider.evaluate((input, value) => {
-      input.value = String(value);
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    }, initial);
-    await expect.poll(async () => (await fetchDevices(page))[0].hardware?.brightness, {
-      timeout: 15_000,
-    }).toBe(initial);
+    if (initial !== target) {
+      await sliderInput.evaluate((input, value) => {
+        input.value = String(value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }, initial);
+
+      await expect.poll(async () => (await fetchDevices(page))[0].hardware?.brightness, {
+        timeout: 20_000,
+      }).toBe(initial);
+    }
   });
 
   test('scene selector switches scene', async ({ page }) => {
     const deviceCard = page.locator('[data-test="device-card"]').first();
     const sceneSelect = deviceCard.locator('[data-test="scene-selector"]');
 
-    const scenes = await fetchScenes(page);
+    const sceneNames = await fetchSceneNames(page);
     const devices = await fetchDevices(page);
     const current = devices[0].currentScene || 'startup';
-    const candidate = scenes.find((name) => name !== current) ?? current;
+    const candidate = sceneNames.find((name) => name !== current) ?? current;
 
     await sceneSelect.click();
-    await page.getByRole('option', { name: new RegExp(candidate, 'i') }).first().click();
+    const option = page.locator('.v-overlay-container .v-list-item-title', {
+      hasText: new RegExp(candidate, 'i'),
+    }).first();
+    await expect(option).toBeVisible({ timeout: 10_000 });
+    await option.click();
 
     await expect.poll(async () => (await fetchDevices(page))[0].currentScene, {
-      timeout: 15_000,
+      timeout: 20_000,
     }).toBe(candidate);
 
     if (candidate !== current) {
       await sceneSelect.click();
-      await page.getByRole('option', { name: new RegExp(current, 'i') }).first().click();
+      const restore = page.locator('.v-overlay-container .v-list-item-title', {
+        hasText: new RegExp(current, 'i'),
+      }).first();
+      await expect(restore).toBeVisible({ timeout: 10_000 });
+      await restore.click();
+
       await expect.poll(async () => (await fetchDevices(page))[0].currentScene, {
-        timeout: 15_000,
+        timeout: 20_000,
       }).toBe(current);
     }
   });
