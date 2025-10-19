@@ -20,3 +20,14 @@ data/secrets/
 
 # UI test artifacts
 ui-test-report/
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
