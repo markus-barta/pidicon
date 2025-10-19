@@ -15,5 +15,8 @@ other-code/
 # Device configuration (contains device-specific settings)
 config/devices.json
 
+# Sensitive secrets
+data/secrets/
+
 # UI test artifacts
 ui-test-report/

@@ -25,10 +25,12 @@ const { DeviceConfigStore } = require('./lib/device-config-store');
 const DIContainer = require('./lib/di-container');
 const logger = require('./lib/logger');
 const MqttService = require('./lib/mqtt-service');
+const { publishOk, publishMetrics } = require('./lib/mqtt-utils');
 const { softReset } = require('./lib/pixoo-http');
 const { SceneRegistration } = require('./lib/scene-loader');
 const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
+const MqttConfigService = require('./lib/services/mqtt-config-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
 const WatchdogService = require('./lib/services/watchdog-service');
@@ -36,8 +38,8 @@ const versionInfo = require('./version.json');
 
 // Create a logger instance
 
-// MQTT connection config – will be overwritten by persisted settings if available
-const mqttConfig = {
+// MQTT connection config defaults – will be overwritten by persisted settings if available
+const defaultMqttConfig = {
   brokerUrl: 'mqtt://localhost:1883',
   username: undefined,
   password: undefined,
@@ -59,638 +61,379 @@ const lastState = {}; // deviceIp -> { key, payload, sceneName }
  */
 const container = new DIContainer();
 
-// Register core services
-container.register('logger', () => logger);
-container.register('stateStore', ({ logger }) => {
-  const StateStore = require('./lib/state-store');
-  return new StateStore({ logger });
-});
-container.register('deploymentTracker', () => new DeploymentTracker());
-container.register('deviceConfigStore', () => new DeviceConfigStore());
-container.register(
-  'sceneManager',
-  ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
-);
-container.register(
-  'mqttService',
-  ({ logger }) => new MqttService({ logger, config: mqttConfig }),
-);
-container.register('deviceAdapter', () => ({
-  getContext,
-  getDevice,
-  getDriverForDevice,
-  setDriverForDevice,
-  deviceDrivers,
-  devices,
-  registerDevicesFromConfig,
-}));
+async function bootstrap() {
+  const mqttConfigService = new MqttConfigService({ logger });
+  let persistedMqttConfig = null;
+  try {
+    persistedMqttConfig = await mqttConfigService.loadConfig();
+  } catch (error) {
+    logger.warn('Failed to load persisted MQTT configuration, using defaults', {
+      error: error.message,
+    });
+  }
 
-// Resolve services from container
-const stateStore = container.resolve('stateStore');
-const deploymentTracker = container.resolve('deploymentTracker');
-const deviceConfigStore = container.resolve('deviceConfigStore');
-const sceneManager = container.resolve('sceneManager');
-const mqttService = container.resolve('mqttService');
+  const mqttConfig = {
+    ...defaultMqttConfig,
+    ...(persistedMqttConfig || {}),
+  };
 
-// Register services in DI container
-container.register(
-  'sceneService',
-  ({ logger, sceneManager, mqttService }) =>
-    new SceneService({
-      logger,
-      sceneManager,
-      deviceAdapter: { getContext, getDevice, deviceDrivers },
-      mqttService,
-      versionInfo,
-      publishOk, // Pass global publishOk callback for WebSocket broadcasts
-    }),
-);
+  container.registerValue('mqttConfigService', mqttConfigService);
 
-container.register(
-  'deviceService',
-  ({ logger, sceneManager, stateStore, deviceConfigStore }) =>
-    new DeviceService({
-      logger,
-      deviceAdapter: {
-        deviceDrivers,
-        getDriverForDevice,
-        getDevice,
-        setDriverForDevice,
-        getContext,
-      },
-      sceneManager,
-      stateStore,
-      softReset,
-      deviceConfigStore,
-    }),
-);
+  // Register core services
+  container.register('logger', () => logger);
+  container.register('stateStore', ({ logger }) => {
+    const StateStore = require('./lib/state-store');
+    return new StateStore({ logger });
+  });
+  container.register('deploymentTracker', () => new DeploymentTracker());
+  container.register('deviceConfigStore', () => new DeviceConfigStore());
+  container.register(
+    'sceneManager',
+    ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
+  );
+  container.register(
+    'mqttService',
+    ({ logger }) => new MqttService({ logger, config: mqttConfig }),
+  );
+  container.register('deviceAdapter', () => ({
+    getContext,
+    getDevice,
+    getDriverForDevice,
+    setDriverForDevice,
+    deviceDrivers,
+    devices,
+    registerDevicesFromConfig,
+  }));
 
-container.register(
-  'systemService',
-  ({ logger, deploymentTracker }) =>
-    new SystemService({
-      logger,
-      versionInfo,
-      deploymentTracker,
-      mqttConfig,
-    }),
-);
+  // Resolve services from container
+  const stateStore = container.resolve('stateStore');
+  const deploymentTracker = container.resolve('deploymentTracker');
+  const deviceConfigStore = container.resolve('deviceConfigStore');
+  const sceneManager = container.resolve('sceneManager');
+  const mqttService = container.resolve('mqttService');
 
-container.register(
-  'watchdogService',
-  ({
-    deviceConfigStore,
-    deviceService,
-    sceneService,
-    stateStore,
-    deviceAdapter,
-  }) =>
-    new WatchdogService(
+  // Register services in DI container
+  container.register(
+    'sceneService',
+    ({ logger, sceneManager, mqttService }) =>
+      new SceneService({
+        logger,
+        sceneManager,
+        deviceAdapter: { getContext, getDevice, deviceDrivers },
+        mqttService,
+        versionInfo,
+        publishOk, // Pass global publishOk callback for WebSocket broadcasts
+      }),
+  );
+
+  container.register(
+    'deviceService',
+    ({ logger, sceneManager, stateStore, deviceConfigStore }) =>
+      new DeviceService({
+        logger,
+        deviceAdapter: {
+          deviceDrivers,
+          getDriverForDevice,
+          getDevice,
+          setDriverForDevice,
+          getContext,
+        },
+        sceneManager,
+        stateStore,
+        softReset,
+        deviceConfigStore,
+      }),
+  );
+
+  container.register(
+    'systemService',
+    ({ logger, deploymentTracker, mqttConfigService }) =>
+      new SystemService({
+        logger,
+        versionInfo,
+        deploymentTracker,
+        mqttConfigService,
+      }),
+  );
+
+  container.register(
+    'watchdogService',
+    ({
       deviceConfigStore,
       deviceService,
       sceneService,
       stateStore,
       deviceAdapter,
-    ),
-);
+    }) =>
+      new WatchdogService(
+        deviceConfigStore,
+        deviceService,
+        sceneService,
+        stateStore,
+        deviceAdapter,
+      ),
+  );
 
-// Register command handlers in DI container
-container.register(
-  'sceneCommandHandler',
-  ({ logger, mqttService }) =>
-    new SceneCommandHandler({
-      logger,
-      mqttService,
-      deviceDefaults,
-    }),
-);
+  // Register command handlers in DI container
+  container.register(
+    'sceneCommandHandler',
+    ({ logger, mqttService }) =>
+      new SceneCommandHandler({
+        logger,
+        mqttService,
+        deviceDefaults,
+      }),
+  );
 
-container.register(
-  'driverCommandHandler',
-  ({ logger, mqttService, sceneManager }) =>
-    new DriverCommandHandler({
-      logger,
-      mqttService,
-      setDriverForDevice,
-      lastState,
-      sceneManager,
-      getContext,
-      publishMetrics,
-    }),
-);
+  container.register(
+    'driverCommandHandler',
+    ({ logger, mqttService, sceneManager }) =>
+      new DriverCommandHandler({
+        logger,
+        mqttService,
+        setDriverForDevice,
+        lastState,
+        sceneManager,
+        getContext,
+        publishMetrics,
+      }),
+  );
 
-container.register(
-  'resetCommandHandler',
-  ({ logger, mqttService }) =>
-    new ResetCommandHandler({
-      logger,
-      mqttService,
-      softReset,
-    }),
-);
+  container.register(
+    'resetCommandHandler',
+    ({ logger, mqttService }) =>
+      new ResetCommandHandler({
+        logger,
+        mqttService,
+        softReset,
+      }),
+  );
 
-container.register(
-  'stateCommandHandler',
-  ({ logger, mqttService, sceneManager }) =>
-    new StateCommandHandler({
-      logger,
-      mqttService,
-      deviceDefaults,
-      lastState,
-      sceneManager,
-      getContext,
-      publishMetrics,
-      getDevice,
-      getDriverForDevice,
-      versionInfo,
-    }),
-);
+  container.register(
+    'stateCommandHandler',
+    ({ logger, mqttService, sceneManager }) =>
+      new StateCommandHandler({
+        logger,
+        mqttService,
+        deviceDefaults,
+        lastState,
+        sceneManager,
+        getContext,
+        publishMetrics,
+        getDevice,
+        getDriverForDevice,
+        versionInfo,
+      }),
+  );
 
-logger.ok('✅ DI Container initialized with services:', {
-  services: container.getServiceNames(),
-});
+  logger.ok('✅ DI Container initialized with services:', {
+    services: container.getServiceNames(),
+  });
 
-// Log StateStore stats for observability (and to satisfy linter)
-logger.debug('StateStore initialized:', stateStore.getStats());
+  // Log StateStore stats for observability (and to satisfy linter)
+  logger.debug('StateStore initialized:', stateStore.getStats());
 
-// Inject StateStore into device-adapter for per-device logging preferences
-setStateStore(stateStore);
+  // Inject StateStore into device-adapter for per-device logging preferences
+  setStateStore(stateStore);
 
-// Restore persisted runtime state from previous session
-(async () => {
+  // Restore persisted runtime state from previous session
   try {
     await stateStore.restore();
   } catch (error) {
     logger.warn('Failed to restore runtime state:', { error: error.message });
   }
-})();
 
-// ============================================================================
-// WEB UI SERVER (OPTIONAL)
-// ============================================================================
-
-/**
- * Start Web UI server if enabled
- */
-const WEB_UI_ENABLED = process.env.PIXOO_WEB_UI !== 'false';
-let webServer = null;
-
-if (WEB_UI_ENABLED) {
-  try {
-    const { startWebServer } = require('./web/server');
-    webServer = startWebServer(container, logger);
-    logger.info(`🔍 webServer initialized:`, {
-      hasWebServer: !!webServer,
-      hasWsBroadcast: !!webServer?.wsBroadcast,
-      webServerType: typeof webServer,
-      webServerKeys: webServer ? Object.keys(webServer).join(', ') : 'null',
-    });
-  } catch (error) {
-    logger.warn('Failed to start Web UI:', { error: error.message });
-    logger.info('Web UI is optional. Daemon will continue without it.');
-  }
-}
-
-// Load all scenes using SceneRegistration utility
-// Automatically loads from ./scenes and ./scenes/examples
-const sceneLoadResults = SceneRegistration.registerFromStructure(
-  sceneManager,
-  path.join(__dirname, 'scenes'),
-);
-
-// Log any errors during scene loading
-if (sceneLoadResults.errors.length > 0) {
-  logger.warn(`Failed to load ${sceneLoadResults.errors.length} scene(s):`, {
-    errors: sceneLoadResults.errors,
-  });
-}
-
-logger.ok(`Loaded ${sceneLoadResults.scenes.size} scene(s) successfully`);
-
-const startTs = new Date().toLocaleString('de-AT');
-logger.ok(`**************************************************`);
-logger.ok(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
-logger.ok(
-  `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`,
-);
-logger.ok(`**************************************************`);
-
-// Reference to available commands documentation
-try {
-  const fs = require('fs');
-  const path = require('path');
-  const commandsPath = path.join(__dirname, 'MQTT_COMMANDS.md');
-  if (fs.existsSync(commandsPath)) {
-    logger.info(`Available commands documented in: ${commandsPath}`);
-  } else {
-    logger.warn('MQTT_COMMANDS.md not found');
-  }
-} catch (err) {
-  logger.warn('Could not check MQTT_COMMANDS.md:', { error: err.message });
-}
-
-logger.info('MQTT Broker:', { url: mqttConfig.brokerUrl });
-if (deviceDrivers.size > 0) {
-  logger.info('Configured Devices and Drivers:');
-  Array.from(deviceDrivers.entries()).forEach(([ip, driver]) => {
-    logger.info(`  ${ip} → ${driver}`);
-  });
-} else {
-  logger.warn(
-    'No device targets configured. Add devices via Web UI or create config/devices.json from example.',
-  );
-}
-logger.info('Loaded scenes:', { scenes: sceneManager.getRegisteredScenes() });
-
-// Initialize deployment tracking and load startup scene
-async function initializeDeployment() {
-  logger.info('Starting deployment initialization...');
-  try {
-    logger.info('Initializing deployment tracker...');
-    await deploymentTracker.initialize();
-    logger.ok('Deployment tracker initialized.');
-    logger.ok(deploymentTracker.getLogString());
-
-    // Load device configuration from JSON
-    logger.info('Loading device configuration...');
+  // ========================================================================
+  // WEB UI SERVER (OPTIONAL)
+  // ========================================================================
+  const WEB_UI_ENABLED = process.env.PIXOO_WEB_UI !== 'false';
+  if (WEB_UI_ENABLED) {
     try {
-      await deviceConfigStore.load();
-      const configSettings = deviceConfigStore.getSettings();
-      if (configSettings.mqttBrokerUrl) {
-        mqttConfig.brokerUrl = configSettings.mqttBrokerUrl;
-      }
-      if (configSettings.mqttUsername) {
-        mqttConfig.username = configSettings.mqttUsername;
-      }
-      if (configSettings.mqttPassword) {
-        mqttConfig.password = configSettings.mqttPassword;
-      }
-      const configuredDevices = Array.from(
-        deviceConfigStore.getAllDevices().values(),
-      );
+      const { startWebServer } = require('./web/server');
+      startWebServer(container, logger);
+    } catch (error) {
+      logger.warn('Failed to start Web UI:', { error: error.message });
+      logger.info('Web UI is optional. Daemon will continue without it.');
+    }
+  }
 
-      // Register devices in device adapter (populates deviceDrivers map)
-      registerDevicesFromConfig(configuredDevices);
+  // Load all scenes using SceneRegistration utility
+  const sceneLoadResults = SceneRegistration.registerFromStructure(
+    sceneManager,
+    path.join(__dirname, 'scenes'),
+  );
 
-      // Load user custom scenes from settings
-      const settings = deviceConfigStore.getSettings();
-      if (settings.scenesPath) {
-        logger.info(`Loading user custom scenes from: ${settings.scenesPath}`);
-        const userSceneResults = SceneRegistration.registerFromStructure(
-          sceneManager,
-          null, // Don't reload built-in scenes
-          settings.scenesPath,
-        );
-        if (userSceneResults.scenes.size > 0) {
-          logger.ok(
-            `Loaded ${userSceneResults.scenes.size} user custom scene(s)`,
-          );
+  if (sceneLoadResults.errors.length > 0) {
+    logger.warn(`Failed to load ${sceneLoadResults.errors.length} scene(s):`, {
+      errors: sceneLoadResults.errors,
+    });
+  }
+
+  logger.ok(`Loaded ${sceneLoadResults.scenes.size} scene(s) successfully`);
+
+  const startTs = new Date().toLocaleString('de-AT');
+  logger.ok('**************************************************');
+  logger.ok(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
+  logger.ok(
+    `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`,
+  );
+  logger.ok('**************************************************');
+
+  logger.info('MQTT Broker:', { url: mqttConfig.brokerUrl });
+  if (deviceDrivers.size > 0) {
+    logger.info('Configured Devices and Drivers:');
+    Array.from(deviceDrivers.entries()).forEach(([ip, driver]) => {
+      logger.info(`  ${ip} → ${driver}`);
+    });
+  } else {
+    logger.warn(
+      'No device targets configured. Add devices via Web UI or create config/devices.json from example.',
+    );
+  }
+  logger.info('Loaded scenes:', { scenes: sceneManager.getRegisteredScenes() });
+
+  async function initializeDeployment() {
+    logger.info('Starting deployment initialization...');
+    try {
+      logger.info('Initializing deployment tracker...');
+      await deploymentTracker.initialize();
+      logger.ok('Deployment tracker initialized.');
+      logger.ok(deploymentTracker.getLogString());
+
+      logger.info('Loading device configuration...');
+      try {
+        await deviceConfigStore.load();
+        const configSettings = deviceConfigStore.getSettings();
+        if (configSettings.mqttBrokerUrl) {
+          mqttConfig.brokerUrl = configSettings.mqttBrokerUrl;
         }
-        if (userSceneResults.errors.length > 0) {
-          logger.warn(
-            `Failed to load ${userSceneResults.errors.length} user scene(s)`,
-          );
+        if (configSettings.mqttUsername) {
+          mqttConfig.username = configSettings.mqttUsername;
         }
-      }
-
-      if (configuredDevices.length > 0) {
-        logger.ok(
-          `Loaded ${configuredDevices.length} device(s) from configuration file`,
+        if (configSettings.mqttPassword) {
+          mqttConfig.password = configSettings.mqttPassword;
+        }
+        const configuredDevices = Array.from(
+          deviceConfigStore.getAllDevices().values(),
         );
 
-        // Apply device configurations (driver, brightness, startup scene)
-        for (const deviceConfig of configuredDevices) {
-          const { ip, name, driver, brightness, startupScene, deviceType } =
-            deviceConfig;
+        registerDevicesFromConfig(configuredDevices);
 
-          logger.info(`Initializing device: ${name} (${ip}) [${deviceType}]`);
-
-          try {
-            // Set driver if specified
-            if (driver) {
-              await setDriverForDevice(ip, driver);
-              logger.debug(`Set driver for ${ip}: ${driver}`);
-            }
-
-            // Apply brightness if specified
-            if (brightness !== undefined && brightness !== null) {
-              const device = getDevice(ip);
-              if (device && device.setBrightness) {
-                try {
-                  await device.setBrightness(brightness);
-                  logger.debug(`Set brightness for ${ip}: ${brightness}%`);
-                } catch (error) {
-                  logger.warn(
-                    `Failed to set brightness for ${ip}: ${error.message}`,
-                  );
-                }
-              }
-            }
-
-            // Load startup scene if specified
-            if (startupScene) {
-              logger.info(
-                `Loading startup scene "${startupScene}" for ${name} (${ip})`,
-              );
-              const ctx = getContext(
-                ip,
-                startupScene,
-                deploymentTracker.getSceneContext(),
-                publishOk,
-              );
-              await sceneManager.switchScene(startupScene, ctx);
-              await sceneManager.renderActiveScene(ctx);
-              logger.ok(`Startup scene "${startupScene}" loaded for ${ip}`);
-            } else {
-              // Default to 'startup' scene if no custom scene specified
-              logger.info(`Loading default startup scene for ${name} (${ip})`);
-              const ctx = getContext(
-                ip,
-                'startup',
-                deploymentTracker.getSceneContext(),
-                publishOk,
-              );
-              await sceneManager.switchScene('startup', ctx);
-              await sceneManager.renderActiveScene(ctx);
-              logger.ok(`Default startup scene loaded for ${ip}`);
-            }
-          } catch (error) {
+        const settings = deviceConfigStore.getSettings();
+        if (settings.scenesPath) {
+          const userSceneResults = SceneRegistration.registerFromStructure(
+            sceneManager,
+            null, // Don't reload built-in scenes
+            settings.scenesPath,
+          );
+          if (userSceneResults.errors.length > 0) {
             logger.warn(
-              `Failed to initialize device ${name} (${ip}): ${error.message}`,
+              `Failed to load ${userSceneResults.errors.length} user scene(s)`,
             );
           }
         }
 
-        // Start watchdog monitoring
-        logger.info('Starting watchdog service...');
-        const watchdogService = container.resolve('watchdogService');
-        watchdogService.startAll();
-        logger.ok('Watchdog service started');
-      } else {
-        logger.info(
-          'No devices in configuration file, falling back to environment variables',
-        );
+        if (configuredDevices.length > 0) {
+          logger.ok(
+            `Loaded ${configuredDevices.length} device(s) from configuration file`,
+          );
 
-        // Fallback to environment variable configuration
-        const deviceTargets = Array.from(deviceDrivers.keys());
-        if (deviceTargets.length > 0) {
-          logger.info('Auto-loading startup scene for configured devices...');
-          for (const deviceIp of deviceTargets) {
-            if (deviceIp.trim()) {
-              try {
-                const ctx = getContext(
-                  deviceIp.trim(),
-                  'startup',
-                  deploymentTracker.getSceneContext(),
-                  publishOk,
-                );
-                await sceneManager.switchScene('startup', ctx);
-                await sceneManager.renderActiveScene(ctx);
-                logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
-              } catch (error) {
-                logger.warn(
-                  `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
-                );
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      logger.warn(
-        `Failed to load device configuration: ${error.message}. Falling back to environment variables.`,
-      );
+          for (const deviceConfig of configuredDevices) {
+            const { ip, name, driver, brightness, startupScene, deviceType } =
+              deviceConfig;
 
-      // Fallback to environment variable configuration
-      const deviceTargets = Array.from(deviceDrivers.keys());
-      if (deviceTargets.length > 0) {
-        logger.info('Auto-loading startup scene for configured devices...');
-        for (const deviceIp of deviceTargets) {
-          if (deviceIp.trim()) {
+            logger.info(`Initializing device: ${name} (${ip}) [${deviceType}]`);
+
             try {
-              const ctx = getContext(
-                deviceIp.trim(),
-                'startup',
-                deploymentTracker.getSceneContext(),
-                publishOk,
-              );
-              await sceneManager.switchScene('startup', ctx);
-              await sceneManager.renderActiveScene(ctx);
-              logger.ok(`Startup scene loaded for ${deviceIp.trim()}`);
+              if (driver) {
+                await setDriverForDevice(ip, driver);
+                logger.debug(`Set driver for ${ip}: ${driver}`);
+              }
+
+              if (brightness !== undefined && brightness !== null) {
+                const device = getDevice(ip);
+                if (device && device.setBrightness) {
+                  try {
+                    await device.setBrightness(brightness);
+                    logger.debug(`Set brightness for ${ip}: ${brightness}%`);
+                  } catch (error) {
+                    logger.warn(
+                      `Failed to set brightness for ${ip}: ${error.message}`,
+                    );
+                  }
+                }
+              }
+
+              if (startupScene) {
+                logger.info(
+                  `Loading startup scene "${startupScene}" for ${name} (${ip})`,
+                );
+                const ctx = getContext(
+                  ip,
+                  deviceDefaults,
+                  deviceDrivers,
+                  deviceConfigStore,
+                );
+                await sceneManager.loadScene({
+                  deviceIp: ip,
+                  sceneName: startupScene,
+                  context: ctx,
+                });
+              }
             } catch (error) {
               logger.warn(
-                `Failed to load startup scene for ${deviceIp.trim()}: ${error.message}`,
+                `Failed to initialize device ${name} (${ip}): ${error.message}`,
               );
             }
           }
         }
-      }
-    }
-  } catch (error) {
-    logger.error('Deployment initialization failed:', { error: error.message });
-  }
-}
-
-// Initialize deployment and startup scenes
-logger.info('Initializing deployment...');
-(async () => {
-  await initializeDeployment();
-})();
-
-// ============================================================================
-// GRACEFUL SHUTDOWN
-// ============================================================================
-
-/**
- * Handle graceful shutdown
- */
-async function gracefulShutdown(signal) {
-  logger.info(`\n🛑 Received ${signal}, shutting down gracefully...`);
-
-  try {
-    // Flush runtime state to disk
-    logger.info('💾 Flushing runtime state...');
-    await stateStore.flush();
-
-    // Stop watchdog service
-    try {
-      const watchdogService = container.resolve('watchdogService');
-      if (watchdogService) {
-        logger.info('🔴 Stopping watchdog service...');
-        watchdogService.stopAll();
-      }
-    } catch {
-      // Watchdog service may not be initialized yet
-      logger.debug('Watchdog service not available during shutdown');
-    }
-
-    // Close WebSocket connections
-    if (webServer) {
-      logger.info('🔌 Closing WebSocket connections...');
-      webServer.close();
-    }
-
-    logger.ok('✅ Graceful shutdown complete');
-    process.exit(0);
-  } catch (error) {
-    logger.error('Failed to shutdown gracefully:', { error: error.message });
-    process.exit(1);
-  }
-}
-
-// Register shutdown handlers
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// SCENE_STATE_TOPIC_BASE is provided by lib/config.js
-
-function publishMetrics(deviceIp) {
-  const dev = devices.get(deviceIp);
-  if (!dev) return;
-  const metrics = dev.getMetrics();
-  mqttService.publish(`pixoo/${deviceIp}/metrics`, metrics);
-}
-
-function publishOk(deviceIp, sceneName, frametime, diffPixels, metrics) {
-  // DEBUG: Log webServer state on FIRST call only
-  if (!publishOk._logged) {
-    logger.info(`🔍 publishOk called - webServer state:`, {
-      hasWebServer: !!webServer,
-      hasWsBroadcast: !!webServer?.wsBroadcast,
-      webServerType: typeof webServer,
-    });
-    publishOk._logged = true;
-  }
-
-  const msg = {
-    scene: sceneName,
-    frametime,
-    diffPixels,
-    pushes: metrics.pushes,
-    skipped: metrics.skipped,
-    errors: metrics.errors,
-    version: versionInfo.version,
-    buildNumber: versionInfo.buildNumber,
-    gitCommit: versionInfo.gitCommit,
-    ts: Date.now(),
-  };
-
-  // Check device logging level (respect per-device logging preferences)
-  const loggingLevel = stateStore.getDeviceState(deviceIp, '__logging_level');
-  const { getDriverForDevice } = require('./lib/device-adapter');
-  const driver = getDriverForDevice(deviceIp);
-  const defaultLevel = driver === 'real' ? 'warning' : 'silent';
-  const effectiveLevel =
-    loggingLevel !== null && loggingLevel !== undefined
-      ? loggingLevel
-      : defaultLevel;
-
-  // Only log if device logging allows it (debug = all, info = info+, warning = warning/error, error = error, silent = none)
-  if (effectiveLevel === 'debug') {
-    logger.ok(`OK [${deviceIp}]`, {
-      scene: sceneName,
-      frametime,
-      diffPixels,
-      pushes: metrics.pushes,
-      skipped: metrics.skipped,
-      errors: metrics.errors,
-      version: versionInfo.version,
-      buildNumber: versionInfo.buildNumber,
-      gitCommit: versionInfo.gitCommit,
-    });
-  }
-
-  // Publish to MQTT
-  mqttService.publish(`pixoo/${deviceIp}/ok`, msg);
-
-  // Event-driven WebSocket update: Broadcast when frame is actually rendered
-  if (webServer?.wsBroadcast) {
-    // Get deviceService reference BEFORE async callback (closure capture)
-    const deviceService = container.resolve('deviceService');
-
-    // Broadcast asynchronously (non-blocking)
-    setTimeout(async () => {
-      try {
-        const deviceInfo = await deviceService.getDeviceInfo(deviceIp);
-        webServer.wsBroadcast({
-          type: 'device_update',
-          deviceIp,
-          data: deviceInfo,
-          timestamp: Date.now(),
-        });
-
-        // Respect device logging level
-        if (effectiveLevel === 'debug') {
-          logger.debug(`📡 Broadcast device_update for ${deviceIp}`);
-        }
       } catch (error) {
-        // Log errors even in production
-        logger.warn('WebSocket broadcast failed:', {
-          deviceIp,
-          error: error.message,
-        });
+        logger.error(
+          `Failed to load device configuration: ${error.message}. Falling back to environment variables.`,
+        );
       }
-    }, 0);
-  } else if (webServer) {
-    logger.warn('❌ webServer exists but wsBroadcast is missing!', {
-      hasWsBroadcast: !!webServer.wsBroadcast,
-      webServerKeys: Object.keys(webServer || {}).join(', '),
-    });
+    } catch (error) {
+      logger.error('Deployment initialization failed:', {
+        error: error.message,
+      });
+    }
   }
+
+  await initializeDeployment();
+
+  mqttService.on('connect', async () => {
+    await mqttService.subscribe([
+      'pixoo/+/state/upd',
+      'pixoo/+/scene/set',
+      'pixoo/+/driver/set',
+      'pixoo/+/reset/set',
+    ]);
+  });
+
+  mqttService.connect().catch((err) => {
+    logger.error('Failed to connect to MQTT broker:', { error: err.message });
+    reconnectMqttWithBackoff();
+  });
+
+  function reconnectMqttWithBackoff(attempt = 1) {
+    const delayMs = Math.min(30000, attempt * 5000);
+    logger.info(
+      `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`,
+    );
+    setTimeout(() => {
+      mqttService.connect().catch((err) => {
+        logger.error('MQTT reconnect failed:', { error: err.message, attempt });
+        reconnectMqttWithBackoff(attempt + 1);
+      });
+    }, delayMs);
+  }
+
+  mqttService.on('error', (err) => {
+    logger.error('MQTT error:', { error: err.message });
+  });
 }
 
-// Register command handlers with MqttService
-// Each handler is resolved from the DI container and registered
-mqttService.registerHandler('scene', async (deviceIp, action, payload) => {
-  const handler = container.resolve('sceneCommandHandler');
-  await handler.handle(deviceIp, action, payload);
-});
-
-mqttService.registerHandler('driver', async (deviceIp, action, payload) => {
-  const handler = container.resolve('driverCommandHandler');
-  await handler.handle(deviceIp, action, payload);
-});
-
-mqttService.registerHandler('reset', async (deviceIp, action, payload) => {
-  const handler = container.resolve('resetCommandHandler');
-  await handler.handle(deviceIp, action, payload);
-});
-
-mqttService.registerHandler('state', async (deviceIp, action, payload) => {
-  const handler = container.resolve('stateCommandHandler');
-  await handler.handle(deviceIp, action, payload);
-});
-
-// Connect to MQTT broker and subscribe to topics
-mqttService.on('connect', async () => {
-  await mqttService.subscribe([
-    'pixoo/+/state/upd',
-    'pixoo/+/scene/set',
-    'pixoo/+/driver/set',
-    'pixoo/+/reset/set',
-  ]);
-});
-
-// Start MQTT service
-mqttService.connect().catch((err) => {
-  logger.error('Failed to connect to MQTT broker:', { error: err.message });
-  reconnectMqttWithBackoff();
-});
-
-function reconnectMqttWithBackoff(attempt = 1) {
-  const delayMs = Math.min(30000, attempt * 5000);
-  logger.info(
-    `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`,
-  );
-  setTimeout(() => {
-    mqttService.connect().catch((err) => {
-      logger.error('MQTT reconnect failed:', { error: err.message, attempt });
-      reconnectMqttWithBackoff(attempt + 1);
-    });
-  }, delayMs);
-}
-
-// Global MQTT error logging
-mqttService.on('error', (err) => {
-  logger.error('MQTT error:', { error: err.message });
+bootstrap().catch((error) => {
+  logger.error('Fatal daemon initialization error:', { error: error.message });
+  process.exit(1);
 });

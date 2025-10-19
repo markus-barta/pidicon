@@ -56,6 +56,7 @@ function startWebServer(container, logger) {
   const sceneService = container.resolve('sceneService');
   const deviceService = container.resolve('deviceService');
   const systemService = container.resolve('systemService');
+  const mqttConfigService = container.resolve('mqttConfigService');
   const watchdogService = container.resolve('watchdogService');
   const deviceConfigStore = container.resolve('deviceConfigStore'); // Use shared instance from DI container
 
@@ -525,6 +526,46 @@ function startWebServer(container, logger) {
         error: error.message,
       });
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/system/mqtt-config', async (req, res) => {
+    try {
+      const config = await mqttConfigService.loadConfig();
+      const safeConfig = {
+        brokerUrl: config.brokerUrl || '',
+        username: config.username || '',
+        clientId: config.clientId || '',
+        keepalive: config.keepalive ?? 60,
+        tls: !!config.tls,
+        hasPassword: Boolean(config.password),
+      };
+      res.json({ config: safeConfig });
+    } catch (error) {
+      logger.error('API /api/system/mqtt-config error:', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/system/mqtt-config', async (req, res) => {
+    try {
+      const updated = await mqttConfigService.updateConfig(req.body || {});
+      const safeConfig = {
+        brokerUrl: updated.brokerUrl || '',
+        username: updated.username || '',
+        clientId: updated.clientId || '',
+        keepalive: updated.keepalive ?? 60,
+        tls: !!updated.tls,
+        hasPassword: Boolean(updated.password),
+      };
+      res.json({ config: safeConfig });
+    } catch (error) {
+      logger.error('API /api/system/mqtt-config (POST) error:', {
+        error: error.message,
+      });
+      res.status(400).json({ error: error.message });
     }
   });
 

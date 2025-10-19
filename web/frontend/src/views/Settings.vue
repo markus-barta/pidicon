@@ -56,7 +56,7 @@
                         persistent-hint
                       />
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col cols="12" md="2">
                       <v-slider
                         v-model="globalSettings.defaultBrightness"
                         label="Default Brightness"
@@ -115,16 +115,109 @@
                     </v-col>
                   </v-row>
 
+                  <v-divider class="my-6" />
+
+                  <h3 class="text-h6 mb-4">
+                    <v-icon class="mr-2">mdi-access-point-network</v-icon>
+                    MQTT Connectivity
+                  </h3>
+
+                  <v-alert type="warning" variant="tonal" class="mb-4">
+                    These credentials apply to <strong>all</strong> devices.
+                    Per-device overrides will be added later.
+                  </v-alert>
+
+                  <v-row>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="mqttSettings.brokerUrl"
+                        label="Broker URL"
+                        placeholder="mqtt://miniserver24:1883"
+                        variant="outlined"
+                        density="compact"
+                        :rules="mqttRules.brokerUrl"
+                        data-test="mqtt-broker-url"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                      <v-text-field
+                        v-model="mqttSettings.username"
+                        label="Username"
+                        variant="outlined"
+                        density="compact"
+                        data-test="mqtt-username"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                      <v-text-field
+                        v-model="mqttSettings.password"
+                        label="Password"
+                        type="password"
+                        variant="outlined"
+                        density="compact"
+                        autocomplete="current-password"
+                        data-test="mqtt-password"
+                      />
+                    </v-col>
+                  </v-row>
+
+                  <v-row>
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="mqttSettings.clientId"
+                        label="Client ID"
+                        variant="outlined"
+                        density="compact"
+                        hint="Optional custom client identifier"
+                        persistent-hint
+                        data-test="mqtt-client-id"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model.number="mqttSettings.keepalive"
+                        label="Keepalive (seconds)"
+                        type="number"
+                        :min="0"
+                        :max="65535"
+                        variant="outlined"
+                        density="compact"
+                        data-test="mqtt-keepalive"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="4">
+                      <v-switch
+                        v-model="mqttSettings.tls"
+                        inset
+                        label="Use TLS"
+                        color="primary"
+                        data-test="mqtt-tls-toggle"
+                      />
+                    </v-col>
+                  </v-row>
+
                   <v-row class="mt-4">
-                    <v-col cols="12">
+                    <v-col cols="12" class="d-flex align-center">
                       <v-btn
                         color="primary"
                         variant="flat"
                         :loading="savingGlobal"
                         @click="saveGlobalSettings"
+                        class="mr-4"
+                        data-test="save-global-settings"
                       >
                         <v-icon class="mr-2">mdi-content-save</v-icon>
                         Save Global Settings
+                      </v-btn>
+                      <v-btn
+                        color="secondary"
+                        variant="outlined"
+                        :loading="savingMqtt"
+                        @click="saveMqttSettings"
+                        data-test="save-mqtt-settings"
+                      >
+                        <v-icon class="mr-2">mdi-lock-check</v-icon>
+                        Save MQTT Settings
                       </v-btn>
                     </v-col>
                   </v-row>
@@ -309,6 +402,95 @@ export default {
       },
     });
 
+    const PASSWORD_PLACEHOLDER = '********';
+    const mqttSettings = ref({
+      brokerUrl: '',
+      username: '',
+      password: '',
+      clientId: '',
+      keepalive: 60,
+      tls: false,
+    });
+
+    const mqttRules = ref({
+      brokerUrl: [(v) => !!v || 'Broker URL is required'],
+    });
+
+    const loadingMqtt = ref(true);
+    const savingMqtt = ref(false);
+
+    const snackbarSuccess = (message) => {
+      snackbarMessage.value = message;
+      snackbarColor.value = 'success';
+      showSnackbar.value = true;
+    };
+
+    const snackbarError = (message) => {
+      snackbarMessage.value = message;
+      snackbarColor.value = 'error';
+      showSnackbar.value = true;
+    };
+
+    const loadMqttSettings = async () => {
+      loadingMqtt.value = true;
+      try {
+        const response = await fetch('/api/system/mqtt-config');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        const config = data.config || {};
+        mqttSettings.value = {
+          brokerUrl: config.brokerUrl || '',
+          username: config.username || '',
+          password: config.hasPassword ? PASSWORD_PLACEHOLDER : '',
+          clientId: config.clientId || '',
+          keepalive: config.keepalive ?? 60,
+          tls: !!config.tls,
+        };
+      } catch (error) {
+        snackbarError(`Failed to load MQTT settings: ${error.message}`);
+      } finally {
+        loadingMqtt.value = false;
+      }
+    };
+
+    const saveMqttSettings = async () => {
+      savingMqtt.value = true;
+      try {
+        const payload = {
+          brokerUrl: mqttSettings.value.brokerUrl,
+          username: mqttSettings.value.username,
+          clientId: mqttSettings.value.clientId,
+          keepalive: Number(mqttSettings.value.keepalive),
+          tls: mqttSettings.value.tls,
+        };
+
+        if (mqttSettings.value.password && mqttSettings.value.password !== PASSWORD_PLACEHOLDER) {
+          payload.password = mqttSettings.value.password;
+        }
+
+        const response = await fetch('/api/system/mqtt-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
+        snackbarSuccess('MQTT settings saved successfully');
+        await loadMqttSettings();
+      } catch (error) {
+        snackbarError(`Failed to save MQTT settings: ${error.message}`);
+      } finally {
+        savingMqtt.value = false;
+      }
+    };
+
+    loadMqttSettings();
+
     const saveGlobalSettings = async () => {
       savingGlobal.value = true;
       try {
@@ -430,6 +612,16 @@ export default {
           },
         };
 
+        // Reset MQTT settings
+        mqttSettings.value = {
+          brokerUrl: '',
+          username: '',
+          password: '',
+          clientId: '',
+          keepalive: 60,
+          tls: false,
+        };
+
         showResetDialog.value = false;
         snackbarMessage.value = 'Settings reset to defaults';
         snackbarColor.value = 'success';
@@ -448,7 +640,11 @@ export default {
     return {
       activeTab,
       globalSettings,
+      mqttSettings,
+      mqttRules,
       savingGlobal,
+      savingMqtt,
+      loadingMqtt,
       importing,
       resetting,
       importFile,
@@ -457,6 +653,7 @@ export default {
       snackbarMessage,
       snackbarColor,
       saveGlobalSettings,
+      saveMqttSettings,
       exportConfig,
       importConfig,
       confirmReset,
