@@ -64,12 +64,11 @@ COPY --from=builder /app/web/public/ ./web/public/
 COPY daemon.js start-daemon.sh ./
 COPY lib/ ./lib/
 COPY web/server.js ./web/
+# Copy bundled scenes including examples and dev helpers
 COPY scenes/*.js ./scenes/
 COPY scenes/media/ ./scenes/media/
+COPY scenes/examples/ ./scenes/examples/
 COPY config/ ./config/
-
-# Exclude dev scenes (examples/dev/) - not needed in production
-COPY scenes/examples/pixoo_showcase.js ./scenes/examples/
 
 # Make wrapper script executable
 RUN chmod +x start-daemon.sh
