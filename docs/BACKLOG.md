@@ -26,6 +26,11 @@
 - **Owner**: mba
 - **Status**: In Progress (2025-10-20)
 
+**Tests**:
+
+- Unit: `lib/state-store` persistence (heartbeat/start) and `system-service` uptime formatting.
+- UI: `SystemStatus.vue` header uptime pause/resume + tooltip verifying stale state indication.
+
 **Problem**: Header uptime counter continues to increment while the daemon is offline because it depends on client-side timers instead of authoritative runtime metadata.
 
 **Goal**: Persist true daemon start and heartbeat timestamps server-side and expose them via API so the UI displays accurate uptime and highlights outages quickly.
