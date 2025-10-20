@@ -55,6 +55,172 @@
 
 ---
 
+### OPS-413: AWTRIX Reboot Control (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 4-6 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: The AWTRIX device action labeled "Reset" only refreshes the UI scene and never triggers a hardware reboot, so hung firmware remains stuck.
+
+**Goal**: Invoke the official AWTRIX reboot command when requested and align UI wording/feedback.
+
+**Deliverables**:
+
+1. Implement reboot via MQTT API (`command` topic `{ "cmd": "reboot" }`).
+2. Update device service + driver wiring with logging and mock support.
+3. Rename UI control to "Reboot" with AWTRIX-specific confirmation text.
+4. Add backend + Playwright tests covering reboot dispatch and UI copy.
+
+**Tests**:
+
+- Unit: driver/device service MQTT payload emission (mock mqtt client).
+- UI: Device card Playwright spec verifying button label + confirmation + API call.
+
+---
+
+### UI-781: AWTRIX Frametime Palette Alignment (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 2-3 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: AWTRIX frametime chart renders black bars for low-duration samples, inconsistent with Pixoo palette.
+
+**Goal**: Apply Pixoo color scheme to AWTRIX frametime visualization.
+
+**Deliverables**:
+
+1. Reuse Pixoo palette tokens in AWTRIX chart component.
+2. Verify gradient thresholds (<=1ms vs >1ms) show proper colors.
+3. Update visual regression/UI tests if required.
+
+**Tests**:
+
+- Unit: snapshot test for chart config (color mapping).
+- UI: Playwright check ensuring AWTRIX frametime legend colors match tokens.
+
+---
+
+### UI-782: MQTT Header Tooltip Detail (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 2-3 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: Header shows only online/offline indicator; troubleshooting requires full `mqttStatusDetails` context.
+
+**Goal**: Provide a tooltip summarizing connection state, last error, retry counters, next retry timing.
+
+**Deliverables**:
+
+1. Render tooltip content derived from `mqttStatusDetails` with human-readable formatting.
+2. Ensure accessibility (keyboard focus + aria) and responsive layout.
+3. Localize copy hooks for future i18n.
+
+**Tests**:
+
+- Unit: tooltip formatter utility (if extracted).
+- UI: Playwright hover/assert verifying tooltip contents update with mocked status.
+
+---
+
+### UI-783: Dev Scene Toggle Visibility Fix (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 4-5 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: Dev scenes remain hidden even when the dev toggle is enabled, blocking QA workflows.
+
+**Goal**: Wire toggle to backend/filter logic so dev-tagged scenes appear immediately and persist.
+
+**Deliverables**:
+
+1. Audit scene filtering pipeline (store + API) and ensure dev scenes included when flag on.
+2. Persist toggle state across reloads via store or local storage.
+3. Provide visual indicator in dropdown for dev scenes.
+
+**Tests**:
+
+- Unit: scene store/filter tests verifying dev scenes included/excluded.
+- UI: Playwright scenario toggling dev scenes and asserting dropdown entries.
+
+---
+
+### UI-784: Global Settings Copy & Styling (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 3-4 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: Global settings form has redundant labels ("Default driver"/"Default brightness") and inconsistent styling versus device cards.
+
+**Goal**: Simplify copy, add explanatory sentence, and align slider design with device card presentation.
+
+**Deliverables**:
+
+1. Remove redundant headings, add single explanatory paragraph for defaults.
+2. Reuse device card slider styles and icons.
+3. Ensure layout responsive across breakpoints.
+
+**Tests**:
+
+- UI: Playwright snapshot/assert for text copy and slider class names.
+
+---
+
+### UI-785: Unified Settings Save Flow (P1)
+
+- **Priority**: P1 (Important)
+- **Effort**: 4-6 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: Separate "Save" buttons for global and MQTT lead to confusion; unsaved changes are not visible.
+
+**Goal**: Merge into single "Save settings" action with unsaved-change indicator.
+
+**Deliverables**:
+
+1. Consolidate API payload to handle both global + MQTT settings.
+2. Implement change detection to pulse/glow button until saved.
+3. Handle success/error toasts with merged messaging.
+
+**Tests**:
+
+- Unit: settings store change detector.
+- UI: Playwright verifying button pulse on change and resets after save.
+
+---
+
+### UI-786: Global MQTT Status Detail Panel (P2)
+
+- **Priority**: P2 (Nice to Have)
+- **Effort**: 2-3 hours
+- **Owner**: mba
+- **Status**: Not Started (2025-10-20)
+
+**Problem**: Global settings page shows basic MQTT status text without exposing retry/error metadata.
+
+**Goal**: Render detailed status summary (connected, last error, retry count, next retry) using `mqttStatusDetails`.
+
+**Deliverables**:
+
+1. Extend settings view to show structured status block.
+2. Reuse tooltip/formatting utilities for consistency.
+
+**Tests**:
+
+- UI: Playwright verifying status block updates with mocked API responses.
+
+---
+
 ## 🌐 Multi-Device Roadmap (v3.0+)
 
 **Context**: PIDICON v3.0 introduced multi-device support with abstract DeviceDriver interface, DisplayCapabilities system, and web-based device configuration.
