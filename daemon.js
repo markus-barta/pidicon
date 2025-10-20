@@ -107,6 +107,10 @@ async function bootstrap() {
 
   // Resolve services from container
   const stateStore = container.resolve('stateStore');
+  stateStore.recordDaemonStart(Date.now());
+  setInterval(() => {
+    stateStore.recordHeartbeat(Date.now());
+  }, 5000);
   const deploymentTracker = container.resolve('deploymentTracker');
   const deviceConfigStore = container.resolve('deviceConfigStore');
   const sceneManager = container.resolve('sceneManager');
@@ -148,12 +152,13 @@ async function bootstrap() {
 
   container.register(
     'systemService',
-    ({ logger, deploymentTracker, mqttConfigService }) =>
+    ({ logger, deploymentTracker, mqttConfigService, stateStore }) =>
       new SystemService({
         logger,
         versionInfo,
         deploymentTracker,
         mqttConfigService,
+        stateStore,
       }),
   );
 

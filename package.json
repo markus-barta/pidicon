@@ -11,6 +11,7 @@
     "ui:build": "vite build",
     "ui:preview": "vite preview",
     "ui:test": "playwright test",
+    "test:daemon": "npm run build:version && node --test test/lib/state-persistence.test.js test/lib/system-service.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier -w .",

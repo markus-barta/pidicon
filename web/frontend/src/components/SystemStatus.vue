@@ -22,6 +22,7 @@
             </span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
+            <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">{{ hostname }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
@@ -112,7 +113,10 @@ const mqttStatusDetails = ref({
 });
 const status = ref('running');
 const startTime = ref(null);
+const trackedStartTime = ref(null);
+const lastHeartbeat = ref(null);
 const uptime = ref('');
+const statusDetail = ref('');
 const restarting = ref(false);
 const confirmDialog = ref(null); // Ref to ConfirmDialog component
 const lastSuccessfulLoad = ref(Date.now());
@@ -147,10 +151,10 @@ const mqttStatus = computed(() => {
 let uptimeInterval = null;
 
 function updateUptime() {
-  if (!startTime.value) return;
+  if (!trackedStartTime.value) return;
 
   const now = Date.now();
-  const diff = now - startTime.value;
+  const diff = now - trackedStartTime.value;
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -203,11 +207,35 @@ async function loadStatus() {
       status.value = data.status?.toLowerCase() || 'running';
     }
 
-    if (data.startTime) {
-      startTime.value = new Date(data.startTime).getTime();
-    } else {
-      // Fallback: calculate from uptime
-      startTime.value = Date.now() - (data.uptime || 0) * 1000;
+    const start = data.daemonStartTime
+      ? new Date(data.daemonStartTime).getTime()
+      : data.startTime
+        ? new Date(data.startTime).getTime()
+        : Date.now() - (data.uptimeTrackedSeconds || data.uptime || 0) * 1000;
+    trackedStartTime.value = start;
+
+    if (data.daemonLastHeartbeat) {
+      lastHeartbeat.value = new Date(data.daemonLastHeartbeat).getTime();
+    }
+
+    statusDetail.value = data.daemonHeartbeatStale
+      ? 'Heartbeat stale'
+      : 'Healthy';
+
+    if (data.daemonHeartbeatStale) {
+      const offlineSeconds = Math.max(
+        0,
+        Math.floor(
+          (Date.now() - (lastHeartbeat.value || trackedStartTime.value)) / 1000,
+        ),
+      );
+      const minutes = Math.floor(offlineSeconds / 60);
+      const seconds = offlineSeconds % 60;
+      uptime.value =
+        minutes > 0
+          ? `offline for ${minutes}m ${seconds}s`
+          : `offline for ${seconds}s`;
+      return;
     }
 
     updateUptime();
