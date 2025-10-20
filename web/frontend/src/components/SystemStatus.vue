@@ -22,7 +22,6 @@
             </span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
-            <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">{{ hostname }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
