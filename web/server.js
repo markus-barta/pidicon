@@ -533,6 +533,8 @@ function startWebServer(container, logger) {
   app.get('/api/system/mqtt-config', async (req, res) => {
     try {
       const config = await mqttConfigService.loadConfig();
+      const mqttStatus =
+        container.resolveIfRegistered('mqttService')?.getStatus?.() || {};
       const safeConfig = {
         brokerUrl: config.brokerUrl || '',
         username: config.username || '',
@@ -541,7 +543,10 @@ function startWebServer(container, logger) {
         tls: !!config.tls,
         hasPassword: Boolean(config.password),
       };
-      res.json({ config: safeConfig });
+      res.json({
+        config: safeConfig,
+        status: mqttStatus,
+      });
     } catch (error) {
       logger.error('API /api/system/mqtt-config error:', {
         error: error.message,
@@ -553,6 +558,22 @@ function startWebServer(container, logger) {
   app.post('/api/system/mqtt-config', async (req, res) => {
     try {
       const updated = await mqttConfigService.updateConfig(req.body || {});
+      const mqttServiceInstance = container.resolveIfRegistered('mqttService');
+      if (mqttServiceInstance) {
+        try {
+          await mqttServiceInstance.disconnect();
+        } catch (disconnectError) {
+          logger.warn('MQTT disconnect during config update failed', {
+            error: disconnectError.message,
+          });
+        }
+
+        mqttServiceInstance.connect().catch((err) => {
+          logger.error('Failed to reconnect MQTT after config update', {
+            error: err.message,
+          });
+        });
+      }
       const safeConfig = {
         brokerUrl: updated.brokerUrl || '',
         username: updated.username || '',
@@ -561,7 +582,10 @@ function startWebServer(container, logger) {
         tls: !!updated.tls,
         hasPassword: Boolean(updated.password),
       };
-      res.json({ config: safeConfig });
+      res.json({
+        config: safeConfig,
+        status: mqttServiceInstance?.getStatus?.() || {},
+      });
     } catch (error) {
       logger.error('API /api/system/mqtt-config (POST) error:', {
         error: error.message,

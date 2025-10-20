@@ -197,28 +197,45 @@
                   </v-row>
 
                   <v-row class="mt-4">
-                    <v-col cols="12" class="d-flex align-center">
-                      <v-btn
-                        color="primary"
-                        variant="flat"
-                        :loading="savingGlobal"
-                        @click="saveGlobalSettings"
-                        class="mr-4"
-                        data-test="save-global-settings"
+                    <v-col cols="12">
+                      <v-alert
+                        v-if="!loadingMqtt"
+                        :type="mqttOnline ? 'success' : 'warning'"
+                        variant="tonal"
+                        class="mb-4"
+                        density="compact"
+                        border="start"
+                        :border-color="mqttOnline ? 'success' : 'warning'"
                       >
-                        <v-icon class="mr-2">mdi-content-save</v-icon>
-                        Save Global Settings
-                      </v-btn>
-                      <v-btn
-                        color="secondary"
-                        variant="outlined"
-                        :loading="savingMqtt"
-                        @click="saveMqttSettings"
-                        data-test="save-mqtt-settings"
-                      >
-                        <v-icon class="mr-2">mdi-lock-check</v-icon>
-                        Save MQTT Settings
-                      </v-btn>
+                        <strong>MQTT status:</strong>
+                        {{ mqttOnline ? 'Connected' : 'Attempting reconnection' }}
+                        <span v-if="mqttLastError">
+                          — last error: {{ mqttLastError }}
+                        </span>
+                      </v-alert>
+                      <div class="d-flex align-center flex-wrap" style="gap: 12px;">
+                        <v-btn
+                          color="primary"
+                          variant="flat"
+                          :loading="savingGlobal"
+                          @click="saveGlobalSettings"
+                          class="mr-2"
+                          data-test="save-global-settings"
+                        >
+                          <v-icon class="mr-2">mdi-content-save</v-icon>
+                          Save Global Settings
+                        </v-btn>
+                        <v-btn
+                          color="secondary"
+                          variant="outlined"
+                          :loading="savingMqtt"
+                          @click="saveMqttSettings"
+                          data-test="save-mqtt-settings"
+                        >
+                          <v-icon class="mr-2">mdi-lock-check</v-icon>
+                          Save MQTT Settings
+                        </v-btn>
+                      </div>
                     </v-col>
                   </v-row>
                 </v-form>
@@ -411,6 +428,8 @@ export default {
       keepalive: 60,
       tls: false,
     });
+    const mqttOnline = ref(true);
+    const mqttLastError = ref(null);
 
     const mqttRules = ref({
       brokerUrl: [(v) => !!v || 'Broker URL is required'],
@@ -440,6 +459,7 @@ export default {
         }
         const data = await response.json();
         const config = data.config || {};
+        const status = data.status || {};
         mqttSettings.value = {
           brokerUrl: config.brokerUrl || '',
           username: config.username || '',
@@ -448,6 +468,8 @@ export default {
           keepalive: config.keepalive ?? 60,
           tls: !!config.tls,
         };
+        mqttOnline.value = status.connected !== false;
+        mqttLastError.value = status.lastError || null;
       } catch (error) {
         snackbarError(`Failed to load MQTT settings: ${error.message}`);
       } finally {
@@ -480,8 +502,25 @@ export default {
           throw new Error(result.error || `HTTP ${response.status}`);
         }
 
-        snackbarSuccess('MQTT settings saved successfully');
-        await loadMqttSettings();
+        const result = await response.json();
+        const config = result.config || {};
+        const status = result.status || {};
+        mqttSettings.value = {
+          brokerUrl: config.brokerUrl || '',
+          username: config.username || '',
+          password: config.hasPassword ? PASSWORD_PLACEHOLDER : '',
+          clientId: config.clientId || '',
+          keepalive: config.keepalive ?? 60,
+          tls: !!config.tls,
+        };
+        mqttOnline.value = status.connected !== false;
+        mqttLastError.value = status.lastError || null;
+
+        snackbarSuccess(
+          mqttOnline.value
+            ? 'MQTT settings saved and connected'
+            : 'MQTT settings saved, reconnecting...'
+        );
       } catch (error) {
         snackbarError(`Failed to save MQTT settings: ${error.message}`);
       } finally {
@@ -642,6 +681,8 @@ export default {
       globalSettings,
       mqttSettings,
       mqttRules,
+      mqttOnline,
+      mqttLastError,
       savingGlobal,
       savingMqtt,
       loadingMqtt,

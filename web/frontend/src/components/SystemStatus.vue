@@ -104,6 +104,12 @@ const hostname = ref('');
 const nodeVersion = ref('Unknown');
 const mqttBroker = ref('localhost');
 const mqttConnected = ref(true);
+const mqttStatusDetails = ref({
+  connected: true,
+  lastError: null,
+  retryCount: 0,
+  nextRetryInMs: null,
+});
 const status = ref('running');
 const startTime = ref(null);
 const uptime = ref('');
@@ -130,7 +136,12 @@ const mqttStatusColor = computed(() => {
 });
 
 const mqttStatus = computed(() => {
-  return mqttConnected.value ? 'connected' : 'disconnected';
+  if (!mqttConnected.value) {
+    return mqttStatusDetails.value.lastError
+      ? `offline (${mqttStatusDetails.value.lastError})`
+      : 'disconnected';
+  }
+  return 'connected';
 });
 
 let uptimeInterval = null;
@@ -178,7 +189,14 @@ async function loadStatus() {
     hostname.value = data.hostname || 'Unknown';
     nodeVersion.value = data.nodeVersion || 'Unknown';
     mqttBroker.value = data.mqttBroker || 'localhost';
-    mqttConnected.value = data.mqttConnected !== false; // Default to true
+    const mqttStatusData = data.mqttStatus || {};
+    mqttStatusDetails.value = {
+      connected: mqttStatusData.connected !== false,
+      lastError: mqttStatusData.lastError || null,
+      retryCount: mqttStatusData.retryCount || 0,
+      nextRetryInMs: mqttStatusData.nextRetryInMs ?? null,
+    };
+    mqttConnected.value = mqttStatusDetails.value.connected;
     
     // Only update status if not manually restarting
     if (!restarting.value) {

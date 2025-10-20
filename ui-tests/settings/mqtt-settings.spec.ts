@@ -6,7 +6,7 @@ const PASSWORD_PLACEHOLDER = '********';
 async function fetchMqttConfig(request) {
   const response = await request.get(`${BASE_URL}/api/system/mqtt-config`);
   expect(response.ok()).toBeTruthy();
-  return (await response.json()).config;
+  return await response.json();
 }
 
 async function updateMqttConfig(request, patch) {
@@ -14,7 +14,7 @@ async function updateMqttConfig(request, patch) {
     data: patch,
   });
   expect(response.ok()).toBeTruthy();
-  return (await response.json()).config;
+  return await response.json();
 }
 
 test.describe('Global MQTT settings', () => {
@@ -25,7 +25,8 @@ test.describe('Global MQTT settings', () => {
   });
 
   test('updates persist via API and UI refresh', async ({ page, request }) => {
-    const original = await fetchMqttConfig(request);
+    const originalResponse = await fetchMqttConfig(request);
+    const original = originalResponse.config;
 
     const form = {
       brokerUrl: 'mqtt://miniserver24:1884',
@@ -44,15 +45,18 @@ test.describe('Global MQTT settings', () => {
     await page.getByTestId('mqtt-tls-toggle').setChecked(form.tls);
 
     await page.getByTestId('save-mqtt-settings').click();
-    await expect(page.getByText('MQTT settings saved')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/MQTT settings saved/i)).toBeVisible({ timeout: 10_000 });
 
-    const saved = await fetchMqttConfig(request);
+    const savedResponse = await fetchMqttConfig(request);
+    const saved = savedResponse.config;
+    const savedStatus = savedResponse.status;
     expect(saved.brokerUrl).toBe(form.brokerUrl);
     expect(saved.username).toBe(form.username);
     expect(saved.clientId).toBe(form.clientId);
     expect(saved.keepalive).toBe(form.keepalive);
     expect(saved.tls).toBe(true);
     expect(saved.hasPassword).toBe(true);
+    expect(savedStatus.connected === true || savedStatus.connected === false).toBeTruthy();
 
     await page.reload();
     await page.getByRole('tab', { name: /Global Settings/i }).click();

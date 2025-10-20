@@ -111,6 +111,7 @@ async function bootstrap() {
   const deviceConfigStore = container.resolve('deviceConfigStore');
   const sceneManager = container.resolve('sceneManager');
   const mqttService = container.resolve('mqttService');
+  mqttConfigService.mqttService = mqttService;
 
   // Register services in DI container
   container.register(
