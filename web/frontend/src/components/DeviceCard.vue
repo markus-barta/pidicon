@@ -172,19 +172,27 @@
           </v-btn>
         </div>
 
-        <!-- Device Reset Button -->
+        <!-- Device Reset/Reboot Button -->
         <v-btn
           size="small"
           variant="outlined"
-          color="grey"
+          :color="device.deviceType === 'awtrix' ? 'warning' : 'grey'"
           @click="handleReset"
           :loading="resetLoading"
           class="control-btn-compact"
         >
-          <v-icon size="small" color="error" class="mr-1">mdi-restart</v-icon>
-          <span class="text-caption">Reset</span>
+          <v-icon
+            size="small"
+            :color="device.deviceType === 'awtrix' ? 'warning' : 'error'"
+            class="mr-1"
+          >
+            {{ device.deviceType === 'awtrix' ? 'mdi-power' : 'mdi-restart' }}
+          </v-icon>
+          <span class="text-caption">
+            {{ device.deviceType === 'awtrix' ? 'Reboot' : 'Reset' }}
+          </span>
           <v-tooltip activator="parent" location="bottom">
-            Reset device display
+            {{ device.deviceType === 'awtrix' ? 'Reboot AWTRIX device' : 'Reset device display' }}
           </v-tooltip>
         </v-btn>
 
@@ -1870,36 +1878,37 @@ const brightnessIconOpacity = computed(() => {
 });
 
 async function handleReset() {
-  // Use Vue confirm dialog instead of browser confirm (UI-512)
+  const isAwtrix = props.device.deviceType === 'awtrix';
   const confirmed = await confirmDialog.value?.show({
-    title: 'Reset Device Display',
-    message: `This will clear the display, reset the device settings, and load the startup scene. Note: This does not perform a hardware restart of the Pixoo device itself.`,
-    confirmText: 'Reset Display',
+    title: isAwtrix ? 'Reboot Device' : 'Reset Device Display',
+    message: isAwtrix
+      ? 'This will send a reboot command to the AWTRIX device. The display will briefly go dark while it restarts.'
+      : 'This will clear the display, reset the device settings, and load the startup scene. Note: This does not perform a hardware restart of the Pixoo device itself.',
+    confirmText: isAwtrix ? 'Reboot Device' : 'Reset Display',
     cancelText: 'Cancel',
     confirmColor: 'warning',
-    icon: 'mdi-restart',
-    iconColor: 'error'
+    icon: isAwtrix ? 'mdi-power' : 'mdi-restart',
+    iconColor: isAwtrix ? 'warning' : 'error',
   });
 
   if (!confirmed) return;
 
   resetLoading.value = true;
   try {
-    // Switch to empty scene first for visual feedback
-    await api.switchScene(props.device.ip, 'empty', { clear: true });
-    await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause
-    
-    // Perform the reset (API call to reset device settings)
-    await api.resetDevice(props.device.ip);
-    
-    // Wait a bit, then switch to startup scene
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    await api.switchScene(props.device.ip, 'startup', { clear: true });
-    
-    toast.success('Device display reset', 2000);
+    if (isAwtrix) {
+      await api.rebootDevice(props.device.ip);
+      toast.success('Device reboot triggered', 2000);
+    } else {
+      await api.switchScene(props.device.ip, 'empty', { clear: true });
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await api.resetDevice(props.device.ip);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await api.switchScene(props.device.ip, 'startup', { clear: true });
+      toast.success('Device display reset', 2000);
+    }
     emit('refresh');
   } catch (err) {
-    toast.error(`Failed to reset device: ${err.message}`);
+    toast.error(`Failed to ${isAwtrix ? 'reboot' : 'reset'} device: ${err.message}`);
   } finally {
     resetLoading.value = false;
   }
