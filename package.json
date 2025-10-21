@@ -19,7 +19,7 @@
     "lint:errors": "eslint . --quiet -f codeframe || true",
     "md:lint": "markdownlint \"**/*.md\" --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
     "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
-    "test": "npm run build:version && node --test",
+    "test": "npm run build:version && node --test test",
     "coverage": "c8 npm test",
     "coverage:report": "c8 report --reporter=text",
     "hooks:setup": "husky init"

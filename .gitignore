@@ -3,6 +3,7 @@ node_modules/
 
 # Generated build artifacts
 version.json
+test-results/
 
 # Vite build output (Vue frontend)
 web/public/
@@ -18,8 +19,9 @@ config/devices.json
 # Sensitive secrets
 data/secrets/
 
-# UI test artifacts
+# Test artifacts
 ui-test-report/
+test-results/
 
 # Devenv
 .devenv*
