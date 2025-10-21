@@ -1540,9 +1540,8 @@ function loadMetrics() {
 // Get color based on frametime - using SIMPLE scheme from performance-utils.js
 // This matches the visual appearance better
 function getFrametimeColor(frametime) {
-  const { getSimplePerformanceColor } = require('../../lib/performance-utils');
-  const [r, g, b, a] = getSimplePerformanceColor(frametime || 0);
-  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+  const [r, g, b] = getSimplePerformanceColor(frametime || 0);
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 // Chart.js functions removed - now using ECharts with reactive computed property!

@@ -24,7 +24,9 @@
 - **Priority**: P1 (Important)
 - **Effort**: 6-8 hours
 - **Owner**: mba
-- **Status**: In Progress (2025-10-20)
+- **Status**: Completed (2025-10-21)
+
+**Notes**: Daemon start + heartbeat persisted in `state-store`; `system-service` exposes authoritative uptime fields consumed by `SystemStatus.vue`. Tests added in `test/lib/system-service.test.js`.
 
 **Tests**:
 
@@ -60,7 +62,9 @@
 - **Priority**: P1 (Important)
 - **Effort**: 4-6 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: Completed (2025-10-21)
+
+**Notes**: AWTRIX driver exposes `reboot()`, `DeviceService.rebootDevice` dispatches via device adapter, `/api/devices/:ip/reboot` + UI button rename shipped. Playwright spec updated.
 
 **Problem**: The AWTRIX device action labeled "Reset" only refreshes the UI scene and never triggers a hardware reboot, so hung firmware remains stuck.
 
@@ -85,7 +89,9 @@
 - **Priority**: P2 (Nice to Have)
 - **Effort**: 2-3 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: In Progress (2025-10-21)
+
+**Notes**: `DeviceCard.vue` frametime bar colors now use `getSimplePerformanceColor`. Need follow-up visual regression/tuning (UI test pending).
 
 **Problem**: AWTRIX frametime chart renders black bars for low-duration samples, inconsistent with Pixoo palette.
 
@@ -109,7 +115,9 @@
 - **Priority**: P1 (Important)
 - **Effort**: 2-3 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: Completed (2025-10-21)
+
+**Notes**: Header wraps MQTT chip in Vuetify tooltip listing connection, broker, retry, next retry, last error; styled via scoped CSS.
 
 **Problem**: Header shows only online/offline indicator; troubleshooting requires full `mqttStatusDetails` context.
 
@@ -133,7 +141,9 @@
 - **Priority**: P1 (Important)
 - **Effort**: 4-5 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: In Progress (2025-10-21)
+
+**Notes**: Investigating scene store filtering + `SceneSelector` dev flag wiring; pending implementation.
 
 **Problem**: Dev scenes remain hidden even when the dev toggle is enabled, blocking QA workflows.
 

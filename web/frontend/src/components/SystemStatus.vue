@@ -16,17 +16,40 @@
               <span style="color: #6b7280;">Daemon: {{ statusLabel }}</span>
             </span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
-            <span
-              class="d-inline-flex align-center mqtt-status-trigger"
-              tabindex="0"
-              @mouseenter="showMqttTooltip = true"
-              @mouseleave="showMqttTooltip = false"
-              @focus="showMqttTooltip = true"
-              @blur="showMqttTooltip = false"
-            >
-              <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: mqttStatusColor, marginRight: '6px' }"></span>
-              <span style="color: #6b7280;">MQTT: {{ mqttStatus }}</span>
-            </span>
+            <v-tooltip location="bottom" :open-on-hover="true" :open-on-focus="true">
+              <template #activator="{ props }">
+                <span
+                  class="d-inline-flex align-center mqtt-status-trigger"
+                  tabindex="0"
+                  v-bind="props"
+                >
+                  <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: mqttStatusColor, marginRight: '6px' }"></span>
+                  <span style="color: #6b7280;">MQTT: {{ mqttStatus }}</span>
+                </span>
+              </template>
+              <div class="mqtt-tooltip">
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Connection</span>
+                  <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Broker URL</span>
+                  <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Retry Count</span>
+                  <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Next Retry</span>
+                  <span class="tooltip-value">{{ nextRetryLabel }}</span>
+                </div>
+                <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
+                  <span class="tooltip-label">Last Error</span>
+                  <span class="tooltip-value tooltip-error">{{ mqttStatusDetails.lastError }}</span>
+                </div>
+              </div>
+            </v-tooltip>
             <span class="mx-2" style="color: #d1d5db;">•</span>
             <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
@@ -118,7 +141,6 @@ const mqttStatusDetails = ref({
   nextRetryInMs: null,
   brokerUrl: null,
 });
-const showMqttTooltip = ref(false);
 const status = ref('running');
 const startTime = ref(null);
 const trackedStartTime = ref(null);
@@ -331,6 +353,37 @@ onUnmounted(() => {
 .daemon-restart-btn {
   /* Remove custom height - let Vuetify handle it to match other buttons */
   transition: all 0.15s ease !important;
+}
+
+.mqtt-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 320px;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.tooltip-label {
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tooltip-value {
+  color: #111827;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tooltip-error {
+  color: #b91c1c;
 }
 
 .daemon-restart-btn:hover {

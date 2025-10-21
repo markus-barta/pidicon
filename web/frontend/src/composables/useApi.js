@@ -96,6 +96,12 @@ export function useApi() {
     });
   }
 
+  async function rebootDevice(ip) {
+    return await request(`/devices/${ip}/reboot`, {
+      method: 'POST',
+    });
+  }
+
   async function setDeviceLogging(ip, level) {
     return await request(`/devices/${ip}/logging`, {
       method: 'POST',
@@ -141,6 +147,7 @@ export function useApi() {
     setDisplayPower,
     setDisplayBrightness,
     resetDevice,
+    rebootDevice,
     setDeviceLogging,
     switchDriver,
     // Scene methods
