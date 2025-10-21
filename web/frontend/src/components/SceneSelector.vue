@@ -82,11 +82,7 @@ const sceneItems = computed(() => {
   let filteredScenes = sceneStore.scenes;
   
   if (!props.showDevScenes) {
-    // Hide scenes in examples/dev/ folder
-    filteredScenes = filteredScenes.filter(scene => {
-      const isDevScene = scene.isDevScene === true || scene.filePath?.includes('examples/dev/');
-      return !isDevScene;
-    });
+    filteredScenes = filteredScenes.filter((scene) => !scene.isDevScene);
   }
 
   // Filter by device type if specified
@@ -115,6 +111,7 @@ const sceneItems = computed(() => {
       category: scene.category || 'General',
       filePath: scene.filePath,
       deviceTypes: scene.deviceTypes,
+      isDevScene: scene.isDevScene,
     };
   });
 });

@@ -64,7 +64,11 @@
               lg="12"
               xl="6"
             >
-              <device-card :device="device" :show-dev-scenes="showDevScenes" @refresh="loadData" />
+              <device-card
+                :device="device"
+                :show-dev-scenes="showDevScenes"
+                @refresh="loadData"
+              />
             </v-col>
           </v-row>
         </template>
@@ -104,10 +108,12 @@ const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
 const currentView = ref('devices'); // 'devices' or 'settings'
-const showDevScenes = ref(localStorage.getItem('pidicon:showDevScenes') === 'true');
+const showDevScenes = ref(
+  JSON.parse(localStorage.getItem('pidicon:showDevScenes') || 'false'),
+);
 
 watch(showDevScenes, (value) => {
-  localStorage.setItem('pidicon:showDevScenes', value ? 'true' : 'false');
+  localStorage.setItem('pidicon:showDevScenes', JSON.stringify(value));
 });
 
 const handleNavigation = (view) => {

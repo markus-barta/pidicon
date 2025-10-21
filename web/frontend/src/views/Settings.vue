@@ -49,15 +49,13 @@
                       <v-select
                         v-model="globalSettings.defaultDriver"
                         label="Driver for new devices"
-                        :items="[
-                          { title: 'Real Hardware', value: 'real' },
-                          { title: 'Mock (Simulated)', value: 'mock' },
-                        ]"
+                        :items="driverOptions"
                         variant="outlined"
                         density="compact"
+                        data-test="global-default-driver"
                       />
                     </v-col>
-                    <v-col cols="12" md="4" class="d-flex align-center">
+                    <v-col cols="12" md="6" class="d-flex align-center">
                       <div class="brightness-control">
                         <v-icon
                           size="small"
@@ -74,23 +72,13 @@
                           color="grey-darken-1"
                           hide-details
                           class="flex-grow-1"
-                          style="max-width: 180px"
+                          style="max-width: 220px"
+                          data-test="global-default-brightness"
                         ></v-slider>
                         <span class="text-caption ml-2" style="min-width: 35px; text-align: right;">
                           {{ globalSettings.defaultBrightness }}%
                         </span>
                       </div>
-                    </v-col>
-                    <v-col cols="12" md="2">
-                      <v-slider
-                        v-model="globalSettings.defaultBrightness"
-                        label="Brightness (%)"
-                        :min="0"
-                        :max="100"
-                        :step="1"
-                        thumb-label="always"
-                        class="d-none"
-                      />
                     </v-col>
                   </v-row>
 
@@ -104,37 +92,28 @@
                   <v-row>
                     <v-col cols="12" md="6">
                       <v-text-field
-                        v-model.number="globalSettings.watchdog.defaultTimeoutMinutes"
+                        v-model.number="globalSettings.watchdog.timeoutMinutes"
                         label="Default Timeout (minutes)"
                         type="number"
-                        :min="30"
+                        :min="1"
                         :max="1440"
                         variant="outlined"
                         density="compact"
                         hint="Default watchdog timeout for new devices"
                         persistent-hint
+                        data-test="global-watchdog-timeout"
                       />
                     </v-col>
                     <v-col cols="12" md="6">
                       <v-select
-                        v-model="globalSettings.watchdog.defaultAction"
+                        v-model="globalSettings.watchdog.action"
                         label="Default Action"
-                        :items="[
-                          { title: 'Restart Device', value: 'restart' },
-                          {
-                            title: 'Show Fallback Scene',
-                            value: 'fallback-scene',
-                          },
-                          {
-                            title: 'Send MQTT Commands',
-                            value: 'mqtt-command',
-                          },
-                          { title: 'Notify Only', value: 'notify' },
-                        ]"
+                        :items="watchdogActionOptions"
                         variant="outlined"
                         density="compact"
                         hint="Default watchdog action for new devices"
                         persistent-hint
+                        data-test="global-watchdog-action"
                       />
                     </v-col>
                   </v-row>
@@ -430,7 +409,7 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import DeviceManagement from '../components/DeviceManagement.vue';
 
 export default {
@@ -452,9 +431,14 @@ export default {
     const globalSettings = ref({
       defaultDriver: 'real',
       defaultBrightness: 80,
+      mediaPath: '/data/media',
+      scenesPath: '/data/scenes',
       watchdog: {
-        defaultTimeoutMinutes: 240,
-        defaultAction: 'restart',
+        timeoutMinutes: 240,
+        action: 'restart',
+        healthCheckIntervalSeconds: 10,
+        checkWhenOff: true,
+        notifyOnFailure: true,
       },
     });
 
@@ -482,9 +466,13 @@ export default {
 
     const mqttRules = ref({
       brokerUrl: [(v) => !!v || 'Broker URL is required'],
+      keepalive: [
+        (v) => v === '' || (!Number.isNaN(Number(v)) && Number(v) >= 0) || 'Keepalive must be >= 0',
+      ],
     });
 
     const loadingMqtt = ref(true);
+    const loadingGlobal = ref(true);
 
     const snackbarSuccess = (message) => {
       snackbarMessage.value = message;
@@ -496,6 +484,76 @@ export default {
       snackbarMessage.value = message;
       snackbarColor.value = 'error';
       showSnackbar.value = true;
+    };
+
+    const formatRetry = (ms) => {
+      if (ms === null || ms === undefined) return '—';
+      if (ms >= 60000) {
+        const mins = Math.round(ms / 60000);
+        return `${mins} minute${mins > 1 ? 's' : ''}`;
+      }
+      if (ms >= 1000) {
+        const secs = Math.round(ms / 1000);
+        return `${secs}s`;
+      }
+      return `${ms}ms`;
+    };
+
+    const driverOptions = [
+      { title: 'Real Hardware', value: 'real' },
+      { title: 'Mock (Simulated)', value: 'mock' },
+    ];
+
+    const watchdogActionOptions = [
+      { title: 'Restart Device', value: 'restart' },
+      { title: 'Show Fallback Scene', value: 'fallback-scene' },
+      { title: 'Send MQTT Commands', value: 'mqtt-command' },
+      { title: 'Notify Only', value: 'notify' },
+    ];
+
+    const globalBrightnessIconOpacity = computed(() => {
+      return (
+        20 + (globalSettings.value.defaultBrightness / 100) * 235
+      ) / 255;
+    });
+
+    const loadGlobalSettings = async () => {
+      loadingGlobal.value = true;
+      try {
+        const response = await fetch('/api/config/global');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        const cfg = data.config || {};
+        globalSettings.value = {
+          defaultDriver: cfg.defaultDriver || 'real',
+          defaultBrightness: cfg.defaultBrightness ?? 80,
+          mediaPath: cfg.mediaPath || '/data/media',
+          scenesPath: cfg.scenesPath || '/data/scenes',
+          watchdog: {
+            timeoutMinutes: cfg.watchdog?.timeoutMinutes ?? 240,
+            action: cfg.watchdog?.action || 'restart',
+            healthCheckIntervalSeconds:
+              cfg.watchdog?.healthCheckIntervalSeconds ?? 10,
+            checkWhenOff:
+              cfg.watchdog?.checkWhenOff === undefined
+                ? true
+                : !!cfg.watchdog.checkWhenOff,
+            notifyOnFailure:
+              cfg.watchdog?.notifyOnFailure === undefined
+                ? true
+                : !!cfg.watchdog.notifyOnFailure,
+          },
+        };
+        originalGlobalSettings.value = JSON.parse(
+          JSON.stringify(globalSettings.value),
+        );
+      } catch (error) {
+        snackbarError(`Failed to load global settings: ${error.message}`);
+      } finally {
+        loadingGlobal.value = false;
+      }
     };
 
     const loadMqttSettings = async () => {
@@ -535,17 +593,36 @@ export default {
     const saveSettings = async () => {
       savingSettings.value = true;
       try {
+        const globalPayload = {
+          defaultDriver: globalSettings.value.defaultDriver,
+          defaultBrightness: Number(globalSettings.value.defaultBrightness),
+          watchdog: {
+            timeoutMinutes: Number(
+              globalSettings.value.watchdog.timeoutMinutes,
+            ),
+            action: globalSettings.value.watchdog.action,
+            healthCheckIntervalSeconds: Number(
+              globalSettings.value.watchdog.healthCheckIntervalSeconds,
+            ),
+            checkWhenOff: !!globalSettings.value.watchdog.checkWhenOff,
+            notifyOnFailure: !!globalSettings.value.watchdog
+              .notifyOnFailure,
+          },
+          mediaPath: globalSettings.value.mediaPath,
+          scenesPath: globalSettings.value.scenesPath,
+        };
+
         const globalResponse = await fetch('/api/config/global', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(globalSettings.value),
+          body: JSON.stringify(globalPayload),
         });
         if (!globalResponse.ok) {
           const result = await globalResponse.json().catch(() => ({}));
           throw new Error(result.error || `HTTP ${globalResponse.status}`);
         }
 
-        const payload = {
+        const mqttPayload = {
           brokerUrl: mqttSettings.value.brokerUrl,
           username: mqttSettings.value.username,
           clientId: mqttSettings.value.clientId,
@@ -557,17 +634,17 @@ export default {
               : mqttSettings.value.password,
         };
 
-        const response = await fetch('/api/system/mqtt-config', {
+        const mqttResponse = await fetch('/api/system/mqtt-config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(mqttPayload),
         });
-        if (!response.ok) {
-          const result = await response.json().catch(() => ({}));
-          throw new Error(result.error || `HTTP ${response.status}`);
+        if (!mqttResponse.ok) {
+          const result = await mqttResponse.json().catch(() => ({}));
+          throw new Error(result.error || `HTTP ${mqttResponse.status}`);
         }
 
-        const result = await response.json();
+        const result = await mqttResponse.json();
         const config = result.config || {};
         const status = result.status || {};
         mqttSettings.value = {
@@ -604,31 +681,46 @@ export default {
       }
     };
 
+    const significantDifference = (a, b) => {
+      if (typeof a === 'number' && typeof b === 'number') {
+        return Math.abs(a - b) > 0.0001;
+      }
+      return JSON.stringify(a) !== JSON.stringify(b);
+    };
+
     const watchForChanges = () => {
-      const globalChanged =
-        JSON.stringify(globalSettings.value) !==
-        JSON.stringify(originalGlobalSettings.value);
-      const mqttChanged =
-        JSON.stringify(mqttSettings.value) !==
-        JSON.stringify(originalMqttSettings.value);
+      const globalChanged = significantDifference(
+        globalSettings.value,
+        originalGlobalSettings.value,
+      );
+      const mqttChanged = significantDifference(
+        mqttSettings.value,
+        originalMqttSettings.value,
+      );
       hasUnsavedChanges.value = globalChanged || mqttChanged;
     };
 
     watch(globalSettings, watchForChanges, { deep: true });
     watch(mqttSettings, watchForChanges, { deep: true });
 
-    loadMqttSettings();
+    onMounted(() => {
+      loadGlobalSettings();
+      loadMqttSettings();
+    });
 
     const exportConfig = async () => {
       try {
-        const response = await fetch('/api/config/devices');
-        const data = await response.json();
+        const devicesResponse = await fetch('/api/config/devices');
+        const devicesData = await devicesResponse.json();
+
+        const globalResponse = await fetch('/api/config/global');
+        const globalData = await globalResponse.json();
 
         const exportData = {
           version: '1.0',
           exportedAt: new Date().toISOString(),
-          devices: data.devices,
-          globalSettings: globalSettings.value,
+          devices: devicesData.devices,
+          globalSettings: globalData.config,
         };
 
         const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -641,13 +733,9 @@ export default {
         link.click();
         URL.revokeObjectURL(url);
 
-        snackbarMessage.value = 'Configuration exported successfully';
-        snackbarColor.value = 'success';
-        showSnackbar.value = true;
+        snackbarSuccess('Configuration exported successfully');
       } catch (error) {
-        snackbarMessage.value = `Failed to export config: ${error.message}`;
-        snackbarColor.value = 'error';
-        showSnackbar.value = true;
+        snackbarError(`Failed to export config: ${error.message}`);
       }
     };
 
@@ -661,7 +749,27 @@ export default {
 
         // Validate import data
         if (!importData.devices || !Array.isArray(importData.devices)) {
-          throw new Error('Invalid config file format');
+          throw new Error('Invalid config file format: missing devices array');
+        }
+        if (!importData.globalSettings) {
+          throw new Error('Invalid config file format: missing globalSettings');
+        }
+
+        // Import global settings first
+        await fetch('/api/config/global', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(importData.globalSettings),
+        });
+        globalSettings.value = importData.globalSettings; // Update UI immediately
+
+        // Clear existing devices before importing new ones
+        const existingDevicesResponse = await fetch('/api/config/devices');
+        const existingDevicesData = await existingDevicesResponse.json();
+        for (const device of existingDevicesData.devices) {
+          await fetch(`/api/config/devices/${device.ip}`, {
+            method: 'DELETE',
+          });
         }
 
         // Import devices
@@ -673,21 +781,13 @@ export default {
           });
         }
 
-        // Import global settings if present
-        if (importData.globalSettings) {
-          globalSettings.value = importData.globalSettings;
-        }
-
-        snackbarMessage.value = `Successfully imported ${importData.devices.length} device(s)`;
-        snackbarColor.value = 'success';
-        showSnackbar.value = true;
-
-        importFile.value = null;
+        snackbarSuccess(
+          `Successfully imported ${importData.devices.length} device(s) and global settings`,
+        );
+        // Refresh device list in DeviceManagement component
         activeTab.value = 'devices'; // Switch to devices tab to see imported devices
       } catch (error) {
-        snackbarMessage.value = `Failed to import config: ${error.message}`;
-        snackbarColor.value = 'error';
-        showSnackbar.value = true;
+        snackbarError(`Failed to import config: ${error.message}`);
       } finally {
         importing.value = false;
       }
@@ -711,17 +811,37 @@ export default {
           });
         }
 
-        // Reset global settings
+        // Reset global settings to defaults
+        const resetResponse = await fetch('/api/config/global/reset', {
+          method: 'POST',
+        });
+        const resetJson = await resetResponse.json();
+        const defaults = resetJson.config || {};
         globalSettings.value = {
-          defaultDriver: 'real',
-          defaultBrightness: 80,
+          defaultDriver: defaults.defaultDriver || 'real',
+          defaultBrightness: defaults.defaultBrightness ?? 80,
+          mediaPath: '/data/media',
+          scenesPath: '/data/scenes',
           watchdog: {
-            defaultTimeoutMinutes: 240,
-            defaultAction: 'restart',
+            timeoutMinutes: defaults.watchdog?.timeoutMinutes ?? 240,
+            action: defaults.watchdog?.action || 'restart',
+            healthCheckIntervalSeconds:
+              defaults.watchdog?.healthCheckIntervalSeconds ?? 10,
+            checkWhenOff:
+              defaults.watchdog?.checkWhenOff === undefined
+                ? true
+                : !!defaults.watchdog.checkWhenOff,
+            notifyOnFailure:
+              defaults.watchdog?.notifyOnFailure === undefined
+                ? true
+                : !!defaults.watchdog.notifyOnFailure,
           },
         };
 
-        // Reset MQTT settings
+        // Reset MQTT settings to defaults
+        await fetch('/api/system/mqtt-config/reset', {
+          method: 'POST',
+        });
         mqttSettings.value = {
           brokerUrl: '',
           username: '',
@@ -749,13 +869,13 @@ export default {
     return {
       activeTab,
       globalSettings,
+      driverOptions,
+      watchdogActionOptions,
       mqttSettings,
       mqttRules,
-      mqttOnline,
-      mqttLastError,
-      savingGlobal,
-      savingMqtt,
       loadingMqtt,
+      loadingGlobal,
+      savingSettings,
       importing,
       resetting,
       importFile,
@@ -763,12 +883,16 @@ export default {
       showSnackbar,
       snackbarMessage,
       snackbarColor,
-      saveGlobalSettings,
-      saveMqttSettings,
+      saveSettings,
       exportConfig,
       importConfig,
       confirmReset,
-      resetToDefaults,
+      mqttOnline,
+      mqttLastError,
+      mqttStatusDetails,
+      formatRetry,
+      globalBrightnessIconOpacity,
+      hasUnsavedChanges,
     };
   },
 };

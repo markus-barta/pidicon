@@ -358,7 +358,10 @@ function startWebServer(container, logger) {
     try {
       const devices = deviceConfigStore.getAllDevices();
       const deviceList = Array.from(devices.values()).map((d) => d.toJSON());
-      res.json({ devices: deviceList });
+      res.json({
+        devices: deviceList,
+        defaults: deviceConfigStore.getDefaults(),
+      });
     } catch (error) {
       logger.error('API /api/config/devices error:', { error: error.message });
       res.status(500).json({ error: error.message });
@@ -396,7 +399,10 @@ function startWebServer(container, logger) {
         );
       }
 
-      res.json(device.toJSON());
+      res.json({
+        device: device.toJSON(),
+        defaults: deviceConfigStore.getDefaults(),
+      });
     } catch (error) {
       logger.error('API /api/config/devices POST error:', {
         error: error.message,
@@ -425,7 +431,10 @@ function startWebServer(container, logger) {
         );
       }
 
-      res.json(device.toJSON());
+      res.json({
+        device: device.toJSON(),
+        defaults: deviceConfigStore.getDefaults(),
+      });
     } catch (error) {
       logger.error(`API /api/config/devices/${req.params.ip} PUT error:`, {
         error: error.message,
@@ -446,12 +455,112 @@ function startWebServer(container, logger) {
 
       await deviceConfigStore.removeDevice(req.params.ip);
       logger.ok(`[WEB UI] Removed device config: ${req.params.ip}`);
-      res.json({ success: true });
+      res.json({ success: true, defaults: deviceConfigStore.getDefaults() });
     } catch (error) {
       logger.error(`API /api/config/devices/${req.params.ip} DELETE error:`, {
         error: error.message,
       });
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  // GET /api/config/global - Global PIDICON defaults/settings
+  app.get('/api/config/global', async (req, res) => {
+    try {
+      const settings = deviceConfigStore.getSettings();
+      res.json({
+        config: {
+          defaultDriver: settings.defaults.driver,
+          defaultBrightness: settings.defaults.brightness,
+          watchdog: settings.defaults.watchdog,
+          mediaPath: settings.mediaPath,
+          scenesPath: settings.scenesPath,
+        },
+      });
+    } catch (error) {
+      logger.error('API /api/config/global error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/config/global - Update global defaults/settings
+  app.post('/api/config/global', async (req, res) => {
+    try {
+      const payload = req.body || {};
+      const {
+        defaultDriver,
+        defaultBrightness,
+        watchdog,
+        mediaPath,
+        scenesPath,
+      } = payload;
+
+      const defaults = await deviceConfigStore.updateDefaults({
+        driver: defaultDriver,
+        brightness: defaultBrightness,
+        watchdog,
+      });
+
+      const mergedSettings = {
+        mediaPath,
+        scenesPath,
+        defaults,
+      };
+
+      await deviceConfigStore.updateSettings(mergedSettings);
+
+      res.json({
+        config: {
+          defaultDriver: defaults.driver,
+          defaultBrightness: defaults.brightness,
+          watchdog: defaults.watchdog,
+          mediaPath:
+            mergedSettings.mediaPath ||
+            deviceConfigStore.getSettings().mediaPath,
+          scenesPath:
+            mergedSettings.scenesPath ||
+            deviceConfigStore.getSettings().scenesPath,
+        },
+      });
+    } catch (error) {
+      logger.error('API /api/config/global POST error:', {
+        error: error.message,
+      });
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // POST /api/config/global/reset - Reset defaults to built-in values
+  app.post('/api/config/global/reset', async (_req, res) => {
+    try {
+      const defaults = await deviceConfigStore.updateDefaults({
+        driver: 'real',
+        brightness: 80,
+        watchdog: {
+          timeoutMinutes: 240,
+          action: 'restart',
+          healthCheckIntervalSeconds: 10,
+          checkWhenOff: true,
+          notifyOnFailure: true,
+          mqttCommandSequence: [],
+          fallbackScene: null,
+        },
+      });
+
+      await deviceConfigStore.updateSettings({ defaults });
+
+      res.json({
+        config: {
+          defaultDriver: defaults.driver,
+          defaultBrightness: defaults.brightness,
+          watchdog: defaults.watchdog,
+        },
+      });
+    } catch (error) {
+      logger.error('API /api/config/global/reset error:', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
     }
   });
 
