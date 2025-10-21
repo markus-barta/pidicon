@@ -66,10 +66,17 @@ function startWebServer(container, logger) {
   // =========================================================================
 
   // GET /api/status - Daemon status
-  app.get('/api/status', async (req, res) => {
+  app.get('/api/status', async (_req, res) => {
     try {
       const status = await systemService.getStatus();
-      res.json(status);
+      const mqttStatus =
+        container.resolveIfRegistered('mqttService')?.getStatus?.() || {};
+      const scenes = await sceneService.listScenes();
+      res.json({
+        ...status,
+        mqttStatus,
+        devSceneCount: scenes.filter((scene) => scene.isDevScene).length,
+      });
     } catch (error) {
       logger.error('API /api/status error:', { error: error.message });
       res.status(500).json({ error: error.message });

@@ -34,6 +34,9 @@ export const useSceneStore = defineStore('scenes', () => {
   const animatedScenes = computed(() =>
     scenes.value.filter((s) => s.wantsLoop),
   );
+  const hasDevScenes = computed(() =>
+    scenes.value.some((scene) => scene.isDevScene),
+  );
 
   // Actions
   function setScenes(newScenes) {
@@ -69,6 +72,7 @@ export const useSceneStore = defineStore('scenes', () => {
     sceneNames,
     scenesByCategory,
     animatedScenes,
+    hasDevScenes,
     setScenes,
     setLoading,
     setError,

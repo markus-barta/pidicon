@@ -27,6 +27,15 @@
           </template>
           <template v-slot:title>
             {{ item.raw.title }}
+            <v-chip
+              v-if="item.raw.isDevScene"
+              size="x-small"
+              color="warning"
+              variant="flat"
+              class="ml-2"
+            >
+              DEV
+            </v-chip>
           </template>
           <template v-slot:subtitle>
             {{ item.raw.description }}

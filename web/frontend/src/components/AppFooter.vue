@@ -16,6 +16,7 @@
             @click="toggleDevScenes"
             class="dev-scenes-toggle text-caption"
             data-test="dev-scenes-toggle"
+            :disabled="!hasDevScenes"
           >
             <span :style="{
               textDecoration: showDevScenes ? 'none' : 'line-through',
@@ -63,7 +64,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show-dev-scenes']);
 
+const hasDevScenes = ref(false);
+
 const toggleDevScenes = () => {
+  if (!hasDevScenes.value) return;
   emit('update:show-dev-scenes', !props.showDevScenes);
 };
 
@@ -72,6 +76,7 @@ onMounted(async () => {
     const status = await api.getSystemStatus();
     buildNumber.value = status.buildNumber;
     gitCommit.value = status.gitCommit;
+    hasDevScenes.value = Boolean(status.devSceneCount);
   } catch (error) {
     console.error('Failed to load build info:', error);
   }
