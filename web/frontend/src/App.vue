@@ -104,7 +104,11 @@ const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
 const currentView = ref('devices'); // 'devices' or 'settings'
-const showDevScenes = ref(false); // Global dev scenes toggle
+const showDevScenes = ref(localStorage.getItem('pidicon:showDevScenes') === 'true');
+
+watch(showDevScenes, (value) => {
+  localStorage.setItem('pidicon:showDevScenes', value ? 'true' : 'false');
+});
 
 const handleNavigation = (view) => {
   currentView.value = view;

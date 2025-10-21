@@ -167,7 +167,7 @@
 - **Priority**: P2 (Nice to Have)
 - **Effort**: 3-4 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: In Progress (2025-10-21) – UI copy refreshed, slider restyled like device cards, unified defaults paragraph implemented. Pending API consolidation, watchdog defaults wiring, and test coverage.
 
 **Problem**: Global settings form has redundant labels ("Default driver"/"Default brightness") and inconsistent styling versus device cards.
 
@@ -190,7 +190,7 @@
 - **Priority**: P1 (Important)
 - **Effort**: 4-6 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: In Progress (2025-10-21) – Single Save Settings CTA wired, unsaved-change pulse active. Awaiting backend integration and Playwright coverage.
 
 **Problem**: Separate "Save" buttons for global and MQTT lead to confusion; unsaved changes are not visible.
 
@@ -214,7 +214,7 @@
 - **Priority**: P2 (Nice to Have)
 - **Effort**: 2-3 hours
 - **Owner**: mba
-- **Status**: Not Started (2025-10-20)
+- **Status**: In Progress (2025-10-21) – Detailed MQTT status card implemented in settings panel. Awaiting unit/UI tests.
 
 **Problem**: Global settings page shows basic MQTT status text without exposing retry/error metadata.
 

@@ -84,7 +84,8 @@ const sceneItems = computed(() => {
   if (!props.showDevScenes) {
     // Hide scenes in examples/dev/ folder
     filteredScenes = filteredScenes.filter(scene => {
-      return !scene.filePath?.includes('examples/dev/');
+      const isDevScene = scene.isDevScene === true || scene.filePath?.includes('examples/dev/');
+      return !isDevScene;
     });
   }
 

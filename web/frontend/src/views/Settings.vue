@@ -40,32 +40,56 @@
                 Global Defaults
               </v-card-title>
               <v-card-text>
+                <p class="text-body-2 text-medium-emphasis mb-6">
+                  These defaults apply to any new device that connects to PIDICON. Existing devices keep their current settings unless updated individually.
+                </p>
                 <v-form>
                   <v-row>
                     <v-col cols="12" md="6">
                       <v-select
                         v-model="globalSettings.defaultDriver"
-                        label="Default Driver"
+                        label="Driver for new devices"
                         :items="[
                           { title: 'Real Hardware', value: 'real' },
                           { title: 'Mock (Simulated)', value: 'mock' },
                         ]"
                         variant="outlined"
                         density="compact"
-                        hint="Default driver for new devices"
-                        persistent-hint
                       />
+                    </v-col>
+                    <v-col cols="12" md="4" class="d-flex align-center">
+                      <div class="brightness-control">
+                        <v-icon
+                          size="small"
+                          class="mr-2 brightness-icon"
+                          :style="{ opacity: brightnessIconOpacity }"
+                        >
+                          mdi-brightness-6
+                        </v-icon>
+                        <v-slider
+                          v-model="globalSettings.defaultBrightness"
+                          :min="0"
+                          :max="100"
+                          :step="1"
+                          color="grey-darken-1"
+                          hide-details
+                          class="flex-grow-1"
+                          style="max-width: 180px"
+                        ></v-slider>
+                        <span class="text-caption ml-2" style="min-width: 35px; text-align: right;">
+                          {{ globalSettings.defaultBrightness }}%
+                        </span>
+                      </div>
                     </v-col>
                     <v-col cols="12" md="2">
                       <v-slider
                         v-model="globalSettings.defaultBrightness"
-                        label="Default Brightness"
+                        label="Brightness (%)"
                         :min="0"
                         :max="100"
                         :step="1"
-                        thumb-label
-                        hint="Default brightness for new devices"
-                        persistent-hint
+                        thumb-label="always"
+                        class="d-none"
                       />
                     </v-col>
                   </v-row>
@@ -198,43 +222,58 @@
 
                   <v-row class="mt-4">
                     <v-col cols="12">
-                      <v-alert
-                        v-if="!loadingMqtt"
-                        :type="mqttOnline ? 'success' : 'warning'"
+                      <v-card
                         variant="tonal"
-                        class="mb-4"
-                        density="compact"
-                        border="start"
-                        :border-color="mqttOnline ? 'success' : 'warning'"
+                        :color="mqttStatusDetails.connected ? 'success' : 'warning'"
+                        class="mb-4 mqtt-status-card"
                       >
-                        <strong>MQTT status:</strong>
-                        {{ mqttOnline ? 'Connected' : 'Attempting reconnection' }}
-                        <span v-if="mqttLastError">
-                          — last error: {{ mqttLastError }}
-                        </span>
-                      </v-alert>
+                        <v-card-title class="text-subtitle-2 d-flex align-center justify-space-between">
+                          <span class="d-inline-flex align-center">
+                            <span
+                              class="mqtt-status-indicator"
+                              :class="mqttStatusDetails.connected ? 'online' : 'offline'"
+                            ></span>
+                            MQTT Connection
+                          </span>
+                          <span class="text-caption">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
+                        </v-card-title>
+                        <v-card-text class="text-caption">
+                          <div class="status-grid">
+                            <div>
+                              <span class="label">Broker</span>
+                              <span class="value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
+                            </div>
+                            <div>
+                              <span class="label">Retry Count</span>
+                              <span class="value">{{ mqttStatusDetails.retryCount }}</span>
+                            </div>
+                            <div>
+                              <span class="label">Next Retry</span>
+                              <span class="value">{{ formatRetry(mqttStatusDetails.nextRetryInMs) }}</span>
+                            </div>
+                            <div>
+                              <span class="label">Last Error</span>
+                              <span class="value">{{ mqttStatusDetails.lastError || 'None' }}</span>
+                            </div>
+                          </div>
+                        </v-card-text>
+                      </v-card>
+
                       <div class="d-flex align-center flex-wrap" style="gap: 12px;">
                         <v-btn
                           color="primary"
                           variant="flat"
-                          :loading="savingGlobal"
-                          @click="saveGlobalSettings"
-                          class="mr-2"
-                          data-test="save-global-settings"
+                          :loading="savingSettings"
+                          @click="saveSettings"
+                          class="save-settings-btn"
+                          :class="{ 'has-unsaved': hasUnsavedChanges }"
+                          data-test="save-settings"
+                          :disabled="!hasUnsavedChanges"
                         >
                           <v-icon class="mr-2">mdi-content-save</v-icon>
-                          Save Global Settings
+                          Save Settings
                         </v-btn>
-                        <v-btn
-                          color="secondary"
-                          variant="outlined"
-                          :loading="savingMqtt"
-                          @click="saveMqttSettings"
-                          data-test="save-mqtt-settings"
-                        >
-                          <v-icon class="mr-2">mdi-lock-check</v-icon>
-                          Save MQTT Settings
-                        </v-btn>
+                        <span v-if="hasUnsavedChanges" class="text-caption text-error">Unsaved changes</span>
                       </div>
                     </v-col>
                   </v-row>
@@ -391,7 +430,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import DeviceManagement from '../components/DeviceManagement.vue';
 
 export default {
@@ -401,7 +440,7 @@ export default {
   },
   setup() {
     const activeTab = ref('devices');
-    const savingGlobal = ref(false);
+    const savingSettings = ref(false);
     const importing = ref(false);
     const resetting = ref(false);
     const importFile = ref(null);
@@ -430,13 +469,22 @@ export default {
     });
     const mqttOnline = ref(true);
     const mqttLastError = ref(null);
+    const mqttStatusDetails = ref({
+      connected: true,
+      brokerUrl: '',
+      lastError: null,
+      retryCount: 0,
+      nextRetryInMs: null,
+    });
+    const originalGlobalSettings = ref(null);
+    const originalMqttSettings = ref(null);
+    const hasUnsavedChanges = ref(false);
 
     const mqttRules = ref({
       brokerUrl: [(v) => !!v || 'Broker URL is required'],
     });
 
     const loadingMqtt = ref(true);
-    const savingMqtt = ref(false);
 
     const snackbarSuccess = (message) => {
       snackbarMessage.value = message;
@@ -468,8 +516,15 @@ export default {
           keepalive: config.keepalive ?? 60,
           tls: !!config.tls,
         };
+        mqttStatusDetails.value = {
+          ...mqttStatusDetails.value,
+          ...status,
+        };
         mqttOnline.value = status.connected !== false;
         mqttLastError.value = status.lastError || null;
+        originalMqttSettings.value = JSON.parse(
+          JSON.stringify(mqttSettings.value),
+        );
       } catch (error) {
         snackbarError(`Failed to load MQTT settings: ${error.message}`);
       } finally {
@@ -477,9 +532,19 @@ export default {
       }
     };
 
-    const saveMqttSettings = async () => {
-      savingMqtt.value = true;
+    const saveSettings = async () => {
+      savingSettings.value = true;
       try {
+        const globalResponse = await fetch('/api/config/global', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(globalSettings.value),
+        });
+        if (!globalResponse.ok) {
+          const result = await globalResponse.json().catch(() => ({}));
+          throw new Error(result.error || `HTTP ${globalResponse.status}`);
+        }
+
         const payload = {
           brokerUrl: mqttSettings.value.brokerUrl,
           username: mqttSettings.value.username,
@@ -513,41 +578,46 @@ export default {
           keepalive: config.keepalive ?? 60,
           tls: !!config.tls,
         };
+        mqttStatusDetails.value = {
+          ...mqttStatusDetails.value,
+          ...status,
+        };
         mqttOnline.value = status.connected !== false;
         mqttLastError.value = status.lastError || null;
 
         snackbarSuccess(
           mqttOnline.value
-            ? 'MQTT settings saved and connected'
-            : 'MQTT settings saved, reconnecting...'
+            ? 'Settings saved and MQTT connected'
+            : 'Settings saved, reconnecting...'
         );
+        originalGlobalSettings.value = JSON.parse(
+          JSON.stringify(globalSettings.value),
+        );
+        originalMqttSettings.value = JSON.parse(
+          JSON.stringify(mqttSettings.value),
+        );
+        hasUnsavedChanges.value = false;
       } catch (error) {
-        snackbarError(`Failed to save MQTT settings: ${error.message}`);
+        snackbarError(`Failed to save settings: ${error.message}`);
       } finally {
-        savingMqtt.value = false;
+        savingSettings.value = false;
       }
     };
+
+    const watchForChanges = () => {
+      const globalChanged =
+        JSON.stringify(globalSettings.value) !==
+        JSON.stringify(originalGlobalSettings.value);
+      const mqttChanged =
+        JSON.stringify(mqttSettings.value) !==
+        JSON.stringify(originalMqttSettings.value);
+      hasUnsavedChanges.value = globalChanged || mqttChanged;
+    };
+
+    watch(globalSettings, watchForChanges, { deep: true });
+    watch(mqttSettings, watchForChanges, { deep: true });
 
     loadMqttSettings();
-
-    const saveGlobalSettings = async () => {
-      savingGlobal.value = true;
-      try {
-        // TODO: Implement global settings API endpoint
-        // For now, just show success message
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        snackbarMessage.value = 'Global settings saved successfully';
-        snackbarColor.value = 'success';
-        showSnackbar.value = true;
-      } catch (error) {
-        snackbarMessage.value = `Failed to save settings: ${error.message}`;
-        snackbarColor.value = 'error';
-        showSnackbar.value = true;
-      } finally {
-        savingGlobal.value = false;
-      }
-    };
 
     const exportConfig = async () => {
       try {
