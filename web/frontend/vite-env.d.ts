@@ -1,6 +1,3 @@
 /// <reference types="vite/client" />
 
-declare module '@pidicon/lib/*' {
-  export const getSimplePerformanceColor: (frametime: number) => number[];
-  export default any;
-}
+// Module shims for path aliases are defined in `@types`.

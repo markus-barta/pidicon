@@ -693,7 +693,7 @@ use([CanvasRenderer, BarChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
 import SceneMetadataViewer from './SceneMetadataViewer.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
-import { getSimplePerformanceColor } from '../lib/performance-utils';
+import { getSimplePerformanceColor } from '@/lib/performance-utils';
 
 const props = defineProps({
   device: {
