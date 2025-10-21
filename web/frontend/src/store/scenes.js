@@ -42,6 +42,7 @@ export const useSceneStore = defineStore('scenes', () => {
       ...scene,
       sceneNumber: index + 1,
       filePath: normalizeScenePath(scene.filePath),
+      isDevScene: Boolean(scene.isDevScene),
     }));
   }
 

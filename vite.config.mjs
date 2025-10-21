@@ -14,6 +14,11 @@ export default defineConfig({
     }),
   ],
   root: path.resolve(__dirname, 'web/frontend'),
+  resolve: {
+    alias: {
+      '@pidicon/lib': path.resolve(__dirname, 'lib'),
+    },
+  },
   build: {
     outDir: path.resolve(__dirname, 'web/public'),
     emptyOutDir: true,
