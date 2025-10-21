@@ -16,6 +16,7 @@ export default defineConfig({
   root: path.resolve(__dirname, 'web/frontend'),
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, 'web/frontend/src'),
       '@pidicon/lib': path.resolve(__dirname, 'lib'),
     },
   },
