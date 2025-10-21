@@ -16,7 +16,14 @@
               <span style="color: #6b7280;">Daemon: {{ statusLabel }}</span>
             </span>
             <span class="mx-2" style="color: #d1d5db;">•</span>
-            <span class="d-inline-flex align-center">
+            <span
+              class="d-inline-flex align-center mqtt-status-trigger"
+              tabindex="0"
+              @mouseenter="showMqttTooltip = true"
+              @mouseleave="showMqttTooltip = false"
+              @focus="showMqttTooltip = true"
+              @blur="showMqttTooltip = false"
+            >
               <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: mqttStatusColor, marginRight: '6px' }"></span>
               <span style="color: #6b7280;">MQTT: {{ mqttStatus }}</span>
             </span>
@@ -109,7 +116,9 @@ const mqttStatusDetails = ref({
   lastError: null,
   retryCount: 0,
   nextRetryInMs: null,
+  brokerUrl: null,
 });
+const showMqttTooltip = ref(false);
 const status = ref('running');
 const startTime = ref(null);
 const trackedStartTime = ref(null);
@@ -145,6 +154,20 @@ const mqttStatus = computed(() => {
       : 'disconnected';
   }
   return 'connected';
+});
+
+const nextRetryLabel = computed(() => {
+  const ms = mqttStatusDetails.value.nextRetryInMs;
+  if (ms === null || ms === undefined) return '—';
+  if (ms >= 60000) {
+    const mins = Math.round(ms / 60000);
+    return `${mins} minute${mins > 1 ? 's' : ''}`;
+  }
+  if (ms >= 1000) {
+    const secs = Math.round(ms / 1000);
+    return `${secs}s`;
+  }
+  return `${ms}ms`;
 });
 
 let uptimeInterval = null;
@@ -198,6 +221,7 @@ async function loadStatus() {
       lastError: mqttStatusData.lastError || null,
       retryCount: mqttStatusData.retryCount || 0,
       nextRetryInMs: mqttStatusData.nextRetryInMs ?? null,
+      brokerUrl: mqttStatusData.brokerUrl || data.mqttBroker || null,
     };
     mqttConnected.value = mqttStatusDetails.value.connected;
     

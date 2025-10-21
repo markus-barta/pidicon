@@ -693,6 +693,7 @@ use([CanvasRenderer, BarChart, GridComponent, TooltipComponent]);
 import SceneSelector from './SceneSelector.vue';
 import SceneMetadataViewer from './SceneMetadataViewer.vue';
 import ConfirmDialog from './ConfirmDialog.vue';
+import { getSimplePerformanceColor } from '../../lib/performance-utils';
 
 const props = defineProps({
   device: {
@@ -1539,45 +1540,9 @@ function loadMetrics() {
 // Get color based on frametime - using SIMPLE scheme from performance-utils.js
 // This matches the visual appearance better
 function getFrametimeColor(frametime) {
-  const MIN_FRAMETIME = 1;
-  const MAX_FRAMETIME = 500;
-  
-  const ratio = (frametime - MIN_FRAMETIME) / (MAX_FRAMETIME - MIN_FRAMETIME);
-  
-  let r, g, b;
-  
-  if (ratio <= 0.2) {
-    // Blue to blue-green (0-100ms) - Very fast
-    r = 0;
-    g = Math.round(255 * (ratio / 0.2));
-    b = Math.round(255 * ratio);
-  } else if (ratio <= 0.4) {
-    // Blue-green to green (100-200ms) - Fast  ← 200ms is HERE!
-    const subRatio = (ratio - 0.2) / 0.2;
-    r = 0;
-    g = 255;
-    b = Math.round(128 + 127 * subRatio);
-  } else if (ratio <= 0.6) {
-    // Green to yellow-green (200-300ms) - Medium
-    const subRatio = (ratio - 0.4) / 0.2;
-    r = Math.round(255 * subRatio);
-    g = 255;
-    b = Math.round(255 * (1 - subRatio));
-  } else if (ratio <= 0.8) {
-    // Yellow to orange (300-400ms) - Slow
-    const subRatio = (ratio - 0.6) / 0.2;
-    r = 255;
-    g = Math.round(255 * (1 - subRatio));
-    b = 0;
-  } else {
-    // Orange to red (400-500ms+) - Very slow
-    const subRatio = Math.min(1, (ratio - 0.8) / 0.2);
-    r = 255;
-    g = Math.round(128 * (1 - subRatio));
-    b = 0;
-  }
-  
-  return `rgb(${r}, ${g}, ${b})`;
+  const { getSimplePerformanceColor } = require('../../lib/performance-utils');
+  const [r, g, b, a] = getSimplePerformanceColor(frametime || 0);
+  return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
 }
 
 // Chart.js functions removed - now using ECharts with reactive computed property!
