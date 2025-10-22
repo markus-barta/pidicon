@@ -95,7 +95,7 @@ function buildVersionInfo(ctx, state) {
   try {
     const fs = require('fs');
     const path = require('path');
-    const versionFile = path.join(__dirname, '..', 'version.json');
+    const versionFile = path.join(__dirname, '..', '..', 'version.json');
 
     if (fs.existsSync(versionFile)) {
       const versionData = JSON.parse(fs.readFileSync(versionFile, 'utf8'));

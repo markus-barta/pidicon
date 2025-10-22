@@ -370,14 +370,14 @@ onUnmounted(() => {
 }
 
 .tooltip-label {
-  color: #6b7280;
-  font-weight: 500;
+  color: #1e293b;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 
 .tooltip-value {
-  color: #111827;
+  color: #0f172a;
   font-weight: 600;
   text-align: right;
 }

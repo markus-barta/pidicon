@@ -201,43 +201,6 @@
 
                   <v-row class="mt-4">
                     <v-col cols="12">
-                      <v-card
-                        variant="tonal"
-                        :color="mqttStatusDetails.connected ? 'success' : 'warning'"
-                        class="mb-4 mqtt-status-card"
-                      >
-                        <v-card-title class="text-subtitle-2 d-flex align-center justify-space-between">
-                          <span class="d-inline-flex align-center">
-                            <span
-                              class="mqtt-status-indicator"
-                              :class="mqttStatusDetails.connected ? 'online' : 'offline'"
-                            ></span>
-                            MQTT Connection
-                          </span>
-                          <span class="text-caption">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
-                        </v-card-title>
-                        <v-card-text class="text-caption">
-                          <div class="status-grid">
-                            <div>
-                              <span class="label">Broker</span>
-                              <span class="value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
-                            </div>
-                            <div>
-                              <span class="label">Retry Count</span>
-                              <span class="value">{{ mqttStatusDetails.retryCount }}</span>
-                            </div>
-                            <div>
-                              <span class="label">Next Retry</span>
-                              <span class="value">{{ formatRetry(mqttStatusDetails.nextRetryInMs) }}</span>
-                            </div>
-                            <div>
-                              <span class="label">Last Error</span>
-                              <span class="value">{{ mqttStatusDetails.lastError || 'None' }}</span>
-                            </div>
-                          </div>
-                        </v-card-text>
-                      </v-card>
-
                       <div class="d-flex align-center flex-wrap" style="gap: 12px;">
                         <v-btn
                           color="primary"
@@ -253,6 +216,43 @@
                           Save Settings
                         </v-btn>
                         <span v-if="hasUnsavedChanges" class="text-caption text-error">Unsaved changes</span>
+
+                        <v-divider vertical class="mx-3" style="height: 28px;" />
+
+                        <div class="d-flex align-center mqtt-status-row">
+                          <v-chip
+                            :color="mqttStatusDetails.connected ? 'success' : 'warning'"
+                            class="mqtt-status-chip"
+                            variant="flat"
+                          >
+                            <v-icon start size="small">
+                              {{ mqttStatusDetails.connected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+                            </v-icon>
+                            {{ mqttStatusSummary }}
+                          </v-chip>
+
+                          <v-btn
+                            color="success"
+                            variant="outlined"
+                            :disabled="mqttStatusDetails.connected || mqttBusy"
+                            :loading="mqttBusy && mqttBusyAction === 'connect'"
+                            @click="handleMqttConnect"
+                          >
+                            <v-icon class="mr-2">mdi-power-plug</v-icon>
+                            Connect
+                          </v-btn>
+
+                          <v-btn
+                            color="warning"
+                            variant="outlined"
+                            :disabled="!mqttStatusDetails.connected || mqttBusy"
+                            :loading="mqttBusy && mqttBusyAction === 'disconnect'"
+                            @click="handleMqttDisconnect"
+                          >
+                            <v-icon class="mr-2">mdi-power-plug-off</v-icon>
+                            Disconnect
+                          </v-btn>
+                        </div>
                       </div>
                     </v-col>
                   </v-row>
@@ -453,6 +453,8 @@ export default {
     });
     const mqttOnline = ref(true);
     const mqttLastError = ref(null);
+    const mqttBusy = ref(false);
+    const mqttBusyAction = ref(null);
     const mqttStatusDetails = ref({
       connected: true,
       brokerUrl: '',
@@ -593,6 +595,15 @@ export default {
     const saveSettings = async () => {
       savingSettings.value = true;
       try {
+        const globalChanged = significantDifference(
+          globalSettings.value,
+          originalGlobalSettings.value,
+        );
+        const mqttChanged = significantDifference(
+          mqttSettings.value,
+          originalMqttSettings.value,
+        );
+
         const globalPayload = {
           defaultDriver: globalSettings.value.defaultDriver,
           defaultBrightness: Number(globalSettings.value.defaultBrightness),
@@ -612,61 +623,73 @@ export default {
           scenesPath: globalSettings.value.scenesPath,
         };
 
-        const globalResponse = await fetch('/api/config/global', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(globalPayload),
-        });
-        if (!globalResponse.ok) {
-          const result = await globalResponse.json().catch(() => ({}));
-          throw new Error(result.error || `HTTP ${globalResponse.status}`);
+        if (globalChanged) {
+          const globalResponse = await fetch('/api/config/global', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(globalPayload),
+          });
+          if (!globalResponse.ok) {
+            const result = await globalResponse.json().catch(() => ({}));
+            throw new Error(result.error || `HTTP ${globalResponse.status}`);
+          }
         }
 
-        const mqttPayload = {
-          brokerUrl: mqttSettings.value.brokerUrl,
-          username: mqttSettings.value.username,
-          clientId: mqttSettings.value.clientId,
-          keepalive: Number(mqttSettings.value.keepalive),
-          tls: mqttSettings.value.tls,
-          password:
-            mqttSettings.value.password === PASSWORD_PLACEHOLDER
-              ? undefined
-              : mqttSettings.value.password,
-        };
+        let mqttResult = null;
+        if (mqttChanged) {
+          const mqttPayload = {
+            brokerUrl: mqttSettings.value.brokerUrl,
+            username: mqttSettings.value.username,
+            clientId: mqttSettings.value.clientId,
+            keepalive: Number(mqttSettings.value.keepalive),
+            tls: mqttSettings.value.tls,
+            password:
+              mqttSettings.value.password === PASSWORD_PLACEHOLDER
+                ? undefined
+                : mqttSettings.value.password,
+          };
 
-        const mqttResponse = await fetch('/api/system/mqtt-config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(mqttPayload),
-        });
-        if (!mqttResponse.ok) {
-          const result = await mqttResponse.json().catch(() => ({}));
-          throw new Error(result.error || `HTTP ${mqttResponse.status}`);
+          const mqttResponse = await fetch('/api/system/mqtt-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mqttPayload),
+          });
+          if (!mqttResponse.ok) {
+            const result = await mqttResponse.json().catch(() => ({}));
+            throw new Error(result.error || `HTTP ${mqttResponse.status}`);
+          }
+
+          mqttResult = await mqttResponse.json();
+          const config = mqttResult.config || {};
+          mqttSettings.value = {
+            brokerUrl: config.brokerUrl || '',
+            username: config.username || '',
+            password: config.hasPassword ? PASSWORD_PLACEHOLDER : '',
+            clientId: config.clientId || '',
+            keepalive: config.keepalive ?? 60,
+            tls: !!config.tls,
+          };
         }
 
-        const result = await mqttResponse.json();
-        const config = result.config || {};
-        const status = result.status || {};
-        mqttSettings.value = {
-          brokerUrl: config.brokerUrl || '',
-          username: config.username || '',
-          password: config.hasPassword ? PASSWORD_PLACEHOLDER : '',
-          clientId: config.clientId || '',
-          keepalive: config.keepalive ?? 60,
-          tls: !!config.tls,
-        };
-        mqttStatusDetails.value = {
-          ...mqttStatusDetails.value,
-          ...status,
-        };
-        mqttOnline.value = status.connected !== false;
-        mqttLastError.value = status.lastError || null;
+        if (mqttResult) {
+          const status = mqttResult.status || {};
+          mqttStatusDetails.value = {
+            ...mqttStatusDetails.value,
+            ...status,
+          };
+          mqttOnline.value = status.connected !== false;
+          mqttLastError.value = status.lastError || null;
+        }
 
-        snackbarSuccess(
-          mqttOnline.value
-            ? 'Settings saved and MQTT connected'
-            : 'Settings saved, reconnecting...'
-        );
+        const message = mqttChanged
+          ? mqttStatusDetails.value.connected
+            ? 'Settings saved and MQTT updated'
+            : 'Settings saved; MQTT will retry'
+          : globalChanged
+          ? 'Settings saved'
+          : 'No changes detected';
+
+        snackbarSuccess(message);
         originalGlobalSettings.value = JSON.parse(
           JSON.stringify(globalSettings.value),
         );
@@ -866,6 +889,67 @@ export default {
       }
     };
 
+    const mqttStatusSummary = computed(() => {
+      if (mqttStatusDetails.value.connected) {
+        return mqttStatusDetails.value.brokerUrl
+          ? `Connected (${mqttStatusDetails.value.brokerUrl})`
+          : 'Connected';
+      }
+      if (mqttStatusDetails.value.lastError) {
+        return `Disconnected (${mqttStatusDetails.value.lastError})`;
+      }
+      if (mqttStatusDetails.value.nextRetryInMs) {
+        return `Disconnected (retry in ${formatRetry(
+          mqttStatusDetails.value.nextRetryInMs,
+        )})`;
+      }
+      return 'Disconnected';
+    });
+
+    const handleMqttConnect = async () => {
+      if (mqttBusy.value) return;
+      mqttBusy.value = true;
+      mqttBusyAction.value = 'connect';
+      try {
+        const response = await api.connectMqtt();
+        const status = response.status || {};
+        mqttStatusDetails.value = {
+          ...mqttStatusDetails.value,
+          ...status,
+        };
+        mqttOnline.value = status.connected !== false;
+        mqttLastError.value = status.lastError || null;
+        snackbarSuccess('MQTT connect requested');
+      } catch (error) {
+        snackbarError(`Failed to connect MQTT: ${error.message}`);
+      } finally {
+        mqttBusy.value = false;
+        mqttBusyAction.value = null;
+      }
+    };
+
+    const handleMqttDisconnect = async () => {
+      if (mqttBusy.value) return;
+      mqttBusy.value = true;
+      mqttBusyAction.value = 'disconnect';
+      try {
+        const response = await api.disconnectMqtt();
+        const status = response.status || {};
+        mqttStatusDetails.value = {
+          ...mqttStatusDetails.value,
+          ...status,
+        };
+        mqttOnline.value = status.connected !== false;
+        mqttLastError.value = status.lastError || null;
+        snackbarSuccess('MQTT disconnect requested');
+      } catch (error) {
+        snackbarError(`Failed to disconnect MQTT: ${error.message}`);
+      } finally {
+        mqttBusy.value = false;
+        mqttBusyAction.value = null;
+      }
+    };
+
     return {
       activeTab,
       globalSettings,
@@ -893,8 +977,35 @@ export default {
       formatRetry,
       globalBrightnessIconOpacity,
       hasUnsavedChanges,
+      mqttStatusSummary,
+      mqttBusy,
+      mqttBusyAction,
+      handleMqttConnect,
+      handleMqttDisconnect,
     };
   },
 };
 </script>
+
+<style scoped>
+.mqtt-status-chip {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+:deep(.mqtt-status-chip) {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #0f172a !important;
+}
+
+:deep(.mqtt-status-chip.v-chip--variant-flat) {
+  background-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+.mqtt-status-row {
+  gap: 10px;
+  align-items: center;
+}
+</style>
 

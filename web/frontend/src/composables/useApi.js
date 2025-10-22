@@ -133,6 +133,18 @@ export function useApi() {
     });
   }
 
+  async function connectMqtt() {
+    return await request('/system/mqtt/connect', {
+      method: 'POST',
+    });
+  }
+
+  async function disconnectMqtt() {
+    return await request('/system/mqtt/disconnect', {
+      method: 'POST',
+    });
+  }
+
   return {
     loading,
     error,
@@ -155,5 +167,7 @@ export function useApi() {
     // System methods
     getSystemStatus,
     restartDaemon,
+    connectMqtt,
+    disconnectMqtt,
   };
 }

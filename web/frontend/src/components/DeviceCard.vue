@@ -1161,29 +1161,27 @@ const playStateIconColor = computed(() => combinedStateColor.value);
 // Badge styling for scene name + play state
 const playStateChipColor = computed(() => {
   const sceneState = props.device?.sceneState;
-  if (sceneState?.testCompleted) return 'success-darken-2';
-  
+  if (sceneState?.testCompleted) return '#15803d';
+
   const state = playState.value;
   const colors = {
-    playing: 'success-darken-2',  // Green for playing
-    paused: 'warning-darken-2',    // Orange for paused
-    stopped: 'grey-darken-1',      // Gray for stopped
+    playing: '#15803d', // Green for playing
+    paused: '#ca8a04', // Amber for paused
+    stopped: '#1e293b', // Slate for stopped
   };
-  return colors[state] || 'grey-darken-1';
+  return colors[state] || '#1e293b';
 });
 
 const playStateIconColorForBadge = computed(() => {
   const state = playState.value;
-  // White icon for active states (playing/paused), grey for stopped
-  if (state === 'playing' || state === 'paused') return '#fff';
-  return '#9ca3af'; // Gray for stopped
+  if (state === 'stopped') return '#f8fafc';
+  return '#ffffff';
 });
 
 const playStateTextColor = computed(() => {
   const state = playState.value;
-  // White text for active states (playing/paused), grey for stopped
-  if (state === 'playing' || state === 'paused') return '#fff';
-  return '#6b7280'; // Gray for stopped
+  if (state === 'stopped') return '#e2e8f0';
+  return '#ffffff';
 });
 
 const combinedStateHint = computed(() => {

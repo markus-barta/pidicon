@@ -673,9 +673,31 @@ function startWebServer(container, logger) {
 
   app.post('/api/system/mqtt-config', async (req, res) => {
     try {
+      const previousConfig = JSON.parse(
+        JSON.stringify(await mqttConfigService.loadConfig()),
+      );
       const updated = await mqttConfigService.updateConfig(req.body || {});
       const mqttServiceInstance = container.resolveIfRegistered('mqttService');
-      if (mqttServiceInstance) {
+
+      const connectionFields = [
+        'brokerUrl',
+        'username',
+        'password',
+        'clientId',
+        'keepalive',
+        'tls',
+      ];
+
+      const connectionChanged = connectionFields.some((field) => {
+        const prevValue = previousConfig ? previousConfig[field] : undefined;
+        const nextValue = updated ? updated[field] : undefined;
+        return prevValue !== nextValue;
+      });
+
+      let status = mqttServiceInstance?.getStatus?.() || {};
+
+      if (mqttServiceInstance && connectionChanged) {
+        logger.info('MQTT configuration changed, cycling connection');
         try {
           await mqttServiceInstance.disconnect();
         } catch (disconnectError) {
@@ -684,12 +706,19 @@ function startWebServer(container, logger) {
           });
         }
 
-        mqttServiceInstance.connect().catch((err) => {
+        try {
+          await mqttServiceInstance.connect();
+          status = mqttServiceInstance.getStatus?.() || {};
+        } catch (connectError) {
           logger.error('Failed to reconnect MQTT after config update', {
-            error: err.message,
+            error: connectError.message,
           });
-        });
+          status = mqttServiceInstance.getStatus?.() || status;
+        }
+      } else if (mqttServiceInstance) {
+        status = mqttServiceInstance.getStatus?.() || status;
       }
+
       const safeConfig = {
         brokerUrl: updated.brokerUrl || '',
         username: updated.username || '',
@@ -698,15 +727,66 @@ function startWebServer(container, logger) {
         tls: !!updated.tls,
         hasPassword: Boolean(updated.password),
       };
+
       res.json({
         config: safeConfig,
-        status: mqttServiceInstance?.getStatus?.() || {},
+        status,
+        connectionChanged,
       });
     } catch (error) {
       logger.error('API /api/system/mqtt-config (POST) error:', {
         error: error.message,
       });
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/system/mqtt/connect', async (_req, res) => {
+    try {
+      const mqttServiceInstance = container.resolveIfRegistered('mqttService');
+      if (!mqttServiceInstance) {
+        return res
+          .status(503)
+          .json({ error: 'MQTT service is not available in this deployment' });
+      }
+
+      await mqttServiceInstance.connect();
+      const status = mqttServiceInstance.getStatus?.() || {};
+
+      logger.ok('MQTT connect triggered manually', {
+        broker: status.brokerUrl,
+        connected: status.connected,
+      });
+
+      res.json({ status });
+    } catch (error) {
+      logger.error('API /api/system/mqtt/connect error', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/system/mqtt/disconnect', async (_req, res) => {
+    try {
+      const mqttServiceInstance = container.resolveIfRegistered('mqttService');
+      if (!mqttServiceInstance) {
+        return res
+          .status(503)
+          .json({ error: 'MQTT service is not available in this deployment' });
+      }
+
+      await mqttServiceInstance.disconnect();
+      const status = mqttServiceInstance.getStatus?.() || {};
+
+      logger.warn('MQTT disconnect triggered manually');
+
+      res.json({ status });
+    } catch (error) {
+      logger.error('API /api/system/mqtt/disconnect error', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
     }
   });
 
