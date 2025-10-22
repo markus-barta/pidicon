@@ -14,6 +14,7 @@ const description = 'Time + Home Stats (Awtrix 32x8)';
 const category = 'Home Automation';
 const wantsLoop = true; // Updates every second
 const deviceTypes = ['awtrix']; // Only for Awtrix/Ulanzi devices
+const tags = ['home'];
 
 // Color mapping for statuses (from Node-RED code)
 const COLORS = Object.freeze({
@@ -195,6 +196,7 @@ module.exports = {
   category,
   wantsLoop,
   deviceTypes,
+  tags,
   init,
   render,
   cleanup,

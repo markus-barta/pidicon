@@ -9,10 +9,7 @@
  * @license GPL-3.0-or-later
  */
 
-const path = require('path');
-const { isValidColor } = require(
-  path.join(__dirname, '../lib/performance-utils'),
-);
+const { isValidColor } = require('../../lib/performance-utils');
 
 const name = 'fill';
 
@@ -75,6 +72,8 @@ const wantsLoop = false;
 const description =
   'Fills the entire 64x64 screen with a single solid color. Accepts RGBA color parameter via MQTT payload (e.g., [255,0,0,255] for red). If no color specified, generates a random vibrant color each time. Perfect for testing color accuracy, brightness settings, or creating custom colored backgrounds.';
 const category = 'Test';
+const deviceTypes = ['pixoo64'];
+const tags = ['fallback'];
 
 module.exports = {
   name,
@@ -84,6 +83,8 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
   metadata: {
     color: [255, 0, 0, 255], // Example: red [R, G, B, A]
     description:

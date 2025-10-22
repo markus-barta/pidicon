@@ -267,6 +267,8 @@ async function bootstrap() {
   const sceneLoadResults = SceneRegistration.registerFromStructure(
     sceneManager,
     path.join(__dirname, 'scenes'),
+    null,
+    process.env.SCENES_FALLBACK !== 'disabled',
   );
 
   if (sceneLoadResults.errors.length > 0) {
@@ -328,6 +330,7 @@ async function bootstrap() {
             sceneManager,
             null, // Don't reload built-in scenes
             settings.scenesPath,
+            false,
           );
           if (userSceneResults.errors.length > 0) {
             logger.warn(

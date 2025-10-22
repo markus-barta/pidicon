@@ -13,6 +13,7 @@ const description = 'Awtrix startup scene (32x8)';
 const category = 'System';
 const wantsLoop = false; // Static display
 const deviceTypes = ['awtrix']; // Only for Awtrix/Ulanzi devices
+const tags = ['system'];
 
 const COLORS = Object.freeze({
   PIDICON: '#00FF88', // Bright green
@@ -64,6 +65,7 @@ module.exports = {
   category,
   wantsLoop,
   deviceTypes,
+  tags,
   init,
   render,
   cleanup,

@@ -38,6 +38,8 @@ const wantsLoop = false;
 const description =
   'Clears the display to complete black. Useful for testing, power saving, or as a base scene for custom implementations. No animation or content - just a clean, dark screen.';
 const category = 'Utility';
+const deviceTypes = ['pixoo64'];
+const tags = ['fallback'];
 
 module.exports = {
   name,
@@ -47,4 +49,6 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
 };

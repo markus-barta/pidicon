@@ -37,15 +37,22 @@ export const useSceneStore = defineStore('scenes', () => {
   const hasDevScenes = computed(() =>
     scenes.value.some((scene) => scene.isDevScene),
   );
+  const availableTags = computed(() => {
+    const tagSet = new Set();
+    scenes.value.forEach((scene) => {
+      (scene.tags || []).forEach((tag) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  });
 
   // Actions
   function setScenes(newScenes) {
-    // Add scene number to each scene based on sorted order
     scenes.value = newScenes.map((scene, index) => ({
       ...scene,
       sceneNumber: index + 1,
       filePath: normalizeScenePath(scene.filePath),
       isDevScene: Boolean(scene.isDevScene),
+      tags: Array.isArray(scene.tags) ? scene.tags : [],
     }));
   }
 
@@ -73,6 +80,7 @@ export const useSceneStore = defineStore('scenes', () => {
     scenesByCategory,
     animatedScenes,
     hasDevScenes,
+    availableTags,
     setScenes,
     setLoading,
     setError,

@@ -128,8 +128,8 @@ describe('Daemon Startup with DI', () => {
         'Should load startup scene',
       );
       assert.ok(
-        sceneLoadResults.scenes.has('empty'),
-        'Should load empty scene',
+        sceneLoadResults.scenes.has('pixoo_showcase'),
+        'Should load pixoo showcase scene',
       );
 
       // Verify logger was used

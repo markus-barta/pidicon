@@ -64,12 +64,7 @@ describe('device-adapter', () => {
       const { ADVANCED_FEATURES } = deviceAdapter;
 
       assert.ok(Object.isFrozen(ADVANCED_FEATURES));
-
-      // Attempt to modify should fail silently in non-strict mode
-      assert.doesNotThrow(() => {
-        ADVANCED_FEATURES.NEW_FEATURE = true;
-      });
-      assert.ok(!('NEW_FEATURE' in ADVANCED_FEATURES));
+      assert.ok(!Object.isExtensible(ADVANCED_FEATURES));
     });
 
     it('should have boolean values for all features', () => {

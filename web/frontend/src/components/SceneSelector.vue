@@ -94,15 +94,25 @@ const sceneItems = computed(() => {
     filteredScenes = filteredScenes.filter((scene) => !scene.isDevScene);
   }
 
+  // Filter out scenes flagged as dev if not requested, and example tags if needed
+  filteredScenes = filteredScenes.filter((scene) => {
+    const tags = scene.tags || [];
+    if (!props.showDevScenes && tags.includes('dev')) {
+      return false;
+    }
+    return true;
+  });
+
   // Filter by device type if specified
   if (props.deviceType) {
-    filteredScenes = filteredScenes.filter(scene => {
-      // If scene has no deviceTypes specified, show it for all devices
-      if (!scene.deviceTypes || scene.deviceTypes.length === 0) {
+    const normalizedType = props.deviceType.toLowerCase();
+    filteredScenes = filteredScenes.filter((scene) => {
+      const sceneTypes = scene.deviceTypes || [];
+      if (sceneTypes.length === 0) {
         return true;
       }
-      // Check if scene supports this device type
-      return scene.deviceTypes.includes(props.deviceType);
+      const target = sceneTypes.map((type) => type.toLowerCase());
+      return target.includes(normalizedType);
     });
   }
   
@@ -121,6 +131,7 @@ const sceneItems = computed(() => {
       filePath: scene.filePath,
       deviceTypes: scene.deviceTypes,
       isDevScene: scene.isDevScene,
+      tags: scene.tags || [],
     };
   });
 });
