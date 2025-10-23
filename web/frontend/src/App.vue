@@ -1,7 +1,11 @@
 <template>
   <v-app>
     <!-- System Status Header -->
-    <system-status @navigate="handleNavigation" />
+    <system-status
+      :active-view="currentView"
+      :show-logs="showDevScenes"
+      @navigate="handleNavigation"
+    />
 
     <!-- Main Content -->
     <v-main class="bg-grey-lighten-4">
@@ -34,6 +38,9 @@
 
         <!-- Settings View -->
         <settings-view v-if="currentView === 'settings'" />
+
+        <!-- Logs View -->
+        <logs-view v-else-if="currentView === 'logs'" />
 
         <!-- Device View -->
         <template v-else>
@@ -95,6 +102,7 @@ import DeviceCard from './components/DeviceCard.vue';
 import ToastNotifications from './components/ToastNotifications.vue';
 import AppFooter from './components/AppFooter.vue';
 import SettingsView from './views/Settings.vue';
+import LogsView from './views/Logs.vue';
 
 const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
@@ -107,16 +115,23 @@ const error = ref(null);
 const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
-const currentView = ref('devices'); // 'devices' or 'settings'
+const currentView = ref('devices'); // 'devices', 'settings', 'logs'
 const showDevScenes = ref(
   JSON.parse(localStorage.getItem('pidicon:showDevScenes') || 'false'),
 );
 
 watch(showDevScenes, (value) => {
   localStorage.setItem('pidicon:showDevScenes', JSON.stringify(value));
+  if (!value && currentView.value === 'logs') {
+    currentView.value = 'devices';
+  }
 });
 
 const handleNavigation = (view) => {
+  if (view === 'logs' && !showDevScenes.value) {
+    currentView.value = 'devices';
+    return;
+  }
   currentView.value = view;
 };
 

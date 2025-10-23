@@ -1,8 +1,8 @@
 <template>
-  <v-app-bar color="white" elevation="0" height="80" class="border-b">
-    <v-container fluid class="d-flex align-center px-8">
+  <v-app-bar color="white" elevation="0" height="80" class="status-bar">
+    <v-container fluid class="status-container">
       <!-- Left: Avatar + Title -->
-      <div class="d-flex align-center">
+      <div class="status-title">
         <v-avatar color="primary" size="48" class="mr-4">
           <v-icon color="white" size="28">mdi-television</v-icon>
         </v-avatar>
@@ -10,21 +10,26 @@
           <div class="text-h6 font-weight-bold primary--text">
             PIDICON: Pixel Display Controller
           </div>
-          <div class="text-caption d-flex align-center">
+          <div class="status-meta text-caption d-flex align-center">
             <span class="d-inline-flex align-center">
-              <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: statusColor, marginRight: '6px' }"></span>
-              <span style="color: #6b7280;">Daemon: {{ statusLabel }}</span>
+              <span :style="statusDotStyles(statusColor)"></span>
+              <span class="status-label">Daemon: {{ statusLabel }}</span>
             </span>
-            <span class="mx-2" style="color: #d1d5db;">•</span>
-            <v-tooltip location="bottom" :open-on-hover="true" :open-on-focus="true">
+            <span class="separator">•</span>
+            <v-tooltip
+              location="bottom"
+              :open-on-hover="true"
+              :open-on-focus="true"
+              content-class="mqtt-tooltip-panel"
+            >
               <template #activator="{ props }">
                 <span
                   class="d-inline-flex align-center mqtt-status-trigger"
                   tabindex="0"
                   v-bind="props"
                 >
-                  <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: mqttStatusColor, marginRight: '6px' }"></span>
-                  <span style="color: #6b7280;">MQTT: {{ mqttStatus }}</span>
+                  <span :style="statusDotStyles(mqttStatusColor)"></span>
+                  <span class="status-label">MQTT: {{ mqttStatus }}</span>
                 </span>
               </template>
               <div class="mqtt-tooltip">
@@ -50,49 +55,39 @@
                 </div>
               </div>
             </v-tooltip>
-            <span class="mx-2" style="color: #d1d5db;">•</span>
-            <span style="color: #9ca3af;">Uptime: {{ uptime }}</span>
-            <span class="mx-2" style="color: #d1d5db;">•</span>
-            <span style="color: #9ca3af;">{{ hostname }}</span>
-            <span class="mx-2" style="color: #d1d5db;">•</span>
-            <span style="color: #9ca3af;">Node {{ nodeVersion }}</span>
+            <span class="separator">•</span>
+            <span class="status-detail">Uptime: {{ uptime }}</span>
+            <span class="separator">•</span>
+            <span class="status-detail">{{ hostname }}</span>
+            <span class="separator">•</span>
+            <span class="status-detail">Node {{ nodeVersion }}</span>
           </div>
         </div>
       </div>
 
-      <v-spacer></v-spacer>
+      <!-- Right: Navigation + Daemon Restart Buttons -->
+      <div class="nav-cluster">
+        <div class="nav-buttons">
+          <v-btn
+            v-for="item in filteredNavItems"
+            :key="item.value"
+            :color="activeNav === item.value ? 'primary' : 'grey'"
+            :variant="activeNav === item.value ? 'flat' : 'outlined'"
+            size="small"
+            class="nav-btn"
+            :class="{ 'nav-btn--active': activeNav === item.value }"
+            @click="handleNav(item.value)"
+            :data-test="item.testId"
+          >
+            <v-icon size="small" class="mr-1">{{ item.icon }}</v-icon>
+            <span class="text-caption">{{ item.label }}</span>
+            <v-tooltip activator="parent" location="bottom">
+              {{ item.tooltip }}
+            </v-tooltip>
+          </v-btn>
+        </div>
 
-      <!-- Right: Settings + Daemon Restart Buttons -->
-      <div class="d-flex align-center" style="gap: 8px;">
-        <v-btn
-          size="small"
-          variant="outlined"
-          color="primary"
-          @click="emit('navigate', 'devices')"
-          class="settings-btn"
-          data-test="nav-devices"
-        >
-          <v-icon size="small" class="mr-1">mdi-view-dashboard</v-icon>
-          <span class="text-caption">Devices</span>
-          <v-tooltip activator="parent" location="bottom">
-            View devices
-          </v-tooltip>
-        </v-btn>
-
-        <v-btn
-          size="small"
-          variant="outlined"
-          color="primary"
-          @click="emit('navigate', 'settings')"
-          class="settings-btn"
-          data-test="nav-settings"
-        >
-          <v-icon size="small" class="mr-1">mdi-cog</v-icon>
-          <span class="text-caption">Settings</span>
-          <v-tooltip activator="parent" location="bottom">
-            Configure devices and settings
-          </v-tooltip>
-        </v-btn>
+        <v-divider vertical class="nav-divider" />
 
         <v-btn
           size="small"
@@ -112,22 +107,34 @@
       </div>
     </v-container>
   </v-app-bar>
-  
+
   <!-- Confirm Dialog -->
   <confirm-dialog ref="confirmDialog" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
 import ConfirmDialog from './ConfirmDialog.vue';
 
 const emit = defineEmits(['navigate']);
+const props = defineProps({
+  activeView: {
+    type: String,
+    default: 'devices'
+  },
+  showLogs: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const api = useApi();
 const toast = useToast();
 
+const activeNav = ref(props.activeView);
+const showLogs = computed(() => props.showLogs);
 const buildNumber = ref(null);
 const gitCommit = ref(null);
 const hostname = ref('');
@@ -333,6 +340,62 @@ async function handleRestart() {
   }
 }
 
+const navItems = computed(() => [
+  {
+    value: 'devices',
+    label: 'Dashboard',
+    icon: 'mdi-view-dashboard',
+    tooltip: 'View devices overview',
+    testId: 'nav-devices'
+  },
+  {
+    value: 'settings',
+    label: 'Settings',
+    icon: 'mdi-cog',
+    tooltip: 'Configure defaults and connectivity',
+    testId: 'nav-settings'
+  },
+  {
+    value: 'logs',
+    label: 'Logs',
+    icon: 'mdi-file-document-outline',
+    tooltip: 'Inspect daemon logs',
+    testId: 'nav-logs'
+  }
+]);
+
+const filteredNavItems = computed(() =>
+  navItems.value.filter((item) => item.value !== 'logs' || showLogs.value),
+);
+
+const statusDotStyles = (color) => ({
+  display: 'inline-block',
+  width: '6px',
+  height: '6px',
+  borderRadius: '50%',
+  backgroundColor: color,
+  marginRight: '6px',
+});
+
+const handleNav = (value) => {
+  if (!value || value === activeNav.value) return;
+  activeNav.value = value;
+};
+
+watch(
+  () => props.activeView,
+  (value) => {
+    activeNav.value = value;
+  },
+  { immediate: true }
+);
+
+watch(activeNav, (value) => {
+  if (value && value !== props.activeView) {
+    emit('navigate', value);
+  }
+});
+
 onMounted(() => {
   loadStatus();
   // Update uptime every second
@@ -349,10 +412,68 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Daemon restart button styling */
-.daemon-restart-btn {
-  /* Remove custom height - let Vuetify handle it to match other buttons */
-  transition: all 0.15s ease !important;
+.status-bar {
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+.status-title {
+  display: flex;
+  align-items: center;
+}
+
+.status-meta {
+  color: #6b7280;
+  gap: 8px;
+}
+
+.status-label,
+.status-detail {
+  color: #6b7280;
+}
+
+.separator {
+  color: #d1d5db;
+  margin: 0 8px;
+}
+
+.nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn {
+  min-width: 0;
+  transition: all 0.15s ease;
+}
+
+.nav-btn--active {
+  box-shadow: none;
+  background-color: rgba(139, 92, 246, 0.12) !important;
+  color: #4c1d95 !important;
+}
+
+.nav-btn.v-btn--variant-flat {
+  box-shadow: none;
+}
+
+.nav-divider {
+  height: 32px;
 }
 
 .mqtt-tooltip {
@@ -367,6 +488,23 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 12px;
   font-size: 12px;
+}
+
+.mqtt-tooltip-panel {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.mqtt-tooltip-panel .tooltip-label {
+  color: #cbd5f5;
+}
+
+.mqtt-tooltip-panel .tooltip-value {
+  color: #e2e8f0;
+}
+
+.mqtt-tooltip-panel .tooltip-error {
+  color: #fca5a5;
 }
 
 .tooltip-label {
@@ -386,12 +524,32 @@ onUnmounted(() => {
   color: #b91c1c;
 }
 
+.daemon-restart-btn {
+  transition: all 0.15s ease !important;
+}
+
 .daemon-restart-btn:hover {
   transform: translateY(-1px);
 }
 
 .daemon-restart-btn:active {
   transform: translateY(0);
+}
+
+@media (max-width: 1280px) {
+  .status-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .nav-cluster {
+    align-self: stretch;
+    justify-content: space-between;
+    width: 100%;
+  }
 }
 </style>
 
