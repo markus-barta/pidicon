@@ -101,7 +101,7 @@ rules:
 
 # Cursor Rules for PIDICON
 
-**Official Location**: `.cursor/rules/pixoo-daemon.mdc` (legacy filename, scope updated to `pidicon`)  
+**Official Location**: `.cursor/rules/pidicon.mdc`
 **Format**: YAML frontmatter + Markdown documentation  
 **Created by**: Cursor UI (New → Rule)
 

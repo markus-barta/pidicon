@@ -26,22 +26,27 @@
 - **Owner**: mba
 - **Status**: Completed (2025-10-21)
 
-**Notes**: Daemon start + heartbeat persisted in `state-store`; `system-service` exposes authoritative uptime fields consumed by `SystemStatus.vue`. Tests added in `test/lib/system-service.test.js`.
+**Notes**: Daemon start + heartbeat persisted in `state-store`; `system-service` exposes authoritative uptime fields
+consumed by `SystemStatus.vue`. Tests added in `test/lib/system-service.test.js`.
 
 **Tests**:
 
 - Unit: `lib/state-store` persistence (heartbeat/start) and `system-service` uptime formatting.
 - UI: `SystemStatus.vue` header uptime pause/resume + tooltip verifying stale state indication.
 
-**Problem**: Header uptime counter continues to increment while the daemon is offline because it depends on client-side timers instead of authoritative runtime metadata.
+**Problem**: Header uptime counter continues to increment while the daemon is offline because it depends on
+client-side timers instead of authoritative runtime metadata.
 
-**Goal**: Persist true daemon start and heartbeat timestamps server-side and expose them via API so the UI displays accurate uptime and highlights outages quickly.
+**Goal**: Persist true daemon start and heartbeat timestamps server-side and expose them via API so the UI
+displays accurate uptime and highlights outages quickly.
 
 **Deliverables**:
 
 1. Persist daemon start timestamp and periodic heartbeat (state store or dedicated atomic file).
-2. Extend `SystemService`/`/api/status` to return real uptime seconds, formatted uptime string, and stale-heartbeat indicator.
-3. Update `SystemStatus.vue` to use new fields, pausing/resuming counters accordingly and surfacing downtime messaging.
+2. Extend `SystemService`/`/api/status` to return real uptime seconds, formatted uptime string, and
+   stale-heartbeat indicator.
+3. Update `SystemStatus.vue` to use new fields, pausing/resuming counters accordingly and surfacing downtime
+   messaging.
 4. Add unit/UI tests covering restart, downtime, and resume scenarios.
 
 **Risks**:
@@ -64,9 +69,11 @@
 - **Owner**: mba
 - **Status**: Completed (2025-10-21)
 
-**Notes**: AWTRIX driver exposes `reboot()`, `DeviceService.rebootDevice` dispatches via device adapter, `/api/devices/:ip/reboot` + UI button rename shipped. Playwright spec updated.
+**Notes**: AWTRIX driver exposes `reboot()`, `DeviceService.rebootDevice` dispatches via device adapter,
+`/api/devices/:ip/reboot` + UI button rename shipped. Playwright spec updated.
 
-**Problem**: The AWTRIX device action labeled "Reset" only refreshes the UI scene and never triggers a hardware reboot, so hung firmware remains stuck.
+**Problem**: The AWTRIX device action labeled "Reset" only refreshes the UI scene and never triggers a hardware
+reboot, so hung firmware remains stuck.
 
 **Goal**: Invoke the official AWTRIX reboot command when requested and align UI wording/feedback.
 
@@ -91,7 +98,8 @@
 - **Owner**: mba
 - **Status**: In Progress (2025-10-21)
 
-**Notes**: `DeviceCard.vue` frametime bar colors now use `getSimplePerformanceColor`. Need follow-up visual regression/tuning (UI test pending).
+**Notes**: `DeviceCard.vue` frametime bar colors now use `getSimplePerformanceColor`. Need follow-up visual
+regression/tuning (UI test pending).
 
 **Problem**: AWTRIX frametime chart renders black bars for low-duration samples, inconsistent with Pixoo palette.
 
@@ -117,9 +125,11 @@
 - **Owner**: mba
 - **Status**: Completed (2025-10-21)
 
-**Notes**: Header wraps MQTT chip in Vuetify tooltip listing connection, broker, retry, next retry, last error; styled via scoped CSS.
+**Notes**: Header wraps MQTT chip in Vuetify tooltip listing connection, broker, retry, next retry, last error;
+styled via scoped CSS.
 
-**Problem**: Header shows only online/offline indicator; troubleshooting requires full `mqttStatusDetails` context.
+**Problem**: Header shows only online/offline indicator; troubleshooting requires full `mqttStatusDetails`
+context.
 
 **Goal**: Provide a tooltip summarizing connection state, last error, retry counters, next retry timing.
 
@@ -167,9 +177,11 @@
 - **Priority**: P2 (Nice to Have)
 - **Effort**: 3-4 hours
 - **Owner**: mba
-- **Status**: In Progress (2025-10-21) – UI copy refreshed, slider restyled like device cards, unified defaults paragraph implemented. Pending API consolidation, watchdog defaults wiring, and test coverage.
+- **Status**: In Progress (2025-10-21) – UI copy refreshed, slider restyled like device cards, unified defaults
+  paragraph implemented. Pending API consolidation, watchdog defaults wiring, and test coverage.
 
-**Problem**: Global settings form has redundant labels ("Default driver"/"Default brightness") and inconsistent styling versus device cards.
+**Problem**: Global settings form has redundant labels ("Default driver"/"Default brightness") and inconsistent
+styling versus device cards.
 
 **Goal**: Simplify copy, add explanatory sentence, and align slider design with device card presentation.
 
@@ -190,7 +202,8 @@
 - **Priority**: P1 (Important)
 - **Effort**: 4-6 hours
 - **Owner**: mba
-- **Status**: In Progress (2025-10-21) – Single Save Settings CTA wired, unsaved-change pulse active. Awaiting backend integration and Playwright coverage.
+- **Status**: In Progress (2025-10-21) – Single Save Settings CTA wired, unsaved-change pulse active. Awaiting
+  backend integration and Playwright coverage.
 
 **Problem**: Separate "Save" buttons for global and MQTT lead to confusion; unsaved changes are not visible.
 
@@ -214,7 +227,8 @@
 - **Priority**: P2 (Nice to Have)
 - **Effort**: 2-3 hours
 - **Owner**: mba
-- **Status**: In Progress (2025-10-21) – Detailed MQTT status card implemented in settings panel. Awaiting unit/UI tests.
+- **Status**: In Progress (2025-10-21) – Detailed MQTT status card implemented in settings panel. Awaiting
+  unit/UI tests.
 
 **Problem**: Global settings page shows basic MQTT status text without exposing retry/error metadata.
 
@@ -233,7 +247,8 @@
 
 ## 🌐 Multi-Device Roadmap (v3.0+)
 
-**Context**: PIDICON v3.0 introduced multi-device support with abstract DeviceDriver interface, DisplayCapabilities system, and web-based device configuration.
+**Context**: PIDICON v3.0 introduced multi-device support with abstract DeviceDriver interface,
+DisplayCapabilities system, and web-based device configuration.
 
 **Current Status**:
 

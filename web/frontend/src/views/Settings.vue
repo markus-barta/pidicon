@@ -29,7 +29,7 @@
         </div>
 
         <v-sheet class="settings-shell">
-        <v-tabs
+          <v-tabs
           v-model="activeTab"
           color="primary"
           class="settings-tabs"
@@ -497,7 +497,8 @@
                 </v-card-text>
               </v-card>
           </v-window-item>
-        </v-window>
+          </v-window>
+        </v-sheet>
       </v-col>
     </v-row>
 
