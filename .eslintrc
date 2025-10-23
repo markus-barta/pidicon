@@ -1,0 +1,22 @@
+{
+    "root": true,
+    "env": { "node": true, "browser": true, "es2022": true },
+    "extends": ["eslint:recommended", "plugin:promise/recommended", "plugin:import/recommended"],
+    "plugins": ["promise", "import"],
+    "parserOptions": { "ecmaVersion": "latest", "sourceType": "module" },
+    "rules": {
+      "no-magic-numbers": ["warn", { "ignoreArrayIndexes": true, "ignore": [0, 1, -1] }],
+      "complexity": ["warn", 10],
+      "max-params": ["warn", 5],
+      "max-lines-per-function": [
+        "warn",
+        { "max": 50, "skipComments": true, "skipBlankLines": true }
+      ],
+      "require-jsdoc": [
+        "warn",
+        { "require": { "FunctionDeclaration": true } }
+      ],
+      "import/no-unresolved": "off",
+      "promise/always-return": "off"
+    }
+  }

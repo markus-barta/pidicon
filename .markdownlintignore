@@ -1,6 +1,7 @@
 # Ignore Cursor rules from markdownlint (CLI and editor)
 .cursor/rules/
 .cursor/rules/**
+
 # Legacy documentation snapshots (AI-generated or historical)
 docs/ai/
 docs/ai/**
@@ -10,3 +11,9 @@ docs/guides/
 docs/guides/**
 docs/BACKLOG.md
 docs/BACKLOG-TABLE.md
+
+# Licensing and meta files
+LICENSE
+COPYING
+CHANGELOG
+NOTICE

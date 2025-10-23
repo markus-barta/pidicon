@@ -21,6 +21,12 @@ export function useApi() {
           ...options.headers,
         },
         ...options,
+        body:
+          options.body &&
+          typeof options.body === 'object' &&
+          !(options.body instanceof FormData)
+            ? JSON.stringify(options.body)
+            : options.body,
       });
 
       if (!response.ok) {
@@ -148,6 +154,7 @@ export function useApi() {
   return {
     loading,
     error,
+    request,
     // Device methods
     getDevices,
     getDeviceInfo,

@@ -20,5 +20,8 @@
   "MD012": false,
   "MD026": {
     "punctuation": ".,;:!"
-  }
+  },
+  "MD046": { "style": "fenced" },
+  "MD040": false,
+  "MD046-fenced-code-language": true
 }

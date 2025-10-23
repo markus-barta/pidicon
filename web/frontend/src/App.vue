@@ -37,7 +37,7 @@
         </v-alert>
 
         <!-- Settings View -->
-        <settings-view v-if="currentView === 'settings'" />
+        <settings-view v-if="currentView === 'settings'" :show-tests-tab="showTestsTab" />
 
         <!-- Logs View -->
         <logs-view v-else-if="currentView === 'logs'" />
@@ -91,9 +91,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useDeviceStore } from './store/devices';
 import { useSceneStore } from './store/scenes';
+import { useDevModeStore } from './store/dev-mode';
 import { useApi } from './composables/useApi';
 import { useToast } from './composables/useToast';
 import { useGlobalWebSocket } from './composables/useWebSocket';
@@ -106,6 +107,7 @@ import LogsView from './views/Logs.vue';
 
 const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
+const devModeStore = useDevModeStore();
 const api = useApi();
 const toast = useToast();
 const ws = useGlobalWebSocket();
@@ -119,6 +121,8 @@ const currentView = ref('devices'); // 'devices', 'settings', 'logs'
 const showDevScenes = ref(
   JSON.parse(localStorage.getItem('pidicon:showDevScenes') || 'false'),
 );
+
+const showTestsTab = computed(() => devModeStore.enabled);
 
 watch(showDevScenes, (value) => {
   localStorage.setItem('pidicon:showDevScenes', JSON.stringify(value));

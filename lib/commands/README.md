@@ -12,7 +12,6 @@ clean, testable, and maintainable way.
 ### **Core**
 
 - **`command-handler.js`** - Base class for all command handlers
-- **`command-router.js`** - Routes MQTT messages to appropriate handlers
 
 ### **Handlers**
 
@@ -40,11 +39,25 @@ MQTT Message
     ↓
 MqttService
     ↓
-CommandRouter.route(topic, payload)
-    ↓
 Parse topic → { deviceIp, section, action }
     ↓
 Get handler for section
+    ↓
+Handler.handle(deviceIp, action, payload)
+    ↓
+Validate, process, publish response
+```
+
+---
+
+## 📊 Command Flow
+
+```
+MQTT Topic → mqttService.registerHandler(section, handler)
+    ↓
+Parse topic → { deviceIp, section, action }
+    ↓
+Look up registered handler
     ↓
 Handler.handle(deviceIp, action, payload)
     ↓
@@ -58,7 +71,6 @@ Validate, process, publish response
 ### Creating the Command System
 
 ```javascript
-const CommandRouter = require('./lib/commands/command-router');
 const SceneCommandHandler = require('./lib/commands/scene-command-handler');
 const DriverCommandHandler = require('./lib/commands/driver-command-handler');
 const ResetCommandHandler = require('./lib/commands/reset-command-handler');
@@ -97,21 +109,11 @@ const stateHandler = new StateCommandHandler({
   lastState,
 });
 
-// Create router
-const commandRouter = new CommandRouter({
-  logger,
-  handlers: {
-    scene: sceneHandler,
-    driver: driverHandler,
-    reset: resetHandler,
-    state: stateHandler,
-  },
-});
-
-// Route messages
-mqttService.on('message', async ({ topic, payload }) => {
-  await commandRouter.route(topic, payload);
-});
+// Register handlers directly on MQTT service (CommandRouter removed in v3)
+mqttService.registerHandler('scene', sceneHandler.handle.bind(sceneHandler));
+mqttService.registerHandler('driver', driverHandler.handle.bind(driverHandler));
+mqttService.registerHandler('reset', resetHandler.handle.bind(resetHandler));
+mqttService.registerHandler('state', stateHandler.handle.bind(stateHandler));
 ```
 
 ---
@@ -172,7 +174,7 @@ await handler.handle('192.168.1.1', 'set', { name: 'test' });
 // Assert
 expect(mockMqttService.publish).toHaveBeenCalledWith(
   'pixoo/192.168.1.1/scene',
-  expect.objectContaining({ default: 'test' }),
+  expect.objectContaining({ default: 'test' })
 );
 ```
 
@@ -184,7 +186,7 @@ Test the full command flow:
 // Send MQTT message
 mqttService.emit('message', {
   topic: 'pixoo/192.168.1.1/scene/set',
-  payload: { name: 'test' },
+  payload: JSON.stringify({ name: 'test' }),
 });
 
 // Verify handler was called
@@ -300,7 +302,7 @@ All handlers implement consistent error handling:
    }
    ```
 
-2. **Register with Router**:
+2. **Register handler**:
 
    ```javascript
    const myHandler = new MyCommandHandler({
@@ -309,13 +311,7 @@ All handlers implement consistent error handling:
      myDependency,
    });
 
-   const commandRouter = new CommandRouter({
-     logger,
-     handlers: {
-       // ...existing handlers
-       mytopic: myHandler, // Matches MQTT topic section
-     },
-   });
+   mqttService.registerHandler('mytopic', myHandler.handle.bind(myHandler));
    ```
 
 3. **Subscribe to MQTT Topic**:

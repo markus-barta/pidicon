@@ -1,139 +1,127 @@
 ---
-version: 2.0.0
-lastUpdated: 2025-10-08
+version: 2.1.0
+lastUpdated: 2025-10-23
 scope: pidicon
 
 rules:
-  - description: Timeout after 30 minutes
+  - description: Split tasks longer than 30 minutes
     globs:
       - "*"
     alwaysApply: true
-    config:
-      timeoutMinutes: 30
+    message: |
+      If any requested task seems to exceed ~30 minutes of realistic work,
+      outline a short execution plan, split it into sub‑tasks, and confirm
+      before continuing.
     reference: "./STANDARDS.md"
 
-  - description: Enforce code quality standards (no magic numbers, function limits)
+  - description: JavaScript code quality and maintainability
     globs:
       - "**/*.js"
     alwaysApply: true
-    config:
-      noMagicNumbers: true
-      maxFunctionLines: 50
-      maxComplexity: 10
-      maxParameters: 5
+    message: |
+      Follow strict code quality:
+      • No magic numbers – extract constants.
+      • Keep functions ≤ 50 LOC.
+      • Aim complexity ≤ 10 and ≤ 5 parameters per function.
+      • Propose refactors when code violates these.
+      Keep code modular, expressive, and easily testable.
     reference: "./docs/CODE_QUALITY.md"
 
-  - description: Enforce linting and formatting rules for JS + Markdown
+  - description: Formatting and linting conventions
     globs:
       - "**/*.js"
       - "**/*.md"
     alwaysApply: true
-    config:
-      lint: true
-      maxLineLength: 120
-      preferredLineLength: 80
-      requireCodeBlockLanguage: true
+    message: |
+      Maintain clean formatting:
+      • Keep lines near 80 chars, never exceed 120.
+      • Always specify a code block language in Markdown.
+      • Use consistent indentation and Prettier defaults.
     reference: "./STANDARDS.md#formatting--commits"
 
-  - description: Enforce Conventional Commit format
+  - description: Enforce Conventional Commit messages
     globs:
       - "COMMIT_MSG"
     alwaysApply: true
-    config:
-      commitConvention: conventional
+    message: |
+      Only use Conventional Commit format:
+      feat(scene): add fade transition
+      fix(lib): handle null input in parser
+      docs(readme): update usage example
     reference: "./STANDARDS.md#commit-guidelines"
 
-  - description: Require README.md in all critical directories
+  - description: Require README.md in key packages
     globs:
       - "lib/*"
       - "scenes/*"
       - "docs/*"
     alwaysApply: true
-    config:
-      requireReadme: true
+    message: |
+      Each primary folder under lib/, scenes/, and docs/ must include
+      a minimal README.md describing purpose, API surface, and ownership.
     reference: "./STANDARDS.md#documentation"
 
-  - description: Require JSDoc on all exported functions
+  - description: Require JSDoc on exports
     globs:
       - "lib/**/*.js"
       - "scenes/**/*.js"
     alwaysApply: true
-    config:
-      requireJsdoc: true
+    message: |
+      All exported functions must have concise JSDoc with @param / @returns.
+      Keep them informative, not verbose. Update docstrings when signatures change.
     reference: "./STANDARDS.md#documentation"
 
-  - description: Require POSIX shebang in server scripts
+  - description: POSIX shebang for server scripts
     globs:
       - "scripts/**/*.sh"
     alwaysApply: true
-    config:
-      requireShebang: "#!/usr/bin/env bash"
+    message: |
+      Every shell script in scripts/ must start with:
+      #!/usr/bin/env bash
+      Follow POSIX where possible and validate via ShellCheck.
     reference: "./STANDARDS.md#shell-standards"
 
-  - description: Prefer fish shell for interactive usage; fallback to bash
+  - description: Shell examples in docs use fish style
     globs:
-      - "**/*.sh"
+      - "docs/**/*.md"
     alwaysApply: true
-    config:
-      preferredShell: fish
-      fallbackShell: bash
-      maxRetries: 3
+    message: |
+      Prefer fish syntax for interactive examples in documentation.
+      If syntax differs from bash, add a bash variant below it.
     reference: "./STANDARDS.md#shell-standards"
 
-  - description: Scene interface requirements and configuration standards
+  - description: Scene architecture contract
     globs:
       - "scenes/**/*.js"
     alwaysApply: true
-    config:
-      requireSceneInterface: true
-      requireConfigConstants: true
+    message: |
+      Scene modules must implement:
+      - init()
+      - run()
+      - teardown()
+      and expose configuration constants via a single exported object.
+      Highlight missing parts during code review or generation.
     reference: "./docs/SCENE_DEVELOPMENT.md"
 
-  - description: Always include build number with git hash when mentioning deployment
+  - description: Include build number + git hash in deployment notes
     globs:
       - "*"
     alwaysApply: true
-    config:
-      requireBuildNumber: true
-      buildNumberCommand: "git rev-list --count HEAD"
+    message: |
+      When referencing deployments in commits or docs, append the build count
+      and short git hash, e.g. “build 1532 (a8b1f3c)”.
+      The build number is produced by:
+      git rev-list --count HEAD
     reference: "./STANDARDS.md#deployment-references"
 ---
-
 # Cursor Rules for PIDICON
 
-**Official Location**: `.cursor/rules/pidicon.mdc`
-**Format**: YAML frontmatter + Markdown documentation  
-**Created by**: Cursor UI (New → Rule)
+**Official location:** `.cursor/rules/pidicon.mdc`  
+**Role:** Provide AI guidance for quality, structure, and consistency.  
 
-## Why This Location?
+## Notes
 
-Cursor's UI creates rules in `.cursor/rules/*.mdc` when you use:
-**New → Rule** in the Cursor interface.
-
-This is the **official** Cursor rules location. Do NOT use `.cursorrules` at project root.
-
-## Rule Structure
-
-Each rule in the frontmatter has:
-- `description` - What the rule enforces
-- `globs` - File patterns it applies to
-- `alwaysApply` - Boolean, typically true for project rules
-- `config` - Structured enforcement parameters (NOT comments!)
-- `reference` - Link to detailed documentation
-
-## Documentation References
-
-Detailed standards are maintained separately:
-- [STANDARDS.md](../../STANDARDS.md) - Core development standards
-- [docs/CODE_QUALITY.md](../../docs/CODE_QUALITY.md) - Code quality guidelines
-- [docs/SCENE_DEVELOPMENT.md](../../docs/SCENE_DEVELOPMENT.md) - Scene development guide
-
-## Validation
-
-Pre-commit hook validates this file's YAML structure automatically.
-See `.husky/pre-commit` for validation logic.
-
----
-
-**Last Updated**: 2025-10-08  
-**Version**: 2.0.0
+- Cursor interprets `message` instructions; there is no active YAML config execution.  
+- Linting, formatting, and commit validation are enforced separately (`eslint`, `prettier`, `husky`).  
+- Keep rules concise and domain‑specific.  
+- Update version when adding or removing rules.

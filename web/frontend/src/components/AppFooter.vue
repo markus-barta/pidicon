@@ -9,7 +9,7 @@
         </div>
 
         <!-- Center: Dev Scenes Toggle -->
-        <div class="d-flex align-center">
+        <div class="d-flex align-center" style="gap: 8px">
           <v-btn
             variant="text"
             size="x-small"
@@ -25,6 +25,18 @@
             }">
               {DEV}
             </span>
+          </v-btn>
+
+          <v-btn
+            variant="text"
+            size="x-small"
+            class="diagnostics-toggle text-caption"
+            data-test="diagnostics-toggle"
+            :color="devMode.enabled ? 'success' : 'grey'"
+            @click="toggleDiagnostics"
+          >
+            <v-icon size="x-small" class="mr-1">mdi-clipboard-check-outline</v-icon>
+            Tests
           </v-btn>
         </div>
 
@@ -48,6 +60,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '../composables/useApi';
+import { useDevModeStore } from '../store/dev-mode';
+
+const devMode = useDevModeStore();
 
 const api = useApi();
 
@@ -71,6 +86,10 @@ const toggleDevScenes = () => {
   emit('update:show-dev-scenes', !props.showDevScenes);
 };
 
+const toggleDiagnostics = () => {
+  devMode.set(!devMode.enabled);
+};
+
 onMounted(async () => {
   try {
     const status = await api.getSystemStatus();
@@ -90,6 +109,12 @@ onMounted(async () => {
 }
 
 .dev-scenes-toggle {
+  min-width: auto !important;
+  padding: 0 8px !important;
+  height: auto !important;
+}
+
+.diagnostics-toggle {
   min-width: auto !important;
   padding: 0 8px !important;
   height: auto !important;

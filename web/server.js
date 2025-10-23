@@ -60,6 +60,7 @@ function startWebServer(container, logger) {
   const mqttConfigService = container.resolve('mqttConfigService');
   const watchdogService = container.resolve('watchdogService');
   const deviceConfigStore = container.resolve('deviceConfigStore'); // Use shared instance from DI container
+  const diagnosticsService = container.resolve('diagnosticsService');
 
   // =========================================================================
   // API ENDPOINTS
@@ -188,12 +189,12 @@ function startWebServer(container, logger) {
         `[WEB UI] Set brightness to ${brightness}% for ${req.params.ip}`,
         {
           source: 'web-ui',
-        },
+        }
       );
 
       const result = await deviceService.setDisplayBrightness(
         req.params.ip,
-        brightness,
+        brightness
       );
       res.json(result);
     } catch (error) {
@@ -402,7 +403,7 @@ function startWebServer(container, logger) {
         await deviceService.activateDevice(device.ip);
       } catch (activationError) {
         logger.warn(
-          `Device config saved but activation failed: ${activationError.message}`,
+          `Device config saved but activation failed: ${activationError.message}`
         );
       }
 
@@ -423,10 +424,10 @@ function startWebServer(container, logger) {
     try {
       const device = await deviceConfigStore.updateDevice(
         req.params.ip,
-        req.body,
+        req.body
       );
       logger.ok(
-        `[WEB UI] Updated device config: ${device.ip} (${device.name})`,
+        `[WEB UI] Updated device config: ${device.ip} (${device.name})`
       );
 
       // Re-activate device with updated config
@@ -434,7 +435,7 @@ function startWebServer(container, logger) {
         await deviceService.activateDevice(device.ip);
       } catch (activationError) {
         logger.warn(
-          `Device config updated but activation failed: ${activationError.message}`,
+          `Device config updated but activation failed: ${activationError.message}`
         );
       }
 
@@ -646,6 +647,39 @@ function startWebServer(container, logger) {
     }
   });
 
+  // Diagnostics API
+  app.get('/api/tests', (req, res) => {
+    try {
+      const tests = diagnosticsService.listTests();
+      res.json({ tests });
+    } catch (error) {
+      logger.error('API /api/tests error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/tests/:id/run', async (req, res) => {
+    try {
+      const result = await diagnosticsService.runTest(req.params.id);
+      res.json(result);
+    } catch (error) {
+      logger.error(`API /api/tests/${req.params.id}/run error:`, {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/tests/run', async (req, res) => {
+    try {
+      const results = await diagnosticsService.runAll();
+      res.json({ results });
+    } catch (error) {
+      logger.error('API /api/tests/run error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/system/mqtt-config', async (req, res) => {
     try {
       const config = await mqttConfigService.loadConfig();
@@ -674,7 +708,7 @@ function startWebServer(container, logger) {
   app.post('/api/system/mqtt-config', async (req, res) => {
     try {
       const previousConfig = JSON.parse(
-        JSON.stringify(await mqttConfigService.loadConfig()),
+        JSON.stringify(await mqttConfigService.loadConfig())
       );
       const updated = await mqttConfigService.updateConfig(req.body || {});
       const mqttServiceInstance = container.resolveIfRegistered('mqttService');
@@ -819,7 +853,7 @@ function startWebServer(container, logger) {
       logger.info('🔒 Web UI authentication enabled');
     } else {
       logger.warn(
-        '⚠️  Web UI authentication disabled (set PIXOO_WEB_AUTH to enable)',
+        '⚠️  Web UI authentication disabled (set PIXOO_WEB_AUTH to enable)'
       );
     }
   });
@@ -850,7 +884,7 @@ function startWebServer(container, logger) {
               scenes,
               timestamp: Date.now(),
             },
-          }),
+          })
         );
       } catch (error) {
         logger.error('Failed to send initial WebSocket state:', {
@@ -906,7 +940,7 @@ function startWebServer(container, logger) {
     });
     if (sent > 0) {
       logger.debug(
-        `📡 WebSocket broadcast to ${sent} client(s): ${message.type}`,
+        `📡 WebSocket broadcast to ${sent} client(s): ${message.type}`
       );
     }
   }

@@ -720,7 +720,7 @@ const resetLoading = ref(false);
 const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 // Local state - initialized from backend, then synced via watchers
-const displayOn = ref(true);
+const displayOn = ref(props.device.hardware?.displayOn !== false);
 const brightness = ref(75);
 const previousBrightness = ref(75);
 const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent');

@@ -30,6 +30,7 @@ const { softReset } = require('./lib/pixoo-http');
 const { SceneRegistration } = require('./lib/scene-loader');
 const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
+const DiagnosticsService = require('./lib/services/diagnostics-service');
 const MqttConfigService = require('./lib/services/mqtt-config-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
@@ -89,11 +90,11 @@ async function bootstrap() {
   container.register('deviceConfigStore', () => new DeviceConfigStore());
   container.register(
     'sceneManager',
-    ({ logger, stateStore }) => new SceneManager({ logger, stateStore }),
+    ({ logger, stateStore }) => new SceneManager({ logger, stateStore })
   );
   container.register(
     'mqttService',
-    ({ logger }) => new MqttService({ logger, config: mqttConfig }),
+    ({ logger }) => new MqttService({ logger, config: mqttConfig })
   );
   container.register('deviceAdapter', () => ({
     getContext,
@@ -128,7 +129,7 @@ async function bootstrap() {
         mqttService,
         versionInfo,
         publishOk, // Pass global publishOk callback for WebSocket broadcasts
-      }),
+      })
   );
 
   container.register(
@@ -147,7 +148,7 @@ async function bootstrap() {
         stateStore,
         softReset,
         deviceConfigStore,
-      }),
+      })
   );
 
   container.register(
@@ -159,7 +160,7 @@ async function bootstrap() {
         deploymentTracker,
         mqttConfigService,
         stateStore,
-      }),
+      })
   );
 
   container.register(
@@ -176,8 +177,30 @@ async function bootstrap() {
         deviceService,
         sceneService,
         stateStore,
-        deviceAdapter,
-      ),
+        deviceAdapter
+      )
+  );
+
+  container.register(
+    'diagnosticsService',
+    ({
+      logger,
+      stateStore,
+      deviceService,
+      systemService,
+      sceneService,
+      watchdogService,
+      deviceConfigStore,
+    }) =>
+      new DiagnosticsService({
+        logger,
+        stateStore,
+        deviceService,
+        systemService,
+        sceneService,
+        watchdogService,
+        deviceConfigStore,
+      })
   );
 
   // Register command handlers in DI container
@@ -188,7 +211,7 @@ async function bootstrap() {
         logger,
         mqttService,
         deviceDefaults,
-      }),
+      })
   );
 
   container.register(
@@ -202,7 +225,7 @@ async function bootstrap() {
         sceneManager,
         getContext,
         publishMetrics,
-      }),
+      })
   );
 
   container.register(
@@ -212,7 +235,7 @@ async function bootstrap() {
         logger,
         mqttService,
         softReset,
-      }),
+      })
   );
 
   container.register(
@@ -229,7 +252,7 @@ async function bootstrap() {
         getDevice,
         getDriverForDevice,
         versionInfo,
-      }),
+      })
   );
 
   logger.ok('✅ DI Container initialized with services:', {
@@ -268,7 +291,7 @@ async function bootstrap() {
     sceneManager,
     path.join(__dirname, 'scenes'),
     null,
-    process.env.SCENES_FALLBACK !== 'disabled',
+    process.env.SCENES_FALLBACK !== 'disabled'
   );
 
   if (sceneLoadResults.errors.length > 0) {
@@ -283,7 +306,7 @@ async function bootstrap() {
   logger.ok('**************************************************');
   logger.ok(`🚀 Starting Pixoo Daemon at [${startTs}] ...`);
   logger.ok(
-    `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`,
+    `   Version: ${versionInfo.version}, Build: #${versionInfo.buildNumber}, Commit: ${versionInfo.gitCommit}`
   );
   logger.ok('**************************************************');
 
@@ -295,7 +318,7 @@ async function bootstrap() {
     });
   } else {
     logger.warn(
-      'No device targets configured. Add devices via Web UI or create config/devices.json from example.',
+      'No device targets configured. Add devices via Web UI or create config/devices.json from example.'
     );
   }
   logger.info('Loaded scenes:', { scenes: sceneManager.getRegisteredScenes() });
@@ -319,7 +342,7 @@ async function bootstrap() {
           mqttConfig.username = configSettings.mqttUsername;
         }
         const configuredDevices = Array.from(
-          deviceConfigStore.getAllDevices().values(),
+          deviceConfigStore.getAllDevices().values()
         );
 
         registerDevicesFromConfig(configuredDevices);
@@ -330,18 +353,18 @@ async function bootstrap() {
             sceneManager,
             null, // Don't reload built-in scenes
             settings.scenesPath,
-            false,
+            false
           );
           if (userSceneResults.errors.length > 0) {
             logger.warn(
-              `Failed to load ${userSceneResults.errors.length} user scene(s)`,
+              `Failed to load ${userSceneResults.errors.length} user scene(s)`
             );
           }
         }
 
         if (configuredDevices.length > 0) {
           logger.ok(
-            `Loaded ${configuredDevices.length} device(s) from configuration file`,
+            `Loaded ${configuredDevices.length} device(s) from configuration file`
           );
 
           for (const deviceConfig of configuredDevices) {
@@ -364,7 +387,7 @@ async function bootstrap() {
                     logger.debug(`Set brightness for ${ip}: ${brightness}%`);
                   } catch (error) {
                     logger.warn(
-                      `Failed to set brightness for ${ip}: ${error.message}`,
+                      `Failed to set brightness for ${ip}: ${error.message}`
                     );
                   }
                 }
@@ -372,26 +395,26 @@ async function bootstrap() {
 
               if (startupScene) {
                 logger.info(
-                  `Loading startup scene "${startupScene}" for ${name} (${ip})`,
+                  `Loading startup scene "${startupScene}" for ${name} (${ip})`
                 );
                 const ctx = getContext(
                   ip,
                   deviceDefaults,
                   deviceDrivers,
-                  deviceConfigStore,
+                  deviceConfigStore
                 );
                 await sceneManager.switchScene(startupScene, ctx);
               }
             } catch (error) {
               logger.warn(
-                `Failed to initialize device ${name} (${ip}): ${error.message}`,
+                `Failed to initialize device ${name} (${ip}): ${error.message}`
               );
             }
           }
         }
       } catch (error) {
         logger.error(
-          `Failed to load device configuration: ${error.message}. Falling back to environment variables.`,
+          `Failed to load device configuration: ${error.message}. Falling back to environment variables.`
         );
       }
     } catch (error) {
@@ -420,7 +443,7 @@ async function bootstrap() {
   function reconnectMqttWithBackoff(attempt = 1) {
     const delayMs = Math.min(30000, attempt * 5000);
     logger.info(
-      `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`,
+      `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`
     );
     setTimeout(() => {
       mqttService.connect().catch((err) => {

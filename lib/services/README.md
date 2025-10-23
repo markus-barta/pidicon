@@ -13,6 +13,7 @@ MQTT handlers and the Web UI.
 - **`scene-service.js`** - Scene management operations
 - **`device-service.js`** - Device management operations
 - **`system-service.js`** - Daemon/system operations
+- **`diagnostics-service.js`** - Runs health checks and exposes diagnostics results for the UI
 
 ---
 
