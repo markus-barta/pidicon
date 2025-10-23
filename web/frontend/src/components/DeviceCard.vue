@@ -11,12 +11,12 @@
           </h3>
           
           <!-- Badges -->
-          <div class="device-badges">
+          <div class="device-badges" v-show="isCollapsed">
             <v-chip
               :color="playStateChipColor"
               size="small"
               variant="flat"
-              class="status-badge"
+              class="status-badge scene-state-chip"
             >
               <span style="display: inline-flex; align-items: center;">
                 <v-icon 
@@ -26,30 +26,22 @@
                 >
                   {{ playStateIcon }}
                 </v-icon>
-                <span :style="{ color: playStateTextColor }">
+                <span class="scene-label" :style="{ color: playStateTextColor }">
                   {{ selectedScene ? formatSceneName(selectedScene) : 'No Scene' }}
                 </span>
               </span>
             </v-chip>
             <v-chip
-              :color="device.driver === 'real' ? 'info-darken-2' : undefined"
+              :color="driverBadgeColor"
               size="small"
-              :variant="device.driver === 'real' ? 'flat' : 'outlined'"
-              :style="device.driver === 'real' ? { backgroundColor: '#0c4a6e !important' } : { borderColor: '#d1d5db' }"
-              class="status-badge"
+              :variant="driverVariant"
+              class="status-badge driver-badge"
             >
-              <span style="display: inline-flex; align-items: center;">
-                <span :style="{ 
-                  display: 'inline-block', 
-                  width: '6px', 
-                  height: '6px', 
-                  borderRadius: '50%', 
-                  backgroundColor: device.driver === 'real' ? '#fff' : '#f59e0b', 
-                  marginRight: '6px' 
-                }"></span>
-                <span :style="{ color: device.driver === 'real' ? '#fff' : '#6b7280' }">
-                  {{ device.driver === 'real' ? 'Hardware' : 'Simulated' }}
-                </span>
+              <span class="driver-badge__content">
+                <v-icon size="x-small" :color="driverIconColor" class="mr-1">
+                  {{ driverIcon }}
+                </v-icon>
+                <span :style="{ color: driverTextColor }">{{ driverLabel }}</span>
               </span>
             </v-chip>
           </div>
@@ -139,35 +131,36 @@
           </v-btn>
         </div>
 
-        <!-- Driver Buttons (Real/Mock) -->
+        <!-- Driver Buttons (HW/SIM) -->
         <div class="button-group">
           <v-btn
             :variant="device.driver === 'real' ? 'tonal' : 'outlined'"
-            :color="device.driver === 'real' ? 'warning' : 'grey'"
+            :color="device.driver === 'real' ? 'blue-darken-3' : 'grey'
+            "
             size="small"
             @click="device.driver === 'real' ? null : toggleDriver('real')"
             class="control-btn-compact"
             data-test="device-driver-real"
           >
-            <v-icon size="small" class="mr-1">mdi-lan-connect</v-icon>
-            <span class="text-caption">Real</span>
+            <v-icon size="small" class="mr-1">mdi-chip</v-icon>
+            <span class="text-caption">HW</span>
             <v-tooltip activator="parent" location="bottom">
-              Use real hardware device
+              Hardware device
             </v-tooltip>
           </v-btn>
 
           <v-btn
             :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
-            :color="device.driver === 'mock' ? 'info' : 'grey'"
+            :color="device.driver === 'mock' ? 'deep-purple-darken-1' : 'grey'"
             size="small"
             @click="device.driver === 'mock' ? null : toggleDriver('mock')"
             class="control-btn-compact"
             data-test="device-driver-mock"
           >
-            <v-icon size="small" class="mr-1">mdi-chip</v-icon>
-            <span class="text-caption">Mock</span>
+            <v-icon size="small" class="mr-1">mdi-robot</v-icon>
+            <span class="text-caption">SIM</span>
             <v-tooltip activator="parent" location="bottom">
-              Use simulated device
+              Simulated device
             </v-tooltip>
           </v-btn>
         </div>
@@ -176,14 +169,15 @@
         <v-btn
           size="small"
           variant="outlined"
-          :color="device.deviceType === 'awtrix' ? 'warning' : 'grey'"
+          class="control-btn-compact critical-action"
+          :color="device.deviceType === 'awtrix' ? 'error' : 'error'
+          "
           @click="handleReset"
           :loading="resetLoading"
-          class="control-btn-compact"
         >
           <v-icon
             size="small"
-            :color="device.deviceType === 'awtrix' ? 'warning' : 'error'"
+            :color="device.deviceType === 'awtrix' ? 'error' : 'error'"
             class="mr-1"
           >
             {{ device.deviceType === 'awtrix' ? 'mdi-power' : 'mdi-restart' }}
@@ -857,7 +851,7 @@ const lastSeenTooltip = computed(() => {
 // Device responsiveness indicator (all real devices)
 const deviceResponsiveColor = computed(() => {
   if (props.device.driver !== 'real') {
-    return '#10b981'; // green (mock device)
+    return '#4c1d95';
   }
   
   const lastSeenTs = props.device?.metrics?.lastSeenTs;
@@ -1165,22 +1159,22 @@ const playStateChipColor = computed(() => {
 
   const state = playState.value;
   const colors = {
-    playing: '#15803d', // Green for playing
-    paused: '#ca8a04', // Amber for paused
-    stopped: '#1e293b', // Slate for stopped
+    playing: '#16a34a',
+    paused: '#ca8a04',
+    stopped: '#dc2626',
   };
   return colors[state] || '#1e293b';
 });
 
 const playStateIconColorForBadge = computed(() => {
   const state = playState.value;
-  if (state === 'stopped') return '#f8fafc';
+  if (state === 'stopped') return '#fee2e2';
   return '#ffffff';
 });
 
 const playStateTextColor = computed(() => {
   const state = playState.value;
-  if (state === 'stopped') return '#e2e8f0';
+  if (state === 'stopped') return '#fee2e2';
   return '#ffffff';
 });
 
@@ -1936,6 +1930,30 @@ onUnmounted(() => {
   
   // ECharts cleans up automatically via v-chart component!
 });
+
+const driverIcon = computed(() => {
+  return props.device.driver === 'real' ? 'mdi-chip' : 'mdi-robot';
+});
+
+const driverBadgeColor = computed(() =>
+  props.device.driver === 'real' ? '#0f172a' : '#ede9fe',
+);
+
+const driverVariant = computed(() =>
+  props.device.driver === 'real' ? 'flat' : 'outlined',
+);
+
+const driverTextColor = computed(() =>
+  props.device.driver === 'real' ? '#f8fafc' : '#4c1d95',
+);
+
+const driverIconColor = computed(() =>
+  props.device.driver === 'real' ? '#facc15' : '#4c1d95',
+);
+
+const driverLabel = computed(() =>
+  props.device.driver === 'real' ? 'HW' : 'SIM',
+);
 </script>
 
 <style scoped>
@@ -2408,4 +2426,36 @@ onUnmounted(() => {
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
+.driver-badge {
+  border-color: rgba(76, 29, 149, 0.18) !important;
+}
+
+.driver-badge__content {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.scene-state-chip {
+  background-image: linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(15, 118, 110, 0.12));
+  border: none !important;
+}
+
+.scene-label {
+  font-weight: 600;
+}
+
+.critical-action {
+  border: 2px solid rgba(220, 38, 38, 0.5) !important;
+  color: #b91c1c !important;
+}
+
+.critical-action .v-icon {
+  color: #b91c1c !important;
+}
+
+.critical-action:hover {
+  background-color: rgba(254, 226, 226, 0.4) !important;
+}
 </style>

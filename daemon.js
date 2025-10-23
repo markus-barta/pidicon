@@ -44,6 +44,7 @@ const defaultMqttConfig = {
   brokerUrl: 'mqtt://localhost:1883',
   username: undefined,
   password: undefined,
+  autoReconnect: true,
 };
 
 // Default scene per device (set via MQTT)

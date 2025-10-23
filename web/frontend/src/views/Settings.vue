@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="settings-view">
     <v-row justify="center">
-      <v-col cols="12" lg="10">
+      <v-col cols="12" lg="11">
         <div class="settings-header">
           <div class="settings-title">
             <v-avatar color="primary" size="40" class="mr-3">
@@ -40,7 +40,7 @@
             :class="{ 'tab-active': activeTab === 'devices' }"
           >
             <v-icon class="mr-2">mdi-view-dashboard</v-icon>
-            Dashboard
+            Devices
           </v-tab>
           <v-tab
             value="global"
@@ -325,15 +325,26 @@
                           />
                         </v-col>
                         <v-col cols="12" md="4" class="d-flex align-center">
-                          <v-switch
-                            v-model="mqttSettings.tls"
-                            inset
-                            color="primary"
-                            hide-details
-                            label="Use TLS"
-                            class="mt-0"
-                            data-test="mqtt-tls-toggle"
-                          />
+                          <div class="d-flex flex-column" style="gap: 8px; width: 100%">
+                            <v-switch
+                              v-model="mqttSettings.tls"
+                              inset
+                              color="primary"
+                              hide-details
+                              label="Use TLS"
+                              class="mt-0"
+                              data-test="mqtt-tls-toggle"
+                            />
+                            <v-switch
+                              v-model="mqttSettings.autoReconnect"
+                              inset
+                              color="primary"
+                              hide-details
+                              label="Automatic reconnect"
+                              class="mt-0"
+                              data-test="mqtt-auto-reconnect"
+                            />
+                          </div>
                         </v-col>
                       </v-row>
                     </v-form>
@@ -354,6 +365,11 @@
                         :prepend-icon="mqttStatusDetails.connected ? 'mdi-lan-connect' : 'mdi-lan-disconnect'"
                       >
                         {{ mqttStatusSummary }}
+                        <template v-if="mqttStatusDetails.lastHeartbeatTs">
+                          <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
+                            • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
+                          </span>
+                        </template>
                       </v-chip>
 
                       <v-btn
@@ -368,14 +384,14 @@
                       </v-btn>
 
                       <v-btn
-                        color="warning"
+                        :color="mqttSettings.autoReconnect ? 'warning' : 'grey-darken-2'"
                         variant="flat"
                         :disabled="!mqttStatusDetails.connected || mqttBusy"
                         :loading="mqttBusy && mqttBusyAction === 'disconnect'"
                         @click="handleMqttDisconnect"
                       >
                         <v-icon class="mr-2">mdi-power-plug-off</v-icon>
-                        Disconnect
+                        {{ mqttSettings.autoReconnect ? 'Disconnect' : 'Stop' }}
                       </v-btn>
                     </div>
                   </div>
@@ -556,6 +572,10 @@
                   item-key="id"
                   density="comfortable"
                 >
+                  <template #item.id="{ item }">
+                    <code class="diagnostics-id">{{ item.id }}</code>
+                  </template>
+
                   <template #item.status="{ item }">
                     <v-chip
                       :color="statusColor(item.latest?.status)"
@@ -703,6 +723,7 @@ export default {
       clientId: '',
       keepalive: 60,
       tls: false,
+      autoReconnect: true,
     });
     const mqttOnline = ref(true);
     const mqttLastError = ref(null);
@@ -830,6 +851,7 @@ export default {
           clientId: config.clientId || '',
           keepalive: config.keepalive ?? 60,
           tls: !!config.tls,
+          autoReconnect: config.autoReconnect !== false,
         };
         mqttStatusDetails.value = {
           ...mqttStatusDetails.value,
@@ -921,6 +943,7 @@ export default {
           clientId: mqttSettings.value.clientId,
           keepalive: Number(mqttSettings.value.keepalive),
           tls: mqttSettings.value.tls,
+          autoReconnect: mqttSettings.value.autoReconnect,
           password:
             mqttSettings.value.password === PASSWORD_PLACEHOLDER
               ? undefined
@@ -946,6 +969,7 @@ export default {
           clientId: config.clientId || '',
           keepalive: config.keepalive ?? 60,
           tls: !!config.tls,
+          autoReconnect: config.autoReconnect !== false,
         };
 
         const status = mqttResult.status || {};
@@ -1158,6 +1182,7 @@ export default {
           clientId: '',
           keepalive: 60,
           tls: false,
+          autoReconnect: true,
         };
 
         showResetDialog.value = false;
@@ -1245,6 +1270,7 @@ export default {
     });
 
     const diagnosticsHeaders = [
+      { title: 'ID', key: 'id', width: 140 },
       { title: 'Test', key: 'name', width: 220 },
       { title: 'Status', key: 'status', width: 120 },
       { title: 'Last Run', key: 'lastRun', width: 160 },
@@ -1263,6 +1289,38 @@ export default {
         default:
           return undefined;
       }
+    };
+
+    const formatTimestamp = (timestamp) => {
+      if (!timestamp) return '—';
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(timestamp));
+    };
+
+    const formatRelative = (timestamp) => {
+      if (!timestamp) return 'never';
+      const diff = Date.now() - timestamp;
+      if (diff < 0) return 'just now';
+      if (diff < 60_000) {
+        const seconds = Math.floor(diff / 1000);
+        return seconds <= 1 ? 'just now' : `${seconds}s ago`;
+      }
+      if (diff < 3_600_000) {
+        const minutes = Math.floor(diff / 60_000);
+        return `${minutes}m ago`;
+      }
+      if (diff < 86_400_000) {
+        const hours = Math.floor(diff / 3_600_000);
+        return `${hours}h ago`;
+      }
+      const days = Math.floor(diff / 86_400_000);
+      return `${days}d ago`;
     };
 
     const formatLastRun = (timestamp) => {
@@ -1389,6 +1447,8 @@ export default {
       runDiagnosticsTest,
       statusColor,
       formatLastRun,
+      formatTimestamp,
+      formatRelative,
       formatDetails,
     };
   },
@@ -1416,7 +1476,7 @@ export default {
 .settings-shell {
   background-color: #ffffff;
   border-radius: 20px;
-  padding: 24px;
+  padding: 8px 12px;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
@@ -1427,12 +1487,13 @@ export default {
 .tab-card {
   background: transparent;
   box-shadow: none;
+  border-radius: 16px;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 }
 
 .section-header {
@@ -1456,11 +1517,27 @@ export default {
   letter-spacing: 0.02em;
 }
 
+.mqtt-status-chip .last-heartbeat {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.7);
+}
+
 .status-row {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.diagnostics-id {
+  font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  background: rgba(15, 23, 42, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #0f172a;
 }
 
 .panel-card {
@@ -1491,9 +1568,19 @@ export default {
   border-radius: 999px !important;
 }
 
+.diagnostics-id {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #475569;
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
 @media (max-width: 960px) {
   .settings-shell {
-    padding: 16px;
+    padding: 12px;
   }
 
   .settings-header {

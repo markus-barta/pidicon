@@ -29,7 +29,14 @@
                   v-bind="props"
                 >
                   <span :style="statusDotStyles(mqttStatusColor)"></span>
-                  <span class="status-label">MQTT: {{ mqttStatus }}</span>
+              <span class="status-label">
+                MQTT: {{ mqttStatus }}
+                <template v-if="mqttStatusDetails.lastHeartbeatTs">
+                  <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
+                    • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
+                  </span>
+                </template>
+              </span>
                 </span>
               </template>
               <div class="mqtt-tooltip">
@@ -48,6 +55,10 @@
                 <div class="tooltip-row">
                   <span class="tooltip-label">Next Retry</span>
                   <span class="tooltip-value">{{ nextRetryLabel }}</span>
+                </div>
+                <div class="tooltip-row">
+                  <span class="tooltip-label">Last Heartbeat</span>
+                  <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
                 </div>
                 <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
                   <span class="tooltip-label">Last Error</span>
@@ -117,6 +128,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
 import ConfirmDialog from './ConfirmDialog.vue';
+import { useDevModeStore } from '../store/dev-mode';
 
 const emit = defineEmits(['navigate']);
 const props = defineProps({
@@ -132,6 +144,7 @@ const props = defineProps({
 
 const api = useApi();
 const toast = useToast();
+const devModeStore = useDevModeStore();
 
 const activeNav = ref(props.activeView);
 const showLogs = computed(() => props.showLogs);
@@ -198,6 +211,38 @@ const nextRetryLabel = computed(() => {
   }
   return `${ms}ms`;
 });
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '—';
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(timestamp));
+};
+
+const formatRelative = (timestamp) => {
+  if (!timestamp) return 'never';
+  const diff = Date.now() - timestamp;
+  if (diff < 0) return 'just now';
+  if (diff < 60_000) {
+    const seconds = Math.floor(diff / 1000);
+    return seconds <= 1 ? 'just now' : `${seconds}s ago`;
+  }
+  if (diff < 3_600_000) {
+    const minutes = Math.floor(diff / 60_000);
+    return `${minutes}m ago`;
+  }
+  if (diff < 86_400_000) {
+    const hours = Math.floor(diff / 3_600_000);
+    return `${hours}h ago`;
+  }
+  const days = Math.floor(diff / 86_400_000);
+  return `${days}d ago`;
+};
 
 let uptimeInterval = null;
 
@@ -356,6 +401,14 @@ const navItems = computed(() => [
     testId: 'nav-settings'
   },
   {
+    value: 'tests',
+    label: 'Diagnostics',
+    icon: 'mdi-clipboard-check-outline',
+    tooltip: 'Run diagnostic checks',
+    testId: 'nav-tests',
+    requiresDev: true
+  },
+  {
     value: 'logs',
     label: 'Logs',
     icon: 'mdi-file-document-outline',
@@ -364,8 +417,18 @@ const navItems = computed(() => [
   }
 ]);
 
+const devMode = computed(() => devModeStore.enabled);
+
 const filteredNavItems = computed(() =>
-  navItems.value.filter((item) => item.value !== 'logs' || showLogs.value),
+  navItems.value.filter((item) => {
+    if (item.requiresDev && !devMode.value) {
+      return false;
+    }
+    if (item.value === 'logs' && !showLogs.value) {
+      return false;
+    }
+    return true;
+  }),
 );
 
 const statusDotStyles = (color) => ({
@@ -438,6 +501,12 @@ onUnmounted(() => {
 .status-label,
 .status-detail {
   color: #6b7280;
+}
+
+.status-label .last-heartbeat {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.7);
 }
 
 .separator {

@@ -70,8 +70,23 @@ function startWebServer(container, logger) {
   app.get('/api/status', async (_req, res) => {
     try {
       const status = await systemService.getStatus();
-      const mqttStatus =
-        container.resolveIfRegistered('mqttService')?.getStatus?.() || {};
+      const mqttServiceInstance = container.resolveIfRegistered('mqttService');
+      const mqttStatus = mqttServiceInstance?.getStatus?.() || {};
+      if (!('autoReconnect' in mqttStatus)) {
+        try {
+          const savedConfig = await mqttConfigService.loadConfig();
+          if (savedConfig?.autoReconnect !== undefined) {
+            mqttStatus.autoReconnect = savedConfig.autoReconnect !== false;
+          }
+        } catch (configError) {
+          logger.warn(
+            'Failed to load MQTT config for status autoReconnect fallback',
+            {
+              error: configError.message,
+            }
+          );
+        }
+      }
       const scenes = await sceneService.listScenes();
       res.json({
         ...status,
@@ -691,6 +706,7 @@ function startWebServer(container, logger) {
         clientId: config.clientId || '',
         keepalive: config.keepalive ?? 60,
         tls: !!config.tls,
+        autoReconnect: config.autoReconnect !== false,
         hasPassword: Boolean(config.password),
       };
       res.json({
@@ -759,6 +775,7 @@ function startWebServer(container, logger) {
         clientId: updated.clientId || '',
         keepalive: updated.keepalive ?? 60,
         tls: !!updated.tls,
+        autoReconnect: updated.autoReconnect !== false,
         hasPassword: Boolean(updated.password),
       };
 
