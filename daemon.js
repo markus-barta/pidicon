@@ -380,11 +380,7 @@ async function bootstrap() {
                   deviceDrivers,
                   deviceConfigStore,
                 );
-                await sceneManager.loadScene({
-                  deviceIp: ip,
-                  sceneName: startupScene,
-                  context: ctx,
-                });
+                await sceneManager.switchScene(startupScene, ctx);
               }
             } catch (error) {
               logger.warn(
