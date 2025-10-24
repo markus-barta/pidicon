@@ -427,6 +427,10 @@ async function bootstrap() {
 
   await initializeDeployment();
 
+  // Start watchdog service for all devices (health checks and recovery actions)
+  const watchdogService = container.resolve('watchdogService');
+  watchdogService.startAll();
+
   mqttService.on('connect', async () => {
     await mqttService.subscribe([
       'pixoo/+/state/upd',

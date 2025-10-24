@@ -37,7 +37,10 @@
         </v-alert>
 
         <!-- Settings View -->
-        <settings-view v-if="currentView === 'settings'" :show-tests-tab="showTestsTab" />
+        <settings-view v-if="currentView === 'settings'" />
+
+        <!-- Tests View -->
+        <tests-view v-else-if="currentView === 'tests'" />
 
         <!-- Logs View -->
         <logs-view v-else-if="currentView === 'logs'" />
@@ -104,6 +107,7 @@ import ToastNotifications from './components/ToastNotifications.vue';
 import AppFooter from './components/AppFooter.vue';
 import SettingsView from './views/Settings.vue';
 import LogsView from './views/Logs.vue';
+import TestsView from './views/Tests.vue';
 
 const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();

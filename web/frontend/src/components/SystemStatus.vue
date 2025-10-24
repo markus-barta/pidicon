@@ -402,9 +402,9 @@ const navItems = computed(() => [
   },
   {
     value: 'tests',
-    label: 'Diagnostics',
+    label: 'Tests',
     icon: 'mdi-clipboard-check-outline',
-    tooltip: 'Run diagnostic checks',
+    tooltip: 'Run diagnostic tests',
     testId: 'nav-tests',
     requiresDev: true
   },

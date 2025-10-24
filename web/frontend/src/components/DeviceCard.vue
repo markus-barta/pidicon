@@ -135,17 +135,16 @@
         <div class="button-group">
           <v-btn
             :variant="device.driver === 'real' ? 'tonal' : 'outlined'"
-            :color="device.driver === 'real' ? 'blue-darken-3' : 'grey'
-            "
+            :color="device.driver === 'real' ? 'blue-darken-3' : 'grey'"
             size="small"
             @click="device.driver === 'real' ? null : toggleDriver('real')"
             class="control-btn-compact"
             data-test="device-driver-real"
           >
             <v-icon size="small" class="mr-1">mdi-chip</v-icon>
-            <span class="text-caption">HW</span>
+            <span class="text-caption">Hardware</span>
             <v-tooltip activator="parent" location="bottom">
-              Hardware device
+              Connect to physical hardware device
             </v-tooltip>
           </v-btn>
 
@@ -158,9 +157,9 @@
             data-test="device-driver-mock"
           >
             <v-icon size="small" class="mr-1">mdi-robot</v-icon>
-            <span class="text-caption">SIM</span>
+            <span class="text-caption">Simulated</span>
             <v-tooltip activator="parent" location="bottom">
-              Simulated device
+              Use simulated device without hardware
             </v-tooltip>
           </v-btn>
         </div>
@@ -1874,11 +1873,16 @@ async function toggleDriver(newDriver) {
   // newDriver comes from the flip switch: 'real' or 'mock'
   if (!newDriver || newDriver === props.device.driver) return;
 
+  const driverLabel = newDriver === 'real' ? 'Hardware' : 'Simulated';
+  const driverDescription = newDriver === 'real' 
+    ? 'This will connect to the physical hardware device.' 
+    : 'This will use a simulated device without physical hardware.';
+
   // Use Vue confirm dialog instead of browser confirm (UI-512)
   const confirmed = await confirmDialog.value?.show({
-    title: 'Switch Driver',
-    message: `Switch device ${props.device.ip} to ${newDriver} driver?`,
-    confirmText: `Switch to ${newDriver}`,
+    title: 'Switch Driver Mode',
+    message: `Switch device ${props.device.ip} to ${driverLabel} mode?\n\n${driverDescription}`,
+    confirmText: `Switch to ${driverLabel}`,
     cancelText: 'Cancel',
     confirmColor: 'primary',
     icon: 'mdi-swap-horizontal',
@@ -1894,7 +1898,7 @@ async function toggleDriver(newDriver) {
   driverLoading.value = true;
   try {
     await api.switchDriver(props.device.ip, newDriver);
-    toast.success(`Switched to ${newDriver} driver`, 2000);
+    toast.success(`Switched to ${driverLabel} mode`, 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to switch driver: ${err.message}`);
@@ -1936,23 +1940,23 @@ const driverIcon = computed(() => {
 });
 
 const driverBadgeColor = computed(() =>
-  props.device.driver === 'real' ? '#0f172a' : '#ede9fe',
+  props.device.driver === 'real' ? '#1565c0' : '#7e57c2',
 );
 
 const driverVariant = computed(() =>
-  props.device.driver === 'real' ? 'flat' : 'outlined',
+  props.device.driver === 'real' ? 'flat' : 'flat',
 );
 
 const driverTextColor = computed(() =>
-  props.device.driver === 'real' ? '#f8fafc' : '#4c1d95',
+  props.device.driver === 'real' ? '#ffffff' : '#ffffff',
 );
 
 const driverIconColor = computed(() =>
-  props.device.driver === 'real' ? '#facc15' : '#4c1d95',
+  props.device.driver === 'real' ? '#ffffff' : '#ffffff',
 );
 
 const driverLabel = computed(() =>
-  props.device.driver === 'real' ? 'HW' : 'SIM',
+  props.device.driver === 'real' ? 'Hardware' : 'Simulated',
 );
 </script>
 
