@@ -1,13 +1,30 @@
 <template>
-  <v-card elevation="1" class="device-card" data-test="device-card" :data-device-ip="device.ip">
+  <v-card 
+    elevation="1" 
+    class="device-card" 
+    :class="{ 'device-card--simulated': device.driver === 'mock' }"
+    data-test="device-card" 
+    :data-device-ip="device.ip"
+  >
     <!-- Device Header -->
     <v-card-title class="pb-2">
       <div class="device-header-container">
         <div class="device-header-row">
-          <!-- Device Type Icon + Name -->
+          <!-- Device Type Icon + Name + Driver Status -->
           <h3 class="text-h5 font-weight-bold device-name">
             <v-icon :icon="deviceTypeIcon" size="small" class="mr-2"></v-icon>
             {{ deviceName }}
+            <v-icon 
+              :icon="driverStatusIcon" 
+              :color="driverStatusColor"
+              size="x-small" 
+              class="ml-2 driver-status-icon"
+              :class="{ 'driver-status-icon--glow': device.driver === 'mock' }"
+            >
+              <v-tooltip activator="parent" location="bottom">
+                {{ driverStatusLabel }}
+              </v-tooltip>
+            </v-icon>
           </h3>
           
           <!-- Badges -->
@@ -53,7 +70,12 @@
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <span v-bind="tooltipProps" class="info-content">
-                    <span :style="{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: deviceResponsiveColor, marginRight: '6px' }"></span>
+                    <span 
+                      class="device-responsive-dot"
+                      :class="{ 'device-responsive-dot--heartbeat': deviceResponsiveColor === '#10b981' }"
+                      :style="{ backgroundColor: deviceResponsiveColor }"
+                      :key="device.metrics?.lastSeenTs"
+                    ></span>
                     <span>{{ lastSeen }}</span>
                   </span>
                 </template>
@@ -131,38 +153,21 @@
           </v-btn>
         </div>
 
-        <!-- Driver Buttons (HW/SIM) -->
-        <div class="button-group">
-          <v-btn
-            :variant="device.driver === 'real' ? 'tonal' : 'outlined'"
-            :color="device.driver === 'real' ? 'blue-darken-3' : 'grey'"
-            size="small"
-            @click="device.driver === 'real' ? null : toggleDriver('real')"
-            class="control-btn-compact"
-            data-test="device-driver-real"
-          >
-            <v-icon size="small" class="mr-1">mdi-chip</v-icon>
-            <span class="text-caption">Hardware</span>
-            <v-tooltip activator="parent" location="bottom">
-              Connect to physical hardware device
-            </v-tooltip>
-          </v-btn>
-
-          <v-btn
-            :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
-            :color="device.driver === 'mock' ? 'deep-purple-darken-1' : 'grey'"
-            size="small"
-            @click="device.driver === 'mock' ? null : toggleDriver('mock')"
-            class="control-btn-compact"
-            data-test="device-driver-mock"
-          >
-            <v-icon size="small" class="mr-1">mdi-robot</v-icon>
-            <span class="text-caption">Simulated</span>
-            <v-tooltip activator="parent" location="bottom">
-              Use simulated device without hardware
-            </v-tooltip>
-          </v-btn>
-        </div>
+        <!-- Mock Mode Toggle Button -->
+        <v-btn
+          :variant="device.driver === 'mock' ? 'tonal' : 'outlined'"
+          :color="device.driver === 'mock' ? 'deep-purple-darken-1' : 'grey'"
+          size="small"
+          @click="toggleDriver(device.driver === 'mock' ? 'real' : 'mock')"
+          class="control-btn-compact"
+          data-test="device-driver-mock"
+        >
+          <v-icon size="small" class="mr-1">mdi-robot</v-icon>
+          <span class="text-caption">{{ device.driver === 'mock' ? 'Exit Mock' : 'Mock Mode' }}</span>
+          <v-tooltip activator="parent" location="bottom">
+            {{ device.driver === 'mock' ? 'Switch to real hardware device' : 'Switch to simulated mock device' }}
+          </v-tooltip>
+        </v-btn>
 
         <!-- Device Reset/Reboot Button -->
         <v-btn
@@ -200,7 +205,7 @@
             Log
           </span>
           
-          <!-- Full mode: 5 tiny toggle buttons -->
+          <!-- Full mode: 3 tiny toggle buttons -->
           <div class="logging-buttons logging-buttons-full">
             <v-btn
               :variant="loggingLevel === 'debug' ? 'tonal' : 'outlined'"
@@ -212,25 +217,9 @@
               icon
               density="compact"
             >
-              <v-icon size="small">mdi-bug</v-icon>
+              <v-icon size="small">mdi-text-box-multiple-outline</v-icon>
               <v-tooltip activator="parent" location="bottom">
-                All logs (debug, info, warning, error)
-              </v-tooltip>
-            </v-btn>
-
-            <v-btn
-              :variant="loggingLevel === 'info' ? 'tonal' : 'outlined'"
-              :color="loggingLevel === 'info' ? 'blue' : 'grey'"
-              size="x-small"
-              @click="setLogging('info')"
-              class="logging-btn"
-              :class="{ 'logging-btn-pressed': loggingLevel === 'info' }"
-              icon
-              density="compact"
-            >
-              <v-icon size="small">mdi-information-outline</v-icon>
-              <v-tooltip activator="parent" location="bottom">
-                Info, warnings, and errors
+                All logs (debug, info, warnings, errors)
               </v-tooltip>
             </v-btn>
 
@@ -246,23 +235,7 @@
             >
               <v-icon size="small">mdi-alert-outline</v-icon>
               <v-tooltip activator="parent" location="bottom">
-                Warnings and errors only
-              </v-tooltip>
-            </v-btn>
-
-            <v-btn
-              :variant="loggingLevel === 'error' ? 'tonal' : 'outlined'"
-              :color="loggingLevel === 'error' ? 'error' : 'grey'"
-              size="x-small"
-              @click="setLogging('error')"
-              class="logging-btn"
-              :class="{ 'logging-btn-pressed': loggingLevel === 'error' }"
-              icon
-              density="compact"
-            >
-              <v-icon size="small">mdi-alert-circle</v-icon>
-              <v-tooltip activator="parent" location="bottom">
-                Errors only
+                Errors and warnings only
               </v-tooltip>
             </v-btn>
 
@@ -278,7 +251,7 @@
             >
               <v-icon size="small">mdi-cancel</v-icon>
               <v-tooltip activator="parent" location="bottom">
-                Silent mode (no logs)
+                No logs (silent mode)
               </v-tooltip>
             </v-btn>
           </div>
@@ -323,10 +296,14 @@
         <div class="brightness-control">
           <v-icon 
             size="small" 
-            class="mr-2 brightness-icon"
+            class="mr-2 brightness-icon brightness-icon-clickable"
             :style="{ opacity: brightnessIconOpacity }"
+            @click="cycleBrightnessPresets"
           >
             mdi-brightness-6
+            <v-tooltip activator="parent" location="bottom">
+              Click to cycle presets: 0%, 1%, 25%, 50%, 75%, 100%
+            </v-tooltip>
           </v-icon>
           <v-slider
             v-model="brightness"
@@ -1737,6 +1714,14 @@ async function setBrightness() {
   }
 }
 
+async function cycleBrightnessPresets() {
+  const presets = [0, 1, 25, 50, 75, 100];
+  const currentIndex = presets.findIndex(preset => preset >= brightness.value);
+  const nextIndex = currentIndex >= presets.length - 1 ? 0 : currentIndex + 1;
+  brightness.value = presets[nextIndex];
+  await setBrightness();
+}
+
 // Set logging level directly (called by the 5 logging buttons)
 async function setLogging(level) {
   if (loggingLevel.value === level) return; // Already at this level
@@ -1787,11 +1772,11 @@ const getLoggingLabel = computed(() => {
 
 const getLoggingTooltip = computed(() => {
   const tooltips = {
-    debug: 'Scene logging: All messages (debug, info, warning, error)',
+    debug: 'Scene logging: All messages (debug, info, warnings, errors)',
     info: 'Scene logging: Info, warnings, and errors',
-    warning: 'Scene logging: Warnings and errors only',
+    warning: 'Scene logging: Errors and warnings only',
     error: 'Scene logging: Errors only',
-    silent: 'Scene logging: Disabled (silent mode)'
+    silent: 'Scene logging: Disabled (no logs)'
   };
   return tooltips[loggingLevel.value];
 });
@@ -1799,7 +1784,7 @@ const getLoggingTooltip = computed(() => {
 // Computed properties for compact logging mode
 const currentLoggingIcon = computed(() => {
   const icons = {
-    debug: 'mdi-bug',
+    debug: 'mdi-text-box-multiple-outline',
     info: 'mdi-information-outline',
     warning: 'mdi-alert-outline',
     error: 'mdi-alert-circle',
@@ -1819,9 +1804,9 @@ const currentLoggingColor = computed(() => {
   return colors[loggingLevel.value];
 });
 
-// Cycle to next logging level
+// Cycle to next logging level (only 3 options visible)
 function cycleLogging() {
-  const levels = ['silent', 'error', 'warning', 'info', 'debug'];
+  const levels = ['silent', 'warning', 'debug'];
   const currentIndex = levels.indexOf(loggingLevel.value);
   const nextIndex = (currentIndex + 1) % levels.length;
   setLogging(levels[nextIndex]);
@@ -1870,23 +1855,23 @@ async function handleReset() {
 }
 
 async function toggleDriver(newDriver) {
-  // newDriver comes from the flip switch: 'real' or 'mock'
+  // newDriver comes from the button: 'real' or 'mock'
   if (!newDriver || newDriver === props.device.driver) return;
 
-  const driverLabel = newDriver === 'real' ? 'Hardware' : 'Simulated';
+  const driverLabel = newDriver === 'real' ? 'Real Hardware' : 'Mock Mode';
   const driverDescription = newDriver === 'real' 
-    ? 'This will connect to the physical hardware device.' 
-    : 'This will use a simulated device without physical hardware.';
+    ? 'This will connect to the physical hardware device and send real commands.' 
+    : 'This will use a simulated mock device for testing without physical hardware.';
 
   // Use Vue confirm dialog instead of browser confirm (UI-512)
   const confirmed = await confirmDialog.value?.show({
-    title: 'Switch Driver Mode',
-    message: `Switch device ${props.device.ip} to ${driverLabel} mode?\n\n${driverDescription}`,
+    title: `Switch to ${driverLabel}?`,
+    message: `${driverDescription}\n\nDevice: ${props.device.ip}`,
     confirmText: `Switch to ${driverLabel}`,
     cancelText: 'Cancel',
-    confirmColor: 'primary',
-    icon: 'mdi-swap-horizontal',
-    iconColor: 'primary'
+    confirmColor: newDriver === 'real' ? 'primary' : 'deep-purple',
+    icon: newDriver === 'real' ? 'mdi-chip' : 'mdi-robot',
+    iconColor: newDriver === 'real' ? 'primary' : 'deep-purple'
   });
 
   if (!confirmed) {
@@ -1898,7 +1883,7 @@ async function toggleDriver(newDriver) {
   driverLoading.value = true;
   try {
     await api.switchDriver(props.device.ip, newDriver);
-    toast.success(`Switched to ${driverLabel} mode`, 2000);
+    toast.success(`Switched to ${driverLabel}`, 2000);
     emit('refresh');
   } catch (err) {
     toast.error(`Failed to switch driver: ${err.message}`);
@@ -1958,6 +1943,21 @@ const driverIconColor = computed(() =>
 const driverLabel = computed(() =>
   props.device.driver === 'real' ? 'Hardware' : 'Simulated',
 );
+
+// Driver status icon next to device name
+const driverStatusIcon = computed(() => {
+  return props.device.driver === 'real' ? 'mdi-chip' : 'mdi-robot';
+});
+
+const driverStatusColor = computed(() => {
+  return props.device.driver === 'real' ? 'blue-darken-3' : 'deep-purple-darken-1';
+});
+
+const driverStatusLabel = computed(() => {
+  return props.device.driver === 'real' 
+    ? 'Connected to real hardware device' 
+    : 'Using simulated mock device';
+});
 </script>
 
 <style scoped>
@@ -1965,6 +1965,12 @@ const driverLabel = computed(() =>
   border-radius: 16px !important;
   border: 1px solid #e5e7eb;
   min-width: 800px;
+}
+
+.device-card--simulated {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%) !important;
+  opacity: 0.92;
+  border: 1px solid #d0d0d0 !important;
 }
 
 .controls-row {
@@ -2270,6 +2276,20 @@ const driverLabel = computed(() =>
   transition: opacity 0.2s ease;
 }
 
+.brightness-icon-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.brightness-icon-clickable:hover {
+  transform: scale(1.15);
+  filter: brightness(1.2);
+}
+
+.brightness-icon-clickable:active {
+  transform: scale(1.05);
+}
+
 /* Logging buttons container */
 .logging-buttons {
   display: inline-flex;
@@ -2461,5 +2481,49 @@ const driverLabel = computed(() =>
 
 .critical-action:hover {
   background-color: rgba(254, 226, 226, 0.4) !important;
+}
+
+/* Driver status icon next to device name */
+.driver-status-icon {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.driver-status-icon--glow {
+  animation: driver-glow 2s ease-in-out infinite;
+}
+
+@keyframes driver-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(126, 87, 194, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(126, 87, 194, 1)) drop-shadow(0 0 12px rgba(126, 87, 194, 0.8));
+  }
+}
+
+/* Device responsive dot heartbeat animation */
+.device-responsive-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  transition: all 0.3s ease;
+}
+
+.device-responsive-dot--heartbeat {
+  animation: device-heartbeat-pulse 2s ease-in-out infinite;
+}
+
+@keyframes device-heartbeat-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 0 8px 2px rgba(16, 185, 129, 0.3);
+  }
 }
 </style>

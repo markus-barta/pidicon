@@ -117,19 +117,19 @@ test('Driver switch (real → mock) during active scene works', async () => {
   let currentDriver = 'real';
 
   // Simulate active scene running
-  stateStore.setDeviceState('192.168.1.100', 'playState', 'running');
-  stateStore.setDeviceState('192.168.1.100', 'activeScene', 'clock');
+  _stateStore.setDeviceState('192.168.1.100', 'playState', 'running');
+  _stateStore.setDeviceState('192.168.1.100', 'activeScene', 'clock');
 
   // Switch to mock driver
   currentDriver = 'mock';
 
   // Verify state preserved
   assert.equal(
-    stateStore.getDeviceState('192.168.1.100', 'playState'),
+    _stateStore.getDeviceState('192.168.1.100', 'playState'),
     'running'
   );
   assert.equal(
-    stateStore.getDeviceState('192.168.1.100', 'activeScene'),
+    _stateStore.getDeviceState('192.168.1.100', 'activeScene'),
     'clock'
   );
   assert.equal(currentDriver, 'mock');
@@ -162,16 +162,16 @@ test('Driver switch preserves brightness and display state', async () => {
   const _stateStore = createMockStateStore();
 
   // Set initial state
-  stateStore.setDeviceState('192.168.1.100', 'brightness', 75);
-  stateStore.setDeviceState('192.168.1.100', 'displayOn', false);
+  _stateStore.setDeviceState('192.168.1.100', 'brightness', 75);
+  _stateStore.setDeviceState('192.168.1.100', 'displayOn', false);
 
   // Simulate driver switch
-  const brightness = stateStore.getDeviceState(
+  const brightness = _stateStore.getDeviceState(
     '192.168.1.100',
     'brightness',
     100
   );
-  const displayOn = stateStore.getDeviceState('192.168.1.100', 'displayOn', true);
+  const displayOn = _stateStore.getDeviceState('192.168.1.100', 'displayOn', true);
 
   // Verify state preserved
   assert.equal(brightness, 75);
@@ -317,13 +317,13 @@ test('Device brightness command fails, state reflects failure', async () => {
   };
 
   // Set initial brightness
-  stateStore.setDeviceState('192.168.1.100', 'brightness', 100);
+  _stateStore.setDeviceState('192.168.1.100', 'brightness', 100);
 
   // Attempt to change brightness
   try {
     await deviceDriver.setBrightness(50);
     // If successful, update state
-    stateStore.setDeviceState('192.168.1.100', 'brightness', 50);
+    _stateStore.setDeviceState('192.168.1.100', 'brightness', 50);
   } catch (error) {
     commandFailed = true;
     // Don't update state on failure
@@ -332,7 +332,7 @@ test('Device brightness command fails, state reflects failure', async () => {
   // Verify state unchanged after failure
   assert.ok(commandFailed);
   assert.equal(
-    stateStore.getDeviceState('192.168.1.100', 'brightness', 100),
+    _stateStore.getDeviceState('192.168.1.100', 'brightness', 100),
     100
   );
 });
@@ -347,19 +347,19 @@ test('Device display power command fails, state unchanged', async () => {
   };
 
   // Set initial state
-  stateStore.setDeviceState('192.168.1.100', 'displayOn', true);
+  _stateStore.setDeviceState('192.168.1.100', 'displayOn', true);
 
   // Attempt to turn off
   try {
     await deviceDriver.setDisplayPower(false);
-    stateStore.setDeviceState('192.168.1.100', 'displayOn', false);
+    _stateStore.setDeviceState('192.168.1.100', 'displayOn', false);
   } catch (error) {
     // State unchanged on failure
   }
 
   // Verify state unchanged
   assert.equal(
-    stateStore.getDeviceState('192.168.1.100', 'displayOn', true),
+    _stateStore.getDeviceState('192.168.1.100', 'displayOn', true),
     true
   );
 });

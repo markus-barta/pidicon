@@ -1,83 +1,113 @@
 <template>
   <v-app-bar color="white" elevation="0" height="80" class="status-bar">
     <v-container fluid class="status-container">
-      <!-- Left: Avatar + Title -->
-      <div class="status-title">
-        <v-avatar color="primary" size="48" class="mr-4">
-          <v-icon color="white" size="28">mdi-television</v-icon>
-        </v-avatar>
-        <div>
-          <div class="text-h6 font-weight-bold primary--text">
-            PIDICON: Pixel Display Controller
-          </div>
-          <div class="status-meta text-caption d-flex align-center">
-            <span class="d-inline-flex align-center">
-              <span :style="statusDotStyles(statusColor)"></span>
-              <span class="status-label">Daemon: {{ statusLabel }}</span>
-            </span>
-            <span class="separator">•</span>
-            <v-tooltip
-              location="bottom"
-              :open-on-hover="true"
-              :open-on-focus="true"
-              content-class="mqtt-tooltip-panel"
-            >
-              <template #activator="{ props }">
-                <span
-                  class="d-inline-flex align-center mqtt-status-trigger"
-                  tabindex="0"
-                  v-bind="props"
-                >
-                  <span :style="statusDotStyles(mqttStatusColor)"></span>
-              <span class="status-label">
-                MQTT: {{ mqttStatus }}
-                <template v-if="mqttStatusDetails.lastHeartbeatTs">
-                  <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
-                    • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
+      <!-- Top Row: Title + Status Indicators + Daemon Restart -->
+      <div class="header-top-row">
+        <!-- Left: Avatar + Title + Status Indicators -->
+        <div class="status-title">
+          <v-avatar color="primary" size="40" class="mr-3">
+            <v-icon color="white" size="24">mdi-television</v-icon>
+          </v-avatar>
+          <div class="title-and-status">
+            <div class="text-h6 font-weight-bold primary--text title-text">
+              PIDICON<span class="app-subtitle">: Pixel Display Controller</span>
+            </div>
+            <div class="status-meta text-caption d-flex align-center">
+              <span class="d-inline-flex align-center">
+                <span 
+                  class="status-dot"
+                  :class="{ 'status-dot--heartbeat': status === 'running' && !connectionFailed }"
+                  :style="statusDotStyles(statusColor)"
+                  :key="lastHeartbeat"
+                ></span>
+                <span class="status-label">{{ statusLabel }}</span>
+              </span>
+              <span class="separator">•</span>
+              <v-tooltip
+                location="bottom"
+                :open-on-hover="true"
+                :open-on-focus="true"
+                content-class="mqtt-tooltip-panel"
+              >
+                <template #activator="{ props }">
+                  <span
+                    class="d-inline-flex align-center mqtt-status-trigger"
+                    tabindex="0"
+                    v-bind="props"
+                  >
+                    <span 
+                      class="status-dot"
+                      :class="{ 'status-dot--heartbeat': mqttConnected }"
+                      :style="statusDotStyles(mqttStatusColor)"
+                      :key="mqttStatusDetails.lastHeartbeatTs"
+                    ></span>
+                <span class="status-label">
+                  {{ mqttStatus }}
+                  <template v-if="mqttStatusDetails.lastHeartbeatTs">
+                    <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
+                      • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
+                    </span>
+                  </template>
+                </span>
                   </span>
                 </template>
-              </span>
-                </span>
-              </template>
-              <div class="mqtt-tooltip">
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Connection</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
+                <div class="mqtt-tooltip">
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">Connection</span>
+                    <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">Broker URL</span>
+                    <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">Retry Count</span>
+                    <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">Next Retry</span>
+                    <span class="tooltip-value">{{ nextRetryLabel }}</span>
+                  </div>
+                  <div class="tooltip-row">
+                    <span class="tooltip-label">Last Heartbeat</span>
+                    <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
+                  </div>
+                  <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
+                    <span class="tooltip-label">Last Error</span>
+                    <span class="tooltip-value tooltip-error">{{ mqttStatusDetails.lastError }}</span>
+                  </div>
                 </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Broker URL</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Retry Count</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Next Retry</span>
-                  <span class="tooltip-value">{{ nextRetryLabel }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Last Heartbeat</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
-                </div>
-                <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
-                  <span class="tooltip-label">Last Error</span>
-                  <span class="tooltip-value tooltip-error">{{ mqttStatusDetails.lastError }}</span>
-                </div>
-              </div>
-            </v-tooltip>
-            <span class="separator">•</span>
-            <span class="status-detail">Uptime: {{ uptime }}</span>
-            <span class="separator">•</span>
-            <span class="status-detail">{{ hostname }}</span>
-            <span class="separator">•</span>
-            <span class="status-detail">Node {{ nodeVersion }}</span>
+              </v-tooltip>
+              <span class="separator status-detail-separator">•</span>
+              <span class="status-detail">{{ uptime }}</span>
+              <span class="separator status-detail-separator">•</span>
+              <span class="status-detail">{{ hostname }}</span>
+              <span class="separator status-detail-separator">•</span>
+              <span class="status-detail">Node {{ nodeVersion }}</span>
+            </div>
           </div>
         </div>
+
+        <!-- Right: Daemon Restart Button (always top-right) -->
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="error"
+          @click="handleRestart"
+          :loading="restarting"
+          class="critical-action daemon-restart-btn"
+          data-test="daemon-restart"
+        >
+          <v-icon size="small" color="error" class="mr-1">mdi-restart-alert</v-icon>
+          <span class="text-caption">Daemon</span>
+          <v-tooltip activator="parent" location="bottom">
+            Restart entire daemon
+          </v-tooltip>
+        </v-btn>
       </div>
 
-      <!-- Right: Navigation + Daemon Restart Buttons -->
-      <div class="nav-cluster">
+      <!-- Bottom Row: Navigation Tabs (closer to content) -->
+      <div class="header-bottom-row">
         <div class="nav-buttons">
           <v-btn
             v-for="item in filteredNavItems"
@@ -97,24 +127,6 @@
             </v-tooltip>
           </v-btn>
         </div>
-
-        <v-divider vertical class="nav-divider" />
-
-        <v-btn
-          size="small"
-          variant="outlined"
-          color="grey"
-          @click="handleRestart"
-          :loading="restarting"
-          class="daemon-restart-btn"
-          data-test="daemon-restart"
-        >
-          <v-icon size="small" color="warning" class="mr-1">mdi-restart-alert</v-icon>
-          <span class="text-caption">Daemon</span>
-          <v-tooltip activator="parent" location="bottom">
-            Restart entire daemon
-          </v-tooltip>
-        </v-btn>
       </div>
     </v-container>
   </v-app-bar>
@@ -482,48 +494,75 @@ onUnmounted(() => {
 
 .status-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
   padding-left: 32px;
   padding-right: 32px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header-bottom-row {
+  display: flex;
+  align-items: center;
+  padding-left: 52px; /* Align with content (40px avatar + 12px gap) */
 }
 
 .status-title {
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.title-and-status {
+  min-width: 0;
+  flex: 1;
+}
+
+.title-text {
+  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
 .status-meta {
   color: #6b7280;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .status-label,
 .status-detail {
   color: #6b7280;
+  font-size: 0.75rem;
 }
 
 .status-label .last-heartbeat {
-  margin-left: 6px;
-  font-size: 0.75rem;
-  color: rgba(15, 23, 42, 0.7);
+  margin-left: 4px;
+  font-size: 0.7rem;
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .separator {
   color: #d1d5db;
-  margin: 0 8px;
+  margin: 0 6px;
 }
 
-.nav-cluster {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.status-detail-separator {
+  display: inline;
 }
 
 .nav-buttons {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nav-btn {
@@ -539,10 +578,6 @@ onUnmounted(() => {
 
 .nav-btn.v-btn--variant-flat {
   box-shadow: none;
-}
-
-.nav-divider {
-  height: 32px;
 }
 
 .mqtt-tooltip {
@@ -605,19 +640,68 @@ onUnmounted(() => {
   transform: translateY(0);
 }
 
-@media (max-width: 1280px) {
-  .status-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding-left: 24px;
-    padding-right: 24px;
+.critical-action {
+  border: 2px solid rgba(220, 38, 38, 0.5) !important;
+}
+
+.critical-action:hover {
+  background-color: rgba(254, 226, 226, 0.4) !important;
+}
+
+/* Status dot heartbeat animation */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  transition: all 0.3s ease;
+}
+
+.status-dot--heartbeat {
+  animation: heartbeat-pulse 2s ease-in-out infinite;
+}
+
+@keyframes heartbeat-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 0 8px 2px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* Hide subtitle on smaller screens */
+@media (max-width: 960px) {
+  .app-subtitle {
+    display: none;
   }
 
-  .nav-cluster {
-    align-self: stretch;
-    justify-content: space-between;
-    width: 100%;
+  .status-detail-separator,
+  .status-detail {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .header-bottom-row {
+    padding-left: 0;
+  }
+
+  .status-title {
+    flex-wrap: wrap;
+  }
+
+  .daemon-restart-btn {
+    order: -1;
+    margin-bottom: 8px;
   }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="settings-view">
     <v-row justify="center">
-      <v-col cols="12" lg="11">
+      <v-col cols="12" lg="10" xl="9">
         <div class="settings-header">
           <div class="settings-title">
             <v-avatar color="primary" size="40" class="mr-3">
@@ -69,7 +69,7 @@
             <!-- Devices Tab -->
             <v-window-item value="devices">
               <v-card class="tab-card">
-                <v-card-text class="pa-6">
+                <v-card-text class="pa-4">
                   <DeviceManagement />
                 </v-card-text>
               </v-card>
@@ -78,7 +78,7 @@
             <!-- Global Settings Tab -->
             <v-window-item value="global">
               <v-card class="tab-card">
-                <v-card-text class="pa-6">
+                <v-card-text class="pa-4">
                   <div class="section">
                     <div class="section-header">
                       <v-icon class="mr-3" color="primary">mdi-tune</v-icon>
@@ -235,7 +235,7 @@
             <!-- MQTT Tab -->
             <v-window-item value="mqtt">
               <v-card class="tab-card">
-                <v-card-text class="pa-6">
+                <v-card-text class="pa-4">
                   <div class="section">
                     <div class="section-header">
                       <v-icon class="mr-3" color="primary">mdi-access-point-network</v-icon>
@@ -411,7 +411,7 @@
             <!-- Import/Export Tab -->
             <v-window-item value="import-export">
               <v-card class="tab-card">
-                <v-card-text class="pa-6">
+                <v-card-text class="pa-4">
                   <div class="section">
                     <div class="section-header">
                       <v-icon class="mr-3" color="primary">mdi-swap-horizontal</v-icon>
@@ -482,11 +482,11 @@
 
                   <v-divider class="my-6" />
 
-                  <div class="section">
+                  <div class="section danger-zone-section">
                     <div class="section-subheader mb-4">
-                      <v-icon class="mr-2" color="warning">mdi-alert</v-icon>
+                      <v-icon class="mr-2" color="error" size="large">mdi-alert-octagon</v-icon>
                       <div>
-                        <h3 class="text-subtitle-1 mb-1">Reset to Defaults</h3>
+                        <h3 class="text-h6 font-weight-bold danger-zone-title mb-1">DANGER ZONE</h3>
                         <p class="text-body-2 text-medium-emphasis mb-0">
                           Remove all configured devices and restore factory defaults.
                         </p>
@@ -1207,7 +1207,7 @@ export default {
 .settings-shell {
   background-color: #ffffff;
   border-radius: 20px;
-  padding: 8px 12px;
+  padding: 8px 6px;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
@@ -1224,7 +1224,7 @@ export default {
 .section {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .section-header {
@@ -1291,6 +1291,18 @@ export default {
 .reset-alert {
   background-color: rgba(253, 230, 138, 0.18) !important;
   border-color: rgba(234, 179, 8, 0.6) !important;
+}
+
+.danger-zone-section {
+  border: 2px solid rgba(220, 38, 38, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.1) 0%, rgba(254, 226, 226, 0.05) 100%);
+}
+
+.danger-zone-title {
+  color: #b91c1c !important;
+  letter-spacing: 0.05em;
 }
 
 .tab-active {
