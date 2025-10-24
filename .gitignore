@@ -11,6 +11,7 @@ web/public/
 web/frontend/dist/
 
 # Legacy code and configuration files
+test-dashboard-figma/
 legacy-code/
 other-code/
 
@@ -34,3 +35,4 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
