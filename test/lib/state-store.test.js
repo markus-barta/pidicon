@@ -116,11 +116,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'activeScene'),
-        'startup',
+        'startup'
       );
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'generationId'),
-        5,
+        5
       );
     });
 
@@ -181,15 +181,15 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'activeScene'),
-        'startup',
+        'startup'
       );
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'generationId'),
-        10,
+        10
       );
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'status'),
-        'running',
+        'running'
       );
     });
 
@@ -223,11 +223,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'startup', 'frameCount'),
-        10,
+        10
       );
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'startup', 'isRunning'),
-        true,
+        true
       );
     });
 
@@ -238,7 +238,7 @@ describe('StateStore', () => {
         '192.168.1.1',
         'test',
         'missing',
-        'default',
+        'default'
       );
       assert.strictEqual(value, 'default');
     });
@@ -286,11 +286,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'test', 'frameCount'),
-        100,
+        100
       );
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'test', 'isRunning'),
-        true,
+        true
       );
       assert.ok(store.getSceneState('192.168.1.1', 'test', 'lastUpdate') > 0);
     });
@@ -315,11 +315,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getDeviceState('192.168.1.1', 'activeScene'),
-        'scene1',
+        'scene1'
       );
       assert.strictEqual(
         store.getDeviceState('192.168.1.2', 'activeScene'),
-        'scene2',
+        'scene2'
       );
     });
 
@@ -331,11 +331,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'startup', 'count'),
-        10,
+        10
       );
       assert.strictEqual(
         store.getSceneState('192.168.1.2', 'startup', 'count'),
-        20,
+        20
       );
     });
 
@@ -347,11 +347,11 @@ describe('StateStore', () => {
 
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'scene1', 'data'),
-        'value1',
+        'value1'
       );
       assert.strictEqual(
         store.getSceneState('192.168.1.1', 'scene2', 'data'),
-        'value2',
+        'value2'
       );
     });
   });
@@ -451,7 +451,7 @@ describe('StateStore', () => {
       assert.ok(snapshot.devices['192.168.1.1']);
       assert.strictEqual(
         snapshot.devices['192.168.1.1'].activeScene,
-        'startup',
+        'startup'
       );
       assert.ok(snapshot.scenes['192.168.1.1::startup']);
       assert.strictEqual(snapshot.scenes['192.168.1.1::startup'].count, 10);
@@ -490,7 +490,10 @@ describe('StateStore', () => {
 
       // Delete by setting to undefined
       store.setDeviceState(deviceIp, 'brightness', undefined);
-      assert.strictEqual(store.getDeviceState(deviceIp, 'brightness', 100), 100);
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'brightness', 100),
+        100
+      );
     });
 
     it('should store undefined as a value in global state', () => {
@@ -512,7 +515,10 @@ describe('StateStore', () => {
       const sceneName = 'clock';
 
       store.setSceneState(deviceIp, sceneName, 'counter', 42);
-      assert.strictEqual(store.getSceneState(deviceIp, sceneName, 'counter'), 42);
+      assert.strictEqual(
+        store.getSceneState(deviceIp, sceneName, 'counter'),
+        42
+      );
 
       // Setting to undefined stores undefined
       store.setSceneState(deviceIp, sceneName, 'counter', undefined);
@@ -539,7 +545,10 @@ describe('StateStore', () => {
       // Other fields unchanged
       assert.strictEqual(store.getDeviceState(deviceIp, 'brightness'), 50);
       assert.strictEqual(store.getDeviceState(deviceIp, 'displayOn'), true);
-      assert.strictEqual(store.getDeviceState(deviceIp, 'activeScene'), 'clock');
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'activeScene'),
+        'clock'
+      );
     });
 
     it('should handle complex nested objects in device state', () => {
@@ -647,7 +656,7 @@ describe('StateStore', () => {
   });
 
   describe('Concurrent Access', () => {
-    it('should handle concurrent reads during write', () => {
+    it('should handle concurrent reads during write', async () => {
       const store = new StateStore();
       const deviceIp = '192.168.1.100';
 
@@ -666,12 +675,11 @@ describe('StateStore', () => {
         );
       }
 
-      return Promise.all(operations).then((results) => {
-        // All operations should succeed (no crashes)
-        assert.strictEqual(results.length, 100);
-        // Final value should be the last write
-        assert.strictEqual(store.getDeviceState(deviceIp, 'counter'), 99);
-      });
+      const results = await Promise.all(operations);
+      // All operations should succeed (no crashes)
+      assert.strictEqual(results.length, 100);
+      // Final value should be the last write
+      assert.strictEqual(store.getDeviceState(deviceIp, 'counter'), 99);
     });
 
     it('should maintain state consistency during rapid updates', () => {
@@ -755,7 +763,10 @@ describe('StateStore', () => {
         store.getDeviceState(deviceIp, 'brightness', null),
         null
       );
-      assert.strictEqual(store.getDeviceState(deviceIp, 'displayOn', null), null);
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'displayOn', null),
+        null
+      );
       assert.strictEqual(
         store.getDeviceState(deviceIp, 'activeScene', null),
         null
