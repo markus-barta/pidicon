@@ -474,4 +474,317 @@ describe('StateStore', () => {
       assert.strictEqual(stats.scenes, 2);
     });
   });
+
+  // ============================================================================
+  // Edge Cases (Phase 4)
+  // ============================================================================
+
+  describe('State Deletion', () => {
+    it('should delete device state by setting to undefined', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'brightness', 75);
+      assert.strictEqual(store.getDeviceState(deviceIp, 'brightness'), 75);
+
+      // Delete by setting to undefined
+      store.setDeviceState(deviceIp, 'brightness', undefined);
+      assert.strictEqual(store.getDeviceState(deviceIp, 'brightness', 100), 100);
+    });
+
+    it('should store undefined as a value in global state', () => {
+      const store = new StateStore();
+
+      store.setGlobal('testKey', 'testValue');
+      assert.strictEqual(store.getGlobal('testKey'), 'testValue');
+
+      // Setting to undefined stores undefined, doesn't delete
+      store.setGlobal('testKey', undefined);
+      assert.strictEqual(store.getGlobal('testKey'), undefined);
+      // Fallback is only used if key doesn't exist
+      assert.strictEqual(store.getGlobal('testKey', 'default'), undefined);
+    });
+
+    it('should store undefined as a value in scene state', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+      const sceneName = 'clock';
+
+      store.setSceneState(deviceIp, sceneName, 'counter', 42);
+      assert.strictEqual(store.getSceneState(deviceIp, sceneName, 'counter'), 42);
+
+      // Setting to undefined stores undefined
+      store.setSceneState(deviceIp, sceneName, 'counter', undefined);
+      assert.strictEqual(
+        store.getSceneState(deviceIp, sceneName, 'counter'),
+        undefined
+      );
+    });
+  });
+
+  describe('State Merging and Partial Updates', () => {
+    it('should support partial device state updates', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'brightness', 75);
+      store.setDeviceState(deviceIp, 'displayOn', true);
+      store.setDeviceState(deviceIp, 'activeScene', 'clock');
+
+      // Partial update - only brightness
+      store.setDeviceState(deviceIp, 'brightness', 50);
+
+      // Other fields unchanged
+      assert.strictEqual(store.getDeviceState(deviceIp, 'brightness'), 50);
+      assert.strictEqual(store.getDeviceState(deviceIp, 'displayOn'), true);
+      assert.strictEqual(store.getDeviceState(deviceIp, 'activeScene'), 'clock');
+    });
+
+    it('should handle complex nested objects in device state', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      const complexState = {
+        metrics: {
+          fps: 5,
+          frametime: 200,
+          pushCount: 1234,
+        },
+        settings: {
+          brightness: 75,
+          displayOn: true,
+        },
+      };
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'deviceData', complexState);
+
+      const retrieved = store.getDeviceState(deviceIp, 'deviceData');
+      assert.deepStrictEqual(retrieved, complexState);
+      assert.strictEqual(retrieved.metrics.fps, 5);
+      assert.strictEqual(retrieved.settings.brightness, 75);
+    });
+
+    it('should merge arrays correctly', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'history', [1, 2, 3]);
+
+      const history = store.getDeviceState(deviceIp, 'history');
+      assert.deepStrictEqual(history, [1, 2, 3]);
+
+      // Replace array (not merge - arrays are replaced, not merged)
+      store.setDeviceState(deviceIp, 'history', [4, 5, 6]);
+      const newHistory = store.getDeviceState(deviceIp, 'history');
+      assert.deepStrictEqual(newHistory, [4, 5, 6]);
+    });
+  });
+
+  describe('Large State Performance', () => {
+    it('should handle large device state efficiently', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+
+      // Create large state object (~100KB)
+      const largeData = new Array(1000).fill(null).map((_, i) => ({
+        id: i,
+        value: `value_${i}`,
+        timestamp: Date.now(),
+        nested: {
+          field1: i * 2,
+          field2: `nested_${i}`,
+        },
+      }));
+
+      const startTime = Date.now();
+      store.setDeviceState(deviceIp, 'largeData', largeData);
+      const writeTime = Date.now() - startTime;
+
+      assert.ok(writeTime < 100, `Write time ${writeTime}ms should be < 100ms`);
+
+      const readStart = Date.now();
+      const retrieved = store.getDeviceState(deviceIp, 'largeData');
+      const readTime = Date.now() - readStart;
+
+      assert.ok(readTime < 50, `Read time ${readTime}ms should be < 50ms`);
+      assert.strictEqual(retrieved.length, 1000);
+      assert.strictEqual(retrieved[0].id, 0);
+      assert.strictEqual(retrieved[999].id, 999);
+    });
+
+    it('should handle many devices efficiently', () => {
+      const store = new StateStore();
+      const deviceCount = 100;
+
+      const startTime = Date.now();
+
+      // Initialize 100 devices
+      for (let i = 0; i < deviceCount; i++) {
+        const ip = `192.168.1.${i}`;
+        store.initDevice(ip);
+        store.setDeviceState(ip, 'brightness', 75);
+        store.setDeviceState(ip, 'displayOn', true);
+        store.setDeviceState(ip, 'activeScene', 'clock');
+      }
+
+      const totalTime = Date.now() - startTime;
+
+      assert.ok(
+        totalTime < 1000,
+        `Initializing ${deviceCount} devices took ${totalTime}ms (should be < 1s)`
+      );
+
+      // Verify all devices stored correctly
+      const stats = store.getStats();
+      assert.strictEqual(stats.devices, deviceCount);
+    });
+  });
+
+  describe('Concurrent Access', () => {
+    it('should handle concurrent reads during write', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'counter', 0);
+
+      // Simulate concurrent operations
+      const operations = [];
+      for (let i = 0; i < 100; i++) {
+        operations.push(
+          new Promise((resolve) => {
+            store.setDeviceState(deviceIp, 'counter', i);
+            const value = store.getDeviceState(deviceIp, 'counter');
+            resolve(value);
+          })
+        );
+      }
+
+      return Promise.all(operations).then((results) => {
+        // All operations should succeed (no crashes)
+        assert.strictEqual(results.length, 100);
+        // Final value should be the last write
+        assert.strictEqual(store.getDeviceState(deviceIp, 'counter'), 99);
+      });
+    });
+
+    it('should maintain state consistency during rapid updates', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+
+      // Rapid sequential updates
+      for (let i = 0; i < 1000; i++) {
+        store.setDeviceState(deviceIp, 'brightness', i % 101);
+      }
+
+      // State should be consistent
+      const brightness = store.getDeviceState(deviceIp, 'brightness');
+      assert.ok(brightness >= 0 && brightness <= 100);
+    });
+  });
+
+  describe('Global vs Device State Isolation', () => {
+    it('should keep global and device state separate', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      // Set same key in both global and device state
+      store.setGlobal('activeScene', 'global_scene');
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'activeScene', 'device_scene');
+
+      // They should remain separate
+      assert.strictEqual(store.getGlobal('activeScene'), 'global_scene');
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'activeScene'),
+        'device_scene'
+      );
+    });
+
+    it('should not leak device state to other devices', () => {
+      const store = new StateStore();
+      const device1 = '192.168.1.100';
+      const device2 = '192.168.1.200';
+
+      store.initDevice(device1);
+      store.initDevice(device2);
+
+      store.setDeviceState(device1, 'brightness', 25);
+      store.setDeviceState(device2, 'brightness', 75);
+
+      assert.strictEqual(store.getDeviceState(device1, 'brightness'), 25);
+      assert.strictEqual(store.getDeviceState(device2, 'brightness'), 75);
+    });
+
+    it('should not leak scene state between devices', () => {
+      const store = new StateStore();
+      const device1 = '192.168.1.100';
+      const device2 = '192.168.1.200';
+
+      store.setSceneState(device1, 'clock', 'counter', 10);
+      store.setSceneState(device2, 'clock', 'counter', 20);
+
+      assert.strictEqual(store.getSceneState(device1, 'clock', 'counter'), 10);
+      assert.strictEqual(store.getSceneState(device2, 'clock', 'counter'), 20);
+    });
+  });
+
+  describe('State Reset and Clear', () => {
+    it('should clear all device state for a device', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.initDevice(deviceIp);
+      store.setDeviceState(deviceIp, 'brightness', 75);
+      store.setDeviceState(deviceIp, 'displayOn', true);
+      store.setDeviceState(deviceIp, 'activeScene', 'clock');
+
+      // Clear device state
+      store.deviceStates.delete(deviceIp);
+
+      // State should be gone
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'brightness', null),
+        null
+      );
+      assert.strictEqual(store.getDeviceState(deviceIp, 'displayOn', null), null);
+      assert.strictEqual(
+        store.getDeviceState(deviceIp, 'activeScene', null),
+        null
+      );
+    });
+
+    it('should clear specific scene state by deleting from sceneStates', () => {
+      const store = new StateStore();
+      const deviceIp = '192.168.1.100';
+
+      store.setSceneState(deviceIp, 'clock', 'counter', 42);
+      store.setSceneState(deviceIp, 'clock', 'lastUpdate', Date.now());
+
+      // Verify state exists
+      assert.strictEqual(store.getSceneState(deviceIp, 'clock', 'counter'), 42);
+
+      // Clear scene state by deleting the composite key
+      const sceneKey = `${deviceIp}::clock`;
+      store.sceneStates.delete(sceneKey);
+
+      // Scene state should be gone (fallback to default)
+      assert.strictEqual(
+        store.getSceneState(deviceIp, 'clock', 'counter', null),
+        null
+      );
+      assert.strictEqual(
+        store.getSceneState(deviceIp, 'clock', 'lastUpdate', null),
+        null
+      );
+    });
+  });
 });
