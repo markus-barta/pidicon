@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * @fileoverview Device Isolation Integration Tests
  * @description Tests that ensure multiple devices operate independently.
