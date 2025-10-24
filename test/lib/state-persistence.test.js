@@ -500,4 +500,260 @@ describe('State Persistence - Full Integration', () => {
       );
     });
   });
+
+  // Note: Driver selection is managed by DeviceConfigStore, not StateStore
+  // Tests omitted - driver persistence tested in device-config-store tests
+
+  describe('Concurrent Write Safety', () => {
+    it('should handle concurrent device state writes', async () => {
+      const device1 = '192.168.1.100';
+      const device2 = '192.168.1.200';
+
+      // Concurrent writes to different devices
+      const writes = Promise.all([
+        (async () => {
+          for (let i = 0; i < 10; i++) {
+            stateStore.setDeviceState(device1, 'brightness', i * 10);
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
+        })(),
+        (async () => {
+          for (let i = 0; i < 10; i++) {
+            stateStore.setDeviceState(device2, 'brightness', i * 5);
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
+        })(),
+      ]);
+
+      await writes;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await stateStore.flush();
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      // Both devices should have correct final values
+      assert.strictEqual(
+        newStateStore.getDeviceState(device1, 'brightness'),
+        90,
+      );
+      assert.strictEqual(
+        newStateStore.getDeviceState(device2, 'brightness'),
+        45,
+      );
+    });
+
+    it('should not corrupt state file during concurrent flush', async () => {
+      const deviceIp = '192.168.1.100';
+
+      stateStore.setDeviceState(deviceIp, 'brightness', 50);
+
+      // Multiple concurrent flushes
+      await Promise.all([
+        stateStore.flush(),
+        stateStore.flush(),
+        stateStore.flush(),
+      ]);
+
+      // Should still be readable
+      assert.ok(fs.existsSync(statePath));
+      const content = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+      assert.ok(content.devices);
+      assert.strictEqual(content.devices[deviceIp].brightness, 50);
+    });
+  });
+
+  describe('Large State Performance', () => {
+    it('should handle 100 devices without truncation', async () => {
+      // Create state for 100 devices
+      for (let i = 0; i < 100; i++) {
+        const deviceIp = `192.168.1.${i}`;
+        stateStore.setDeviceState(deviceIp, 'brightness', i);
+        stateStore.setDeviceState(deviceIp, 'displayOn', i % 2 === 0);
+        stateStore.setDeviceState(deviceIp, 'activeScene', `scene-${i}`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      await stateStore.flush();
+
+      // Verify file size is reasonable (< 1MB)
+      const stats = fs.statSync(statePath);
+      assert.ok(stats.size < 1024 * 1024, 'State file should be < 1MB');
+
+      // Restore and verify all devices
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      for (let i = 0; i < 100; i++) {
+        const deviceIp = `192.168.1.${i}`;
+        assert.strictEqual(
+          newStateStore.getDeviceState(deviceIp, 'brightness'),
+          i,
+          `Device ${i} brightness should be restored`,
+        );
+      }
+    });
+
+    it('should persist state <50ms for typical size', async () => {
+      // Typical state: 5 devices with full state
+      for (let i = 0; i < 5; i++) {
+        const deviceIp = `192.168.1.${100 + i}`;
+        stateStore.setDeviceState(deviceIp, 'brightness', 80);
+        stateStore.setDeviceState(deviceIp, 'displayOn', true);
+        stateStore.setDeviceState(deviceIp, 'activeScene', 'clock');
+        stateStore.setDeviceState(deviceIp, 'playState', 'playing');
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const start = Date.now();
+      await stateStore.flush();
+      const duration = Date.now() - start;
+
+      assert.ok(duration < 50, `Flush should take <50ms (took ${duration}ms)`);
+    });
+  });
+
+  describe('File Permission Errors', () => {
+    it('should handle write permission errors gracefully', async () => {
+      const readOnlyPath = path.join(tempDir, 'readonly.json');
+
+      // Create file and make it read-only
+      fs.writeFileSync(readOnlyPath, '{}');
+      fs.chmodSync(readOnlyPath, 0o444); // Read-only
+
+      const readOnlyStore = createStateStore({ persistPath: readOnlyPath });
+      readOnlyStore.setDeviceState('192.168.1.100', 'brightness', 50);
+
+      // Should not throw
+      await readOnlyStore.flush();
+
+      // Cleanup - restore write permission
+      fs.chmodSync(readOnlyPath, 0o644);
+    });
+
+    it('should handle directory permission errors', async () => {
+      const restrictedDir = path.join(tempDir, 'restricted');
+      fs.mkdirSync(restrictedDir);
+      const restrictedPath = path.join(restrictedDir, 'state.json');
+
+      // Make directory read-only
+      fs.chmodSync(restrictedDir, 0o555);
+
+      const restrictedStore = createStateStore({
+        persistPath: restrictedPath,
+      });
+      restrictedStore.setDeviceState('192.168.1.100', 'brightness', 50);
+
+      // Should not throw
+      await restrictedStore.flush();
+
+      // Cleanup
+      fs.chmodSync(restrictedDir, 0o755);
+    });
+  });
+
+  describe('State Corruption Recovery', () => {
+    it('should recover from partial JSON write', async () => {
+      // Write valid state first
+      stateStore.setDeviceState('192.168.1.100', 'brightness', 50);
+      await stateStore.flush();
+
+      // Corrupt the file (truncate)
+      const content = fs.readFileSync(statePath, 'utf8');
+      fs.writeFileSync(statePath, content.slice(0, content.length / 2));
+
+      // Should not crash on restore
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      // Should use defaults after corruption
+      const brightness = newStateStore.getDeviceState(
+        '192.168.1.100',
+        'brightness',
+        100,
+      );
+      assert.strictEqual(
+        brightness,
+        100,
+        'Should use default after corruption',
+      );
+    });
+
+    it('should handle empty state file', async () => {
+      fs.writeFileSync(statePath, '');
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      // Should not crash, should use defaults
+      const displayOn = newStateStore.getDeviceState(
+        '192.168.1.100',
+        'displayOn',
+        true,
+      );
+      assert.strictEqual(displayOn, true);
+    });
+
+    it('should handle state file with wrong structure', async () => {
+      // Write valid JSON but wrong structure
+      fs.writeFileSync(statePath, JSON.stringify({ wrongKey: 'wrongValue' }));
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      // Should not crash
+      const brightness = newStateStore.getDeviceState(
+        '192.168.1.100',
+        'brightness',
+        100,
+      );
+      assert.strictEqual(brightness, 100);
+    });
+  });
+
+  // Note: Global state persistence not yet implemented in StateStore.restore()
+  // Tests omitted until feature is fully implemented
+
+  describe('Daemon Metrics Persistence', () => {
+    it('should persist daemon start time', async () => {
+      const startTime = Date.now();
+      stateStore.recordDaemonStart(startTime);
+      await stateStore.flush();
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      const metrics = newStateStore.getDaemonMetrics();
+      assert.strictEqual(metrics.startTime, startTime);
+    });
+
+    it('should persist daemon heartbeat', async () => {
+      const heartbeat = Date.now();
+      stateStore.recordHeartbeat(heartbeat);
+      await stateStore.flush();
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      const metrics = newStateStore.getDaemonMetrics();
+      assert.strictEqual(metrics.lastHeartbeat, heartbeat);
+    });
+
+    it('should restore daemon metrics after restart', async () => {
+      const startTime = Date.now() - 10000;
+      const heartbeat = Date.now() - 1000;
+
+      stateStore.recordDaemonStart(startTime);
+      stateStore.recordHeartbeat(heartbeat);
+      await stateStore.flush();
+
+      const newStateStore = createStateStore();
+      await newStateStore.restore();
+
+      const metrics = newStateStore.getDaemonMetrics();
+      assert.strictEqual(metrics.startTime, startTime);
+      assert.strictEqual(metrics.lastHeartbeat, heartbeat);
+    });
+  });
 });
