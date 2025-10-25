@@ -62,17 +62,23 @@ function createMockDevice(ip, options = {}) {
           displayOn: options.displayOn ?? true,
         };
       },
-      setBrightness: options.setBrightness || (async (level) => ({ success: true, brightness: level })),
-      setDisplayPower: options.setDisplayPower || (async (on) => ({ success: true, displayOn: on })),
+      setBrightness:
+        options.setBrightness ||
+        (async (level) => ({ success: true, brightness: level })),
+      setDisplayPower:
+        options.setDisplayPower ||
+        (async (on) => ({ success: true, displayOn: on })),
       reboot: options.reboot || (async () => ({ success: true })),
       healthCheck: options.healthCheck || (async () => ({ success: true })),
     },
-    getMetrics: options.getMetrics || (() => ({
-      pushCount: 1234,
-      fps: 5,
-      frametime: 200,
-      lastSeenTs: Date.now(),
-    })),
+    getMetrics:
+      options.getMetrics ||
+      (() => ({
+        pushCount: 1234,
+        fps: 5,
+        frametime: 200,
+        lastSeenTs: Date.now(),
+      })),
   };
 }
 
@@ -144,73 +150,58 @@ describe('DeviceService Construction', () => {
   });
 
   it('should throw ValidationError if logger missing', () => {
-    assert.throws(
-      () => {
-        new DeviceService({
-          deviceAdapter: createMockDeviceAdapter(),
-          sceneManager: createMockSceneManager(),
-          stateStore: createMockStateStore(),
-          softReset: createMockSoftReset(),
-        });
-      },
-      ValidationError
-    );
+    assert.throws(() => {
+      new DeviceService({
+        deviceAdapter: createMockDeviceAdapter(),
+        sceneManager: createMockSceneManager(),
+        stateStore: createMockStateStore(),
+        softReset: createMockSoftReset(),
+      });
+    }, ValidationError);
   });
 
   it('should throw ValidationError if deviceAdapter missing', () => {
-    assert.throws(
-      () => {
-        new DeviceService({
-          logger: createMockLogger(),
-          sceneManager: createMockSceneManager(),
-          stateStore: createMockStateStore(),
-          softReset: createMockSoftReset(),
-        });
-      },
-      ValidationError
-    );
+    assert.throws(() => {
+      new DeviceService({
+        logger: createMockLogger(),
+        sceneManager: createMockSceneManager(),
+        stateStore: createMockStateStore(),
+        softReset: createMockSoftReset(),
+      });
+    }, ValidationError);
   });
 
   it('should throw ValidationError if sceneManager missing', () => {
-    assert.throws(
-      () => {
-        new DeviceService({
-          logger: createMockLogger(),
-          deviceAdapter: createMockDeviceAdapter(),
-          stateStore: createMockStateStore(),
-          softReset: createMockSoftReset(),
-        });
-      },
-      ValidationError
-    );
+    assert.throws(() => {
+      new DeviceService({
+        logger: createMockLogger(),
+        deviceAdapter: createMockDeviceAdapter(),
+        stateStore: createMockStateStore(),
+        softReset: createMockSoftReset(),
+      });
+    }, ValidationError);
   });
 
   it('should throw ValidationError if stateStore missing', () => {
-    assert.throws(
-      () => {
-        new DeviceService({
-          logger: createMockLogger(),
-          deviceAdapter: createMockDeviceAdapter(),
-          sceneManager: createMockSceneManager(),
-          softReset: createMockSoftReset(),
-        });
-      },
-      ValidationError
-    );
+    assert.throws(() => {
+      new DeviceService({
+        logger: createMockLogger(),
+        deviceAdapter: createMockDeviceAdapter(),
+        sceneManager: createMockSceneManager(),
+        softReset: createMockSoftReset(),
+      });
+    }, ValidationError);
   });
 
   it('should throw ValidationError if softReset missing', () => {
-    assert.throws(
-      () => {
-        new DeviceService({
-          logger: createMockLogger(),
-          deviceAdapter: createMockDeviceAdapter(),
-          sceneManager: createMockSceneManager(),
-          stateStore: createMockStateStore(),
-        });
-      },
-      ValidationError
-    );
+    assert.throws(() => {
+      new DeviceService({
+        logger: createMockLogger(),
+        deviceAdapter: createMockDeviceAdapter(),
+        sceneManager: createMockSceneManager(),
+        stateStore: createMockStateStore(),
+      });
+    }, ValidationError);
   });
 });
 
@@ -361,7 +352,10 @@ describe('DeviceService.setDisplayBrightness', () => {
     const result = await service.setDisplayBrightness('192.168.1.100', 75);
 
     assert.ok(result.success || result.brightness === 75);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'brightness'), 75);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'brightness'),
+      75
+    );
   });
 
   it('should clamp brightness < 0 to 0', async () => {
@@ -378,9 +372,12 @@ describe('DeviceService.setDisplayBrightness', () => {
     });
 
     await service.setDisplayBrightness('192.168.1.100', -1);
-    
+
     // Should clamp to 0
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'brightness'), 0);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'brightness'),
+      0
+    );
   });
 
   it('should clamp brightness > 100 to 100', async () => {
@@ -397,9 +394,12 @@ describe('DeviceService.setDisplayBrightness', () => {
     });
 
     await service.setDisplayBrightness('192.168.1.100', 150);
-    
+
     // Should clamp to 100
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'brightness'), 100);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'brightness'),
+      100
+    );
   });
 
   it('should accept boundary values (0, 100)', async () => {
@@ -416,10 +416,16 @@ describe('DeviceService.setDisplayBrightness', () => {
     });
 
     await service.setDisplayBrightness('192.168.1.100', 0);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'brightness'), 0);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'brightness'),
+      0
+    );
 
     await service.setDisplayBrightness('192.168.1.100', 100);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'brightness'), 100);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'brightness'),
+      100
+    );
   });
 });
 
@@ -444,7 +450,10 @@ describe('DeviceService.setDisplayPower', () => {
     const result = await service.setDisplayPower('192.168.1.100', false);
 
     assert.ok(result);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'displayOn'), false);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'displayOn'),
+      false
+    );
   });
 
   it('should turn display on', async () => {
@@ -464,7 +473,10 @@ describe('DeviceService.setDisplayPower', () => {
     const result = await service.setDisplayPower('192.168.1.100', true);
 
     assert.ok(result);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'displayOn'), true);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'displayOn'),
+      true
+    );
   });
 
   it('should handle boolean values correctly', async () => {
@@ -482,11 +494,17 @@ describe('DeviceService.setDisplayPower', () => {
 
     // Test with true
     await service.setDisplayPower('192.168.1.100', true);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'displayOn'), true);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'displayOn'),
+      true
+    );
 
     // Test with false
     await service.setDisplayPower('192.168.1.100', false);
-    assert.strictEqual(stateStore.getDeviceState('192.168.1.100', 'displayOn'), false);
+    assert.strictEqual(
+      stateStore.getDeviceState('192.168.1.100', 'displayOn'),
+      false
+    );
   });
 });
 
@@ -510,7 +528,10 @@ describe.skip('DeviceService.switchDriver', () => {
     const result = await service.switchDriver('192.168.1.100', 'mock');
 
     assert.ok(result);
-    assert.strictEqual(deviceAdapter.getDriverForDevice('192.168.1.100'), 'mock');
+    assert.strictEqual(
+      deviceAdapter.getDriverForDevice('192.168.1.100'),
+      'mock'
+    );
   });
 
   it('should switch from mock to real driver', async () => {
@@ -528,7 +549,10 @@ describe.skip('DeviceService.switchDriver', () => {
     const result = await service.switchDriver('192.168.1.100', 'real');
 
     assert.ok(result);
-    assert.strictEqual(deviceAdapter.getDriverForDevice('192.168.1.100'), 'real');
+    assert.strictEqual(
+      deviceAdapter.getDriverForDevice('192.168.1.100'),
+      'real'
+    );
   });
 
   it('should reject invalid driver type', async () => {
@@ -547,7 +571,10 @@ describe.skip('DeviceService.switchDriver', () => {
         await service.switchDriver('192.168.1.100', 'invalid');
       },
       (error) => {
-        return error.message.includes('Invalid driver') || error instanceof ValidationError;
+        return (
+          error.message.includes('Invalid driver') ||
+          error instanceof ValidationError
+        );
       }
     );
   });
@@ -665,9 +692,104 @@ describe.skip('DeviceService.resetDevice', () => {
         await service.resetDevice('192.168.1.100');
       },
       (error) => {
-        return error.message.includes('failed') || error.message.includes('Reset');
+        return (
+          error.message.includes('failed') || error.message.includes('Reset')
+        );
       }
     );
   });
 });
 
+describe('DeviceService Rehydration', () => {
+  function buildService(overrides = {}) {
+    const device = createMockDevice('192.168.1.100', overrides.deviceOptions);
+    const deviceAdapter = createMockDeviceAdapter([device]);
+
+    const sceneManager = {
+      ...createMockSceneManager(),
+      switchScene: overrides.switchScene || (async () => {}),
+      pauseScene: overrides.pauseScene || (() => {}),
+      stopScene: overrides.stopScene || (async () => {}),
+      getScene: (sceneName) => ({ name: sceneName, render: async () => {} }),
+    };
+
+    const service = new DeviceService({
+      logger: createMockLogger(),
+      deviceAdapter,
+      sceneManager,
+      stateStore: createMockStateStore(),
+      softReset: createMockSoftReset(),
+    });
+
+    return { service, deviceAdapter, sceneManager };
+  }
+
+  it('should rehydrate brightness and display state', async () => {
+    const { service, deviceAdapter } = buildService({
+      deviceOptions: { driverType: 'real' },
+    });
+
+    const setBrightnessSpy = [];
+    const setDisplaySpy = [];
+    deviceAdapter.getDevice('192.168.1.100').impl.setBrightness = async (
+      level
+    ) => {
+      setBrightnessSpy.push(level);
+      return true;
+    };
+    deviceAdapter.getDevice('192.168.1.100').impl.setDisplayPower = async (
+      on
+    ) => {
+      setDisplaySpy.push(on);
+      return true;
+    };
+
+    await service.rehydrateFromState('192.168.1.100', {
+      brightness: 42,
+      displayOn: false,
+    });
+
+    assert.deepStrictEqual(setBrightnessSpy, [42]);
+    assert.deepStrictEqual(setDisplaySpy, [false]);
+  });
+
+  it('should skip unknown scenes during rehydration', async () => {
+    const { service, sceneManager } = buildService({
+      switchScene: async () => {
+        throw new Error('Should not be called');
+      },
+    });
+
+    sceneManager.getScene = () => null;
+
+    const result = await service.rehydrateFromState('192.168.1.100', {
+      activeScene: 'nonexistent',
+    });
+
+    assert.ok(result.skipped.includes('activeScene'));
+  });
+
+  it('should rehydrate scene and playState', async () => {
+    let switchedScene = null;
+    let paused = false;
+
+    const { service, sceneManager } = buildService({
+      switchScene: async (sceneName) => {
+        switchedScene = sceneName;
+      },
+      pauseScene: () => {
+        paused = true;
+      },
+    });
+
+    const result = await service.rehydrateFromState('192.168.1.100', {
+      activeScene: 'clock',
+      playState: 'paused',
+    });
+
+    assert.strictEqual(switchedScene, 'clock');
+    assert.ok(result.applied.includes('activeScene'));
+    assert.ok(result.applied.some((entry) => entry.startsWith('playState')));
+    assert.ok(paused);
+  });
+});

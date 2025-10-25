@@ -6,7 +6,21 @@
           <div>
             <h2 class="tests-dashboard__title">Diagnostics</h2>
             <p class="tests-dashboard__subtitle">
-              {{ totalTests }} total tests
+              <span class="status-summary">
+                <span class="status-dot status-dot--green">●</span>
+                {{ statusCounts.green }} passed
+              </span>
+              <span class="status-summary">
+                <span class="status-dot status-dot--red">●</span>
+                {{ statusCounts.red }} failed
+              </span>
+              <span class="status-summary">
+                <span class="status-dot status-dot--yellow">●</span>
+                {{ statusCounts.yellow }} pending
+              </span>
+              <span class="status-summary status-summary--muted">
+                {{ totalTests }} total tests
+              </span>
             </p>
           </div>
           <div class="tests-dashboard__actions">
@@ -39,20 +53,6 @@
             density="comfortable"
             clearable
           />
-          <div class="tests-dashboard__summary-status">
-            <span class="status-summary">
-              <span class="status-dot status-dot--green">●</span>
-              {{ statusCounts.green }} passed
-            </span>
-            <span class="status-summary">
-              <span class="status-dot status-dot--red">●</span>
-              {{ statusCounts.red }} failed
-            </span>
-            <span class="status-summary">
-              <span class="status-dot status-dot--yellow">●</span>
-              {{ statusCounts.yellow }} pending
-            </span>
-          </div>
         </div>
 
         <v-alert
@@ -99,17 +99,20 @@
                 <div class="tests-section__title">
                   <span class="tests-section__label">{{ section.label }}</span>
                   <div class="tests-section__status">
-                    <span v-if="section.counts.green > 0" class="section-status">
+                    <span class="section-status section-status--green">
                       <span class="status-dot status-dot--green">●</span>
-                      {{ section.counts.green }}
+                      {{ section.counts.green }} passed
                     </span>
-                    <span v-if="section.counts.red > 0" class="section-status">
+                    <span class="section-status section-status--red">
                       <span class="status-dot status-dot--red">●</span>
-                      {{ section.counts.red }}
+                      {{ section.counts.red }} failed
                     </span>
-                    <span v-if="section.counts.yellow > 0" class="section-status">
+                    <span class="section-status section-status--yellow">
                       <span class="status-dot status-dot--yellow">●</span>
-                      {{ section.counts.yellow }}
+                      {{ section.counts.yellow }} pending
+                    </span>
+                    <span class="section-status section-status--total">
+                      {{ section.tests.length }} total
                     </span>
                   </div>
                 </div>
@@ -202,13 +205,14 @@ const testsState = reactive({
 });
 
 const CATEGORY_METADATA = {
-  system: { label: 'SYSTEM DIAGNOSTICS', type: 'diagnostic', prefix: 'SD' },
-  device: { label: 'DEVICE DIAGNOSTICS', type: 'diagnostic', prefix: 'DD' },
-  mqtt: { label: 'MQTT DIAGNOSTICS', type: 'diagnostic', prefix: 'MD' },
-  'unit-tests': { label: 'UNIT TESTS', type: 'automated', prefix: 'UT' },
-  'integration-tests': { label: 'INTEGRATION TESTS', type: 'automated', prefix: 'IT' },
-  'contract-tests': { label: 'CONTRACT TESTS', type: 'automated', prefix: 'CT' },
-  'ui-tests': { label: 'UI TESTS', type: 'automated', prefix: 'UI' },
+  system: { label: 'SYSTEM DIAGNOSTICS', type: 'diagnostic', prefix: 'SYS' },
+  device: { label: 'DEVICE DIAGNOSTICS', type: 'diagnostic', prefix: 'DEV' },
+  integration: { label: 'INTEGRATION DIAGNOSTICS', type: 'diagnostic', prefix: 'IND' },
+  mqtt: { label: 'MQTT DIAGNOSTICS', type: 'diagnostic', prefix: 'MQT' },
+  'unit-tests': { label: 'UNIT TESTS', type: 'automated', prefix: 'UNT' },
+  'integration-tests': { label: 'INTEGRATION TESTS', type: 'automated', prefix: 'INT' },
+  'contract-tests': { label: 'CONTRACT TESTS', type: 'automated', prefix: 'CON' },
+  'ui-tests': { label: 'UI TESTS', type: 'automated', prefix: 'UIT' },
 };
 
 const totalTests = computed(() => testsState.tests.length);
@@ -443,6 +447,10 @@ onMounted(() => {
   margin: 4px 0 0;
   font-size: 14px;
   color: rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
 .tests-dashboard__actions {
@@ -458,12 +466,6 @@ onMounted(() => {
   align-items: center;
 }
 
-.tests-dashboard__summary-status {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
 .status-summary {
   display: flex;
   align-items: center;
@@ -471,6 +473,11 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   color: rgba(15, 23, 42, 0.76);
+}
+
+.status-summary--muted {
+  color: rgba(15, 23, 42, 0.45);
+  font-weight: 400;
 }
 
 .status-dot {
@@ -566,6 +573,11 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 500;
   color: rgba(15, 23, 42, 0.7);
+}
+
+.section-status--total {
+  color: rgba(15, 23, 42, 0.45);
+  font-weight: 400;
 }
 
 .tests-section__body {

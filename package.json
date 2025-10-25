@@ -11,7 +11,7 @@
     "ui:build": "vite build",
     "ui:preview": "vite preview",
     "ui:test": "playwright test",
-    "ui:test:report": "playwright test --reporter=list,html,json",
+    "ui:test:report": "playwright test --reporter=json",
     "test:daemon": "npm run build:version && node --test test/lib/state-persistence.test.js test/lib/system-service.test.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -22,7 +22,7 @@
     "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
     "test": "npm run build:version && node scripts/run-node-tests.js",
     "coverage": "c8 npm test",
-    "test:report": "npm test && echo 'Test results saved to data/test-results/node-tests.json'",
+    "test:report": "npm test && echo 'Test results → data/test-results/node-tests.json'",
     "coverage:report": "c8 report --reporter=text",
     "hooks:setup": "husky init"
   },

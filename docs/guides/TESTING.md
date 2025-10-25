@@ -8,20 +8,20 @@ This document explains how diagnostic tests (runtime health checks) and automate
 
 - Defined in `lib/services/diagnostics-service.js`
 - Run against the live daemon to verify health signals
-- Categories include `system`, `device`, `mqtt`
+- Categories include `system`, `device`, `integration`, `mqtt`
 - Exposed at `/api/tests` and runnable from the Diagnostics Dashboard (UI)
 - Each test exposes `{ id, name, description, category, runnable, latest }`
 - `latest` includes status (`green`, `yellow`, `red`), message, details, duration, timestamp
-- Test IDs use category-specific prefixes: `SD-` (System), `DD-` (Device), `MD-` (MQTT)
+- Test IDs use category-specific prefixes persisted in the registry (e.g., `SYS-`, `DEV-`, `IND-`, `MQT-`)
 
 ### Automated Tests (development)
 
 - **Node.js test suite** in `test/` directory
-  - `test/lib/*.test.js` → unit tests (`unit-tests`) → ID prefix `UT-`
-  - `test/integration/*.test.js` → integration tests (`integration-tests`) → ID prefix `IT-`
-  - `test/contracts/*.test.js` → contract tests (`contract-tests`) → ID prefix `CT-`
-- **Playwright UI tests** in `ui-tests/` directory → ID prefix `UI-`
-- Run locally or in CI via `npm test` (Node.js) or `npm run ui:test` (Playwright)
+  - `test/lib/*.test.js` → unit tests (`unit-tests`) → ID prefix `UNT-`
+  - `test/integration/*.test.js` → integration tests (`integration-tests`) → ID prefix `INT-`
+  - `test/contracts/*.test.js` → contract tests (`contract-tests`) → ID prefix `CON-`
+- **Playwright UI tests** in `ui-tests/` directory → ID prefix `UIT-`
+- Run locally or in CI via `npm test` (Node.js) or `npm run ui:test`
 - Results saved to `data/test-results/node-tests.json` and `data/test-results/playwright-tests.json`
 - Parsed by `lib/services/test-results-parser.js` and merged into `/api/tests` response
 - Read-only in the Diagnostics Dashboard (no run button)
@@ -30,21 +30,22 @@ This document explains how diagnostic tests (runtime health checks) and automate
 
 All tests have stable, short IDs with category-specific prefixes:
 
-| Category           | Prefix | Example         | Source                                |
-| ------------------ | ------ | --------------- | ------------------------------------- |
-| System Diagnostics | `SD-`  | `SD-1`, `SD-2`  | `lib/services/diagnostics-service.js` |
-| Device Diagnostics | `DD-`  | `DD-1`, `DD-2`  | `lib/services/diagnostics-service.js` |
-| MQTT Diagnostics   | `MD-`  | `MD-1`          | `lib/services/diagnostics-service.js` |
-| Unit Tests         | `UT-`  | `UT-1`, `UT-42` | `test/lib/*.test.js`                  |
-| Integration Tests  | `IT-`  | `IT-1`, `IT-23` | `test/integration/*.test.js`          |
-| Contract Tests     | `CT-`  | `CT-1`, `CT-15` | `test/contracts/*.test.js`            |
-| UI Tests           | `UI-`  | `UI-1`, `UI-8`  | `ui-tests/**/*.spec.ts`               |
+| Category                | Prefix | Example            | Source                                |
+| ----------------------- | ------ | ------------------ | ------------------------------------- |
+| System Diagnostics      | `SYS-` | `SYS-1`, `SYS-4`   | `lib/services/diagnostics-service.js` |
+| Device Diagnostics      | `DEV-` | `DEV-1`, `DEV-12`  | `lib/services/diagnostics-service.js` |
+| Integration Diagnostics | `IND-` | `IND-5`            | `lib/services/diagnostics-service.js` |
+| MQTT Diagnostics        | `MQT-` | `MQT-9`            | `lib/services/diagnostics-service.js` |
+| Unit Tests              | `UNT-` | `UNT-1`, `UNT-156` | `test/lib/*.test.js`                  |
+| Integration Tests       | `INT-` | `INT-1`, `INT-23`  | `test/integration/*.test.js`          |
+| Contract Tests          | `CON-` | `CON-1`, `CON-31`  | `test/contracts/*.test.js`            |
+| UI Tests                | `UIT-` | `UIT-1`, `UIT-8`   | `ui-tests/**/*.spec.ts`               |
 
 Test IDs are:
 
 - **Stable** - generated from hash of (file path + test name)
-- **Sequential** - numbered per category
-- **Persistent** - stored in `data/test-registry.json`
+- **Sequential** - numbered per category with counters maintained per prefix
+- **Persistent** - stored in `data/test-registry.json` and reused across runs
 
 ## Updating Automated Test Results
 
@@ -94,24 +95,25 @@ This executes Playwright tests and outputs results to `data/test-results/playwri
    - Integration: `test/integration/my-flow.test.js`
    - Contract: `test/contracts/my-api.test.js`
 2. Write Node.js test cases using `node:test` API
-3. Run `npm run test:report` to generate results
+3. Run `npm run test:report` to generate results (`data/test-results/node-tests.json`)
 4. Confirm results appear in Diagnostics UI under expected category with correct ID prefix
 
 ### UI Test
 
 1. Create test file in `ui-tests/` directory (e.g., `ui-tests/my-feature.spec.ts`)
 2. Write Playwright test cases
-3. Run `npm run ui:test:report` to generate results
-4. Confirm results appear in Diagnostics UI with `UI-` prefix
+3. Run `npm run ui:test:report` to generate results (`data/test-results/playwright-tests.json`)
+4. Confirm results appear in Diagnostics UI with `UIT-` prefix
 
 ## Diagnostics Dashboard Features
 
-- **Grouped sections** by category with colored status indicators (● 3 passed ● 2 failed ● 0 pending)
+- **Grouped sections** by category with colored status indicators (● 650 passed ● 45 failed ● 5 pending)
 - **Search** across ID, name, description, latest message
 - **Short IDs** for easy reference (e.g., `UT-42`, `SD-1`)
 - **Run buttons** only for diagnostic tests (automated tests show last run results)
 - **Details modal** shows metadata, last run information, structured details, and failure messages
 - **Status dots** with colors: green (passed), red (failed), yellow (pending/skipped)
+- **Short IDs** visible in the grid with columns: status dot, ID, name/description, last run, actions
 
 ## Test Results Parser
 

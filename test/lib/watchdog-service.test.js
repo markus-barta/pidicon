@@ -782,6 +782,62 @@ test('startMonitoring begins monitoring a device', () => {
   }
 });
 
+test('startMonitoring triggers immediate health check', async () => {
+  let healthCheckCount = 0;
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: {
+        enabled: true,
+        checkWhenOff: true,
+        timeoutMinutes: 60,
+        action: 'restart',
+        healthCheckIntervalSeconds: 60,
+      },
+    },
+  });
+
+  const metricsStore = {
+    '192.168.1.100': {
+      lastSeenTs: null,
+    },
+  };
+
+  const deviceService = createMockDeviceService(metricsStore);
+  const stateStore = createMockStateStore();
+
+  const watchdogService = new WatchdogService(
+    configStore,
+    deviceService,
+    createMockSceneService(),
+    stateStore,
+    {
+      getDevice() {
+        return {
+          impl: {
+            driverType: 'real',
+            async healthCheck() {
+              healthCheckCount++;
+              return { success: true, latencyMs: 5 };
+            },
+          },
+        };
+      },
+    }
+  );
+
+  try {
+    watchdogService.startMonitoring('192.168.1.100');
+
+    // Allow asynchronous immediate check to fire
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.ok(healthCheckCount >= 1, 'health check should run immediately');
+  } finally {
+    watchdogService.stopMonitoring('192.168.1.100');
+  }
+});
+
 test('stopMonitoring stops monitoring a device', () => {
   const configStore = new MockConfigStore({
     '192.168.1.100': {

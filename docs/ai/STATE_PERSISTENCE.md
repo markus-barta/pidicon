@@ -79,6 +79,9 @@ The daemon now automatically persists critical runtime state to disk, allowing d
 ```javascript
 // Restore persisted state (automatic)
 await stateStore.restore();
+
+// Access snapshot for daemon rehydration
+const snapshot = stateStore.getSnapshot();
 ```
 
 ### Daemon Shutdown

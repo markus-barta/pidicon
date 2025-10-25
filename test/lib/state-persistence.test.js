@@ -104,7 +104,7 @@ describe('State Persistence - Full Integration', () => {
       assert.strictEqual(
         displayOn,
         false,
-        'displayOn should be restored as false',
+        'displayOn should be restored as false'
       );
     });
 
@@ -123,7 +123,7 @@ describe('State Persistence - Full Integration', () => {
       assert.strictEqual(
         displayOn,
         true,
-        'displayOn should be restored as true',
+        'displayOn should be restored as true'
       );
     });
 
@@ -153,12 +153,12 @@ describe('State Persistence - Full Integration', () => {
 
       const restoredBrightness = newStateStore.getDeviceState(
         deviceIp,
-        'brightness',
+        'brightness'
       );
       assert.strictEqual(
         restoredBrightness,
         brightness,
-        'Brightness should be restored correctly',
+        'Brightness should be restored correctly'
       );
     });
 
@@ -206,12 +206,12 @@ describe('State Persistence - Full Integration', () => {
 
       const restoredScene = newStateStore.getDeviceState(
         deviceIp,
-        'activeScene',
+        'activeScene'
       );
       assert.strictEqual(
         restoredScene,
         sceneName,
-        'Active scene should be restored',
+        'Active scene should be restored'
       );
     });
 
@@ -264,7 +264,7 @@ describe('State Persistence - Full Integration', () => {
       assert.strictEqual(
         playState,
         'playing',
-        'Playing state should be restored',
+        'Playing state should be restored'
       );
     });
   });
@@ -283,7 +283,7 @@ describe('State Persistence - Full Integration', () => {
 
       const logLevel = newStateStore.getDeviceState(
         deviceIp,
-        '__logging_level',
+        '__logging_level'
       );
       assert.strictEqual(logLevel, 'error', 'Logging level should be restored');
     });
@@ -301,12 +301,12 @@ describe('State Persistence - Full Integration', () => {
 
         const restored = newStateStore.getDeviceState(
           deviceIp,
-          '__logging_level',
+          '__logging_level'
         );
         assert.strictEqual(
           restored,
           level,
-          `Log level ${level} should be restored`,
+          `Log level ${level} should be restored`
         );
       }
     });
@@ -335,29 +335,29 @@ describe('State Persistence - Full Integration', () => {
       // Verify device 1
       assert.strictEqual(
         newStateStore.getDeviceState(device1, 'displayOn'),
-        false,
+        false
       );
       assert.strictEqual(
         newStateStore.getDeviceState(device1, 'brightness'),
-        50,
+        50
       );
       assert.strictEqual(
         newStateStore.getDeviceState(device1, 'activeScene'),
-        'clock',
+        'clock'
       );
 
       // Verify device 2
       assert.strictEqual(
         newStateStore.getDeviceState(device2, 'displayOn'),
-        true,
+        true
       );
       assert.strictEqual(
         newStateStore.getDeviceState(device2, 'brightness'),
-        100,
+        100
       );
       assert.strictEqual(
         newStateStore.getDeviceState(device2, 'activeScene'),
-        'weather',
+        'weather'
       );
     });
   });
@@ -383,28 +383,75 @@ describe('State Persistence - Full Integration', () => {
       assert.strictEqual(
         restoredStateStore.getDeviceState(deviceIp, 'displayOn'),
         false,
-        'displayOn not restored',
+        'displayOn not restored'
       );
       assert.strictEqual(
         restoredStateStore.getDeviceState(deviceIp, 'brightness'),
         75,
-        'brightness not restored',
+        'brightness not restored'
       );
       assert.strictEqual(
         restoredStateStore.getDeviceState(deviceIp, 'activeScene'),
         'power_price',
-        'activeScene not restored',
+        'activeScene not restored'
       );
       assert.strictEqual(
         restoredStateStore.getDeviceState(deviceIp, 'playState'),
         'playing',
-        'playState not restored',
+        'playState not restored'
       );
       assert.strictEqual(
         restoredStateStore.getDeviceState(deviceIp, '__logging_level'),
         'warning',
-        'logging level not restored',
+        'logging level not restored'
       );
+    });
+
+    it('should provide snapshot for daemon rehydration sequencing', async () => {
+      const firstDevice = '192.168.1.100';
+      const secondDevice = '192.168.1.101';
+
+      stateStore.setDeviceState(firstDevice, 'displayOn', false);
+      stateStore.setDeviceState(firstDevice, 'brightness', 25);
+      stateStore.setDeviceState(firstDevice, 'activeScene', 'clock');
+      stateStore.setDeviceState(firstDevice, 'playState', 'paused');
+      stateStore.setDeviceState(firstDevice, '__logging_level', 'debug');
+
+      stateStore.setDeviceState(secondDevice, 'displayOn', true);
+      stateStore.setDeviceState(secondDevice, 'brightness', 90);
+      stateStore.setDeviceState(secondDevice, 'activeScene', 'weather');
+      stateStore.setDeviceState(secondDevice, 'playState', 'playing');
+
+      await stateStore.flush();
+
+      const snapshot = stateStore.getSnapshot();
+      assert.ok(snapshot.devices[firstDevice], 'First device should exist');
+      assert.ok(snapshot.devices[secondDevice], 'Second device should exist');
+
+      const firstSnapshot = snapshot.devices[firstDevice];
+      assert.strictEqual(firstSnapshot.activeScene, 'clock');
+      assert.strictEqual(firstSnapshot.playState, 'paused');
+      assert.strictEqual(firstSnapshot.brightness, 25);
+      assert.strictEqual(firstSnapshot.displayOn, false);
+      assert.strictEqual(firstSnapshot.__logging_level, 'debug');
+      assert.strictEqual(firstSnapshot.status, 'idle');
+      assert.strictEqual(firstSnapshot.generationId, 0);
+
+      const secondSnapshot = snapshot.devices[secondDevice];
+      assert.strictEqual(secondSnapshot.activeScene, 'weather');
+      assert.strictEqual(secondSnapshot.playState, 'playing');
+      assert.strictEqual(secondSnapshot.brightness, 90);
+      assert.strictEqual(secondSnapshot.displayOn, true);
+      assert.ok(
+        !('loggingLevel' in secondSnapshot),
+        'loggingLevel key should not exist'
+      );
+      assert.ok(
+        !('__logging_level' in secondSnapshot) ||
+          secondSnapshot.__logging_level === null
+      );
+      assert.strictEqual(secondSnapshot.status, 'idle');
+      assert.strictEqual(secondSnapshot.generationId, 0);
     });
 
     it('should handle rapid state changes before UI reload', async () => {
@@ -428,7 +475,7 @@ describe('State Persistence - Full Integration', () => {
       assert.strictEqual(
         brightness,
         80,
-        'Latest brightness value should be restored',
+        'Latest brightness value should be restored'
       );
     });
   });
@@ -446,12 +493,12 @@ describe('State Persistence - Full Integration', () => {
       const displayOn = newStateStore.getDeviceState(
         '192.168.1.100',
         'displayOn',
-        true,
+        true
       );
       assert.strictEqual(
         displayOn,
         true,
-        'Should use default when no state file',
+        'Should use default when no state file'
       );
     });
 
@@ -467,7 +514,7 @@ describe('State Persistence - Full Integration', () => {
       const displayOn = newStateStore.getDeviceState(
         '192.168.1.100',
         'displayOn',
-        true,
+        true
       );
       assert.strictEqual(displayOn, true, 'Should handle corrupted file');
     });
@@ -496,7 +543,7 @@ describe('State Persistence - Full Integration', () => {
       // Should have written much fewer times than changes
       assert.ok(
         writeCount <= 2,
-        `Should debounce writes (writeCount: ${writeCount})`,
+        `Should debounce writes (writeCount: ${writeCount})`
       );
     });
   });
@@ -535,11 +582,11 @@ describe('State Persistence - Full Integration', () => {
       // Both devices should have correct final values
       assert.strictEqual(
         newStateStore.getDeviceState(device1, 'brightness'),
-        90,
+        90
       );
       assert.strictEqual(
         newStateStore.getDeviceState(device2, 'brightness'),
-        45,
+        45
       );
     });
 
@@ -589,7 +636,7 @@ describe('State Persistence - Full Integration', () => {
         assert.strictEqual(
           newStateStore.getDeviceState(deviceIp, 'brightness'),
           i,
-          `Device ${i} brightness should be restored`,
+          `Device ${i} brightness should be restored`
         );
       }
     });
@@ -671,12 +718,12 @@ describe('State Persistence - Full Integration', () => {
       const brightness = newStateStore.getDeviceState(
         '192.168.1.100',
         'brightness',
-        100,
+        100
       );
       assert.strictEqual(
         brightness,
         100,
-        'Should use default after corruption',
+        'Should use default after corruption'
       );
     });
 
@@ -690,7 +737,7 @@ describe('State Persistence - Full Integration', () => {
       const displayOn = newStateStore.getDeviceState(
         '192.168.1.100',
         'displayOn',
-        true,
+        true
       );
       assert.strictEqual(displayOn, true);
     });
@@ -706,7 +753,7 @@ describe('State Persistence - Full Integration', () => {
       const brightness = newStateStore.getDeviceState(
         '192.168.1.100',
         'brightness',
-        100,
+        100
       );
       assert.strictEqual(brightness, 100);
     });

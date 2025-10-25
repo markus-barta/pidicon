@@ -108,11 +108,6 @@ async function bootstrap() {
     registerDevicesFromConfig,
   }));
 
-  container.register(
-    'testResultsParser',
-    ({ logger }) => new TestResultsParser({ logger })
-  );
-
   // Resolve services from container
   const stateStore = container.resolve('stateStore');
   stateStore.recordDaemonStart(Date.now());
@@ -189,11 +184,6 @@ async function bootstrap() {
   );
 
   container.register(
-    'testResultsParser',
-    ({ logger }) => new TestResultsParser({ logger })
-  );
-
-  container.register(
     'diagnosticsService',
     ({
       logger,
@@ -213,7 +203,8 @@ async function bootstrap() {
         sceneService,
         watchdogService,
         deviceConfigStore,
-        testResultsParser,
+        testResultsParser:
+          testResultsParser || new TestResultsParser({ logger }),
       })
   );
 
@@ -285,6 +276,7 @@ async function bootstrap() {
   } catch (error) {
     logger.warn('Failed to restore runtime state:', { error: error.message });
   }
+  const persistedSnapshot = stateStore.getSnapshot();
 
   // ========================================================================
   // WEB UI SERVER (OPTIONAL)
@@ -361,6 +353,9 @@ async function bootstrap() {
 
         registerDevicesFromConfig(configuredDevices);
 
+        const rehydratedDevices = new Set();
+        const deviceService = container.resolve('deviceService');
+
         const settings = deviceConfigStore.getSettings();
         if (settings.scenesPath) {
           const userSceneResults = SceneRegistration.registerFromStructure(
@@ -393,35 +388,59 @@ async function bootstrap() {
                 logger.debug(`Set driver for ${ip}: ${driver}`);
               }
 
-              if (brightness !== undefined && brightness !== null) {
-                const device = getDevice(ip);
-                if (device && device.setBrightness) {
-                  try {
-                    await device.setBrightness(brightness);
-                    logger.debug(`Set brightness for ${ip}: ${brightness}%`);
-                  } catch (error) {
-                    logger.warn(
-                      `Failed to set brightness for ${ip}: ${error.message}`
-                    );
+              const persistedDeviceState = persistedSnapshot.devices?.[ip];
+
+              if (persistedDeviceState) {
+                logger.info(
+                  `Rehydrating ${ip} from persisted runtime state`,
+                  persistedDeviceState
+                );
+                const rehydrateResult = await deviceService.rehydrateFromState(
+                  ip,
+                  persistedDeviceState
+                );
+                rehydratedDevices.add(ip);
+                logger.debug('Rehydration result', rehydrateResult);
+              } else {
+                if (brightness !== undefined && brightness !== null) {
+                  const device = getDevice(ip);
+                  if (device && device.setBrightness) {
+                    try {
+                      await device.setBrightness(brightness);
+                      logger.debug(`Set brightness for ${ip}: ${brightness}%`);
+                    } catch (error) {
+                      logger.warn(
+                        `Failed to set brightness for ${ip}: ${error.message}`
+                      );
+                    }
                   }
                 }
-              }
 
-              if (startupScene) {
-                logger.info(
-                  `Loading startup scene "${startupScene}" for ${name} (${ip})`
-                );
-                const ctx = getContext(
-                  ip,
-                  deviceDefaults,
-                  deviceDrivers,
-                  deviceConfigStore
-                );
-                await sceneManager.switchScene(startupScene, ctx);
+                if (startupScene) {
+                  logger.info(
+                    `Loading startup scene "${startupScene}" for ${name} (${ip})`
+                  );
+                  const ctx = getContext(
+                    ip,
+                    deviceDefaults,
+                    deviceDrivers,
+                    deviceConfigStore
+                  );
+                  await sceneManager.switchScene(startupScene, ctx);
+                }
               }
             } catch (error) {
               logger.warn(
                 `Failed to initialize device ${name} (${ip}): ${error.message}`
+              );
+            }
+          }
+
+          const persistedDevices = Object.keys(persistedSnapshot.devices || {});
+          for (const ip of persistedDevices) {
+            if (!rehydratedDevices.has(ip) && !deviceDrivers.has(ip)) {
+              logger.info(
+                `Persisted state found for ${ip} but device not configured; skipping rehydration`
               );
             }
           }

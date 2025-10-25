@@ -291,3 +291,21 @@ Expected output:
 - [Architecture Documentation](ARCHITECTURE.md)
 - [Deployment Guide](DEPLOYMENT.md)
 - [Driver Development](DRIVER_DEVELOPMENT.md)
+
+## Runtime State Persistence
+
+PIDICON also stores volatile device state (display power, brightness, active scene,
+play state, logging level) in the `/data/runtime-state.json` file. The daemon updates this
+file automatically (debounced) whenever these values change.
+
+On restart the daemon restores this file, applies the last known device state, and exposes the
+snapshot via `stateStore.getSnapshot()` so additional services can rehydrate their own state.
+
+```javascript
+const StateStore = require('./lib/state-store');
+const stateStore = new StateStore({ logger });
+await stateStore.restore();
+const snapshot = stateStore.getSnapshot();
+```
+
+Ensure `/data` remains writable so the runtime state file can be created and updated.
