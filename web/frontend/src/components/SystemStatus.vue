@@ -488,6 +488,12 @@ onUnmounted(() => {
 .status-bar {
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
+  height: auto !important;
+}
+
+.status-bar :deep(.v-toolbar__content) {
+  height: auto !important;
+  padding: 0;
 }
 
 .status-container {

@@ -233,18 +233,8 @@ onUnmounted(() => {
   min-height: 100vh;
 }
 
-/* Account for fixed app-bar */
-.v-main > .v-main__wrap {
-  padding-top: 0;
-}
-
 .main-content {
   min-width: 800px;
-  padding-top: 100px;
-}
-
-.main-content > .main-container:first-child {
-  padding-top: 32px;
 }
 
 .main-container {
