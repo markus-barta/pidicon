@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="logs-view">
     <v-row justify="center">
-      <v-col cols="12" lg="9">
+      <v-col cols="12" md="12" lg="10" xl="8">
         <v-card class="logs-card">
           <div class="logs-header d-flex align-center">
             <v-avatar color="primary" size="36" class="mr-3">
@@ -94,17 +94,17 @@ const activeFilters = ref(['daemon', 'ui']);
 
 <style scoped>
 .logs-view {
-  padding: 16px 32px 48px;
+  padding-bottom: 48px;
 }
 
 .logs-card {
-  border-radius: 18px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
-  padding: 20px 24px 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
 }
 
 .logs-header {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .logs-filter {
@@ -112,45 +112,51 @@ const activeFilters = ref(['daemon', 'ui']);
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 8px 16px;
-  margin-bottom: 16px;
-  border-radius: 12px;
-  background-color: rgba(79, 70, 229, 0.08);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background-color: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.12);
 }
 
 .logs-filter-group {
   display: inline-flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .logs-filter-chip {
-  border-radius: 999px !important;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.logs-filter-chip--active {
-  background-color: rgba(79, 70, 229, 0.12) !important;
-  color: #312e81 !important;
+  font-weight: 500;
 }
 
 .logs-filter-chip--disabled {
-  background-color: transparent !important;
-  border: 1px dashed rgba(79, 70, 229, 0.25) !important;
-  color: rgba(49, 46, 129, 0.6) !important;
+  opacity: 0.6;
+  font-style: italic;
 }
 
 .logs-subcard {
-  border-radius: 14px !important;
+  border-radius: 8px !important;
 }
 
-@media (max-width: 960px) {
-  .logs-view {
-    padding: 12px 16px 32px;
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+  .logs-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 800px) {
+  .logs-card {
+    padding: 16px;
   }
 
-  .logs-card {
-    padding: 16px !important;
+  .logs-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .logs-filter-group {
+    width: 100%;
   }
 }
 </style>

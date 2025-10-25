@@ -1,23 +1,21 @@
 <template>
-  <v-app-bar color="white" elevation="0" height="68" class="status-bar">
+  <v-app-bar color="white" elevation="0" class="status-bar">
     <v-container fluid class="status-container">
-      <!-- Top Row: Title + Centered Status + Daemon Restart -->
-      <div class="header-top-row">
-        <div class="header-left">
-          <div class="status-title">
-            <v-avatar color="primary" size="36" class="mr-3">
-              <v-icon color="white" size="22">mdi-television</v-icon>
-            </v-avatar>
-            <div class="title-copy">
-              <div class="text-h6 font-weight-bold primary--text title-text">
-                PIDICON<span class="app-subtitle">: Pixel Display Controller</span>
-              </div>
+      <!-- Header Row: Title + Status + Daemon Restart -->
+      <div class="header-row">
+        <div class="header-title">
+          <v-avatar color="primary" size="40" class="mr-3">
+            <v-icon color="white" size="24">mdi-television</v-icon>
+          </v-avatar>
+          <div class="title-text">
+            <div class="text-h6 font-weight-bold primary--text">
+              PIDICON<span class="app-subtitle">: Pixel Display Controller</span>
             </div>
           </div>
         </div>
 
-        <div class="header-center">
-          <div class="status-meta text-caption d-flex align-center justify-center">
+        <div class="header-status">
+          <div class="status-meta text-caption d-flex align-center">
             <span class="d-inline-flex align-center">
               <span
                 class="status-dot"
@@ -92,7 +90,7 @@
           </div>
         </div>
 
-        <div class="header-right">
+        <div class="header-actions">
           <v-btn
             size="small"
             variant="outlined"
@@ -111,31 +109,26 @@
         </div>
       </div>
 
-      <!-- Bottom Row: Navigation Tabs (closer to content) -->
-      <div class="header-bottom-row">
-        <div class="nav-buttons">
-          <v-btn
-            v-for="item in filteredNavItems"
-            :key="item.value"
-            :color="activeNav === item.value ? 'primary' : 'grey'"
-            :variant="activeNav === item.value ? 'flat' : 'outlined'"
-            size="small"
-            class="nav-btn"
-            :class="{
-              'nav-btn--active': activeNav === item.value,
-              'nav-btn--inactive': activeNav !== item.value
-            }"
-            @click="handleNav(item.value)"
-            :data-test="item.testId"
-          >
-            <v-icon size="small" class="mr-1">{{ item.icon }}</v-icon>
-            <span class="text-caption nav-btn__label">{{ item.label }}</span>
-            <v-tooltip activator="parent" location="bottom">
-              {{ item.tooltip }}
-            </v-tooltip>
-          </v-btn>
-        </div>
-      </div>
+      <!-- Divider -->
+      <v-divider class="my-2" />
+
+      <!-- Navigation Tabs -->
+      <v-tabs
+        v-model="activeNav"
+        color="primary"
+        class="nav-tabs"
+        density="compact"
+      >
+        <v-tab
+          v-for="item in filteredNavItems"
+          :key="item.value"
+          :value="item.value"
+          :data-test="item.testId"
+        >
+          <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
+          {{ item.label }}
+        </v-tab>
+      </v-tabs>
     </v-container>
   </v-app-bar>
 
@@ -460,11 +453,6 @@ const statusDotStyles = (color) => ({
   marginRight: '6px',
 });
 
-const handleNav = (value) => {
-  if (!value || value === activeNav.value) return;
-  activeNav.value = value;
-};
-
 watch(
   () => props.activeView,
   (value) => {
@@ -501,65 +489,51 @@ onUnmounted(() => {
 }
 
 .status-container {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 20px 6px;
+  padding: 12px 24px 0;
 }
 
-.header-top-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left,
-.header-right {
+.header-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.header-left {
-  justify-content: flex-start;
-}
-
-.header-right {
-  justify-content: flex-end;
-}
-
-.header-center {
-  display: flex;
-  justify-content: center;
-}
-
-.status-title {
+.header-title {
   display: flex;
   align-items: center;
-  min-width: 0;
-}
-
-.title-copy {
   min-width: 0;
 }
 
 .title-text {
+  min-width: 0;
   line-height: 1.2;
 }
 
+.header-status {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
 .status-meta {
-  color: #4c1d95;
-  gap: 8px;
+  color: #6b7280;
+  gap: 6px;
   flex-wrap: wrap;
-  text-align: center;
 }
 
 .status-label,
 .status-detail {
-  color: rgba(49, 46, 129, 0.9);
+  color: #6b7280;
   font-size: 0.75rem;
 }
-
 
 .status-label .last-heartbeat {
   margin-left: 4px;
@@ -576,48 +550,8 @@ onUnmounted(() => {
   display: inline;
 }
 
-.header-bottom-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 36px 6px;
-}
-
-.nav-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-btn {
-  min-width: 0;
-  transition: all 0.15s ease;
-  border-radius: 999px !important;
-  padding: 6px 14px 10px;
-}
-
-.nav-btn__label {
-  letter-spacing: 0.04em;
-}
-
-.nav-btn--active {
-  box-shadow: none;
-  background-color: rgba(139, 92, 246, 0.18) !important;
-  color: #1f0f4d !important;
-}
-
-.nav-btn--inactive {
-  color: #312e81 !important;
-  border-color: rgba(79, 70, 229, 0.14) !important;
-  background-color: rgba(79, 70, 229, 0.08) !important;
-}
-
-.nav-btn--inactive .v-icon {
-  color: rgba(67, 56, 202, 0.8) !important;
-}
-
-.nav-btn.v-btn--variant-flat {
-  box-shadow: none;
+.nav-tabs {
+  margin-top: 0;
 }
 
 .mqtt-tooltip {
@@ -713,52 +647,37 @@ onUnmounted(() => {
   }
 }
 
-/* Hide subtitle on smaller screens */
-@media (max-width: 960px) {
-  .app-subtitle {
-    display: none;
-  }
-
-  .header-top-row {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-    gap: 8px;
-  }
-
-  .header-left,
-  .header-right {
-    justify-content: center;
-  }
-
-  .header-right {
-    margin-top: 4px;
-  }
-
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
   .status-detail-separator,
   .status-detail {
     display: none;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
+  .app-subtitle {
+    display: none;
+  }
+
   .status-container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 8px 16px 0;
   }
 
-  .header-bottom-row {
-    padding-left: 0;
-    padding-right: 0;
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  .status-title {
-    flex-wrap: wrap;
+  .header-status {
+    justify-content: flex-start;
+    width: 100%;
   }
 
-  .daemon-restart-btn {
-    order: -1;
-    margin-bottom: 8px;
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 </style>

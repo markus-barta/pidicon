@@ -10,21 +10,21 @@
     <v-card-title class="pb-2">
       <div class="device-header-container">
         <div class="device-header-row">
-          <!-- Device Type Icon + Name + Driver Status -->
+          <!-- Hardware Icon + Device Type Icon + Name -->
           <h3 class="text-h5 font-weight-bold device-name">
-            <v-icon :icon="deviceTypeIcon" size="small" class="mr-2"></v-icon>
-            {{ deviceName }}
             <v-icon 
               :icon="driverStatusIcon" 
               :color="driverStatusColor"
-              size="x-small" 
-              class="ml-2 driver-status-icon"
+              :size="14"
+              class="mr-2 driver-status-icon"
               :class="{ 'driver-status-icon--glow': device.driver === 'mock' }"
             >
               <v-tooltip activator="parent" location="bottom">
-                {{ driverStatusLabel }}
+                {{ driverStatusTooltip }}
               </v-tooltip>
             </v-icon>
+            <v-icon :icon="deviceTypeIcon" size="small" class="mr-2"></v-icon>
+            {{ deviceName }}
           </h3>
           
           <!-- Badges -->
@@ -1951,6 +1951,12 @@ const driverStatusIcon = computed(() => {
 
 const driverStatusColor = computed(() => {
   return props.device.driver === 'real' ? 'blue-darken-3' : 'deep-purple-darken-1';
+});
+
+const driverStatusTooltip = computed(() => {
+  return props.device.driver === 'real' 
+    ? 'Real hardware device' 
+    : 'Simulated device';
 });
 
 const driverStatusLabel = computed(() => {

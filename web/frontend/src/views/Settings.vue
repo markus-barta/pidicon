@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="settings-view">
     <v-row justify="center">
-      <v-col cols="12" lg="9" xl="8">
+      <v-col cols="12" md="12" lg="10" xl="8">
         <div class="settings-header">
           <div class="settings-title">
             <v-avatar color="primary" size="40" class="mr-3">
@@ -1188,7 +1188,7 @@ export default {
 
 <style scoped>
 .settings-view {
-  padding: 16px 32px 48px;
+  padding-bottom: 48px;
 }
 
 .settings-header {
@@ -1196,7 +1196,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .settings-title {
@@ -1206,20 +1206,18 @@ export default {
 
 .settings-shell {
   background-color: #ffffff;
-  border-radius: 18px;
-  padding: 6px 4px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .settings-tabs {
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  padding: 0 8px;
+  margin-bottom: 24px;
 }
 
 .tab-card {
   background: transparent;
   box-shadow: none;
-  border-radius: 16px;
 }
 
 .section {
@@ -1306,30 +1304,29 @@ export default {
   letter-spacing: 0.05em;
 }
 
-.tab-active {
-  color: #0f172a !important;
-  background-color: rgba(139, 92, 246, 0.08) !important;
-  border-radius: 999px !important;
-}
-
-.diagnostics-id {
-  font-family: monospace;
-  font-size: 0.875rem;
-  color: #475569;
-  background-color: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-}
-
-@media (max-width: 960px) {
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
   .settings-shell {
-    padding: 12px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 800px) {
+  .settings-shell {
+    padding: 16px;
   }
 
   .settings-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .settings-title {
+    width: 100%;
+  }
+
+  .status-chip {
+    width: 100%;
   }
 }
 </style>

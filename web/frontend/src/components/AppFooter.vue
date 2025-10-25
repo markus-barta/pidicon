@@ -174,5 +174,27 @@ onMounted(async () => {
   outline: 2px solid rgba(59, 130, 246, 0.5);
   outline-offset: 2px;
 }
+
+/* Responsive breakpoints */
+@media (max-width: 800px) {
+  .footer-container {
+    padding: 12px 16px;
+  }
+
+  .footer-container > div {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center !important;
+    text-align: center;
+  }
+
+  .footer-container > div > div {
+    justify-content: center !important;
+  }
+
+  .dev-toggle-container {
+    order: -1;
+  }
+}
 </style>
 

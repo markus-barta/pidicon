@@ -8,8 +8,8 @@
     />
 
     <!-- Main Content -->
-    <v-main class="bg-grey-lighten-4">
-      <v-container fluid class="pa-8">
+    <v-main class="bg-grey-lighten-4 main-content">
+      <v-container fluid class="main-container">
         <!-- Loading State -->
         <v-alert
           v-if="!dataLoaded && !error"
@@ -233,6 +233,16 @@ onUnmounted(() => {
   min-height: 100vh;
 }
 
+.main-content {
+  min-width: 800px;
+}
+
+.main-container {
+  padding: 32px;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
 /* Custom utility classes */
 .border-b {
   border-bottom: 1px solid #e5e7eb !important;
@@ -245,6 +255,19 @@ onUnmounted(() => {
 /* Override Vuetify primary color text */
 .primary--text {
   color: #8b5cf6 !important;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1280px) {
+  .main-container {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 800px) {
+  .main-container {
+    padding: 16px;
+  }
 }
 </style>
 
