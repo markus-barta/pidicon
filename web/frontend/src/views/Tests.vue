@@ -4,7 +4,7 @@
       <v-card-text class="tests-dashboard__content">
         <div class="tests-dashboard__header">
           <div>
-            <h2 class="tests-dashboard__title">Test Dashboard</h2>
+            <h2 class="tests-dashboard__title">Diagnostics</h2>
             <p class="tests-dashboard__subtitle">
               {{ totalTests }} total tests
             </p>
@@ -25,7 +25,7 @@
               :disabled="testsState.loading || diagnosticTests.length === 0"
               @click="runAllDiagnostics"
             >
-              Run All Diagnostics
+              Run All
             </v-btn>
           </div>
         </div>
@@ -39,16 +39,19 @@
             density="comfortable"
             clearable
           />
-          <div class="tests-dashboard__chips">
-            <v-chip color="success" variant="outlined" class="tests-dashboard__chip">
+          <div class="tests-dashboard__summary-status">
+            <span class="status-summary">
+              <span class="status-dot status-dot--green">●</span>
               {{ statusCounts.green }} passed
-            </v-chip>
-            <v-chip color="error" variant="outlined" class="tests-dashboard__chip">
+            </span>
+            <span class="status-summary">
+              <span class="status-dot status-dot--red">●</span>
               {{ statusCounts.red }} failed
-            </v-chip>
-            <v-chip color="warning" variant="outlined" class="tests-dashboard__chip">
+            </span>
+            <span class="status-summary">
+              <span class="status-dot status-dot--yellow">●</span>
               {{ statusCounts.yellow }} pending
-            </v-chip>
+            </span>
           </div>
         </div>
 
@@ -95,31 +98,19 @@
                 />
                 <div class="tests-section__title">
                   <span class="tests-section__label">{{ section.label }}</span>
-                  <div class="tests-section__badges">
-                    <v-chip
-                      v-if="section.counts.green > 0"
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                    >
+                  <div class="tests-section__status">
+                    <span v-if="section.counts.green > 0" class="section-status">
+                      <span class="status-dot status-dot--green">●</span>
                       {{ section.counts.green }}
-                    </v-chip>
-                    <v-chip
-                      v-if="section.counts.red > 0"
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                    >
+                    </span>
+                    <span v-if="section.counts.red > 0" class="section-status">
+                      <span class="status-dot status-dot--red">●</span>
                       {{ section.counts.red }}
-                    </v-chip>
-                    <v-chip
-                      v-if="section.counts.yellow > 0"
-                      size="small"
-                      color="warning"
-                      variant="outlined"
-                    >
+                    </span>
+                    <span v-if="section.counts.yellow > 0" class="section-status">
+                      <span class="status-dot status-dot--yellow">●</span>
                       {{ section.counts.yellow }}
-                    </v-chip>
+                    </span>
                   </div>
                 </div>
               </button>
@@ -155,9 +146,6 @@
                     </div>
                     <div class="test-row__last-run">
                       {{ formatRelativeTime(test.latest?.lastRun) }}
-                    </div>
-                    <div class="test-row__status-text">
-                      {{ formatStatusLabel(test.latest?.status) }}
                     </div>
                     <div class="test-row__actions" @click.stop>
                       <v-btn
@@ -214,13 +202,13 @@ const testsState = reactive({
 });
 
 const CATEGORY_METADATA = {
-  system: { label: 'SYSTEM DIAGNOSTICS ⚡', type: 'diagnostic' },
-  device: { label: 'DEVICE DIAGNOSTICS ⚡', type: 'diagnostic' },
-  integration: { label: 'INTEGRATION DIAGNOSTICS ⚡', type: 'diagnostic' },
-  mqtt: { label: 'MQTT DIAGNOSTICS ⚡', type: 'diagnostic' },
-  'unit-tests': { label: 'UNIT TESTS 📋', type: 'automated' },
-  'integration-tests': { label: 'INTEGRATION TESTS 📋', type: 'automated' },
-  'contract-tests': { label: 'CONTRACT TESTS 📋', type: 'automated' },
+  system: { label: 'SYSTEM DIAGNOSTICS', type: 'diagnostic', prefix: 'SD' },
+  device: { label: 'DEVICE DIAGNOSTICS', type: 'diagnostic', prefix: 'DD' },
+  mqtt: { label: 'MQTT DIAGNOSTICS', type: 'diagnostic', prefix: 'MD' },
+  'unit-tests': { label: 'UNIT TESTS', type: 'automated', prefix: 'UT' },
+  'integration-tests': { label: 'INTEGRATION TESTS', type: 'automated', prefix: 'IT' },
+  'contract-tests': { label: 'CONTRACT TESTS', type: 'automated', prefix: 'CT' },
+  'ui-tests': { label: 'UI TESTS', type: 'automated', prefix: 'UI' },
 };
 
 const totalTests = computed(() => testsState.tests.length);
@@ -470,14 +458,36 @@ onMounted(() => {
   align-items: center;
 }
 
-.tests-dashboard__chips {
+.tests-dashboard__summary-status {
   display: flex;
-  gap: 8px;
+  gap: 16px;
+  align-items: center;
 }
 
-.tests-dashboard__chip {
+.status-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
   font-weight: 500;
-  background: rgba(15, 23, 42, 0.03);
+  color: rgba(15, 23, 42, 0.76);
+}
+
+.status-dot {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.status-dot--green {
+  color: #16a34a;
+}
+
+.status-dot--red {
+  color: #ef4444;
+}
+
+.status-dot--yellow {
+  color: #f59e0b;
 }
 
 .tests-dashboard__skeleton {
@@ -543,9 +553,19 @@ onMounted(() => {
   color: rgba(15, 23, 42, 0.55);
 }
 
-.tests-section__badges {
+.tests-section__status {
   display: flex;
-  gap: 6px;
+  gap: 12px;
+  align-items: center;
+}
+
+.section-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(15, 23, 42, 0.7);
 }
 
 .tests-section__body {
@@ -555,7 +575,7 @@ onMounted(() => {
 
 .test-row {
   display: grid;
-  grid-template-columns: 32px 110px 1fr 140px 110px auto;
+  grid-template-columns: 32px 90px 1fr 140px auto;
   align-items: center;
   padding: 18px 24px;
   border-top: 1px solid rgba(15, 23, 42, 0.08);
@@ -632,12 +652,6 @@ onMounted(() => {
   color: rgba(15, 23, 42, 0.55);
 }
 
-.test-row__status-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(15, 23, 42, 0.76);
-}
-
 .test-row__actions {
   display: flex;
   gap: 12px;
@@ -686,8 +700,7 @@ onMounted(() => {
     grid-area: name;
   }
 
-  .test-row__last-run,
-  .test-row__status-text {
+  .test-row__last-run {
     display: none;
   }
 
@@ -717,8 +730,8 @@ onMounted(() => {
     align-items: stretch;
   }
 
-  .tests-dashboard__chips {
-    justify-content: space-between;
+  .tests-dashboard__summary-status {
+    flex-wrap: wrap;
   }
 }
 

@@ -189,6 +189,11 @@ async function bootstrap() {
   );
 
   container.register(
+    'testResultsParser',
+    ({ logger }) => new TestResultsParser({ logger })
+  );
+
+  container.register(
     'diagnosticsService',
     ({
       logger,

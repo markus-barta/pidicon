@@ -22,6 +22,10 @@ config/devices.json
 # Sensitive secrets
 data/secrets/
 
+# Test results and registry
+data/test-results/*.json
+data/test-registry.json
+
 # Test artifacts
 ui-test-report/
 test-results/
