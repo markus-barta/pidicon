@@ -129,16 +129,9 @@ const showTestsTab = computed(() => devModeStore.enabled);
 
 watch(showDevScenes, (value) => {
   localStorage.setItem('pidicon:showDevScenes', JSON.stringify(value));
-  if (!value && currentView.value === 'logs') {
-    currentView.value = 'devices';
-  }
 });
 
 const handleNavigation = (view) => {
-  if (view === 'logs' && !showDevScenes.value) {
-    currentView.value = 'devices';
-    return;
-  }
   currentView.value = view;
 };
 
@@ -230,7 +223,7 @@ onUnmounted(() => {
 /* Global app styles */
 .v-main {
   min-height: 100vh;
-  padding-top: 146px !important;
+  padding-top: 122px !important;
 }
 
 .main-content {

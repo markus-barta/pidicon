@@ -556,6 +556,12 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.nav-tabs :deep(.v-tab) {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 12px;
+}
+
 .nav-tabs :deep(.v-tab--selected) {
   background-color: rgba(139, 92, 246, 0.08);
   border-radius: 8px 8px 0 0;
