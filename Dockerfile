@@ -71,7 +71,6 @@ COPY config/ ./config/
 # Copy test infrastructure for server-side test execution
 COPY test/ ./test/
 COPY scripts/run-node-tests.js ./scripts/
-COPY scripts/run-playwright-tests.js ./scripts/
 
 # Make wrapper script executable
 RUN chmod +x start-daemon.sh

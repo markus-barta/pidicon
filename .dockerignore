@@ -30,7 +30,6 @@ README.md
 scripts/
 !scripts/build-version.js
 !scripts/run-node-tests.js
-!scripts/run-playwright-tests.js
 
 # CI/CD files
 .husky/
