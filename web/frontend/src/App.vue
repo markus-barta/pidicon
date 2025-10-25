@@ -231,11 +231,20 @@ onUnmounted(() => {
 /* Global app styles */
 .v-main {
   min-height: 100vh;
-  padding-top: 0 !important;
+}
+
+/* Account for fixed app-bar */
+.v-main > .v-main__wrap {
+  padding-top: 0;
 }
 
 .main-content {
   min-width: 800px;
+  padding-top: 100px;
+}
+
+.main-content > .main-container:first-child {
+  padding-top: 32px;
 }
 
 .main-container {
