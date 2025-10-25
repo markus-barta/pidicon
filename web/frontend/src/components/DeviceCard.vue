@@ -691,8 +691,8 @@ const driverLoading = ref(false);
 const brightnessLoading = ref(false);
 // Local state - initialized from backend, then synced via watchers
 const displayOn = ref(props.device.hardware?.displayOn !== false);
-const brightness = ref(75);
-const previousBrightness = ref(75);
+const brightness = ref(props.device.hardware?.brightness ?? 75);
+const previousBrightness = ref(props.device.hardware?.brightness ?? 75);
 const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent');
 const isCollapsed = ref(props.device.driver === 'mock');
 const confirmDialog = ref(null);
