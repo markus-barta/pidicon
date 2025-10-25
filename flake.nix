@@ -20,11 +20,19 @@
           in name.name == "cursor" || name.name == "code-cursor";
         };
       };
-    in
-      devenv.mkShell {
+
+      project = devenv.lib.mkShell {
         inherit inputs pkgs;
         modules = [
+          # Inline module to set project root for flake-aware dir detection
+          ({ ... }: {
+            project.root = self;
+          })
           ./devenv.nix
         ];
       };
+    in {
+      devShells.${system}.default = project.shell;
+      packages.${system}.default = project.shell;
+    };
 }
