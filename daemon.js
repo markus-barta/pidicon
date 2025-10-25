@@ -34,6 +34,7 @@ const DiagnosticsService = require('./lib/services/diagnostics-service');
 const MqttConfigService = require('./lib/services/mqtt-config-service');
 const SceneService = require('./lib/services/scene-service');
 const SystemService = require('./lib/services/system-service');
+const TestResultsParser = require('./lib/services/test-results-parser');
 const WatchdogService = require('./lib/services/watchdog-service');
 const versionInfo = require('./version.json');
 
@@ -106,6 +107,11 @@ async function bootstrap() {
     devices,
     registerDevicesFromConfig,
   }));
+
+  container.register(
+    'testResultsParser',
+    ({ logger }) => new TestResultsParser({ logger })
+  );
 
   // Resolve services from container
   const stateStore = container.resolve('stateStore');
@@ -192,6 +198,7 @@ async function bootstrap() {
       sceneService,
       watchdogService,
       deviceConfigStore,
+      testResultsParser,
     }) =>
       new DiagnosticsService({
         logger,
@@ -201,6 +208,7 @@ async function bootstrap() {
         sceneService,
         watchdogService,
         deviceConfigStore,
+        testResultsParser,
       })
   );
 

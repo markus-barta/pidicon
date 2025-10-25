@@ -113,6 +113,7 @@ test('DiagnosticsService constructs with all dependencies', () => {
     sceneService,
     watchdogService,
     deviceConfigStore,
+    testResultsParser: null,
   });
 
   assert.ok(service);
@@ -129,11 +130,12 @@ test('DiagnosticsService loads default tests on construction', () => {
     sceneService: createMockSceneService(),
     watchdogService: createMockWatchdogService(),
     deviceConfigStore: createMockDeviceConfigStore(),
+    testResultsParser: null,
   });
 
   const tests = service.listTests();
   assert.ok(tests.length > 0, 'Should have default tests loaded');
-  
+
   // Verify expected default tests are present
   const testIds = tests.map((t) => t.id);
   assert.ok(testIds.includes('device-last-seen'));
@@ -173,7 +175,7 @@ test('device-last-seen: returns green when all real devices recent', async () =>
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.strictEqual(result.status, 'green');
   assert.ok(result.message.includes('All real devices responded'));
   assert.ok(result.durationMs >= 0);
@@ -201,7 +203,7 @@ test('device-last-seen: returns yellow when no real devices', async () => {
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.strictEqual(result.status, 'yellow');
   assert.ok(result.message.includes('No real devices'));
 });
@@ -228,7 +230,7 @@ test('device-last-seen: returns red when devices stale (>60s)', async () => {
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('missing recent heartbeat'));
   assert.ok(result.details.stale);
@@ -257,7 +259,7 @@ test('device-last-seen: returns red when lastSeenTs missing', async () => {
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.details.stale);
 });
@@ -288,7 +290,7 @@ test('device-last-seen: handles mixed real and mock devices correctly', async ()
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   // Should be green because only real device matters and it's recent
   assert.strictEqual(result.status, 'green');
 });
@@ -325,7 +327,7 @@ test('watchdog-monitors: returns green when all monitors active', async () => {
   });
 
   const result = await service.runTest('watchdog-monitors');
-  
+
   assert.strictEqual(result.status, 'green');
   assert.ok(result.message.includes('Watchdog monitoring active'));
   assert.strictEqual(result.details.monitoredCount, 2);
@@ -350,7 +352,7 @@ test('watchdog-monitors: returns yellow when no watchdog enabled', async () => {
   });
 
   const result = await service.runTest('watchdog-monitors');
-  
+
   assert.strictEqual(result.status, 'yellow');
   assert.ok(result.message.includes('No devices have watchdog enabled'));
 });
@@ -378,7 +380,7 @@ test('watchdog-monitors: returns red when monitors inactive', async () => {
   });
 
   const result = await service.runTest('watchdog-monitors');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('not being monitored'));
   assert.ok(result.details.inactive);
@@ -397,7 +399,7 @@ test('watchdog-monitors: returns yellow when watchdogService unavailable', async
   });
 
   const result = await service.runTest('watchdog-monitors');
-  
+
   assert.strictEqual(result.status, 'yellow');
   assert.ok(result.message.includes('Watchdog service not available'));
 });
@@ -416,7 +418,7 @@ test('watchdog-monitors: returns yellow when getAllStatus missing', async () => 
   });
 
   const result = await service.runTest('watchdog-monitors');
-  
+
   assert.strictEqual(result.status, 'yellow');
 });
 
@@ -442,7 +444,7 @@ test('system-heartbeat: returns green when heartbeat recent', async () => {
   });
 
   const result = await service.runTest('system-heartbeat');
-  
+
   assert.strictEqual(result.status, 'green');
   assert.ok(result.message.includes('Heartbeat recent'));
 });
@@ -466,7 +468,7 @@ test('system-heartbeat: returns yellow when heartbeat >30s old', async () => {
   });
 
   const result = await service.runTest('system-heartbeat');
-  
+
   assert.strictEqual(result.status, 'yellow');
   assert.ok(result.message.includes('older than 30 seconds'));
   assert.strictEqual(result.details.lastHeartbeat, oldTimestamp);
@@ -490,7 +492,7 @@ test('system-heartbeat: returns red when heartbeat not recorded', async () => {
   });
 
   const result = await service.runTest('system-heartbeat');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('Daemon heartbeat not recorded'));
 });
@@ -516,10 +518,11 @@ test('mqtt-status: returns green when MQTT connected', async () => {
     sceneService: createMockSceneService(),
     watchdogService: createMockWatchdogService(),
     deviceConfigStore: createMockDeviceConfigStore(),
+    testResultsParser: null,
   });
 
   const result = await service.runTest('mqtt-status');
-  
+
   assert.strictEqual(result.status, 'green');
   assert.ok(result.message.includes('MQTT connected'));
   assert.strictEqual(result.details.brokerUrl, 'mqtt://localhost:1883');
@@ -545,7 +548,7 @@ test('mqtt-status: returns red when MQTT disconnected', async () => {
   });
 
   const result = await service.runTest('mqtt-status');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('Connection refused'));
 });
@@ -570,7 +573,7 @@ test('mqtt-status: returns red with generic message when no error', async () => 
   });
 
   const result = await service.runTest('mqtt-status');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('MQTT disconnected'));
 });
@@ -588,10 +591,11 @@ test('listTests returns all tests with latest results', () => {
     sceneService: createMockSceneService(),
     watchdogService: createMockWatchdogService(),
     deviceConfigStore: createMockDeviceConfigStore(),
+    testResultsParser: null,
   });
 
   const tests = service.listTests();
-  
+
   assert.ok(Array.isArray(tests));
   tests.forEach((test) => {
     assert.ok(test.id);
@@ -611,10 +615,11 @@ test('getResult returns null for test never run', () => {
     sceneService: createMockSceneService(),
     watchdogService: createMockWatchdogService(),
     deviceConfigStore: createMockDeviceConfigStore(),
+    testResultsParser: null,
   });
 
   const result = service.getResult('device-last-seen');
-  
+
   assert.strictEqual(result, null);
 });
 
@@ -637,7 +642,7 @@ test('getResult returns latest result after test run', async () => {
 
   await service.runTest('device-last-seen');
   const result = service.getResult('device-last-seen');
-  
+
   assert.ok(result);
   assert.ok(result.status);
   assert.ok(result.lastRun);
@@ -676,7 +681,7 @@ test('runTest tracks duration correctly', async () => {
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.ok(typeof result.durationMs === 'number');
   assert.ok(result.durationMs >= 0);
   assert.ok(result.durationMs < 1000); // Should be fast
@@ -684,7 +689,7 @@ test('runTest tracks duration correctly', async () => {
 
 test('runTest persists result to StateStore', async () => {
   const stateStore = createMockStateStore();
-  
+
   const service = new DiagnosticsService({
     logger: createMockLogger(),
     stateStore,
@@ -696,7 +701,7 @@ test('runTest persists result to StateStore', async () => {
   });
 
   await service.runTest('device-last-seen');
-  
+
   const persistedResult = service.getResult('device-last-seen');
   assert.ok(persistedResult);
   assert.ok(persistedResult.lastRun);
@@ -721,7 +726,7 @@ test('runTest returns red status on test exception', async () => {
   });
 
   const result = await service.runTest('device-last-seen');
-  
+
   assert.strictEqual(result.status, 'red');
   assert.ok(result.message.includes('Simulated device service failure'));
   assert.ok(result.durationMs >= 0);
@@ -739,10 +744,10 @@ test('runAll executes all tests sequentially', async () => {
   });
 
   const results = await service.runAll();
-  
+
   assert.ok(Array.isArray(results));
   assert.ok(results.length > 0);
-  
+
   results.forEach((result) => {
     assert.ok(result.id);
     assert.ok(['green', 'yellow', 'red'].includes(result.status));
@@ -770,10 +775,10 @@ test('runAll continues after test failure', async () => {
   });
 
   const results = await service.runAll();
-  
+
   // Should still run other tests despite device-last-seen failure
   assert.ok(results.length > 1);
-  
+
   // At least one should be red (device-last-seen)
   const failedTests = results.filter((r) => r.status === 'red');
   assert.ok(failedTests.length > 0);
@@ -801,7 +806,7 @@ test('_normaliseResult handles valid green status', () => {
   };
 
   const result = service._normaliseResult(outcome, 42);
-  
+
   assert.strictEqual(result.status, 'green');
   assert.strictEqual(result.message, 'All good');
   assert.deepStrictEqual(result.details, { count: 5 });
@@ -827,7 +832,7 @@ test('_normaliseResult converts invalid status to red', () => {
   };
 
   const result = service._normaliseResult(outcome, 10);
-  
+
   assert.strictEqual(result.status, 'red');
 });
 
@@ -848,7 +853,7 @@ test('_normaliseResult provides default message', () => {
   };
 
   const result = service._normaliseResult(outcome, 10);
-  
+
   assert.ok(result.message);
   assert.ok(result.message.includes('completed'));
 });
@@ -870,7 +875,7 @@ test('_normaliseResult provides empty details if missing', () => {
   };
 
   const result = service._normaliseResult(outcome, 10);
-  
+
   assert.deepStrictEqual(result.details, {});
 });
 
@@ -897,7 +902,7 @@ test('concurrent runTest calls dont corrupt results', async () => {
   ];
 
   const results = await Promise.all(promises);
-  
+
   // All should complete successfully
   assert.strictEqual(results.length, 3);
   results.forEach((result) => {
@@ -910,4 +915,3 @@ test('concurrent runTest calls dont corrupt results', async () => {
   assert.ok(service.getResult('mqtt-status'));
   assert.ok(service.getResult('system-heartbeat'));
 });
-

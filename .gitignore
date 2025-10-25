@@ -5,6 +5,7 @@ node_modules/
 # Generated build artifacts
 version.json
 test-results/
+coverage/test-results.json
 
 # Vite build output (Vue frontend)
 web/public/

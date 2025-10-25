@@ -21,8 +21,20 @@
     "md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules --ignore .cursor/rules/cursor-rules.mdc --ignore docs/reports",
     "test": "npm run build:version && node scripts/run-node-tests.js",
     "coverage": "c8 npm test",
+    "test:with-results": "npm test && echo 'Test results saved to coverage/test-results.json'",
     "coverage:report": "c8 report --reporter=text",
     "hooks:setup": "husky init"
+  },
+  "jest": {
+    "reporters": [
+      "default",
+      [
+        "json",
+        {
+          "outputFile": "coverage/test-results.json"
+        }
+      ]
+    ]
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",

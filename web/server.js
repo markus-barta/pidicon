@@ -663,9 +663,9 @@ function startWebServer(container, logger) {
   });
 
   // Diagnostics API
-  app.get('/api/tests', (req, res) => {
+  app.get('/api/tests', async (req, res) => {
     try {
-      const tests = diagnosticsService.listTests();
+      const tests = await diagnosticsService.getAllTests();
       res.json({ tests });
     } catch (error) {
       logger.error('API /api/tests error:', { error: error.message });
