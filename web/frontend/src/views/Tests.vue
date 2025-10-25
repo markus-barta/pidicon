@@ -33,13 +33,21 @@
               Refresh
             </v-btn>
             <v-btn
+              v-if="!testsState.runningAutomated"
               color="secondary"
               prepend-icon="mdi-test-tube"
-              :loading="testsState.runningAutomated"
               :disabled="testsState.loading || testsState.runningAll"
               @click="runAutomatedTests"
             >
               Run Automated Tests
+            </v-btn>
+            <v-btn
+              v-else
+              color="error"
+              prepend-icon="mdi-stop"
+              @click="stopTests"
+            >
+              Force Stop Tests
             </v-btn>
             <v-btn
               color="primary"
@@ -51,6 +59,23 @@
               Run All Diagnostics
             </v-btn>
           </div>
+        </div>
+        
+        <!-- Test Progress Bar -->
+        <div
+          v-if="testsState.runningAutomated && testProgress.total > 0"
+          class="tests-dashboard__progress"
+        >
+          <v-progress-linear
+            :model-value="(testProgress.completed / testProgress.total) * 100"
+            color="secondary"
+            height="24"
+            striped
+          >
+            <template #default>
+              <strong>{{ testProgress.completed }} / {{ testProgress.total }} tests</strong>
+            </template>
+          </v-progress-linear>
         </div>
 
         <div class="tests-dashboard__summary">
@@ -213,6 +238,14 @@ const testsState = reactive({
   runningAutomated: false,
   error: null,
 });
+
+const testProgress = reactive({
+  running: false,
+  completed: 0,
+  total: 0,
+});
+
+let progressPollInterval = null;
 
 const CATEGORY_METADATA = {
   system: { label: 'SYSTEM DIAGNOSTICS', type: 'diagnostic', prefix: 'SYS' },
@@ -416,9 +449,42 @@ async function runAllDiagnostics() {
   }
 }
 
+async function pollTestProgress() {
+  if (!testsState.runningAutomated) return;
+  
+  try {
+    const progress = await api.request('/tests/progress');
+    testProgress.running = progress.running;
+    testProgress.completed = progress.completed;
+    testProgress.total = progress.total;
+  } catch (error) {
+    // Silently fail - progress polling is not critical
+  }
+}
+
+function startProgressPolling() {
+  if (progressPollInterval) {
+    clearInterval(progressPollInterval);
+  }
+  testProgress.running = true;
+  testProgress.completed = 0;
+  testProgress.total = 0;
+  progressPollInterval = setInterval(pollTestProgress, 500); // Poll every 500ms
+}
+
+function stopProgressPolling() {
+  if (progressPollInterval) {
+    clearInterval(progressPollInterval);
+    progressPollInterval = null;
+  }
+  testProgress.running = false;
+}
+
 async function runAutomatedTests() {
   testsState.runningAutomated = true;
   testsState.error = null;
+  startProgressPolling();
+  
   try {
     const response = await api.request('/tests/run-automated', { method: 'POST' });
     // Always reload tests, even if some failed (exitCode != 0)
@@ -431,11 +497,36 @@ async function runAutomatedTests() {
     testsState.error = error.message || 'Failed to run automated tests.';
   } finally {
     testsState.runningAutomated = false;
+    stopProgressPolling();
   }
 }
 
-onMounted(() => {
-  loadTests();
+async function stopTests() {
+  try {
+    await api.request('/tests/stop', { method: 'POST' });
+    testsState.runningAutomated = false;
+    stopProgressPolling();
+  } catch (error) {
+    testsState.error = error.message || 'Failed to stop tests.';
+  }
+}
+
+onMounted(async () => {
+  await loadTests();
+  
+  // Check if we should auto-navigate due to startup test failure
+  try {
+    const settingsResponse = await api.request('/settings');
+    if (settingsResponse.settings?.testFailedOnStartup) {
+      // Clear the flag immediately
+      await api.request('/settings', {
+        method: 'POST',
+        body: JSON.stringify({ testFailedOnStartup: false }),
+      });
+    }
+  } catch (error) {
+    // Silently fail - this is not critical
+  }
 });
 </script>
 
@@ -448,6 +539,13 @@ onMounted(() => {
   background: transparent;
   box-shadow: none;
   border-radius: 16px;
+}
+
+.tests-dashboard__progress {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
 }
 
 .tests-dashboard__content {

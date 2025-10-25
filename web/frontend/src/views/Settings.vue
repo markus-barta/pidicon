@@ -207,6 +207,61 @@
                           />
                         </v-col>
                       </v-row>
+                      
+                      <v-divider class="my-6" />
+
+                      <div class="section-subheader">
+                        <v-icon class="mr-2" color="primary">mdi-test-tube</v-icon>
+                        <div>
+                          <h3 class="text-subtitle-1 mb-1">Test Settings</h3>
+                          <p class="text-body-2 text-medium-emphasis mb-0">
+                            Configure automated test execution behavior.
+                          </p>
+                        </div>
+                      </div>
+
+                      <v-row class="ga-6 mt-2">
+                        <v-col cols="12" md="6">
+                          <v-switch
+                            v-model="globalSettings.runTestsOnStartup"
+                            label="Run tests on startup"
+                            inset
+                            color="primary"
+                            hide-details
+                            class="mt-1"
+                            data-test="global-run-tests-startup"
+                          >
+                            <template #label>
+                              <div>
+                                <div class="text-body-1">Run tests on startup</div>
+                                <div class="text-caption text-medium-emphasis">
+                                  Automatically run all automated tests when the daemon starts
+                                </div>
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-switch
+                            v-model="globalSettings.showTestPageOnError"
+                            label="Show test page on error"
+                            inset
+                            color="primary"
+                            hide-details
+                            class="mt-1"
+                            data-test="global-show-test-page-error"
+                          >
+                            <template #label>
+                              <div>
+                                <div class="text-body-1">Show test page on error</div>
+                                <div class="text-caption text-medium-emphasis">
+                                  Enable Dev Mode and navigate to tests if startup tests fail
+                                </div>
+                              </div>
+                            </template>
+                          </v-switch>
+                        </v-col>
+                      </v-row>
                     </v-form>
                   </div>
 
@@ -594,6 +649,8 @@ export default {
         checkWhenOff: true,
         notifyOnFailure: true,
       },
+      runTestsOnStartup: false,
+      showTestPageOnError: false,
     });
 
     const PASSWORD_PLACEHOLDER = '********';
@@ -684,6 +741,12 @@ export default {
         }
         const data = await response.json();
         const cfg = data.config || {};
+        
+        // Load test settings from state store
+        const settingsResponse = await fetch('/api/settings');
+        const settingsData = await settingsResponse.json();
+        const settings = settingsData.settings || {};
+        
         globalSettings.value = {
           defaultDriver: cfg.defaultDriver || 'real',
           defaultBrightness: cfg.defaultBrightness ?? 80,
@@ -703,6 +766,8 @@ export default {
                 ? true
                 : !!cfg.watchdog.notifyOnFailure,
           },
+          runTestsOnStartup: settings.runTestsOnStartup ?? false,
+          showTestPageOnError: settings.showTestPageOnError ?? false,
         };
         originalGlobalSettings.value = JSON.parse(
           JSON.stringify(globalSettings.value),
@@ -791,6 +856,21 @@ export default {
         if (!globalResponse.ok) {
           const result = await globalResponse.json().catch(() => ({}));
           throw new Error(result.error || `HTTP ${globalResponse.status}`);
+        }
+        
+        // Save test settings separately
+        const testSettingsPayload = {
+          runTestsOnStartup: globalSettings.value.runTestsOnStartup,
+          showTestPageOnError: globalSettings.value.showTestPageOnError,
+        };
+        const settingsResponse = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testSettingsPayload),
+        });
+        if (!settingsResponse.ok) {
+          const result = await settingsResponse.json().catch(() => ({}));
+          throw new Error(result.error || `HTTP ${settingsResponse.status}`);
         }
 
         snackbarSuccess('Global defaults saved');
