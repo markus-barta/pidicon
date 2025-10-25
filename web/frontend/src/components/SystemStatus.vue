@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar color="white" elevation="0" class="status-bar">
+  <v-app-bar color="white" elevation="0" class="status-bar" height="auto">
     <v-container fluid class="status-container">
       <!-- Header Row: Title + Status + Daemon Restart -->
       <div class="header-row">
@@ -489,7 +489,7 @@ onUnmounted(() => {
 }
 
 .status-container {
-  padding: 12px 24px 0;
+  padding: 16px 24px 8px;
 }
 
 .header-row {
@@ -552,6 +552,7 @@ onUnmounted(() => {
 
 .nav-tabs {
   margin-top: 0;
+  flex-shrink: 0;
 }
 
 .mqtt-tooltip {
