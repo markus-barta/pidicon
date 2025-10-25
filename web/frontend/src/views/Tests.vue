@@ -421,11 +421,11 @@ async function runAutomatedTests() {
   testsState.error = null;
   try {
     const response = await api.request('/tests/run-automated', { method: 'POST' });
-    if (response.success) {
-      // Reload all tests to get the fresh automated test results
+    // Always reload tests, even if some failed (exitCode != 0)
+    if (response.totalTests !== undefined) {
       await loadTests();
-    } else {
-      testsState.error = response.error || 'Automated tests failed to run.';
+    } else if (response.error) {
+      testsState.error = response.error;
     }
   } catch (error) {
     testsState.error = error.message || 'Failed to run automated tests.';
