@@ -61,6 +61,11 @@ function startWebServer(container, logger) {
   const watchdogService = container.resolve('watchdogService');
   const deviceConfigStore = container.resolve('deviceConfigStore'); // Use shared instance from DI container
   const diagnosticsService = container.resolve('diagnosticsService');
+  const stateStore = container.resolve('stateStore');
+
+  // Track running test process
+  let runningTestProcess = null;
+  let testProgress = { completed: 0, total: 0, running: false };
 
   // =========================================================================
   // API ENDPOINTS
@@ -695,20 +700,56 @@ function startWebServer(container, logger) {
     }
   });
 
+  // Get test progress
+  app.get('/api/tests/progress', (req, res) => {
+    res.json(testProgress);
+  });
+
   // Run automated tests (npm test) on the server
   app.post('/api/tests/run-automated', async (req, res) => {
     try {
+      // Check if tests are already running
+      if (runningTestProcess && !runningTestProcess.killed) {
+        return res.status(409).json({ error: 'Tests are already running' });
+      }
+
       logger.info('[WEB UI] Running automated tests on server...', {
         source: 'web-ui',
       });
 
+      testProgress = { completed: 0, total: 0, running: true };
+
       const { spawn } = require('child_process');
-      const testProcess = spawn('npm', ['test'], {
+      runningTestProcess = spawn('npm', ['test'], {
         cwd: process.cwd(),
         env: process.env,
       });
 
-      testProcess.on('close', async (code) => {
+      let responseTimeout;
+      let responseSent = false;
+
+      // Parse TAP output for progress
+      runningTestProcess.stdout.on('data', (data) => {
+        const chunk = data.toString();
+
+        // Count test completions in TAP format
+        const testMatches = chunk.match(/^(ok|not ok) \d+/gm);
+        if (testMatches) {
+          testProgress.completed += testMatches.length;
+        }
+
+        // Extract total from TAP plan line (e.g., "1..454")
+        const planMatch = chunk.match(/^1\.\.(\d+)$/m);
+        if (planMatch) {
+          testProgress.total = parseInt(planMatch[1], 10);
+        }
+      });
+
+      runningTestProcess.on('close', async (code) => {
+        testProgress.running = false;
+        runningTestProcess = null;
+        clearTimeout(responseTimeout);
+
         logger.info('[WEB UI] Automated tests completed', {
           exitCode: code,
           source: 'web-ui',
@@ -719,38 +760,133 @@ function startWebServer(container, logger) {
           const tests = await diagnosticsService.getAllTests();
           const automatedTests = tests.filter((t) => t.type === 'automated');
 
-          res.json({
-            success: code === 0,
-            exitCode: code,
-            message:
-              code === 0
-                ? 'Tests completed successfully'
-                : 'Tests completed with failures',
-            totalTests: automatedTests.length,
-            tests: automatedTests,
-          });
+          if (!responseSent) {
+            responseSent = true;
+            res.json({
+              success: code === 0,
+              exitCode: code,
+              message:
+                code === 0
+                  ? 'Tests completed successfully'
+                  : 'Tests completed with failures',
+              totalTests: automatedTests.length,
+              tests: automatedTests,
+            });
+          }
         } catch (error) {
+          if (!responseSent) {
+            responseSent = true;
+            res.status(500).json({
+              success: false,
+              error: 'Tests ran but failed to load results: ' + error.message,
+            });
+          }
+        }
+      });
+
+      runningTestProcess.on('error', (error) => {
+        testProgress.running = false;
+        runningTestProcess = null;
+        clearTimeout(responseTimeout);
+
+        if (!responseSent) {
+          responseSent = true;
           res.status(500).json({
             success: false,
-            error: 'Tests ran but failed to load results: ' + error.message,
+            error: error.message,
           });
         }
       });
 
       // Timeout after 5 minutes
-      setTimeout(() => {
-        if (!testProcess.killed) {
-          testProcess.kill();
-          res.status(408).json({
-            success: false,
-            error: 'Test execution timed out after 5 minutes',
-          });
+      responseTimeout = setTimeout(() => {
+        if (runningTestProcess && !runningTestProcess.killed) {
+          runningTestProcess.kill('SIGTERM');
+          testProgress.running = false;
+
+          if (!responseSent) {
+            responseSent = true;
+            res.status(408).json({
+              success: false,
+              error: 'Test execution timed out after 5 minutes',
+            });
+          }
         }
       }, 300000);
     } catch (error) {
+      testProgress.running = false;
       logger.error('API /api/tests/run-automated error:', {
         error: error.message,
       });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Force stop running tests
+  app.post('/api/tests/stop', (req, res) => {
+    try {
+      if (!runningTestProcess || runningTestProcess.killed) {
+        return res
+          .status(404)
+          .json({ error: 'No tests are currently running' });
+      }
+
+      logger.info('[WEB UI] Force stopping tests', { source: 'web-ui' });
+
+      runningTestProcess.kill('SIGTERM');
+      testProgress.running = false;
+      runningTestProcess = null;
+
+      res.json({ success: true, message: 'Tests stopped' });
+    } catch (error) {
+      logger.error('API /api/tests/stop error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get settings
+  app.get('/api/settings', (req, res) => {
+    try {
+      const settings = {
+        runTestsOnStartup:
+          stateStore.get('settings.runTestsOnStartup') || false,
+        showTestPageOnError:
+          stateStore.get('settings.showTestPageOnError') || false,
+        testFailedOnStartup: stateStore.get('testFailedOnStartup') || false,
+      };
+      res.json(settings);
+    } catch (error) {
+      logger.error('API /api/settings error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update settings
+  app.post('/api/settings', (req, res) => {
+    try {
+      const { runTestsOnStartup, showTestPageOnError } = req.body;
+
+      if (typeof runTestsOnStartup === 'boolean') {
+        stateStore.set('settings.runTestsOnStartup', runTestsOnStartup);
+      }
+      if (typeof showTestPageOnError === 'boolean') {
+        stateStore.set('settings.showTestPageOnError', showTestPageOnError);
+      }
+
+      logger.info('[WEB UI] Settings updated', {
+        source: 'web-ui',
+        updates: req.body,
+      });
+
+      res.json({
+        success: true,
+        settings: {
+          runTestsOnStartup: stateStore.get('settings.runTestsOnStartup'),
+          showTestPageOnError: stateStore.get('settings.showTestPageOnError'),
+        },
+      });
+    } catch (error) {
+      logger.error('API /api/settings error:', { error: error.message });
       res.status(500).json({ error: error.message });
     }
   });

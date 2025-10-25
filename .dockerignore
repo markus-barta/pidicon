@@ -16,8 +16,7 @@ config/devices.json
 npm-debug.log*
 .DS_Store
 
-# Test files
-test/
+# Test files (keep test/ for server-side execution)
 coverage/
 .nyc_output
 
@@ -27,9 +26,11 @@ README.md
 *.md
 !version.json
 
-# Development scripts
+# Development scripts (keep test runners for server-side execution)
 scripts/
 !scripts/build-version.js
+!scripts/run-node-tests.js
+!scripts/run-playwright-tests.js
 
 # CI/CD files
 .husky/

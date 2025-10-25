@@ -463,13 +463,22 @@ async function bootstrap() {
 
   await initializeDeployment();
 
+  // Initialize global settings defaults in StateStore
+  if (stateStore.get('settings.runTestsOnStartup') === undefined) {
+    stateStore.set('settings.runTestsOnStartup', false);
+  }
+  if (stateStore.get('settings.showTestPageOnError') === undefined) {
+    stateStore.set('settings.showTestPageOnError', false);
+  }
+
   // Start watchdog service for all devices (health checks and recovery actions)
   const watchdogService = container.resolve('watchdogService');
   watchdogService.startAll();
 
   // Run automated tests in background to populate test results
   // This runs asynchronously and doesn't block daemon startup
-  if (process.env.RUN_TESTS_ON_STARTUP !== 'false') {
+  const runTestsOnStartup = stateStore.get('settings.runTestsOnStartup');
+  if (runTestsOnStartup) {
     setTimeout(() => {
       logger.info('[STARTUP] Running automated tests to populate dashboard...');
       const { spawn } = require('child_process');
@@ -486,6 +495,11 @@ async function bootstrap() {
           logger.warn('[STARTUP] Automated tests completed with failures', {
             exitCode: code,
           });
+
+          // Store test failure flag for showTestPageOnError feature
+          if (stateStore.get('settings.showTestPageOnError')) {
+            stateStore.set('testFailedOnStartup', true);
+          }
         }
       });
 
