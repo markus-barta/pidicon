@@ -12,8 +12,8 @@
     pkgs.gh           # GitHub CLI (gh)
   ];
 
-  # Whitelist unfree *only* for Cursor (via nixpkgs override)
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "code-cursor" ];
+  # Allow unfree (for Cursor—nest under nixpkgs.config)
+  nixpkgs.config.allowUnfree = true;
 
   env.PIDICON_STATE_DIR = "$HOME/.pidicon";
 
@@ -25,3 +25,4 @@
 
   # See full reference at https://devenv.sh/reference/options/
 }
+

@@ -269,7 +269,7 @@ async function bootstrap() {
   });
 
   // Log StateStore stats for observability (and to satisfy linter)
-  logger.debug('StateStore initialized:', stateStore.getStats());
+  logger.debug('StateStore initialized:', stateStore.getGlobalStats());
 
   // Inject StateStore into device-adapter for per-device logging preferences
   setStateStore(stateStore);
@@ -280,7 +280,7 @@ async function bootstrap() {
   } catch (error) {
     logger.warn('Failed to restore runtime state:', { error: error.message });
   }
-  const persistedSnapshot = stateStore.getSnapshot();
+  const persistedSnapshot = stateStore.getGlobalSnapshot();
 
   // ========================================================================
   // WEB UI SERVER (OPTIONAL)
@@ -464,11 +464,11 @@ async function bootstrap() {
   await initializeDeployment();
 
   // Initialize global settings defaults in StateStore
-  if (stateStore.get('settings.runTestsOnStartup') === undefined) {
-    stateStore.set('settings.runTestsOnStartup', false);
+  if (stateStore.getGlobal('settings.runTestsOnStartup') === undefined) {
+    stateStore.setGlobal('settings.runTestsOnStartup', false);
   }
-  if (stateStore.get('settings.showTestPageOnError') === undefined) {
-    stateStore.set('settings.showTestPageOnError', false);
+  if (stateStore.getGlobal('settings.showTestPageOnError') === undefined) {
+    stateStore.setGlobal('settings.showTestPageOnError', false);
   }
 
   // Start watchdog service for all devices (health checks and recovery actions)
@@ -477,7 +477,7 @@ async function bootstrap() {
 
   // Run automated tests in background to populate test results
   // This runs asynchronously and doesn't block daemon startup
-  const runTestsOnStartup = stateStore.get('settings.runTestsOnStartup');
+  const runTestsOnStartup = stateStore.getGlobal('settings.runTestsOnStartup');
   if (runTestsOnStartup) {
     setTimeout(() => {
       logger.info('[STARTUP] Running automated tests to populate dashboard...');
@@ -497,8 +497,8 @@ async function bootstrap() {
           });
 
           // Store test failure flag for showTestPageOnError feature
-          if (stateStore.get('settings.showTestPageOnError')) {
-            stateStore.set('testFailedOnStartup', true);
+          if (stateStore.getGlobal('settings.showTestPageOnError')) {
+            stateStore.setGlobal('testFailedOnStartup', true);
           }
         }
       });

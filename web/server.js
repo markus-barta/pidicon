@@ -847,10 +847,11 @@ function startWebServer(container, logger) {
     try {
       const settings = {
         runTestsOnStartup:
-          stateStore.get('settings.runTestsOnStartup') || false,
+          stateStore.getGlobal('settings.runTestsOnStartup') || false,
         showTestPageOnError:
-          stateStore.get('settings.showTestPageOnError') || false,
-        testFailedOnStartup: stateStore.get('testFailedOnStartup') || false,
+          stateStore.getGlobal('settings.showTestPageOnError') || false,
+        testFailedOnStartup:
+          stateStore.getGlobal('testFailedOnStartup') || false,
       };
       res.json(settings);
     } catch (error) {
@@ -865,10 +866,13 @@ function startWebServer(container, logger) {
       const { runTestsOnStartup, showTestPageOnError } = req.body;
 
       if (typeof runTestsOnStartup === 'boolean') {
-        stateStore.set('settings.runTestsOnStartup', runTestsOnStartup);
+        stateStore.setGlobal('settings.runTestsOnStartup', runTestsOnStartup);
       }
       if (typeof showTestPageOnError === 'boolean') {
-        stateStore.set('settings.showTestPageOnError', showTestPageOnError);
+        stateStore.setGlobal(
+          'settings.showTestPageOnError',
+          showTestPageOnError
+        );
       }
 
       logger.info('[WEB UI] Settings updated', {
@@ -879,8 +883,10 @@ function startWebServer(container, logger) {
       res.json({
         success: true,
         settings: {
-          runTestsOnStartup: stateStore.get('settings.runTestsOnStartup'),
-          showTestPageOnError: stateStore.get('settings.showTestPageOnError'),
+          runTestsOnStartup: stateStore.getGlobal('settings.runTestsOnStartup'),
+          showTestPageOnError: stateStore.getGlobal(
+            'settings.showTestPageOnError'
+          ),
         },
       });
     } catch (error) {
