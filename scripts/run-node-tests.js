@@ -37,49 +37,86 @@ function parseTapToJson(tapOutput) {
   const tests = [];
   let currentTest = null;
   let currentFile = null;
+  let currentSuite = null;
+  let inMetadataBlock = false;
+  let pendingTest = null; // Hold test until we check if it's a suite
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
     // Extract file name from comments (# Subtest: filepath)
     const fileMatch = line.match(/^# Subtest: (.+)$/);
     if (fileMatch) {
       currentFile = fileMatch[1];
+      currentSuite = null;
+      continue;
+    }
+
+    // Extract nested subtest markers (indented)
+    const nestedSubtestMatch = line.match(/^\s+# Subtest: (.+)$/);
+    if (nestedSubtestMatch) {
+      currentSuite = nestedSubtestMatch[1];
+      continue;
+    }
+
+    // Check for metadata block start
+    if (line.trim() === '---') {
+      inMetadataBlock = true;
+      continue;
+    }
+
+    // Check for metadata block end
+    if (line.trim() === '...' && inMetadataBlock) {
+      inMetadataBlock = false;
+      // If we have a pending test and it wasn't marked as suite, add it
+      if (pendingTest) {
+        tests.push(pendingTest);
+        pendingTest = null;
+      }
+      continue;
+    }
+
+    // Check if this test is actually a suite (in metadata block)
+    if (inMetadataBlock && line.includes("type: 'suite'")) {
+      // Discard the pending test - it's a suite container
+      pendingTest = null;
       continue;
     }
 
     // Test result lines: "ok 1 - test name" or "not ok 1 - test name"
-    const testMatch = line.match(/^(ok|not ok) \d+ - (.+?)( # (.+))?$/);
+    // Handles both top-level and indented (nested) tests
+    const testMatch = line.match(/^\s*(ok|not ok) \d+ - (.+?)(\s+#\s+(.+))?$/);
     if (testMatch) {
       const [, status, name, , meta] = testMatch;
-      const durationMatch = meta?.match(/duration_ms: ([\d.]+)/);
 
-      currentTest = {
-        name: name.trim(),
-        file: currentFile,
-        suite: null,
+      // Skip SKIP markers
+      if (meta && meta.includes('SKIP')) {
+        continue;
+      }
+
+      // Extract duration from inline metadata
+      const durationMatch = meta?.match(/duration_ms: ([\d.]+)/);
+      const testName = name.trim();
+
+      // If we have a pending test, finalize it first
+      if (pendingTest) {
+        tests.push(pendingTest);
+      }
+
+      // Create new pending test (will be added after checking metadata block)
+      pendingTest = {
+        name: testName,
+        file: currentFile || 'unknown',
+        suite: currentSuite,
         status: status === 'ok' ? 'pass' : 'fail',
         duration: durationMatch ? parseFloat(durationMatch[1]) : 0,
         error: null,
       };
-
-      // Extract suite name from test name if it contains " > "
-      if (name.includes(' > ')) {
-        const parts = name.split(' > ');
-        currentTest.suite = parts[0].trim();
-        currentTest.name = parts.slice(1).join(' > ').trim();
-      }
-
-      tests.push(currentTest);
+      currentTest = pendingTest;
       continue;
     }
 
-    // Skip markers: "ok 1 - test name # SKIP"
-    if (line.includes('# SKIP')) {
-      if (currentTest) {
-        currentTest.status = 'skip';
-      }
-    }
-
-    // Error details in subsequent lines (starts with spaces or "  ---")
+    // Error details in subsequent lines (starts with spaces and "error:")
     if (
       currentTest &&
       currentTest.status === 'fail' &&
@@ -90,6 +127,11 @@ function parseTapToJson(tapOutput) {
         .replace(/^['"]|['"]$/g, '');
       currentTest.error = { message: errorMsg };
     }
+  }
+
+  // Add any remaining pending test
+  if (pendingTest) {
+    tests.push(pendingTest);
   }
 
   return {
