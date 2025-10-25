@@ -97,7 +97,7 @@
             color="error"
             @click="handleRestart"
             :loading="restarting"
-            class="daemon-restart-btn"
+            class="daemon-restart-btn critical-action"
             data-test="daemon-restart"
           >
             <v-icon size="small" class="mr-1">mdi-restart-alert</v-icon>
@@ -625,6 +625,19 @@ onUnmounted(() => {
 
 .daemon-restart-btn:active {
   transform: translateY(0);
+}
+
+.critical-action {
+  border: 2px solid rgba(220, 38, 38, 0.5) !important;
+  color: #b91c1c !important;
+}
+
+.critical-action .v-icon {
+  color: #b91c1c !important;
+}
+
+.critical-action:hover {
+  background-color: rgba(254, 226, 226, 0.4) !important;
 }
 
 /* Status dot heartbeat animation */
