@@ -15,24 +15,26 @@
         inherit system;
         config = {
           allowUnfree = true;
-          allowUnfreePredicate = pkg: let
-            name = builtins.parseDrvName (builtins.getName pkg);
-          in name.name == "cursor" || name.name == "code-cursor";
+          allowUnfreePredicate = pkg:
+            let
+              name = builtins.parseDrvName (builtins.getName pkg);
+            in
+              name.name == "cursor" || name.name == "code-cursor";
         };
       };
 
       project = devenv.lib.mkShell {
         inherit inputs pkgs;
-        modules = [
-          # Inline module: Set project root to flake source for dir detection in pure eval
-          ({ ... }: {
-            project.root = ./.;  # Resolves to flake outPath (e.g., /Users/markus/Code/pidicon)
-          })
-          ./devenv.nix
-        ];
+        modules = [ ./devenv.nix ];
       };
+
+      shellOut =
+        if project ? shell then project.shell
+        else if project ? devShell then project.devShell
+        else if project ? shells && project.shells ? default then project.shells.default
+        else devenv.mkShell { modules = [ ./devenv.nix ]; };
     in {
-      devShells.${system}.default = project.shell;
-      packages.${system}.default = project.shell;
+      devShells.${system}.default = shellOut;
+      packages.${system}.default = shellOut;
     };
 }

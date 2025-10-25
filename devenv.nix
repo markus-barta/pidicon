@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
   languages.javascript.enable = true;
@@ -14,5 +14,6 @@
 
   enterShell = ''
     mkdir -p "$HOME/.pidicon"
+    echo "✅ pidicon shell loaded"
   '';
 }
