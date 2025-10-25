@@ -3,9 +3,7 @@
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
-    devenv.url  = "github:cachix/devenv";
-    # pin to a safe commit
-    # devenv.url = "github:cachix/devenv?ref=v1.9.3";
+    devenv.url = "github:cachix/devenv";
   };
 
   nixConfig.allow-dirty = true;
@@ -22,19 +20,11 @@
           in name.name == "cursor" || name.name == "code-cursor";
         };
       };
-
-      project = devenv.lib.mkShell {
+    in
+      devenv.mkShell {
         inherit inputs pkgs;
-        modules = [ ./devenv.nix ];
+        modules = [
+          ./devenv.nix
+        ];
       };
-
-      shellOut =
-        if project ? shell then project.shell
-        else if project ? devShell then project.devShell
-        else if project ? shells && project.shells ? default then project.shells.default
-        else devenv.mkShell { modules = [ ./devenv.nix ]; };
-    in {
-      devShells.${system}.default = shellOut;
-      packages.${system}.default  = shellOut;
-    };
 }
