@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="modelValue" max-width="720">
+  <v-dialog v-model="dialogModel" max-width="720">
     <v-card class="test-details">
       <v-card-title class="test-details__header">
         <div class="test-details__title">
@@ -93,6 +93,13 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
+const dialogModel = computed({
+  get: () => props.modelValue,
+  set: (value) => {
+    emit('update:modelValue', value);
+  },
+});
+
 const metricsVisible = computed(() => Boolean(props.test?.latest));
 
 const testStatus = computed(() => props.test?.latest?.status || 'unknown');
@@ -177,7 +184,7 @@ const failureMessages = computed(
 );
 
 function emitClose() {
-  emit('update:modelValue', false);
+  dialogModel.value = false;
 }
 </script>
 
