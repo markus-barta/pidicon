@@ -12,17 +12,6 @@
         <div class="device-header-row">
           <!-- Hardware Icon + Device Type Icon + Name -->
           <h3 class="text-h5 font-weight-bold device-name">
-            <v-icon 
-              :icon="driverStatusIcon" 
-              :color="driverStatusColor"
-              :size="14"
-              class="mr-2 driver-status-icon"
-              :class="{ 'driver-status-icon--glow': device.driver === 'mock' }"
-            >
-              <v-tooltip activator="parent" location="bottom">
-                {{ driverStatusTooltip }}
-              </v-tooltip>
-            </v-icon>
             <v-icon :icon="deviceTypeIcon" size="small" class="mr-2"></v-icon>
             {{ deviceName }}
           </h3>
@@ -66,20 +55,30 @@
           <!-- Info items (stay in line when space available) -->
           <div class="device-info-items">
             <!-- Combined Status: Responsive indicator + Last Seen -->
-            <div v-if="device.driver === 'real'" class="header-info-item">
+            <div class="header-info-item">
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <span v-bind="tooltipProps" class="info-content">
                     <span 
+                      v-if="device.driver === 'real'"
                       class="device-responsive-dot"
                       :class="{ 'device-responsive-dot--heartbeat': deviceResponsiveColor === '#10b981' }"
                       :style="{ backgroundColor: deviceResponsiveColor }"
                       :key="device.metrics?.lastSeenTs"
                     ></span>
-                    <span>{{ lastSeen }}</span>
+                    <v-icon 
+                      v-else
+                      size="small"
+                      class="mr-1"
+                      color="deep-purple-darken-1"
+                    >
+                      mdi-robot
+                    </v-icon>
+                    <span>{{ device.driver === 'real' ? lastSeen : 'Mock Mode' }}</span>
                   </span>
                 </template>
-                <span>{{ deviceResponsiveLabel }} • {{ lastSeenTooltip }}</span>
+                <span v-if="device.driver === 'real'">{{ deviceResponsiveLabel }} • {{ lastSeenTooltip }}</span>
+                <span v-else>Simulated device - no real hardware connection</span>
               </v-tooltip>
             </div>
 
@@ -1945,20 +1944,6 @@ const driverLabel = computed(() =>
 );
 
 // Driver status icon next to device name
-const driverStatusIcon = computed(() => {
-  return props.device.driver === 'real' ? 'mdi-chip' : 'mdi-robot';
-});
-
-const driverStatusColor = computed(() => {
-  return props.device.driver === 'real' ? 'blue-darken-3' : 'deep-purple-darken-1';
-});
-
-const driverStatusTooltip = computed(() => {
-  return props.device.driver === 'real' 
-    ? 'Real hardware device' 
-    : 'Simulated device';
-});
-
 const driverStatusLabel = computed(() => {
   return props.device.driver === 'real' 
     ? 'Connected to real hardware device' 
@@ -2490,24 +2475,6 @@ const driverStatusLabel = computed(() => {
 }
 
 /* Driver status icon next to device name */
-.driver-status-icon {
-  display: inline-flex;
-  vertical-align: middle;
-}
-
-.driver-status-icon--glow {
-  animation: driver-glow 2s ease-in-out infinite;
-}
-
-@keyframes driver-glow {
-  0%, 100% {
-    filter: drop-shadow(0 0 2px rgba(126, 87, 194, 0.6));
-  }
-  50% {
-    filter: drop-shadow(0 0 8px rgba(126, 87, 194, 1)) drop-shadow(0 0 12px rgba(126, 87, 194, 0.8));
-  }
-}
-
 /* Device responsive dot heartbeat animation */
 .device-responsive-dot {
   display: inline-block;
