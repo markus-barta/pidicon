@@ -47,6 +47,12 @@ function createMockDeviceService(metricsByIp) {
     async getMetrics(ip) {
       return metricsByIp[ip] ?? null;
     },
+    updateMetrics(ip, updater) {
+      if (!metricsByIp[ip]) {
+        metricsByIp[ip] = {};
+      }
+      updater(metricsByIp[ip]);
+    },
     async restartDevice(ip) {
       metricsByIp[ip].restartCalled = true;
     },
@@ -104,7 +110,7 @@ test('executeWatchdogAction runs restart flow', async () => {
           },
         };
       },
-    },
+    }
   );
 
   await watchdogService.executeWatchdogAction('127.0.0.1');
@@ -154,7 +160,7 @@ test('checkDevice triggers executeWatchdogAction when scene stopped and checkWhe
           },
         };
       },
-    },
+    }
   );
 
   const originalExecute =
@@ -212,7 +218,7 @@ test('WatchdogService does not trigger when scene running and checkWhenOff false
           },
         };
       },
-    },
+    }
   );
 
   watchdogService.executeWatchdogAction = async () => {
@@ -272,7 +278,7 @@ test('watchdog detects stale lastSeenTs (device unresponsive)', async () => {
           },
         };
       },
-    },
+    }
   );
 
   const originalExecute =
@@ -284,7 +290,11 @@ test('watchdog detects stale lastSeenTs (device unresponsive)', async () => {
 
   await watchdogService.checkDevice('192.168.1.100', 60 * 60 * 1000); // 60 min timeout
 
-  assert.equal(actionInvoked, true, 'action should be invoked for stale device');
+  assert.equal(
+    actionInvoked,
+    true,
+    'action should be invoked for stale device'
+  );
 });
 
 test('watchdog does not trigger for healthy device', async () => {
@@ -330,7 +340,7 @@ test('watchdog does not trigger for healthy device', async () => {
           },
         };
       },
-    },
+    }
   );
 
   watchdogService.executeWatchdogAction = async () => {
@@ -389,7 +399,7 @@ test('watchdog does not trigger when disabled', async () => {
           },
         };
       },
-    },
+    }
   );
 
   watchdogService.executeWatchdogAction = async () => {
@@ -455,7 +465,7 @@ test('watchdog action "fallback-scene" switches to fallback scene', async () => 
           },
         };
       },
-    },
+    }
   );
 
   await watchdogService.executeWatchdogAction('192.168.1.100');
@@ -500,7 +510,7 @@ test('watchdog action "notify" only logs, no device action', async () => {
           },
         };
       },
-    },
+    }
   );
 
   await watchdogService.executeWatchdogAction('192.168.1.100');
@@ -533,7 +543,8 @@ test('health check updates lastSeenTs when successful', async () => {
 
   const metricsStore = {
     '192.168.1.100': {
-      lastSeenTs: Date.now(),
+      lastSeenTs: null,
+      lastSeenSource: null,
     },
   };
 
@@ -549,7 +560,9 @@ test('health check updates lastSeenTs when successful', async () => {
     {
       getDevice() {
         return {
+          host: '192.168.1.100',
           impl: {
+            driverType: 'real',
             healthCheck: async () => {
               healthCheckCalled = true;
               return { success: true, latencyMs: 50 };
@@ -557,7 +570,7 @@ test('health check updates lastSeenTs when successful', async () => {
           },
         };
       },
-    },
+    }
   );
 
   const result = await watchdogService.performHealthCheck('192.168.1.100');
@@ -565,6 +578,11 @@ test('health check updates lastSeenTs when successful', async () => {
   assert.equal(healthCheckCalled, true, 'health check should be called');
   assert.equal(result.success, true, 'health check should succeed');
   assert.ok(result.latencyMs, 'should include latency');
+  assert.strictEqual(
+    metricsStore['192.168.1.100'].lastSeenTs,
+    null,
+    'device service metrics should remain unchanged'
+  );
 });
 
 test('health check skips when device is OFF and checkWhenOff=false', async () => {
@@ -610,7 +628,7 @@ test('health check skips when device is OFF and checkWhenOff=false', async () =>
           },
         };
       },
-    },
+    }
   );
 
   const result = await watchdogService.performHealthCheck('192.168.1.100');
@@ -662,12 +680,16 @@ test('health check runs when device is OFF and checkWhenOff=true', async () => {
           },
         };
       },
-    },
+    }
   );
 
   await watchdogService.performHealthCheck('192.168.1.100');
 
-  assert.equal(healthCheckCalled, true, 'health check should run even when off');
+  assert.equal(
+    healthCheckCalled,
+    true,
+    'health check should run even when off'
+  );
 });
 
 // ============================================================================
@@ -711,7 +733,7 @@ test('startMonitoring begins monitoring a device', () => {
           },
         };
       },
-    },
+    }
   );
 
   try {
@@ -763,7 +785,7 @@ test('stopMonitoring stops monitoring a device', () => {
           },
         };
       },
-    },
+    }
   );
 
   // Start then stop
@@ -821,7 +843,7 @@ test('stopAll stops all monitoring', () => {
           },
         };
       },
-    },
+    }
   );
 
   // Start monitoring both
@@ -874,7 +896,7 @@ test('getAllStatus returns status for all monitored devices', () => {
           },
         };
       },
-    },
+    }
   );
 
   try {
@@ -883,7 +905,10 @@ test('getAllStatus returns status for all monitored devices', () => {
     const status = watchdogService.getAllStatus();
 
     assert.ok(status, 'status should be returned');
-    assert.ok(status['192.168.1.100'], 'status should include monitored device');
+    assert.ok(
+      status['192.168.1.100'],
+      'status should include monitored device'
+    );
     assert.equal(
       status['192.168.1.100'].monitoring,
       true,
@@ -930,7 +955,7 @@ test('getStatus returns status for specific device', () => {
           },
         };
       },
-    },
+    }
   );
 
   try {
@@ -987,7 +1012,7 @@ test('watchdog handles device service error gracefully', async () => {
           },
         };
       },
-    },
+    }
   );
 
   // Should not throw
@@ -1021,7 +1046,7 @@ test('watchdog handles missing device config gracefully', async () => {
           },
         };
       },
-    },
+    }
   );
 
   // Should not throw
