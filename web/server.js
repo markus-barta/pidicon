@@ -746,6 +746,10 @@ function startWebServer(container, logger) {
       });
 
       runningTestProcess.on('close', async (code) => {
+        // Set responseSent immediately to prevent race condition with timeout
+        if (responseSent) return;
+        responseSent = true;
+
         testProgress.running = false;
         runningTestProcess = null;
         clearTimeout(responseTimeout);
@@ -760,42 +764,36 @@ function startWebServer(container, logger) {
           const tests = await diagnosticsService.getAllTests();
           const automatedTests = tests.filter((t) => t.type === 'automated');
 
-          if (!responseSent) {
-            responseSent = true;
-            res.json({
-              success: code === 0,
-              exitCode: code,
-              message:
-                code === 0
-                  ? 'Tests completed successfully'
-                  : 'Tests completed with failures',
-              totalTests: automatedTests.length,
-              tests: automatedTests,
-            });
-          }
+          res.json({
+            success: code === 0,
+            exitCode: code,
+            message:
+              code === 0
+                ? 'Tests completed successfully'
+                : 'Tests completed with failures',
+            totalTests: automatedTests.length,
+            tests: automatedTests,
+          });
         } catch (error) {
-          if (!responseSent) {
-            responseSent = true;
-            res.status(500).json({
-              success: false,
-              error: 'Tests ran but failed to load results: ' + error.message,
-            });
-          }
+          res.status(500).json({
+            success: false,
+            error: 'Tests ran but failed to load results: ' + error.message,
+          });
         }
       });
 
       runningTestProcess.on('error', (error) => {
+        if (responseSent) return;
+        responseSent = true;
+
         testProgress.running = false;
         runningTestProcess = null;
         clearTimeout(responseTimeout);
 
-        if (!responseSent) {
-          responseSent = true;
-          res.status(500).json({
-            success: false,
-            error: error.message,
-          });
-        }
+        res.status(500).json({
+          success: false,
+          error: error.message,
+        });
       });
 
       // Timeout after 5 minutes
