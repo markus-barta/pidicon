@@ -428,7 +428,8 @@ const navItems = computed(() => [
     label: 'Logs',
     icon: 'mdi-file-document-outline',
     tooltip: 'Inspect daemon logs',
-    testId: 'nav-logs'
+    testId: 'nav-logs',
+    requiresDev: true
   }
 ]);
 
