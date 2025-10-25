@@ -23,11 +23,8 @@
 
       project = devenv.lib.mkShell {
         inherit inputs pkgs;
+        project = self;  # Provides flake source tree for dir detection/assertions
         modules = [
-          # Inline module to set project root for flake-aware dir detection
-          ({ ... }: {
-            project.root = self;
-          })
           ./devenv.nix
         ];
       };
