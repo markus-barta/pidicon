@@ -695,6 +695,66 @@ function startWebServer(container, logger) {
     }
   });
 
+  // Run automated tests (npm test) on the server
+  app.post('/api/tests/run-automated', async (req, res) => {
+    try {
+      logger.info('[WEB UI] Running automated tests on server...', {
+        source: 'web-ui',
+      });
+
+      const { spawn } = require('child_process');
+      const testProcess = spawn('npm', ['test'], {
+        cwd: process.cwd(),
+        env: process.env,
+      });
+
+      testProcess.on('close', async (code) => {
+        logger.info('[WEB UI] Automated tests completed', {
+          exitCode: code,
+          source: 'web-ui',
+        });
+
+        // Reload tests to get fresh results
+        try {
+          const tests = await diagnosticsService.getAllTests();
+          const automatedTests = tests.filter((t) => t.type === 'automated');
+
+          res.json({
+            success: code === 0,
+            exitCode: code,
+            message:
+              code === 0
+                ? 'Tests completed successfully'
+                : 'Tests completed with failures',
+            totalTests: automatedTests.length,
+            tests: automatedTests,
+          });
+        } catch (error) {
+          res.status(500).json({
+            success: false,
+            error: 'Tests ran but failed to load results: ' + error.message,
+          });
+        }
+      });
+
+      // Timeout after 5 minutes
+      setTimeout(() => {
+        if (!testProcess.killed) {
+          testProcess.kill();
+          res.status(408).json({
+            success: false,
+            error: 'Test execution timed out after 5 minutes',
+          });
+        }
+      }, 300000);
+    } catch (error) {
+      logger.error('API /api/tests/run-automated error:', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get('/api/system/mqtt-config', async (req, res) => {
     try {
       const config = await mqttConfigService.loadConfig();

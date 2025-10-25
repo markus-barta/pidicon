@@ -33,13 +33,22 @@
               Refresh
             </v-btn>
             <v-btn
+              color="secondary"
+              prepend-icon="mdi-test-tube"
+              :loading="testsState.runningAutomated"
+              :disabled="testsState.loading || testsState.runningAll"
+              @click="runAutomatedTests"
+            >
+              Run Automated Tests
+            </v-btn>
+            <v-btn
               color="primary"
               prepend-icon="mdi-refresh"
               :loading="testsState.runningAll"
               :disabled="testsState.loading || diagnosticTests.length === 0"
               @click="runAllDiagnostics"
             >
-              Run All
+              Run All Diagnostics
             </v-btn>
           </div>
         </div>
@@ -201,6 +210,7 @@ const testsState = reactive({
   loading: false,
   running: {},
   runningAll: false,
+  runningAutomated: false,
   error: null,
 });
 
@@ -403,6 +413,24 @@ async function runAllDiagnostics() {
     testsState.error = error.message || 'Failed to run diagnostics tests.';
   } finally {
     testsState.runningAll = false;
+  }
+}
+
+async function runAutomatedTests() {
+  testsState.runningAutomated = true;
+  testsState.error = null;
+  try {
+    const response = await api.request('/tests/run-automated', { method: 'POST' });
+    if (response.success) {
+      // Reload all tests to get the fresh automated test results
+      await loadTests();
+    } else {
+      testsState.error = response.error || 'Automated tests failed to run.';
+    }
+  } catch (error) {
+    testsState.error = error.message || 'Failed to run automated tests.';
+  } finally {
+    testsState.runningAutomated = false;
   }
 }
 

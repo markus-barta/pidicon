@@ -467,6 +467,36 @@ async function bootstrap() {
   const watchdogService = container.resolve('watchdogService');
   watchdogService.startAll();
 
+  // Run automated tests in background to populate test results
+  // This runs asynchronously and doesn't block daemon startup
+  if (process.env.RUN_TESTS_ON_STARTUP !== 'false') {
+    setTimeout(() => {
+      logger.info('[STARTUP] Running automated tests to populate dashboard...');
+      const { spawn } = require('child_process');
+      const testProcess = spawn('npm', ['test'], {
+        cwd: process.cwd(),
+        env: process.env,
+        stdio: 'ignore', // Don't pipe output to console
+      });
+
+      testProcess.on('close', (code) => {
+        if (code === 0) {
+          logger.ok('[STARTUP] Automated tests completed successfully');
+        } else {
+          logger.warn('[STARTUP] Automated tests completed with failures', {
+            exitCode: code,
+          });
+        }
+      });
+
+      testProcess.on('error', (error) => {
+        logger.warn('[STARTUP] Failed to run automated tests:', {
+          error: error.message,
+        });
+      });
+    }, 0);
+  }
+
   mqttService.on('connect', async () => {
     await mqttService.subscribe([
       'pixoo/+/state/upd',
