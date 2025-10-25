@@ -150,10 +150,6 @@ const props = defineProps({
   activeView: {
     type: String,
     default: 'devices'
-  },
-  showLogs: {
-    type: Boolean,
-    default: false
   }
 });
 
@@ -162,7 +158,6 @@ const toast = useToast();
 const devModeStore = useDevModeStore();
 
 const activeNav = ref(props.activeView);
-const showLogs = computed(() => props.showLogs);
 const buildNumber = ref(null);
 const gitCommit = ref(null);
 const hostname = ref('');
@@ -438,9 +433,6 @@ const devMode = computed(() => devModeStore.enabled);
 const filteredNavItems = computed(() =>
   navItems.value.filter((item) => {
     if (item.requiresDev && !devMode.value) {
-      return false;
-    }
-    if (item.value === 'logs' && !showLogs.value) {
       return false;
     }
     return true;

@@ -3,7 +3,6 @@
     <!-- System Status Header -->
     <system-status
       :active-view="currentView"
-      :show-logs="showDevScenes"
       @navigate="handleNavigation"
     />
 
