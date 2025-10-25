@@ -1,7 +1,5 @@
 <template>
   <v-container fluid class="settings-view">
-    <v-row justify="center">
-      <v-col cols="12" md="12" lg="10" xl="8">
         <div class="settings-header">
           <div class="settings-title">
             <v-avatar color="primary" size="40" class="mr-3">
@@ -515,8 +513,6 @@
           </v-window-item>
           </v-window>
         </v-sheet>
-      </v-col>
-    </v-row>
 
     <!-- Reset Confirmation Dialog -->
     <v-dialog v-model="showResetDialog" max-width="500px">

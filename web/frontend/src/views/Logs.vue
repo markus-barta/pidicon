@@ -1,7 +1,5 @@
 <template>
   <v-container fluid class="logs-view">
-    <v-row justify="center">
-      <v-col cols="12" md="12" lg="10" xl="8">
         <v-card class="logs-card">
           <div class="logs-header d-flex align-center">
             <v-avatar color="primary" size="36" class="mr-3">
@@ -81,8 +79,6 @@
             </v-card-text>
           </v-card>
         </v-card>
-      </v-col>
-    </v-row>
   </v-container>
 </template>
 

@@ -97,10 +97,10 @@
             color="error"
             @click="handleRestart"
             :loading="restarting"
-            class="critical-action daemon-restart-btn"
+            class="daemon-restart-btn"
             data-test="daemon-restart"
           >
-            <v-icon size="small" color="error" class="mr-1">mdi-restart-alert</v-icon>
+            <v-icon size="small" class="mr-1">mdi-restart-alert</v-icon>
             <span class="text-caption">Daemon</span>
             <v-tooltip activator="parent" location="bottom">
               Restart entire daemon
@@ -118,6 +118,8 @@
         color="primary"
         class="nav-tabs"
         density="compact"
+        show-arrows
+        hide-slider
       >
         <v-tab
           v-for="item in filteredNavItems"
@@ -555,6 +557,11 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.nav-tabs :deep(.v-tab--selected) {
+  background-color: rgba(139, 92, 246, 0.08);
+  border-radius: 8px 8px 0 0;
+}
+
 .mqtt-tooltip {
   display: flex;
   flex-direction: column;
@@ -613,14 +620,6 @@ onUnmounted(() => {
 
 .daemon-restart-btn:active {
   transform: translateY(0);
-}
-
-.critical-action {
-  border: 2px solid rgba(220, 38, 38, 0.5) !important;
-}
-
-.critical-action:hover {
-  background-color: rgba(254, 226, 226, 0.4) !important;
 }
 
 /* Status dot heartbeat animation */
