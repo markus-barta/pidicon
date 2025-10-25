@@ -184,6 +184,11 @@ async function bootstrap() {
   );
 
   container.register(
+    'testResultsParser',
+    ({ logger }) => new TestResultsParser({ logger })
+  );
+
+  container.register(
     'diagnosticsService',
     ({
       logger,
@@ -203,8 +208,7 @@ async function bootstrap() {
         sceneService,
         watchdogService,
         deviceConfigStore,
-        testResultsParser:
-          testResultsParser || new TestResultsParser({ logger }),
+        testResultsParser,
       })
   );
 
