@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="settings-view">
     <v-row justify="center">
-      <v-col cols="12" lg="10" xl="9">
+      <v-col cols="12" lg="9" xl="8">
         <div class="settings-header">
           <div class="settings-title">
             <v-avatar color="primary" size="40" class="mr-3">
@@ -1188,7 +1188,7 @@ export default {
 
 <style scoped>
 .settings-view {
-  padding-bottom: 48px;
+  padding: 16px 32px 48px;
 }
 
 .settings-header {
@@ -1196,7 +1196,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .settings-title {
@@ -1206,13 +1206,14 @@ export default {
 
 .settings-shell {
   background-color: #ffffff;
-  border-radius: 20px;
-  padding: 8px 6px;
+  border-radius: 18px;
+  padding: 6px 4px;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
 .settings-tabs {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0 8px;
 }
 
 .tab-card {

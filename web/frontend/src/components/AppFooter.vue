@@ -1,6 +1,6 @@
 <template>
   <v-footer app color="white" elevation="1" class="app-footer">
-    <v-container fluid class="py-3">
+    <v-container fluid class="footer-container">
       <div class="d-flex align-center justify-space-between flex-wrap text-caption text-medium-emphasis">
         <!-- Left: License & Author -->
         <div class="d-flex align-center">
@@ -83,9 +83,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
 .app-footer {
   border-top: 1px solid #e5e7eb;
   margin-top: 24px;
+}
+
+.footer-container {
+  padding: 6px 20px;
 }
 
 .dev-toggle-container {
@@ -97,7 +102,7 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 4px 12px;
   border-radius: 999px;
   border: 1px solid transparent;
   background: rgba(17, 24, 39, 0.04);
