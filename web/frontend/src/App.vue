@@ -231,6 +231,7 @@ onUnmounted(() => {
 /* Global app styles */
 .v-main {
   min-height: 100vh;
+  padding-top: 0 !important;
 }
 
 .main-content {

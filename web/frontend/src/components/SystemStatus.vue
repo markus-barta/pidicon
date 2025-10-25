@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar color="white" elevation="0" class="status-bar" height="auto">
+  <v-app-bar app color="white" elevation="0" class="status-bar">
     <v-container fluid class="status-container">
       <!-- Header Row: Title + Status + Daemon Restart -->
       <div class="header-row">
