@@ -9,6 +9,7 @@
   # Packages: Add Cursor for CLI + editor support
   packages = [
     pkgs.code-cursor  # Cursor AI editor + CLI agent (from nixpkgs-unstable)
+    pkgs.gh           # GitHub CLI (gh)
   ];
 
   env.PIDICON_STATE_DIR = "$HOME/.pidicon";

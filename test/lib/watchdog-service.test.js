@@ -1,9 +1,25 @@
 'use strict';
 
 const assert = require('node:assert');
-const test = require('node:test');
+const { test, afterEach } = require('node:test');
 
 const WatchdogService = require('../../lib/services/watchdog-service');
+
+// Track all watchdog services created during tests for cleanup
+const watchdogInstances = [];
+
+// Global cleanup to prevent timer leaks
+afterEach(() => {
+  watchdogInstances.forEach((service) => service.stopAll());
+  watchdogInstances.length = 0;
+});
+
+// Helper to create and track watchdog services for auto-cleanup
+function createTrackedWatchdogService(...args) {
+  const service = new WatchdogService(...args);
+  watchdogInstances.push(service);
+  return service;
+}
 
 class MockConfigStore {
   constructor(configs) {
@@ -107,7 +123,7 @@ test('executeWatchdogAction runs restart flow', async () => {
   const deviceService = createMockDeviceService(metricsStore, healthEntries);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -157,7 +173,7 @@ test('checkDevice triggers executeWatchdogAction when scene stopped and checkWhe
     },
   });
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -215,7 +231,7 @@ test('WatchdogService does not trigger when scene running and checkWhenOff false
     },
   });
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -275,7 +291,7 @@ test('watchdog detects stale lastSeenTs (device unresponsive)', async () => {
     },
   });
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -337,7 +353,7 @@ test('watchdog does not trigger for healthy device', async () => {
     },
   });
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -396,7 +412,7 @@ test('watchdog does not trigger when disabled', async () => {
     },
   });
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -462,7 +478,7 @@ test('watchdog action "fallback-scene" switches to fallback scene', async () => 
 
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     sceneService,
@@ -514,7 +530,7 @@ test('watchdog action "notify" only logs, no device action', async () => {
   const deviceService = createMockDeviceService(metricsStore, healthEntries);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -573,7 +589,7 @@ test('health check updates lastSeenTs when successful', async () => {
   const stateStore = createMockStateStore();
 
   let healthCheckCalled = false;
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -645,7 +661,7 @@ test('health check skips when device is OFF and checkWhenOff=false', async () =>
   });
 
   let healthCheckCalled = false;
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -697,7 +713,7 @@ test('health check runs when device is OFF and checkWhenOff=true', async () => {
   });
 
   let healthCheckCalled = false;
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -752,7 +768,7 @@ test('startMonitoring begins monitoring a device', () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -806,7 +822,7 @@ test('startMonitoring triggers immediate health check', async () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -860,7 +876,7 @@ test('stopMonitoring stops monitoring a device', () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -918,7 +934,7 @@ test('stopAll stops all monitoring', () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -971,7 +987,7 @@ test('getAllStatus returns status for all monitored devices', () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -1030,7 +1046,7 @@ test('getStatus returns status for specific device', () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -1088,7 +1104,7 @@ test('watchdog handles device service error gracefully', async () => {
 
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
@@ -1122,7 +1138,7 @@ test('watchdog handles missing device config gracefully', async () => {
   const deviceService = createMockDeviceService(metricsStore);
   const stateStore = createMockStateStore();
 
-  const watchdogService = new WatchdogService(
+  const watchdogService = createTrackedWatchdogService(
     configStore,
     deviceService,
     createMockSceneService(),
