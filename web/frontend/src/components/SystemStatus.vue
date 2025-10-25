@@ -557,8 +557,8 @@ onUnmounted(() => {
 }
 
 .nav-tabs :deep(.v-tab) {
-  min-height: 32px;
-  height: 32px;
+  min-height: 32px !important;
+  height: 32px !important;
   padding: 0 12px;
 }
 
