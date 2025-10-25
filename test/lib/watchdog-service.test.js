@@ -42,7 +42,7 @@ class MockConfigStore {
   }
 }
 
-function createMockDeviceService(metricsByIp) {
+function createMockDeviceService(metricsByIp, healthEntries = {}) {
   return {
     async getMetrics(ip) {
       return metricsByIp[ip] ?? null;
@@ -55,6 +55,9 @@ function createMockDeviceService(metricsByIp) {
     },
     async restartDevice(ip) {
       metricsByIp[ip].restartCalled = true;
+    },
+    getHealthEntry(ip) {
+      return healthEntries[ip];
     },
   };
 }
@@ -94,7 +97,14 @@ test('executeWatchdogAction runs restart flow', async () => {
     },
   };
 
-  const deviceService = createMockDeviceService(metricsStore);
+  const healthEntries = {
+    '192.168.1.100': {
+      lastSeenTs: null,
+      lastSeenSource: null,
+    },
+  };
+
+  const deviceService = createMockDeviceService(metricsStore, healthEntries);
   const stateStore = createMockStateStore();
 
   const watchdogService = new WatchdogService(
@@ -494,7 +504,14 @@ test('watchdog action "notify" only logs, no device action', async () => {
     },
   };
 
-  const deviceService = createMockDeviceService(metricsStore);
+  const healthEntries = {
+    '192.168.1.100': {
+      lastSeenTs: null,
+      lastSeenSource: null,
+    },
+  };
+
+  const deviceService = createMockDeviceService(metricsStore, healthEntries);
   const stateStore = createMockStateStore();
 
   const watchdogService = new WatchdogService(
@@ -542,13 +559,17 @@ test('health check updates lastSeenTs when successful', async () => {
   });
 
   const metricsStore = {
+    '192.168.1.100': {},
+  };
+
+  const healthEntries = {
     '192.168.1.100': {
       lastSeenTs: null,
       lastSeenSource: null,
     },
   };
 
-  const deviceService = createMockDeviceService(metricsStore);
+  const deviceService = createMockDeviceService(metricsStore, healthEntries);
   const stateStore = createMockStateStore();
 
   let healthCheckCalled = false;
@@ -568,6 +589,14 @@ test('health check updates lastSeenTs when successful', async () => {
               return { success: true, latencyMs: 50 };
             },
           },
+          health: {
+            recordCheckStart() {},
+            recordCheckResult() {},
+            updateLastSeen(timestamp, source) {
+              healthEntries['192.168.1.100'].lastSeenTs = timestamp;
+              healthEntries['192.168.1.100'].lastSeenSource = source;
+            },
+          },
         };
       },
     }
@@ -578,10 +607,14 @@ test('health check updates lastSeenTs when successful', async () => {
   assert.equal(healthCheckCalled, true, 'health check should be called');
   assert.equal(result.success, true, 'health check should succeed');
   assert.ok(result.latencyMs, 'should include latency');
-  assert.strictEqual(
-    metricsStore['192.168.1.100'].lastSeenTs,
-    null,
-    'device service metrics should remain unchanged'
+  assert.ok(
+    healthEntries['192.168.1.100'].lastSeenTs,
+    'lastSeenTs should update via health store'
+  );
+  assert.equal(
+    healthEntries['192.168.1.100'].lastSeenSource,
+    'health-check',
+    'Health store should record health-check source'
   );
 });
 
