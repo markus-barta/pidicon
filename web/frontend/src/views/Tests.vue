@@ -234,8 +234,14 @@ const statusCounts = computed(() => {
 });
 
 const groupedSections = computed(() => {
+  if (!testsState.tests || testsState.tests.length === 0) {
+    return [];
+  }
+  
   const map = new Map();
   for (const test of testsState.tests) {
+    if (!test || !test.id) continue; // Skip invalid tests
+    
     const meta = CATEGORY_METADATA[test.category] || {
       label: `${(test.category || 'other').toUpperCase()} 📋`,
       type: test.type || 'automated',
@@ -251,6 +257,7 @@ const groupedSections = computed(() => {
     }
     map.get(key).tests.push(test);
   }
+  
   return Array.from(map.values()).map((section) => ({
     ...section,
     counts: section.tests.reduce(
@@ -360,6 +367,9 @@ async function loadTests() {
   try {
     const response = await api.request('/tests');
     const tests = Array.isArray(response.tests) ? response.tests : [];
+    
+    console.log('[Tests] Loaded', tests.length, 'tests from API');
+    
     testsState.tests = tests.map((test) => ({
       ...test,
       latest: test.latest || null,
@@ -367,8 +377,15 @@ async function loadTests() {
       type: test.type || (test.runnable ? 'diagnostic' : 'automated'),
     }));
 
-    testsState.tests.forEach((test) => ensureSectionExpanded(test.category || 'system'));
+    console.log('[Tests] Mapped', testsState.tests.length, 'tests');
+
+    // Expand all sections by default
+    const categories = new Set(testsState.tests.map(t => t.category || 'system'));
+    categories.forEach((cat) => ensureSectionExpanded(cat));
+    
+    console.log('[Tests] Expanded', categories.size, 'categories:', Array.from(categories));
   } catch (error) {
+    console.error('[Tests] Load error:', error);
     testsState.error = error.message || 'Failed to load tests.';
   } finally {
     testsState.loading = false;
