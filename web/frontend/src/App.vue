@@ -8,7 +8,7 @@
 
     <!-- Main Content -->
     <v-main class="bg-grey-lighten-4" data-test="main-content">
-      <v-container class="main-shell">
+      <v-container class="py-6 py-md-8">
         <!-- Loading State -->
           <v-alert
             v-if="!dataLoaded && !error"

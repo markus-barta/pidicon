@@ -47,9 +47,7 @@ export default createVuetify({
       density: 'comfortable',
       border: 'b thin',
     },
-    VMain: {
-      class: 'py-6 py-md-8',
-    },
+    // Let Vuetify's app prop handle v-main padding automatically
     VContainer: {
       class: 'mx-auto px-4 px-md-6 px-lg-8',
       maxWidth: 1920,
