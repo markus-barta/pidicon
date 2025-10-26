@@ -33,23 +33,6 @@
               Refresh
             </v-btn>
             <v-btn
-              v-if="!testsState.runningAutomated"
-              color="secondary"
-              prepend-icon="mdi-test-tube"
-              :disabled="testsState.loading || testsState.runningAll"
-              @click="runAutomatedTests"
-            >
-              Run Automated Tests
-            </v-btn>
-            <v-btn
-              v-else
-              color="error"
-              prepend-icon="mdi-stop"
-              @click="stopTests"
-            >
-              Force Stop Tests
-            </v-btn>
-            <v-btn
               color="primary"
               prepend-icon="mdi-refresh"
               :loading="testsState.runningAll"
@@ -61,22 +44,6 @@
           </div>
         </div>
         
-        <!-- Test Progress Bar -->
-        <div
-          v-if="testsState.runningAutomated && testProgress.total > 0"
-          class="tests-dashboard__progress"
-        >
-          <v-progress-linear
-            :model-value="(testProgress.completed / testProgress.total) * 100"
-            color="secondary"
-            height="24"
-            striped
-          >
-            <template #default>
-              <strong>{{ testProgress.completed }} / {{ testProgress.total }} tests</strong>
-            </template>
-          </v-progress-linear>
-        </div>
 
         <div class="tests-dashboard__summary">
           <v-text-field
@@ -235,17 +202,8 @@ const testsState = reactive({
   loading: false,
   running: {},
   runningAll: false,
-  runningAutomated: false,
   error: null,
 });
-
-const testProgress = reactive({
-  running: false,
-  completed: 0,
-  total: 0,
-});
-
-let progressPollInterval = null;
 
 const CATEGORY_METADATA = {
   system: { label: 'SYSTEM DIAGNOSTICS', type: 'diagnostic', prefix: 'SYS' },
