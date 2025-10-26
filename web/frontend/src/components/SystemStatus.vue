@@ -8,7 +8,7 @@
     <template #default>
       <v-toolbar-title class="d-flex align-center">
         <v-avatar color="primary" size="40" class="mr-3">
-          <v-icon color="white" size="24">mdi-television</vicon>
+          <v-icon color="white" size="24">mdi-television</v-icon>
         </v-avatar>
         <div class="title-text">
           <div class="text-h6 font-weight-bold primary--text">
