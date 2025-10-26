@@ -258,9 +258,8 @@ const groupedSections = computed(() => {
     map.get(key).tests.push(test);
   }
   
-  return Array.from(map.values()).map((section) => ({
-    ...section,
-    counts: section.tests.reduce(
+  const sections = Array.from(map.values()).map((section) => {
+    const counts = section.tests.reduce(
       (acc, test) => {
         const status = test.latest?.status;
         if (status === 'green') acc.green += 1;
@@ -270,16 +269,41 @@ const groupedSections = computed(() => {
         return acc;
       },
       { green: 0, yellow: 0, red: 0, unknown: 0 },
-    ),
-  }));
+    );
+    
+    console.log('[groupedSections]', section.key, ':', section.tests.length, 'tests');
+    if (section.tests.length > 0) {
+      console.log('[groupedSections] First test:', section.tests[0]?.id, section.tests[0]?.name?.substring(0, 30));
+    }
+    
+    return {
+      key: section.key,
+      label: section.label,
+      type: section.type,
+      tests: section.tests,
+      counts: counts,
+    };
+  });
+  
+  console.log('[groupedSections] Returning', sections.length, 'sections');
+  return sections;
 });
 
 const filteredSections = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
+  const grouped = groupedSections.value;
+  
+  console.log('[filteredSections] Query:', query, '| Grouped sections:', grouped?.length);
+  
   if (!query) {
-    return groupedSections.value;
+    if (grouped && grouped.length > 0) {
+      console.log('[filteredSections] No filter, returning', grouped.length, 'sections');
+      grouped.forEach(s => console.log('  -', s.key, ':', s.tests?.length, 'tests'));
+    }
+    return grouped;
   }
-  return groupedSections.value
+  
+  const filtered = grouped
     .map((section) => {
       const tests = section.tests.filter((test) => {
         const nameMatches = test.name?.toLowerCase().includes(query);
@@ -291,6 +315,9 @@ const filteredSections = computed(() => {
       return { ...section, tests };
     })
     .filter((section) => section.tests.length > 0);
+    
+  console.log('[filteredSections] Filtered to', filtered.length, 'sections');
+  return filtered;
 });
 
 function toggleSection(key) {
