@@ -1,7 +1,6 @@
 <template>
   <v-app-bar app class="status-bar">
-    <v-container class="py-4 py-md-5">
-      <!-- Header Row: Title + Status + Daemon Restart -->
+    <v-container class="status-container py-3 py-md-4">
       <div class="header-row">
         <div class="header-title">
           <v-avatar color="primary" size="40" class="mr-3">
@@ -108,30 +107,31 @@
           </v-btn>
         </div>
       </div>
-
-      <!-- Divider -->
-      <v-divider class="my-3 my-md-4" />
-
-      <!-- Navigation Tabs -->
-      <v-tabs
-        v-model="activeNav"
-        color="primary"
-        class="nav-tabs"
-        density="comfortable"
-        show-arrows
-        hide-slider
-      >
-        <v-tab
-          v-for="item in filteredNavItems"
-          :key="item.value"
-          :value="item.value"
-          :data-test="item.testId"
-        >
-          <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
-          {{ item.label }}
-        </v-tab>
-      </v-tabs>
     </v-container>
+
+    <template #extension>
+      <v-divider class="status-divider" />
+      <v-container class="status-extension py-2 py-md-4">
+        <v-tabs
+          v-model="activeNav"
+          color="primary"
+          class="nav-tabs"
+          density="comfortable"
+          show-arrows
+          hide-slider
+        >
+          <v-tab
+            v-for="item in filteredNavItems"
+            :key="item.value"
+            :value="item.value"
+            :data-test="item.testId"
+          >
+            <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
+            {{ item.label }}
+          </v-tab>
+        </v-tabs>
+      </v-container>
+    </template>
   </v-app-bar>
 
   <!-- Confirm Dialog -->
@@ -480,11 +480,22 @@ onUnmounted(() => {
 <style scoped>
 /* Additional header styling */
 
-.header-row {
+.status-bar {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.status-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
+}
+
+.header-row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -536,6 +547,14 @@ onUnmounted(() => {
 
 .status-detail-separator {
   display: inline;
+}
+
+.status-divider {
+  border-color: #edeff3 !important;
+}
+
+.status-extension {
+  padding-inline: 24px;
 }
 
 .nav-tabs {
@@ -644,6 +663,12 @@ onUnmounted(() => {
 }
 
 /* Responsive breakpoints */
+@media (max-width: 1280px) {
+  .status-extension {
+    padding-inline: 16px;
+  }
+}
+
 @media (max-width: 1024px) {
   .status-detail-separator,
   .status-detail {
@@ -657,13 +682,15 @@ onUnmounted(() => {
   }
 
   .status-container {
-    padding: 8px 16px 0;
-  }
-
-  .header-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 12px;
+    padding-inline: 16px;
+  }
+
+  .status-wrapper {
+    width: 100%;
+    gap: 12px;
   }
 
   .header-status {
@@ -674,6 +701,10 @@ onUnmounted(() => {
   .header-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .status-extension {
+    padding-inline: 16px;
   }
 }
 </style>

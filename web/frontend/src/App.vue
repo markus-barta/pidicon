@@ -7,8 +7,8 @@
     />
 
     <!-- Main Content -->
-    <v-main class="bg-grey-lighten-4">
-      <v-container>
+    <v-main class="bg-grey-lighten-4" data-test="main-content">
+      <v-container class="main-shell">
         <!-- Loading State -->
           <v-alert
             v-if="!dataLoaded && !error"
