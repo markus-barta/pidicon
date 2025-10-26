@@ -41,6 +41,17 @@ const category = 'Utility';
 const deviceTypes = ['pixoo64'];
 const tags = ['fallback'];
 
+// Scene has no configurable parameters
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'user';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 10;
+
 module.exports = {
   name,
   render,
@@ -51,4 +62,11 @@ module.exports = {
   category,
   deviceTypes,
   tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

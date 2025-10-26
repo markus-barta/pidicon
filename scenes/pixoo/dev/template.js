@@ -200,14 +200,14 @@ async function drawStaticFrame(device) {
     'TEMPLATE SCENE',
     [32, 20],
     COLORS.PRIMARY,
-    'center',
+    'center'
   );
 
   await device.drawTextRgbaAligned(
     'Static Mode',
     [32, 35],
     COLORS.SECONDARY,
-    'center',
+    'center'
   );
 }
 
@@ -235,21 +235,21 @@ async function drawAnimatedFrame(device, frameCount) {
     'TEMPLATE SCENE',
     [32, 20],
     COLORS.PRIMARY,
-    'center',
+    'center'
   );
 
   await device.drawTextRgbaAligned(
     `Frame: ${frameCount}`,
     [32, 35],
     COLORS.ACCENT,
-    'center',
+    'center'
   );
 
   // Animated element
   await device.fillRectangleRgba(
     [Math.floor(x - 2), Math.floor(y - 2)],
     [4, 4],
-    COLORS.SECONDARY,
+    COLORS.SECONDARY
   );
 }
 
@@ -283,6 +283,40 @@ async function cleanup(context) {
  */
 const wantsLoop = true; // Change to false for static scenes
 
+const description = 'Template scene for creating new scenes';
+const category = 'Development';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'template'];
+
+const configSchema = {
+  animate: {
+    type: 'boolean',
+    default: true,
+    description: 'Enable animation',
+  },
+  animationSpeed: {
+    type: 'number',
+    default: 100,
+    description: 'Animation speed in milliseconds',
+    min: 10,
+    max: 5000,
+  },
+  frames: {
+    type: 'number',
+    default: null,
+    description: 'Number of frames to render (null for continuous)',
+    min: 1,
+  },
+};
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'Your Name';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 200;
+
 /**
  * Export the scene interface
  * This object must be exported and contain all required properties
@@ -293,4 +327,15 @@ module.exports = {
   render,
   cleanup,
   wantsLoop,
+  description,
+  category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

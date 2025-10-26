@@ -23,10 +23,10 @@ const path = require('path');
 
 // Import internal modules
 const { CHART_CONFIG, getPerformanceColor } = require(
-  path.join(__dirname, '../../../lib/performance-utils'),
+  path.join(__dirname, '../../../lib/performance-utils')
 );
 const { drawTextRgbaAlignedWithBg, drawLine, BACKGROUND_COLORS } = require(
-  path.join(__dirname, '../../../lib/rendering-utils'),
+  path.join(__dirname, '../../../lib/rendering-utils')
 );
 
 // Default configuration
@@ -91,7 +91,7 @@ class PerformanceChartRenderer {
     await this.device.drawRectangleRgba(
       [CHART_CONFIG.CHART_START_X, CHART_CONFIG.CHART_START_Y],
       [CHART_CONFIG.CHART_WIDTH, CHART_CONFIG.CHART_HEIGHT],
-      CHART_CONFIG.BG_COLOR,
+      CHART_CONFIG.BG_COLOR
     );
 
     // Draw Y-axis (left boundary)
@@ -101,7 +101,7 @@ class PerformanceChartRenderer {
       CHART_CONFIG.CHART_START_Y,
       CHART_CONFIG.CHART_START_X,
       CHART_CONFIG.CHART_BOTTOM_Y,
-      CHART_CONFIG.AXIS_COLOR,
+      CHART_CONFIG.AXIS_COLOR
     );
 
     // Draw X-axis (mid at ~250ms relative to MAX_VALUE / CHART_HEIGHT)
@@ -115,7 +115,7 @@ class PerformanceChartRenderer {
       midY,
       CHART_CONFIG.CHART_END_X,
       midY,
-      CHART_CONFIG.AXIS_COLOR,
+      CHART_CONFIG.AXIS_COLOR
     );
 
     // Draw Y-axis grid lines (subtle)
@@ -128,7 +128,7 @@ class PerformanceChartRenderer {
         y,
         CHART_CONFIG.CHART_END_X,
         y,
-        CHART_CONFIG.GRID_COLOR,
+        CHART_CONFIG.GRID_COLOR
       );
     }
   }
@@ -142,7 +142,7 @@ class PerformanceChartRenderer {
         modeHeaderColor,
         'left',
         true,
-        null,
+        null
       );
     }
   }
@@ -153,7 +153,7 @@ class PerformanceChartRenderer {
       await this.device.drawRectangleRgba(
         [0, 51],
         [64, 13],
-        CHART_CONFIG.BG_COLOR,
+        CHART_CONFIG.BG_COLOR
       );
 
       // Draw labels in gray, values in white with exact positioning from v2
@@ -163,7 +163,7 @@ class PerformanceChartRenderer {
         [0, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
-        false,
+        false
       );
       const totalFrames = metrics.framesRendered.toString();
       await drawTextRgbaAlignedWithBg(
@@ -172,7 +172,7 @@ class PerformanceChartRenderer {
         [23, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -180,7 +180,7 @@ class PerformanceChartRenderer {
         [36, 52],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -188,7 +188,7 @@ class PerformanceChartRenderer {
         [47, 52],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -196,7 +196,7 @@ class PerformanceChartRenderer {
         [0, 58],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -204,7 +204,7 @@ class PerformanceChartRenderer {
         [11, 58],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -212,7 +212,7 @@ class PerformanceChartRenderer {
         [36, 58],
         CHART_CONFIG.TEXT_COLOR_STATS,
         'left',
-        false,
+        false
       );
       await drawTextRgbaAlignedWithBg(
         this.device,
@@ -220,7 +220,7 @@ class PerformanceChartRenderer {
         [47, 58],
         CHART_CONFIG.TEXT_COLOR_HEADER,
         'left',
-        false,
+        false
       );
     }
   }
@@ -234,7 +234,7 @@ class PerformanceChartRenderer {
     await this.device.fillRectangleRgba(
       [left, top],
       [boxWidth, boxHeight],
-      BACKGROUND_COLORS.TRANSPARENT_BLACK_75,
+      BACKGROUND_COLORS.TRANSPARENT_BLACK_75
     );
     await drawTextRgbaAlignedWithBg(
       this.device,
@@ -242,7 +242,7 @@ class PerformanceChartRenderer {
       [32 + 1, 29],
       [255, 255, 255, 200],
       'center',
-      false,
+      false
     );
   }
 }
@@ -256,7 +256,7 @@ function withAlpha(color, alpha) {
 function computeYFromFrametime(frametime) {
   const normalizedValue = Math.min(
     Math.max(frametime, 0),
-    CHART_CONFIG.MAX_VALUE,
+    CHART_CONFIG.MAX_VALUE
   );
   const scaledValue =
     (normalizedValue / CHART_CONFIG.MAX_VALUE) * CHART_CONFIG.CHART_HEIGHT;
@@ -290,7 +290,7 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
     fpsVal,
     [x, y],
     [255, 255, 255, 255],
-    'left',
+    'left'
   );
   x += estimateTextWidth(fpsVal) + 1;
   await device.drawTextRgbaAligned('FPS', [x, y], darkGray, 'left');
@@ -316,7 +316,7 @@ async function drawGradientSegment(
   x2,
   y2,
   colorStart,
-  colorEnd,
+  colorEnd
 ) {
   // DDA stepping with per-step color interpolation
   const dx = x2 - x1;
@@ -337,7 +337,7 @@ async function drawGradientSegment(
     const b = Math.round(colorStart[2] + (colorEnd[2] - colorStart[2]) * t);
     await device.drawPixelRgba(
       [Math.round(x), Math.round(y)],
-      [r, g, b, LINE_ALPHA],
+      [r, g, b, LINE_ALPHA]
     );
     x += xInc;
     y += yInc;
@@ -406,7 +406,7 @@ async function renderFrame(context, config) {
   if (getState('inFrame')) {
     log?.(
       `[PERF V3] renderFrame: inFrame=true; skip overlapping frame`,
-      'debug',
+      'debug'
     );
     return;
   }
@@ -429,16 +429,16 @@ async function renderFrame(context, config) {
   const metrics = performanceState.getMetrics();
   log?.(
     `[PERF V3] metrics: frames=${metrics.framesRendered}, avg=${Math.round(
-      metrics.avgFrametime,
+      metrics.avgFrametime
     )}ms`,
-    'debug',
+    'debug'
   );
 
   // Generate display content for current frame (show previous frame time)
   const displayContent = generateDisplayContent(
     config,
     frametime,
-    performanceState,
+    performanceState
   );
 
   // Create chart renderer
@@ -477,7 +477,7 @@ async function renderFrame(context, config) {
       nextX,
       currY,
       colorStart,
-      colorEnd,
+      colorEnd
     );
   } else {
     // First point: just plot a pixel
@@ -494,13 +494,13 @@ async function renderFrame(context, config) {
     'chartX',
     wrapped > CHART_CONFIG.CHART_END_X
       ? CHART_CONFIG.CHART_START_X + 1
-      : wrapped,
+      : wrapped
   );
 
   // Render headers (mode on first line)
   await chartRenderer.renderHeader(
     displayContent.modeHeaderText,
-    displayContent.modeHeaderColor,
+    displayContent.modeHeaderColor
   );
 
   // Render colored status line on second line
@@ -510,7 +510,7 @@ async function renderFrame(context, config) {
     device,
     currentFps.toFixed(1),
     Math.round(displayContent.frametime),
-    colorEnd,
+    colorEnd
   );
 
   // Render statistics
@@ -534,7 +534,7 @@ async function renderFrame(context, config) {
   setState('inFrame', false);
   log?.(
     `[PERF V3] shouldContinue=${shouldContinue} pushes=${nextPushed} chartX=${getState('chartX')}`,
-    'debug',
+    'debug'
   );
 
   if (!shouldContinue) {
@@ -586,7 +586,7 @@ async function updateStatistics(frametime, getState, setState) {
     const sumFrametime = (getState?.('sumFrametime') || 0) + frametime;
     const minFrametime = Math.min(
       getState?.('minFrametime') || Infinity,
-      frametime,
+      frametime
     );
     const maxFrametime = Math.max(getState?.('maxFrametime') || 0, frametime);
 
@@ -610,7 +610,7 @@ async function handleTestCompletion(context, metrics, chartRenderer) {
   const duration = now - (getState?.('startTime') || now);
   log?.(
     `✅ [PERF V3] Test completed: ${framesRendered} frames in ${duration}ms (avg: ${Math.round(metrics.avgFrametime)}ms)`,
-    'info',
+    'info'
   );
 
   // Show completion overlay
@@ -641,7 +641,7 @@ async function render(context) {
       await device.clear();
       log?.(
         `🎯 [PERF V3] Starting ${interval ? `fixed ${interval}ms` : 'adaptive'} test for ${frames} frames (reset on param change)`,
-        'info',
+        'info'
       );
     }
     setState('config', config);
@@ -658,16 +658,55 @@ async function render(context) {
   }
 }
 
+const description =
+  'Professional performance benchmarking tool. Runs configurable frame counts (default 100) with real-time FPS and frametime monitoring. Shows progress bars, timing accuracy, and completion status. Supports both adaptive timing and fixed intervals. Essential for testing display performance, measuring latency, and ensuring rendering stability.';
+const category = 'Test';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'test', 'performance'];
+const configSchema = {
+  frames: {
+    type: 'number',
+    default: DEFAULT_FRAMES,
+    description: 'Number of frames to render for performance test',
+    min: 10,
+    max: 10000,
+  },
+  interval: {
+    type: 'number',
+    default: null,
+    description: 'Fixed interval in ms (null = adaptive mode)',
+    min: 0,
+  },
+};
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 230;
+
 module.exports = {
   name: SCENE_NAME,
   init,
   cleanup,
   render,
   wantsLoop: true,
+  description,
+  category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
   metadata: {
     frames: DEFAULT_FRAMES,
     interval: null, // null = adaptive mode, number = fixed interval in ms
-    description:
-      'Professional performance benchmarking tool. Runs configurable frame counts (default 100) with real-time FPS and frametime monitoring. Shows progress bars, timing accuracy, and completion status. Supports both adaptive timing and fixed intervals. Essential for testing display performance, measuring latency, and ensuring rendering stability.',
+    description,
   },
 };

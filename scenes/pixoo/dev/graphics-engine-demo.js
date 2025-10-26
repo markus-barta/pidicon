@@ -8,7 +8,7 @@
 
 const path = require('path');
 const GraphicsEngine = require(
-  path.join(__dirname, '../../../lib/graphics-engine'),
+  path.join(__dirname, '../../../lib/graphics-engine')
 );
 
 // Configuration constants
@@ -207,7 +207,7 @@ class GraphicsEngineDemoScene {
     this.graphicsEngine.startFadeTransition(
       GFX_DEMO_CONFIG.TIMING.FADE_IN_DURATION_MS,
       0,
-      1,
+      1
     );
 
     this.frameCount = 0;
@@ -257,7 +257,7 @@ class GraphicsEngineDemoScene {
     this.graphicsEngine.startFadeTransition(
       GFX_DEMO_CONFIG.TIMING.FADE_OUT_DURATION_MS,
       1,
-      0,
+      0
     );
   }
 
@@ -301,7 +301,7 @@ class GraphicsEngineDemoScene {
           0,
           0,
           Math.round(GFX_DEMO_CONFIG.ANIMATION.GLOBAL_OVERLAY_ALPHA * opacity),
-        ],
+        ]
       );
     }
 
@@ -373,7 +373,7 @@ class GraphicsEngineDemoScene {
         'GFX ERROR',
         [32, 32],
         [255, 0, 0, 255],
-        'center',
+        'center'
       );
       await context.device.push('graphics_engine_demo', context.publishOk);
 
@@ -403,7 +403,7 @@ class GraphicsEngineDemoScene {
       await this.graphicsEngine.drawGradientBackground(
         topColor,
         bottomColor,
-        'vertical',
+        'vertical'
       );
       if (this.frameCount % 60 === 1) {
         // logger.debug(`🎨 GFX Demo background drawn successfully`);
@@ -431,7 +431,7 @@ class GraphicsEngineDemoScene {
           shadowOffset: 1,
           shadowColor: GFX_DEMO_CONFIG.COLORS.SEMI_TRANSPARENT_BLACK,
         },
-      },
+      }
     );
 
     // Outlined text (animated) - using config constants
@@ -447,7 +447,7 @@ class GraphicsEngineDemoScene {
           outlineColor: [...GFX_DEMO_CONFIG.TEXT_EFFECTS.SHADOW_COLOR, alpha],
           outlineWidth: outlineWidth,
         },
-      },
+      }
     );
 
     // Gradient text - using config constants
@@ -460,7 +460,7 @@ class GraphicsEngineDemoScene {
         effects: {
           gradient: true,
         },
-      },
+      }
     );
 
     // Combined effects (shadow + outline + gradient) - using config constants
@@ -479,7 +479,7 @@ class GraphicsEngineDemoScene {
             alpha,
           ],
         },
-      },
+      }
     );
   }
 
@@ -494,14 +494,14 @@ class GraphicsEngineDemoScene {
       {
         alignment: 'center',
         effects: { shadow: true },
-      },
+      }
     );
 
     // Vertical gradient demo - using config constants
     await this.graphicsEngine.drawGradientBackground(
       [...GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.START.slice(0, 3), alpha],
       [...GFX_DEMO_CONFIG.GRADIENTS.VERTICAL_GRADIENT.END.slice(0, 3), alpha],
-      'vertical',
+      'vertical'
     );
 
     // Add some text over the gradient - using config constants
@@ -515,7 +515,7 @@ class GraphicsEngineDemoScene {
           outline: true,
           outlineColor: [...GFX_DEMO_CONFIG.COLORS.BLACK.slice(0, 3), alpha],
         },
-      },
+      }
     );
 
     // Horizontal gradient demo - using config constants
@@ -530,7 +530,7 @@ class GraphicsEngineDemoScene {
           GFX_DEMO_CONFIG.GRADIENTS.HORIZONTAL_GRADIENT_Y,
         ],
         [1, 16],
-        [r, g, b, alpha],
+        [r, g, b, alpha]
       );
     }
 
@@ -541,7 +541,7 @@ class GraphicsEngineDemoScene {
       {
         alignment: 'center',
         effects: { shadow: true },
-      },
+      }
     );
   }
 
@@ -555,12 +555,12 @@ class GraphicsEngineDemoScene {
       'ANIMATIONS',
       GFX_DEMO_CONFIG.ANIMATIONS.TITLE_POSITION,
       GFX_DEMO_CONFIG.ANIMATIONS.TITLE_COLOR.map((c) =>
-        c === 255 ? alpha : c,
+        c === 255 ? alpha : c
       ),
       {
         alignment: 'center',
         effects: { shadow: true },
-      },
+      }
     );
 
     // Bouncing ball animation - using config constants
@@ -589,7 +589,7 @@ class GraphicsEngineDemoScene {
             const glowAlpha = Math.round(alpha * (1 - (distance - 3) / 2));
             await this.graphicsEngine.device.drawPixel(
               [x, y],
-              [255, 150, 50, glowAlpha],
+              [255, 150, 50, glowAlpha]
             );
           }
         }
@@ -606,7 +606,7 @@ class GraphicsEngineDemoScene {
           if (x >= 0 && x < 64 && y >= 0 && y < 64) {
             await this.graphicsEngine.device.drawPixel(
               [x, y],
-              [255, 220, 100, alpha],
+              [255, 220, 100, alpha]
             );
           }
         }
@@ -639,7 +639,7 @@ class GraphicsEngineDemoScene {
       const stripeColor = this._hslToRgb(
         stripeHue,
         GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.SATURATION,
-        GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.VALUE,
+        GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.VALUE
       );
       await this.graphicsEngine.device.fillRect(
         [
@@ -651,7 +651,7 @@ class GraphicsEngineDemoScene {
           GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_WIDTH,
           GFX_DEMO_CONFIG.ANIMATIONS.COLORFUL_BOXES.STRIPE_HEIGHT,
         ],
-        [...stripeColor, alpha],
+        [...stripeColor, alpha]
       );
     }
 
@@ -668,7 +668,7 @@ class GraphicsEngineDemoScene {
           outline: true,
           outlineColor: [255, 255, 255, Math.round(alpha * 0.5)],
         }, // 50% transparent white outline
-      },
+      }
     );
 
     // Easing demo - faster moving text
@@ -682,7 +682,7 @@ class GraphicsEngineDemoScene {
       {
         alignment: 'center',
         effects: { shadow: true },
-      },
+      }
     );
 
     // Rotating text effect - simulate rotation by positioning around center
@@ -701,25 +701,25 @@ class GraphicsEngineDemoScene {
           outline: true,
           outlineColor: [150, 150, 0, Math.round(alpha * 0.6)],
         },
-      },
+      }
     );
 
     // Add floating transparent particles for atmosphere
     for (let i = 0; i < 5; i++) {
       const particleX = Math.round(
-        32 + Math.sin(this.frameCount * 0.05 + i * 1.3) * 25,
+        32 + Math.sin(this.frameCount * 0.05 + i * 1.3) * 25
       );
       const particleY = Math.round(
-        20 + Math.cos(this.frameCount * 0.03 + i * 0.8) * 15,
+        20 + Math.cos(this.frameCount * 0.03 + i * 0.8) * 15
       );
       const particleAlpha = Math.round(
-        60 * opacity * (0.3 + Math.sin(this.frameCount * 0.1 + i) * 0.2),
+        60 * opacity * (0.3 + Math.sin(this.frameCount * 0.1 + i) * 0.2)
       );
 
       await this.graphicsEngine.device.fillRect(
         [particleX, particleY],
         [2, 2],
-        [200, 220, 255, particleAlpha],
+        [200, 220, 255, particleAlpha]
       );
     }
   }
@@ -733,7 +733,7 @@ class GraphicsEngineDemoScene {
       await this.graphicsEngine.device.fillRect(
         [0, 57],
         [64, 7],
-        [0, 0, 0, 255],
+        [0, 0, 0, 255]
       );
 
       // Format ultra-compact display: "fps,decimal/frametime ms #framecount"
@@ -759,7 +759,7 @@ class GraphicsEngineDemoScene {
         `${fpsInt},${fpsDecimal}/`,
         [x, y],
         [255, 255, 255, 255],
-        'left',
+        'left'
       );
       x += 4 * 4 + 1; // "4,9/" width + 1px gap
 
@@ -769,7 +769,7 @@ class GraphicsEngineDemoScene {
         msVal,
         [x, y],
         [msColor[0], msColor[1], msColor[2], 255],
-        'left',
+        'left'
       );
       x += msVal.length * 4; // frametime width
       await this.graphicsEngine.device.drawText('ms', [x, y], darkGray, 'left');
@@ -782,7 +782,7 @@ class GraphicsEngineDemoScene {
         frameText,
         [frameX, y],
         [200, 200, 200, 255],
-        'left',
+        'left'
       );
     } catch {
       // logger.error(`🎨 GFX Demo performance metrics error: ${error.message}`);
@@ -800,7 +800,7 @@ class GraphicsEngineDemoScene {
       {
         alignment: 'center',
         effects: { shadow: true },
-      },
+      }
     );
 
     // Separate moon and sun animations - sun moves opposite to moon - using config constants
@@ -815,11 +815,11 @@ class GraphicsEngineDemoScene {
     this.moonAngle += GFX_DEMO_CONFIG.IMAGES.MOON.ANGLE_INCREMENT;
     const moonX = Math.round(
       GFX_DEMO_CONFIG.DISPLAY.CENTER_X +
-        Math.cos(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS,
+        Math.cos(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS
     );
     const moonY = Math.round(
       GFX_DEMO_CONFIG.DISPLAY.CENTER_Y +
-        Math.sin(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS,
+        Math.sin(this.moonAngle) * GFX_DEMO_CONFIG.IMAGES.MOON.RADIUS
     );
 
     // Sun movement (clockwise, same direction as moon but positioned opposite) - using config constants
@@ -829,12 +829,12 @@ class GraphicsEngineDemoScene {
     const sunX = Math.round(
       GFX_DEMO_CONFIG.DISPLAY.CENTER_X +
         Math.cos(this.sunAngle + GFX_DEMO_CONFIG.IMAGES.SUN.ORBIT_OFFSET) *
-          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS,
+          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS
     );
     const sunY = Math.round(
       GFX_DEMO_CONFIG.DISPLAY.CENTER_Y +
         Math.sin(this.sunAngle + GFX_DEMO_CONFIG.IMAGES.SUN.ORBIT_OFFSET) *
-          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS,
+          GFX_DEMO_CONFIG.IMAGES.SUN.RADIUS
     );
 
     try {
@@ -844,14 +844,14 @@ class GraphicsEngineDemoScene {
         [moonX + 1, moonY + 1],
         [5, 5],
         Math.round(80 * opacity),
-        'normal',
+        'normal'
       );
       await this.graphicsEngine.drawImageBlended(
         moonImagePath,
         [moonX, moonY],
         [5, 5],
         alpha,
-        'multiply',
+        'multiply'
       );
 
       // Draw sun with shadow (opposite position)
@@ -860,14 +860,14 @@ class GraphicsEngineDemoScene {
         [sunX + 1, sunY + 1],
         sunImageSize,
         Math.round(80 * opacity),
-        'normal',
+        'normal'
       );
       await this.graphicsEngine.drawImageBlended(
         sunImagePath,
         [sunX, sunY],
         sunImageSize,
         alpha,
-        'multiply',
+        'multiply'
       );
 
       // Show info
@@ -877,7 +877,7 @@ class GraphicsEngineDemoScene {
         moonInfo,
         [32, 50],
         [180, 180, 255, Math.round(200 * opacity)],
-        'center',
+        'center'
       );
     } catch {
       // Fallback
@@ -885,7 +885,7 @@ class GraphicsEngineDemoScene {
         '🌙 MOON ☀️ SUN',
         [32, 32],
         [200, 200, 255, alpha],
-        'center',
+        'center'
       );
     }
 
@@ -896,7 +896,7 @@ class GraphicsEngineDemoScene {
       await this.graphicsEngine.device.fillRect(
         [waveX, waveY],
         [3, 2],
-        [100, 150, 255, Math.round(100 * opacity)],
+        [100, 150, 255, Math.round(100 * opacity)]
       );
     }
   }
@@ -922,7 +922,7 @@ class GraphicsEngineDemoScene {
             shadow: true,
             shadowColor: [0, 0, 0, Math.round(alpha * 0.8)],
           },
-        },
+        }
       );
 
       // GOODBYE text that fades out
@@ -938,17 +938,17 @@ class GraphicsEngineDemoScene {
             outline: true,
             outlineColor: [150, 50, 50, alpha],
           },
-        },
+        }
       );
 
       // Add some final sparkle effects that also fade
       if (fadeProgress < 0.7) {
         for (let i = 0; i < 5; i++) {
           const sparkleX = Math.round(
-            32 + Math.sin(this.frameCount * 0.2 + i * 1.3) * 20,
+            32 + Math.sin(this.frameCount * 0.2 + i * 1.3) * 20
           );
           const sparkleY = Math.round(
-            25 + Math.cos(this.frameCount * 0.15 + i * 0.8) * 15,
+            25 + Math.cos(this.frameCount * 0.15 + i * 0.8) * 15
           );
           const sparkleAlpha = Math.round(alpha * 0.6 * (1 - fadeProgress));
 
@@ -956,7 +956,7 @@ class GraphicsEngineDemoScene {
             await this.graphicsEngine.device.fillRect(
               [sparkleX, sparkleY],
               [2, 2],
-              [255, 255, 200, sparkleAlpha],
+              [255, 255, 200, sparkleAlpha]
             );
           }
         }
@@ -1019,6 +1019,20 @@ const render = (context) => scene.render(context);
 const init = (context) => scene.init(context);
 const cleanup = (context) => scene.cleanup(context);
 const wantsLoop = true;
+const description =
+  "Showcases advanced graphics capabilities with stunning visual effects. Watch text shadows, bouncing animations, rainbow gradients, and smooth transitions. Cycles through 5 different demo phases every 12 seconds - perfect for admiring the display's rendering power and testing visual quality.";
+const category = 'Development';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'graphics'];
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 300;
 
 module.exports = {
   name,
@@ -1026,6 +1040,17 @@ module.exports = {
   init,
   cleanup,
   wantsLoop,
+  description,
+  category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
   metadata: {
     phases: ['Text Effects', 'Gradients', 'Animations', 'Images', 'Fade Out'],
     phaseDuration: 60, // frames per phase (~12s at 5fps)

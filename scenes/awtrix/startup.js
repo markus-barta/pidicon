@@ -21,6 +21,16 @@ const COLORS = Object.freeze({
   BACKGROUND: '#000000', // Black
 });
 
+const configSchema = {
+  duration: {
+    type: 'number',
+    default: 5,
+    description: 'Duration in seconds to display in rotation cycle',
+    min: 1,
+    max: 60,
+  },
+};
+
 async function init(ctx) {
   ctx.log(`Awtrix startup scene initialized`, 'debug');
 }
@@ -59,6 +69,14 @@ async function cleanup(ctx) {
   ctx.log('Awtrix startup scene cleaned up', 'debug');
 }
 
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 110;
+
 module.exports = {
   name,
   description,
@@ -66,7 +84,14 @@ module.exports = {
   wantsLoop,
   deviceTypes,
   tags,
+  configSchema,
   init,
   render,
   cleanup,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

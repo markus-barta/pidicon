@@ -307,6 +307,19 @@ function startWebServer(container, logger) {
     }
   });
 
+  // GET /api/scenes/list-with-schema - List all scenes with configSchema
+  app.get('/api/scenes/list-with-schema', async (req, res) => {
+    try {
+      const scenes = await sceneService.listScenesWithSchema();
+      res.json({ scenes });
+    } catch (error) {
+      logger.error('API /api/scenes/list-with-schema error:', {
+        error: error.message,
+      });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // POST /api/devices/:ip/scene/pause - Pause current scene
   app.post('/api/devices/:ip/scene/pause', async (req, res) => {
     try {
@@ -491,6 +504,305 @@ function startWebServer(container, logger) {
       res.status(400).json({ error: error.message });
     }
   });
+
+  // ============================================================================
+  // SCENE DEFAULTS API ENDPOINTS
+  // ============================================================================
+
+  // GET /api/config/devices/:ip/scene-defaults - Get all scene defaults for a device
+  app.get('/api/config/devices/:ip/scene-defaults', async (req, res) => {
+    try {
+      const device = deviceConfigStore.getDevice(req.params.ip);
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+      res.json({
+        deviceIp: req.params.ip,
+        sceneDefaults: device.sceneDefaults || {},
+      });
+    } catch (error) {
+      logger.error(
+        `API /api/config/devices/${req.params.ip}/scene-defaults GET error:`,
+        { error: error.message }
+      );
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/config/devices/:ip/scene-defaults/:sceneName - Get scene defaults for specific scene
+  app.get(
+    '/api/config/devices/:ip/scene-defaults/:sceneName',
+    async (req, res) => {
+      try {
+        const device = deviceConfigStore.getDevice(req.params.ip);
+        if (!device) {
+          return res.status(404).json({ error: 'Device not found' });
+        }
+        const defaults = device.getSceneDefaults(req.params.sceneName);
+        res.json({
+          deviceIp: req.params.ip,
+          sceneName: req.params.sceneName,
+          defaults: defaults || {},
+        });
+      } catch (error) {
+        logger.error(
+          `API /api/config/devices/${req.params.ip}/scene-defaults/${req.params.sceneName} GET error:`,
+          { error: error.message }
+        );
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // PUT /api/config/devices/:ip/scene-defaults/:sceneName - Update scene defaults
+  app.put(
+    '/api/config/devices/:ip/scene-defaults/:sceneName',
+    async (req, res) => {
+      try {
+        const device = deviceConfigStore.getDevice(req.params.ip);
+        if (!device) {
+          return res.status(404).json({ error: 'Device not found' });
+        }
+
+        const { defaults } = req.body;
+        if (!defaults || typeof defaults !== 'object') {
+          return res
+            .status(400)
+            .json({ error: 'defaults object is required in request body' });
+        }
+
+        device.setSceneDefaults(req.params.sceneName, defaults);
+        await deviceConfigStore.save();
+
+        logger.ok(
+          `[WEB UI] Updated scene defaults for ${req.params.ip}/${req.params.sceneName}`,
+          { defaults }
+        );
+
+        res.json({
+          success: true,
+          deviceIp: req.params.ip,
+          sceneName: req.params.sceneName,
+          defaults,
+        });
+      } catch (error) {
+        logger.error(
+          `API /api/config/devices/${req.params.ip}/scene-defaults/${req.params.sceneName} PUT error:`,
+          { error: error.message }
+        );
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // DELETE /api/config/devices/:ip/scene-defaults/:sceneName - Remove scene defaults
+  app.delete(
+    '/api/config/devices/:ip/scene-defaults/:sceneName',
+    async (req, res) => {
+      try {
+        const device = deviceConfigStore.getDevice(req.params.ip);
+        if (!device) {
+          return res.status(404).json({ error: 'Device not found' });
+        }
+
+        device.removeSceneDefaults(req.params.sceneName);
+        await deviceConfigStore.save();
+
+        logger.ok(
+          `[WEB UI] Removed scene defaults for ${req.params.ip}/${req.params.sceneName}`
+        );
+
+        res.json({
+          success: true,
+          deviceIp: req.params.ip,
+          sceneName: req.params.sceneName,
+        });
+      } catch (error) {
+        logger.error(
+          `API /api/config/devices/${req.params.ip}/scene-defaults/${req.params.sceneName} DELETE error:`,
+          { error: error.message }
+        );
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================================================
+  // SCENE USAGE & MANAGEMENT API ENDPOINTS
+  // ============================================================================
+
+  // GET /api/config/devices/:ip/scene-usage - Get all scene usage stats for a device
+  app.get('/api/config/devices/:ip/scene-usage', async (req, res) => {
+    try {
+      const device = deviceConfigStore.getDevice(req.params.ip);
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+      res.json({
+        deviceIp: req.params.ip,
+        sceneUsage: device.getAllSceneUsage(),
+      });
+    } catch (error) {
+      logger.error(
+        `API /api/config/devices/${req.params.ip}/scene-usage GET error:`,
+        { error: error.message }
+      );
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // PUT /api/config/devices/:ip/scenes/:sceneName/sort-order - Update scene sort order
+  app.put(
+    '/api/config/devices/:ip/scenes/:sceneName/sort-order',
+    async (req, res) => {
+      try {
+        const device = deviceConfigStore.getDevice(req.params.ip);
+        if (!device) {
+          return res.status(404).json({ error: 'Device not found' });
+        }
+
+        const { sortOrder } = req.body;
+        if (typeof sortOrder !== 'number') {
+          return res.status(400).json({ error: 'sortOrder must be a number' });
+        }
+
+        device.setSceneSortOrder(req.params.sceneName, sortOrder);
+        await deviceConfigStore.save();
+
+        logger.ok(
+          `[WEB UI] Updated sort order for ${req.params.ip}/${req.params.sceneName}: ${sortOrder}`
+        );
+
+        res.json({
+          success: true,
+          deviceIp: req.params.ip,
+          sceneName: req.params.sceneName,
+          sortOrder,
+        });
+      } catch (error) {
+        logger.error(
+          `API /api/config/devices/${req.params.ip}/scenes/${req.params.sceneName}/sort-order PUT error:`,
+          { error: error.message }
+        );
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // POST /api/devices/:ip/scenes/:sceneName/test - Test scene with temporary parameters
+  app.post('/api/devices/:ip/scenes/:sceneName/test', async (req, res) => {
+    try {
+      const { params = {} } = req.body;
+
+      // Switch to scene with test parameters (no persistence)
+      await sceneService.switchToScene(req.params.ip, req.params.sceneName, {
+        clear: true,
+        payload: params,
+      });
+
+      logger.ok(
+        `[WEB UI] Testing scene ${req.params.sceneName} on ${req.params.ip} with temp params`,
+        { params }
+      );
+
+      res.json({
+        success: true,
+        deviceIp: req.params.ip,
+        sceneName: req.params.sceneName,
+        message: 'Scene activated with test parameters (not saved)',
+      });
+    } catch (error) {
+      logger.error(
+        `API /api/devices/${req.params.ip}/scenes/${req.params.sceneName}/test POST error:`,
+        { error: error.message }
+      );
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // POST /api/config/devices/:ip/scenes/bulk - Bulk operations on scenes
+  app.post('/api/config/devices/:ip/scenes/bulk', async (req, res) => {
+    try {
+      const device = deviceConfigStore.getDevice(req.params.ip);
+      if (!device) {
+        return res.status(404).json({ error: 'Device not found' });
+      }
+
+      const { sceneNames, action } = req.body;
+      if (!Array.isArray(sceneNames) || sceneNames.length === 0) {
+        return res.status(400).json({ error: 'sceneNames array is required' });
+      }
+      if (!action) {
+        return res.status(400).json({ error: 'action is required' });
+      }
+
+      const results = [];
+
+      switch (action) {
+        case 'hide':
+        case 'show': {
+          // Note: isHidden is scene metadata, not per-device
+          // This would require a different approach or should be removed
+          // For now, return an error
+          return res.status(400).json({
+            error:
+              'hide/show actions require scene file modifications, not supported via API',
+          });
+        }
+
+        case 'reset': {
+          // Remove scene defaults for selected scenes
+          for (const sceneName of sceneNames) {
+            device.removeSceneDefaults(sceneName);
+            results.push({ sceneName, action: 'reset', success: true });
+          }
+          await deviceConfigStore.save();
+          break;
+        }
+
+        case 'export': {
+          // Export scene defaults for selected scenes
+          const exportData = {};
+          for (const sceneName of sceneNames) {
+            const defaults = device.getSceneDefaults(sceneName);
+            if (defaults) {
+              exportData[sceneName] = defaults;
+            }
+          }
+          return res.json({
+            success: true,
+            deviceIp: req.params.ip,
+            action: 'export',
+            data: exportData,
+          });
+        }
+
+        default:
+          return res.status(400).json({ error: `Unknown action: ${action}` });
+      }
+
+      logger.ok(
+        `[WEB UI] Bulk ${action} operation on ${req.params.ip} for ${sceneNames.length} scenes`
+      );
+
+      res.json({
+        success: true,
+        deviceIp: req.params.ip,
+        action,
+        results,
+      });
+    } catch (error) {
+      logger.error(
+        `API /api/config/devices/${req.params.ip}/scenes/bulk POST error:`,
+        { error: error.message }
+      );
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================================================
+  // GLOBAL CONFIG API ENDPOINTS
+  // ============================================================================
 
   // GET /api/config/global - Global PIDICON defaults/settings
   app.get('/api/config/global', async (req, res) => {

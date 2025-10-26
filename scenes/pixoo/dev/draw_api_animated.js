@@ -48,10 +48,10 @@ const MOVEMENT_LIMITS = Object.freeze({
 // Imports
 const path = require('path');
 const { CHART_CONFIG, getPerformanceColor, validateSceneContext } = require(
-  path.join(__dirname, '../../../lib/performance-utils'),
+  path.join(__dirname, '../../../lib/performance-utils')
 );
 const { drawText, BACKGROUND_COLORS } = require(
-  path.join(__dirname, '../../../lib/rendering-utils'),
+  path.join(__dirname, '../../../lib/rendering-utils')
 );
 
 // --- FPS/frametime overlay utilities (lightweight copies from performance test) ---
@@ -71,7 +71,7 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
   await device.drawRectangleRgba(
     [0, 10],
     [64, 7],
-    BACKGROUND_COLORS.TRANSPARENT_BLACK_50,
+    BACKGROUND_COLORS.TRANSPARENT_BLACK_50
   );
 
   let x = 2;
@@ -84,7 +84,7 @@ async function drawStatusLine(device, fpsOneDecimal, frametimeMs, msColor) {
     fpsVal,
     [x, y],
     [255, 255, 255, 255],
-    'left',
+    'left'
   );
 
   x += estimateTextWidth(fpsVal) + 1;
@@ -134,11 +134,11 @@ class AnimatedV2State {
     const sumFrametime = (this.getState('sumFrametime') || 0) + frametime;
     const minFrametime = Math.min(
       this.getState('minFrametime') || Infinity,
-      frametime,
+      frametime
     );
     const maxFrametime = Math.max(
       this.getState('maxFrametime') || 0,
-      frametime,
+      frametime
     );
 
     samples.push(frametime);
@@ -249,19 +249,19 @@ async function renderFrame(context, config) {
     [0, 200, 255, 178], // Cyan text with transparency
     'center',
     [0, 0, 0, 102], // Semi-transparent black backdrop
-    1, // 1-pixel offset
+    1 // 1-pixel offset
   );
 
   // Status line: FPS, ms (use color scale from performance utils)
   const colorEnd = getPerformanceColor(
-    Math.round(metrics.avgFrametime || frametime),
+    Math.round(metrics.avgFrametime || frametime)
   );
   const currentFps = frametime > 0 ? 1000 / frametime : 0;
   await drawStatusLine(
     device,
     currentFps.toFixed(1),
     Math.round(frametime),
-    colorEnd,
+    colorEnd
   );
 
   // Measure time for draw+push (for fixed-interval correction)
@@ -357,11 +357,11 @@ async function drawAnimatedBackground(device, t) {
 async function drawMovingShapes(device, t, getState, setState, maxDelta) {
   const rectXTarget = Math.max(
     2,
-    Math.min(47, Math.round(Math.sin(t * 0.5) * 20 + 32)),
+    Math.min(47, Math.round(Math.sin(t * 0.5) * 20 + 32))
   );
   const rectYTarget = Math.max(
     2,
-    Math.min(47, Math.round(Math.cos(t * 0.3) * 15 + 32)),
+    Math.min(47, Math.round(Math.cos(t * 0.3) * 15 + 32))
   );
   const rectXPrev = getPrev(getState, 'rectXPrev', rectXTarget);
   const rectYPrev = getPrev(getState, 'rectYPrev', rectYTarget);
@@ -375,16 +375,16 @@ async function drawMovingShapes(device, t, getState, setState, maxDelta) {
   await device.fillRectangleRgba(
     [rectX, rectY],
     [15, 15],
-    [255, 100, 100, 200],
+    [255, 100, 100, 200]
   );
 
   const orbitXTarget = Math.max(
     8,
-    Math.min(56, Math.round(Math.sin(t * 1.2) * 25 + 32)),
+    Math.min(56, Math.round(Math.sin(t * 1.2) * 25 + 32))
   );
   const orbitYTarget = Math.max(
     8,
-    Math.min(56, Math.round(Math.cos(t * 1.2) * 25 + 32)),
+    Math.min(56, Math.round(Math.cos(t * 1.2) * 25 + 32))
   );
   const orbitXPrev = getPrev(getState, 'orbitXPrev', orbitXTarget);
   const orbitYPrev = getPrev(getState, 'orbitYPrev', orbitYTarget);
@@ -423,15 +423,15 @@ async function drawMovingShapes(device, t, getState, setState, maxDelta) {
       2,
       Math.min(
         62,
-        Math.round(Math.sin(angle + (i * Math.PI * 2) / 3) * size + 32),
-      ),
+        Math.round(Math.sin(angle + (i * Math.PI * 2) / 3) * size + 32)
+      )
     );
     const triangleYTarget = Math.max(
       35,
       Math.min(
         55,
-        Math.round(Math.cos(angle + (i * Math.PI * 2) / 3) * size + 45),
-      ),
+        Math.round(Math.cos(angle + (i * Math.PI * 2) / 3) * size + 45)
+      )
     );
     const txKey = `tri${i}XPrev`;
     const tyKey = `tri${i}YPrev`;
@@ -508,7 +508,7 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
     [255, 255, 255, 255], // White text
     'center',
     [0, 0, 0, 120], // Semi-transparent black backdrop
-    BACKDROP_OFFSET,
+    BACKDROP_OFFSET
   );
 
   // Draw "ATED" with professional backdrop
@@ -519,7 +519,7 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
     [255, 200, 100, 255], // Orange text
     'center',
     [0, 0, 0, 120], // Semi-transparent black backdrop
-    BACKDROP_OFFSET,
+    BACKDROP_OFFSET
   );
 
   // Draw scrolling frame counter with pixel-perfect backdrop
@@ -537,7 +537,7 @@ async function drawAnimatedText(device, t, getState, setState, maxDelta) {
     [200, 200, 200, 180], // Light gray text
     'left',
     [0, 0, 0, 100], // More transparent black backdrop for scrolling text
-    BACKDROP_OFFSET,
+    BACKDROP_OFFSET
   );
 }
 
@@ -547,11 +547,11 @@ async function drawParticleSystem(device, t, getState, setState, maxDelta) {
     const pt = t + (i * Math.PI) / 4;
     const xTarget = Math.max(
       2,
-      Math.min(62, Math.round(Math.sin(pt * 1.5) * 25 + 32)),
+      Math.min(62, Math.round(Math.sin(pt * 1.5) * 25 + 32))
     );
     const yTarget = Math.max(
       2,
-      Math.min(62, Math.round(Math.cos(pt * 1.2) * 20 + 32)),
+      Math.min(62, Math.round(Math.cos(pt * 1.2) * 20 + 32))
     );
     const pxKey = `p${i}XPrev`;
     const pyKey = `p${i}YPrev`;
@@ -564,11 +564,11 @@ async function drawParticleSystem(device, t, getState, setState, maxDelta) {
     for (let trail = 0; trail < 3; trail++) {
       const tx = Math.max(
         0,
-        Math.min(64, Math.round(Math.sin((pt - trail * 0.1) * 1.5) * 25 + 32)),
+        Math.min(64, Math.round(Math.sin((pt - trail * 0.1) * 1.5) * 25 + 32))
       );
       const ty = Math.max(
         0,
-        Math.min(64, Math.round(Math.cos((pt - trail * 0.1) * 1.2) * 20 + 32)),
+        Math.min(64, Math.round(Math.cos((pt - trail * 0.1) * 1.2) * 20 + 32))
       );
       const ta = Math.round((3 - trail) * 60);
       if (tx >= 0 && tx < 64 && ty >= 0 && ty < 64) {
@@ -587,7 +587,7 @@ async function drawMoonAnimation(
   frameCount,
   getState,
   setState,
-  maxDelta,
+  maxDelta
 ) {
   // Moon phase cycling based on framecount, 26 phases available (0-25)
   const moonPhase = frameCount % 26;
@@ -602,10 +602,10 @@ async function drawMoonAnimation(
 
   const moonAngleTarget = (frameCount * moonSpeed) % (Math.PI * 2);
   const moonXTarget = Math.round(
-    moonCenterX + Math.cos(moonAngleTarget) * moonRadius,
+    moonCenterX + Math.cos(moonAngleTarget) * moonRadius
   );
   const moonYTarget = Math.round(
-    moonCenterY + Math.sin(moonAngleTarget) * moonRadius,
+    moonCenterY + Math.sin(moonAngleTarget) * moonRadius
   );
 
   // Smooth moon movement with same pattern as other elements
@@ -628,7 +628,7 @@ async function drawMoonAnimation(
       Math.max(0, Math.min(59, moonY + shadowOffset)),
     ],
     [5, 5],
-    shadowAlpha,
+    shadowAlpha
   );
 
   // Draw main moon image
@@ -636,7 +636,7 @@ async function drawMoonAnimation(
     moonImagePath,
     [Math.max(0, Math.min(59, moonX)), Math.max(0, Math.min(59, moonY))],
     [5, 5],
-    255,
+    255
   );
 
   // Debug logging for first few frames (disabled)
@@ -660,6 +660,17 @@ const wantsLoop = true;
 const description =
   'Animated demonstration of advanced drawing techniques with real-time performance monitoring. Features moving shapes, particle systems, sweeping lines, and smooth animations. Displays live FPS and frametime metrics with color-coded performance indicators. Perfect for testing animation smoothness and rendering performance.';
 const category = 'Development';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'test', 'animation'];
+const configSchema = null; // No configurable parameters
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 290;
 
 module.exports = {
   name: SCENE_NAME,
@@ -669,6 +680,15 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };
 
 // --- Completion overlay (pixel-perfect backdrop) ---
@@ -681,7 +701,7 @@ async function renderCompletion(device, publishOk) {
     [255, 255, 255, 200], // White text with transparency
     'center',
     BACKGROUND_COLORS.TRANSPARENT_BLACK_75, // Semi-transparent black backdrop
-    2, // 2-pixel offset for more prominent backdrop
+    2 // 2-pixel offset for more prominent backdrop
   );
 
   await device.push(SCENE_NAME, publishOk);

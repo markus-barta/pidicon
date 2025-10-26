@@ -17,3 +17,7 @@ LICENSE
 COPYING
 CHANGELOG
 NOTICE
+
+# Planning documents (formatting not critical)
+docs/BL_SCENE_MGR.md
+docs/reports/SCENE_MANAGER_IMPLEMENTATION.md

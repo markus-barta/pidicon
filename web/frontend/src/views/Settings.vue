@@ -61,6 +61,13 @@
             <v-icon class="mr-2">mdi-swap-horizontal</v-icon>
             Import / Export
           </v-tab>
+          <v-tab
+            value="scene-manager"
+            :class="{ 'tab-active': activeTab === 'scene-manager' }"
+          >
+            <v-icon class="mr-2">mdi-palette-advanced</v-icon>
+            Scene Manager
+          </v-tab>
         </v-tabs>
 
           <v-window v-model="activeTab" class="mt-6">
@@ -507,6 +514,15 @@
               </v-card>
             </v-window-item>
 
+            <!-- Scene Manager Tab -->
+            <v-window-item value="scene-manager">
+              <v-card class="tab-card">
+                <v-card-text class="pa-0">
+                  <SceneManager />
+                </v-card-text>
+              </v-card>
+            </v-window-item>
+
             <!-- Import/Export Tab -->
             <v-window-item value="import-export">
               <v-card class="tab-card">
@@ -661,12 +677,14 @@
 <script>
 import { ref, watch, computed, onMounted } from 'vue';
 import DeviceManagement from '../components/DeviceManagement.vue';
+import SceneManager from './SceneManager.vue';
 import { useApi } from '../composables/useApi';
 
 export default {
   name: 'SettingsView',
   components: {
     DeviceManagement,
+    SceneManager,
   },
   props: {},
   setup(props) {

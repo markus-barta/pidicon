@@ -26,6 +26,16 @@ const COLORS = Object.freeze({
   TIME_TEXT: '#FFFFD5', // Light yellow for time
 });
 
+const configSchema = {
+  updateInterval: {
+    type: 'number',
+    default: 1000,
+    description: 'Update interval in milliseconds for time display',
+    min: 100,
+    max: 60000,
+  },
+};
+
 async function init(ctx) {
   ctx.log('Awtrix timestats scene initialized', 'debug');
 }
@@ -89,7 +99,7 @@ function getStatuses(state) {
   const slidingDoorColor = selectColor(
     slidingDoorClosed == null ? null : !slidingDoorClosed,
     COLORS.OPEN,
-    COLORS.CLOSED,
+    COLORS.CLOSED
   );
 
   // Skylight VK status
@@ -97,7 +107,7 @@ function getStatuses(state) {
   const skylightVkColor = selectColor(
     skylightVkClosed == null ? null : !skylightVkClosed,
     COLORS.OPEN_SKYLIGHT,
-    COLORS.CLOSED_SKYLIGHT,
+    COLORS.CLOSED_SKYLIGHT
   );
 
   // Skylight VR status
@@ -105,7 +115,7 @@ function getStatuses(state) {
   const skylightVrColor = selectColor(
     skylightVrClosed == null ? null : !skylightVrClosed,
     COLORS.OPEN_SKYLIGHT,
-    COLORS.CLOSED_SKYLIGHT,
+    COLORS.CLOSED_SKYLIGHT
   );
 
   return {
@@ -121,7 +131,7 @@ function selectColor(
   condition,
   colorTrue,
   colorFalse,
-  colorUnknown = COLORS.UNKNOWN,
+  colorUnknown = COLORS.UNKNOWN
 ) {
   return condition == null ? colorUnknown : condition ? colorTrue : colorFalse;
 }
@@ -190,6 +200,14 @@ function buildDrawArray(timeString, statuses) {
 //   // Add more topics as needed...
 // });
 
+// Scene metadata
+const sceneType = 'user';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 30;
+
 module.exports = {
   name,
   description,
@@ -197,7 +215,14 @@ module.exports = {
   wantsLoop,
   deviceTypes,
   tags,
+  configSchema,
   init,
   render,
   cleanup,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };
