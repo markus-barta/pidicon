@@ -269,7 +269,7 @@ async function bootstrap() {
   });
 
   // Log StateStore stats for observability (and to satisfy linter)
-  logger.debug('StateStore initialized:', stateStore.getGlobalStats());
+  logger.debug('StateStore initialized:', stateStore.getStats());
 
   // Inject StateStore into device-adapter for per-device logging preferences
   setStateStore(stateStore);
