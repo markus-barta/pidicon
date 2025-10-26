@@ -800,6 +800,11 @@ test('startMonitoring begins monitoring a device', () => {
 
 test('startMonitoring triggers immediate health check', async () => {
   let healthCheckCount = 0;
+  let resolveHealthCheck;
+  const healthCheckPromise = new Promise((resolve) => {
+    resolveHealthCheck = resolve;
+  });
+
   const configStore = new MockConfigStore({
     '192.168.1.100': {
       ip: '192.168.1.100',
@@ -834,6 +839,7 @@ test('startMonitoring triggers immediate health check', async () => {
             driverType: 'real',
             async healthCheck() {
               healthCheckCount++;
+              resolveHealthCheck();
               return { success: true, latencyMs: 5 };
             },
           },
@@ -845,8 +851,11 @@ test('startMonitoring triggers immediate health check', async () => {
   try {
     watchdogService.startMonitoring('192.168.1.100');
 
-    // Allow asynchronous immediate check to fire
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Wait for health check to actually complete with timeout
+    await Promise.race([
+      healthCheckPromise,
+      new Promise((resolve) => setTimeout(resolve, 100)),
+    ]);
 
     assert.ok(healthCheckCount >= 1, 'health check should run immediately');
   } finally {
