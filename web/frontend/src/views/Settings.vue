@@ -311,14 +311,14 @@
                     </v-alert>
 
                     <v-form>
-                      <v-row class="ga-6">
+                      <v-row class="ga-4">
                         <v-col cols="12" md="6">
                           <v-text-field
                             v-model="mqttSettings.brokerUrl"
                             label="Broker URL"
                             placeholder="mqtt://miniserver24:1883"
                             variant="outlined"
-                            density="comfortable"
+                            density="compact"
                             :rules="mqttRules.brokerUrl"
                             data-test="mqtt-broker-url"
                           />
@@ -328,7 +328,7 @@
                             v-model="mqttSettings.username"
                             label="Username"
                             variant="outlined"
-                            density="comfortable"
+                            density="compact"
                             data-test="mqtt-username"
                           />
                         </v-col>
@@ -338,26 +338,42 @@
                             label="Password"
                             type="password"
                             variant="outlined"
-                            density="comfortable"
+                            density="compact"
                             autocomplete="current-password"
                             data-test="mqtt-password"
                           />
                         </v-col>
                       </v-row>
 
-                      <v-row class="ga-6 mt-1">
-                        <v-col cols="12" md="4">
+                      <v-row class="ga-4 mt-2">
+                        <v-col cols="12" md="6">
                           <v-text-field
                             v-model="mqttSettings.clientId"
                             label="Client ID"
                             variant="outlined"
-                            density="comfortable"
+                            density="compact"
                             hint="Optional custom client identifier"
                             persistent-hint
                             data-test="mqtt-client-id"
-                          />
+                          >
+                            <template #append-inner>
+                              <v-btn
+                                icon
+                                size="x-small"
+                                variant="text"
+                                color="primary"
+                                @click="generateClientId"
+                                data-test="generate-client-id"
+                              >
+                                <v-icon size="small">mdi-refresh</v-icon>
+                                <v-tooltip activator="parent" location="top">
+                                  Generate random client ID
+                                </v-tooltip>
+                              </v-btn>
+                            </template>
+                          </v-text-field>
                         </v-col>
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
                           <v-text-field
                             v-model.number="mqttSettings.keepalive"
                             label="Keepalive (seconds)"
@@ -365,18 +381,19 @@
                             :min="0"
                             :max="65535"
                             variant="outlined"
-                            density="comfortable"
+                            density="compact"
                             data-test="mqtt-keepalive"
                           />
                         </v-col>
-                        <v-col cols="12" md="4" class="d-flex align-center">
-                          <div class="d-flex flex-column" style="gap: 8px; width: 100%">
+                        <v-col cols="12" md="3" class="d-flex align-center pt-0">
+                          <div class="d-flex flex-column ga-1 w-100">
                             <v-switch
                               v-model="mqttSettings.tls"
                               inset
                               color="primary"
                               hide-details
                               label="Use TLS"
+                              density="compact"
                               class="mt-0"
                               data-test="mqtt-tls-toggle"
                             />
@@ -385,7 +402,8 @@
                               inset
                               color="primary"
                               hide-details
-                              label="Automatic reconnect"
+                              label="Auto-reconnect"
+                              density="compact"
                               class="mt-0"
                               data-test="mqtt-auto-reconnect"
                             />
@@ -398,44 +416,72 @@
                   <v-divider class="my-6" />
 
                   <div class="section">
-                    <div class="section-subheader mb-4">
-                      <v-icon class="mr-2" color="primary">mdi-heart-pulse</v-icon>
-                      <h3 class="text-subtitle-1 mb-0">Live Connection Status</h3>
+                    <div class="section-subheader mb-3">
+                      <v-icon class="mr-2" color="primary" size="small">mdi-heart-pulse</v-icon>
+                      <h3 class="text-subtitle-2 mb-0">Live Connection Status</h3>
                     </div>
-                    <div class="status-row">
-                      <v-chip
-                        :color="mqttStatusDetails.connected ? 'success' : 'warning'"
-                        class="mqtt-status-chip"
-                        variant="tonal"
-                        :prepend-icon="mqttStatusDetails.connected ? 'mdi-lan-connect' : 'mdi-lan-disconnect'"
-                      >
-                        {{ mqttStatusSummary }}
-                        <template v-if="mqttStatusDetails.lastHeartbeatTs">
-                          <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
-                            • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
-                          </span>
-                        </template>
-                      </v-chip>
+                    
+                    <!-- Status Details Card -->
+                    <v-card variant="outlined" class="mb-4">
+                      <v-card-text class="pa-3">
+                        <div class="d-flex flex-column ga-2">
+                          <div class="status-detail-row">
+                            <span class="status-detail-label">Connection</span>
+                            <v-chip
+                              size="small"
+                              :color="mqttStatusDetails.connected ? 'success' : 'error'"
+                              variant="flat"
+                            >
+                              {{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}
+                            </v-chip>
+                          </div>
+                          <div class="status-detail-row">
+                            <span class="status-detail-label">Broker URL</span>
+                            <span class="status-detail-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
+                          </div>
+                          <div class="status-detail-row">
+                            <span class="status-detail-label">Retry Count</span>
+                            <span class="status-detail-value">{{ mqttStatusDetails.retryCount || 0 }}</span>
+                          </div>
+                          <div class="status-detail-row">
+                            <span class="status-detail-label">Next Retry</span>
+                            <span class="status-detail-value">{{ formatRetry(mqttStatusDetails.nextRetryInMs) }}</span>
+                          </div>
+                          <div class="status-detail-row">
+                            <span class="status-detail-label">Last Heartbeat</span>
+                            <span class="status-detail-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
+                          </div>
+                          <div v-if="mqttStatusDetails.lastError" class="status-detail-row">
+                            <span class="status-detail-label">Last Error</span>
+                            <span class="status-detail-value text-error">{{ mqttStatusDetails.lastError }}</span>
+                          </div>
+                        </div>
+                      </v-card-text>
+                    </v-card>
 
+                    <!-- Action Buttons -->
+                    <div class="d-flex ga-2 flex-wrap">
                       <v-btn
                         color="success"
                         variant="flat"
+                        size="small"
                         :disabled="mqttStatusDetails.connected || mqttBusy"
                         :loading="mqttBusy && mqttBusyAction === 'connect'"
                         @click="handleMqttConnect"
                       >
-                        <v-icon class="mr-2">mdi-power-plug</v-icon>
+                        <v-icon size="small" class="mr-1">mdi-power-plug</v-icon>
                         Connect
                       </v-btn>
 
                       <v-btn
                         :color="mqttSettings.autoReconnect ? 'warning' : 'grey-darken-2'"
                         variant="flat"
+                        size="small"
                         :disabled="!mqttStatusDetails.connected || mqttBusy"
                         :loading="mqttBusy && mqttBusyAction === 'disconnect'"
                         @click="handleMqttDisconnect"
                       >
-                        <v-icon class="mr-2">mdi-power-plug-off</v-icon>
+                        <v-icon size="small" class="mr-1">mdi-power-plug-off</v-icon>
                         {{ mqttSettings.autoReconnect ? 'Disconnect' : 'Stop' }}
                       </v-btn>
                     </div>
@@ -712,6 +758,24 @@ export default {
         return `${secs}s`;
       }
       return `${ms}ms`;
+    };
+
+    const formatTimestamp = (timestamp) => {
+      if (!timestamp) return '—';
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(timestamp));
+    };
+
+    const generateClientId = () => {
+      // Generate a short random hash (8 characters)
+      const randomHash = Math.random().toString(36).substring(2, 10);
+      mqttSettings.value.clientId = `pidicon-${randomHash}`;
     };
 
     const driverOptions = [
@@ -1249,6 +1313,8 @@ export default {
       mqttLastError,
       mqttStatusDetails,
       formatRetry,
+      formatTimestamp,
+      generateClientId,
       globalBrightnessIconOpacity,
       hasUnsavedGlobalChanges,
       hasUnsavedMqttChanges,
@@ -1257,6 +1323,7 @@ export default {
       mqttBusyAction,
       handleMqttConnect,
       handleMqttDisconnect,
+      mqttStatusSummary,
     };
   },
 };
@@ -1334,6 +1401,31 @@ export default {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.status-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+}
+
+.status-detail-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.status-detail-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+  text-align: right;
+  word-break: break-word;
 }
 
 .diagnostics-id {
