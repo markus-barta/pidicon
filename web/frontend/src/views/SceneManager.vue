@@ -908,8 +908,7 @@ async function resetDefaults() {
 async function loadDevices() {
   loadingDevices.value = true;
   try {
-    const response = await api.getDevices();
-    devices.value = response.devices || [];
+    devices.value = await api.getDevices();
   } catch (error) {
     showError(`Failed to load devices: ${error.message}`);
   } finally {
