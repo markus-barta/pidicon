@@ -30,13 +30,13 @@ function collectTestFiles(dir) {
 /**
  * Parse TAP output from Node.js test runner and convert to JSON.
  * @param {string} tapOutput
- * @returns {Object}
+ * @param {string} testFilePath - The actual file path being tested
+ * @returns {Array<Object>} Array of test results
  */
-function parseTapToJson(tapOutput) {
+function parseTapToJson(tapOutput, testFilePath) {
   const lines = tapOutput.split('\n');
   const tests = [];
   let currentTest = null;
-  let currentFile = null;
   let currentSuite = null;
   let inMetadataBlock = false;
   let pendingTest = null; // Hold test until we check if it's a suite
@@ -44,18 +44,18 @@ function parseTapToJson(tapOutput) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Extract file name from comments (# Subtest: filepath)
-    const fileMatch = line.match(/^# Subtest: (.+)$/);
-    if (fileMatch) {
-      currentFile = fileMatch[1];
-      currentSuite = null;
-      continue;
-    }
-
-    // Extract nested subtest markers (indented)
+    // Extract nested subtest markers (indented) - these are suite names
     const nestedSubtestMatch = line.match(/^\s+# Subtest: (.+)$/);
     if (nestedSubtestMatch) {
       currentSuite = nestedSubtestMatch[1];
+      continue;
+    }
+
+    // Top-level subtests (non-indented) are also suite names, not file paths
+    const topLevelSubtestMatch = line.match(/^# Subtest: (.+)$/);
+    if (topLevelSubtestMatch) {
+      // This is a top-level suite - reset currentSuite
+      currentSuite = topLevelSubtestMatch[1];
       continue;
     }
 
@@ -80,6 +80,8 @@ function parseTapToJson(tapOutput) {
     if (inMetadataBlock && line.includes("type: 'suite'")) {
       // Discard the pending test - it's a suite container
       pendingTest = null;
+      // Reset suite when exiting a suite block
+      currentSuite = null;
       continue;
     }
 
@@ -104,9 +106,10 @@ function parseTapToJson(tapOutput) {
       }
 
       // Create new pending test (will be added after checking metadata block)
+      // Use the actual test file path passed as parameter
       pendingTest = {
         name: testName,
-        file: currentFile || 'unknown',
+        file: testFilePath, // Use the actual file path from parameter
         suite: currentSuite,
         status: status === 'ok' ? 'pass' : 'fail',
         duration: durationMatch ? parseFloat(durationMatch[1]) : 0,
@@ -134,10 +137,45 @@ function parseTapToJson(tapOutput) {
     tests.push(pendingTest);
   }
 
-  return {
-    timestamp: new Date().toISOString(),
-    tests,
-  };
+  return tests;
+}
+
+/**
+ * Run a single test file and return parsed results.
+ * @param {string} testFile - Path to test file
+ * @returns {Promise<Array<Object>>} Array of test results
+ */
+function runTestFile(testFile) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      process.execPath,
+      ['--test', '--test-reporter=tap', testFile],
+      {
+        stdio: ['inherit', 'pipe', 'inherit'],
+      }
+    );
+
+    let tapOutput = '';
+    child.stdout.on('data', (data) => {
+      const chunk = data.toString();
+      tapOutput += chunk;
+    });
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+
+    child.on('exit', (code, signal) => {
+      if (signal) {
+        reject(new Error(`Test exited due to signal ${signal}`));
+        return;
+      }
+
+      // Parse TAP output with the actual file path
+      const tests = parseTapToJson(tapOutput, testFile);
+      resolve({ code, tests });
+    });
+  });
 }
 
 /**
@@ -156,53 +194,65 @@ function saveResults(results) {
   }
 }
 
-if (!fs.existsSync(TEST_ROOT)) {
-  console.error('[test-runner] Test directory not found:', TEST_ROOT);
-  process.exit(1);
-}
-
-const testFiles = collectTestFiles(TEST_ROOT);
-
-if (testFiles.length === 0) {
-  console.warn(
-    '[test-runner] No *.test.js or *.spec.js files found under',
-    TEST_ROOT
-  );
-  process.exit(0);
-}
-
-// Run tests with TAP reporter
-const child = spawn(
-  process.execPath,
-  ['--test', '--test-reporter=tap', ...testFiles],
-  {
-    stdio: ['inherit', 'pipe', 'inherit'],
-  }
-);
-
-let tapOutput = '';
-child.stdout.on('data', (data) => {
-  const chunk = data.toString();
-  process.stdout.write(chunk); // Still show output to console
-  tapOutput += chunk;
-});
-
-child.on('error', (error) => {
-  console.error('[test-runner] Failed to launch node --test:', error.message);
-  process.exit(1);
-});
-
-child.on('exit', (code, signal) => {
-  if (signal) {
-    console.warn(`[test-runner] node --test exited due to signal ${signal}`);
+async function main() {
+  if (!fs.existsSync(TEST_ROOT)) {
+    console.error('[test-runner] Test directory not found:', TEST_ROOT);
     process.exit(1);
   }
 
-  // Parse TAP output and save as JSON
-  if (tapOutput) {
-    const results = parseTapToJson(tapOutput);
-    saveResults(results);
+  const testFiles = collectTestFiles(TEST_ROOT);
+
+  if (testFiles.length === 0) {
+    console.warn(
+      '[test-runner] No *.test.js or *.spec.js files found under',
+      TEST_ROOT
+    );
+    process.exit(0);
   }
 
-  process.exit(code);
+  console.log(`[test-runner] Running ${testFiles.length} test files...`);
+
+  const allTests = [];
+  let totalFailures = 0;
+
+  for (const testFile of testFiles) {
+    const relPath = path.relative(process.cwd(), testFile);
+    process.stdout.write(`[test-runner] Running ${relPath}...`);
+
+    try {
+      const { code, tests } = await runTestFile(testFile);
+      allTests.push(...tests);
+
+      const failures = tests.filter((t) => t.status === 'fail').length;
+      totalFailures += failures;
+
+      if (code === 0) {
+        console.log(` ✓ (${tests.length} tests)`);
+      } else {
+        console.log(` ✗ (${failures} failures)`);
+      }
+    } catch (error) {
+      console.log(` ERROR: ${error.message}`);
+      totalFailures++;
+    }
+  }
+
+  // Save consolidated results
+  const results = {
+    timestamp: new Date().toISOString(),
+    tests: allTests,
+  };
+
+  saveResults(results);
+
+  console.log(
+    `\n[test-runner] Total: ${allTests.length} tests, ${totalFailures} failures`
+  );
+
+  process.exit(totalFailures > 0 ? 1 : 0);
+}
+
+main().catch((error) => {
+  console.error('[test-runner] Unexpected error:', error);
+  process.exit(1);
 });
