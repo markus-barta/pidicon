@@ -426,9 +426,10 @@ async function bootstrap() {
                   );
                   const ctx = getContext(
                     ip,
-                    deviceDefaults,
-                    deviceDrivers,
-                    deviceConfigStore
+                    startupScene,
+                    {},
+                    (hostIp, message) =>
+                      mqttService.publish(`pixoo/${hostIp}/ok`, message)
                   );
                   await sceneManager.switchScene(startupScene, ctx);
                 }
