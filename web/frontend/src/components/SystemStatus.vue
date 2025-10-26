@@ -8,7 +8,7 @@
     <template #default>
       <v-toolbar-title class="d-flex align-center">
         <v-avatar color="primary" size="40" class="mr-3">
-          <v-icon color="white" size="24">mdi-television</v-icon>
+          <v-icon color="white" size="24">mdi-television</vicon>
         </v-avatar>
         <div class="title-text">
           <div class="text-h6 font-weight-bold primary--text">
@@ -116,28 +116,26 @@
 
     <template #extension>
       <v-divider class="status-divider" />
-      <div class="status-extension py-2 py-md-4" data-test="app-bar-extension">
-        <v-container class="nav-container">
-          <v-tabs
-            v-model="activeNav"
-            color="primary"
-            class="nav-tabs"
-            density="comfortable"
-            show-arrows
-            hide-slider
+      <div class="status-extension py-2 py-md-3" data-test="app-bar-extension">
+        <v-tabs
+          v-model="activeNav"
+          color="primary"
+          class="nav-tabs"
+          density="comfortable"
+          show-arrows
+          hide-slider
+        >
+          <v-tab
+            v-for="item in filteredNavItems"
+            :key="item.value"
+            :value="item.value"
+            :data-test="item.testId"
+            class="nav-tab"
           >
-            <v-tab
-              v-for="item in filteredNavItems"
-              :key="item.value"
-              :value="item.value"
-              :data-test="item.testId"
-              class="nav-tab"
-            >
-              <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
-              {{ item.label }}
-            </v-tab>
-          </v-tabs>
-        </v-container>
+            <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
+            {{ item.label }}
+          </v-tab>
+        </v-tabs>
       </div>
     </template>
   </v-app-bar>
@@ -492,10 +490,19 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.status-meta {
-  color: #6b7280;
-  gap: 6px;
-  flex-wrap: wrap;
+
+
+
+
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
 }
 
 .status-label,
@@ -523,21 +530,12 @@ onUnmounted(() => {
   border-color: #edeff3 !important;
 }
 
-.status-extension {
-  display: flex;
-  justify-content: center;
-  padding-inline: 24px;
-}
 
-.nav-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
 
 .nav-tabs {
   margin-top: 0;
   flex-shrink: 0;
+  justify-content: center;
 }
 
 /* Rely on Vuetify defaults for tab sizing */
