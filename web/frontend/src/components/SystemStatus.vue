@@ -63,24 +63,28 @@
             </template>
             <div class="mqtt-tooltip">
               <div class="tooltip-row">
-                <span class="tooltip-label">Connection</span>
+                <span class="tooltip-label">Status</span>
                 <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
               </div>
               <div class="tooltip-row">
-                <span class="tooltip-label">Broker URL</span>
+                <span class="tooltip-label">Broker</span>
                 <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
               </div>
-              <div class="tooltip-row">
+              <div class="tooltip-row" v-if="mqttStatusDetails.connected && mqttStatusDetails.lastHeartbeatTs">
+                <span class="tooltip-label">Last Activity</span>
+                <span class="tooltip-value">{{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}</span>
+              </div>
+              <div class="tooltip-row" v-if="mqttStatusDetails.connected && !mqttStatusDetails.lastHeartbeatTs">
+                <span class="tooltip-label">Activity</span>
+                <span class="tooltip-value tooltip-warning">No messages received yet</span>
+              </div>
+              <div class="tooltip-row" v-if="!mqttStatusDetails.connected && mqttStatusDetails.autoReconnect">
                 <span class="tooltip-label">Retry Count</span>
                 <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
               </div>
-              <div class="tooltip-row">
+              <div class="tooltip-row" v-if="!mqttStatusDetails.connected && mqttStatusDetails.autoReconnect">
                 <span class="tooltip-label">Next Retry</span>
                 <span class="tooltip-value">{{ nextRetryLabel }}</span>
-              </div>
-              <div class="tooltip-row">
-                <span class="tooltip-label">Last Heartbeat</span>
-                <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
               </div>
               <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
                 <span class="tooltip-label">Last Error</span>
@@ -207,7 +211,17 @@ const statusLabel = computed(() => {
 });
 
 const mqttStatusColor = computed(() => {
-  return mqttConnected.value ? '#10b981' : '#ef4444';
+  if (!mqttConnected.value) return '#ef4444'; // red - disconnected
+  
+  // Check if connected but no activity for > 60 seconds (yellow warning)
+  if (mqttStatusDetails.value.lastHeartbeatTs) {
+    const timeSinceActivity = Date.now() - mqttStatusDetails.value.lastHeartbeatTs;
+    if (timeSinceActivity > 60000) {
+      return '#f59e0b'; // yellow - connected but idle
+    }
+  }
+  
+  return '#10b981'; // green - connected and active
 });
 
 const mqttStatus = computed(() => {
@@ -216,6 +230,16 @@ const mqttStatus = computed(() => {
       ? `offline (${mqttStatusDetails.value.lastError})`
       : 'disconnected';
   }
+  
+  // Show last activity time if available
+  if (mqttStatusDetails.value.lastHeartbeatTs) {
+    const timeSinceActivity = Date.now() - mqttStatusDetails.value.lastHeartbeatTs;
+    if (timeSinceActivity > 60000) {
+      return 'connected (idle)';
+    }
+    return 'active';
+  }
+  
   return 'connected';
 });
 
@@ -317,6 +341,8 @@ async function loadStatus() {
       retryCount: mqttStatusData.retryCount || 0,
       nextRetryInMs: mqttStatusData.nextRetryInMs ?? null,
       brokerUrl: mqttStatusData.brokerUrl || data.mqttBroker || null,
+      lastHeartbeatTs: mqttStatusData.lastHeartbeatTs || null,
+      autoReconnect: mqttStatusData.autoReconnect !== false,
     };
     mqttConnected.value = mqttStatusDetails.value.connected;
     
@@ -570,6 +596,10 @@ onUnmounted(() => {
 
 .mqtt-tooltip-panel .tooltip-error {
   color: #fca5a5;
+}
+
+.mqtt-tooltip-panel .tooltip-warning {
+  color: #fcd34d;
 }
 
 .tooltip-label {
