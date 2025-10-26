@@ -1,6 +1,6 @@
 {
   "name": "pidicon",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "PIDICON: Pixel Display Controller - Universal daemon for pixel displays (Pixoo, AWTRIX, etc.)",
   "main": "daemon.js",
   "scripts": {
@@ -44,6 +44,7 @@
     "echarts": "^6.0.0",
     "express": "^5.1.0",
     "joi": "^17.13.3",
+    "marked": "^11.0.0",
     "mqtt": "^5.9.0",
     "pinia": "^3.0.3",
     "pngjs": "^7.0.0",

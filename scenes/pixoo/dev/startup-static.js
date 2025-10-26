@@ -12,7 +12,7 @@
 const name = 'startup-static';
 const path = require('path');
 const { validateSceneContext } = require(
-  path.join(__dirname, '../../../lib/performance-utils'),
+  path.join(__dirname, '../../../lib/performance-utils')
 );
 
 const COLORS = Object.freeze({
@@ -77,7 +77,7 @@ function logDebugInfo(state, log) {
       stateType: typeof state,
       stateConstructor: state.constructor.name,
     })}`,
-    'debug',
+    'debug'
   );
 
   // Also check environment variables directly
@@ -87,13 +87,13 @@ function logDebugInfo(state, log) {
       GIT_COMMIT_COUNT: process.env.GIT_COMMIT_COUNT,
       NODE_ENV: process.env.NODE_ENV,
     })}`,
-    'debug',
+    'debug'
   );
 
   // Check all environment variables for debugging
   const envKeys = Object.keys(process.env).filter(
     (key) =>
-      key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD'),
+      key.includes('GIT') || key.includes('DEPLOY') || key.includes('BUILD')
   );
   log?.(`All environment variables: ${JSON.stringify(envKeys)}`, 'debug');
 }
@@ -123,7 +123,7 @@ function buildVersionInfo(state, log) {
       };
       log?.(
         `Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
-        'info',
+        'info'
       );
     }
   } catch (error) {
@@ -152,7 +152,7 @@ function buildVersionInfo(state, log) {
     daemonStart: getStateValue(
       state,
       'daemonStart',
-      new Date().toLocaleString(),
+      new Date().toLocaleString()
     ),
   };
 }
@@ -169,7 +169,7 @@ async function drawStartupInfo(device, versionInfo) {
     'PIXOO DAEMON',
     [32, LAYOUT.HEADER_Y],
     COLORS.HEADER,
-    'center',
+    'center'
   );
 
   // Main info section
@@ -178,7 +178,7 @@ async function drawStartupInfo(device, versionInfo) {
     `Build:${buildNumber}`,
     [32, LAYOUT.BUILD_NUMBER_Y],
     COLORS.BUILD_NUMBER,
-    'center',
+    'center'
   );
 
   // Git hash
@@ -186,7 +186,7 @@ async function drawStartupInfo(device, versionInfo) {
     `Commit:${gitCommit}`,
     [32, LAYOUT.GIT_HASH_Y],
     COLORS.GIT_HASH,
-    'center',
+    'center'
   );
 
   // Status indicator (centered, with white background box)
@@ -211,7 +211,7 @@ async function drawStartupInfo(device, versionInfo) {
   await device.fillRectangleRgba(
     [0, statusBoxY],
     [64, statusBoxHeight],
-    COLORS.STATUS_BOX,
+    COLORS.STATUS_BOX
   );
 
   // Draw status text in green, centered
@@ -219,7 +219,7 @@ async function drawStartupInfo(device, versionInfo) {
     STATUS_TEXT,
     [32, STATUS_Y],
     COLORS.STATUS_TEXT,
-    'center',
+    'center'
   );
 
   // // Latest tag/version (smaller)
@@ -244,7 +244,7 @@ async function drawStartupInfo(device, versionInfo) {
     })()}`,
     [32, LAYOUT.FOOTER_DATE_Y],
     COLORS.FOOTER_TEXT,
-    'center',
+    'center'
   );
 
   // Start time
@@ -252,7 +252,7 @@ async function drawStartupInfo(device, versionInfo) {
     `${new Date(daemonStart).toLocaleTimeString('de-AT', { hour12: false })}`,
     [32, LAYOUT.FOOTER_TIME_Y],
     COLORS.FOOTER_TEXT,
-    'center',
+    'center'
   );
 }
 
@@ -265,6 +265,17 @@ const wantsLoop = false;
 const description =
   'Static startup scene displaying build information and deployment details. Shows daemon version, git commit hash, and deployment status without updating. Perfect for static deployment verification where time updates are not needed.';
 const category = 'System';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev'];
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 270;
 
 module.exports = {
   name,
@@ -274,4 +285,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

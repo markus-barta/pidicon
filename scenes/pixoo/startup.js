@@ -79,7 +79,7 @@ function logDebugInfo(ctx, state) {
   // Get deployment info from state or use defaults
   ctx.log(
     `Deployment ${state.get('deploymentId')} (build ${state.get('buildNumber')}) loaded`,
-    'info',
+    'info'
   );
 }
 
@@ -108,7 +108,7 @@ function buildVersionInfo(ctx, state) {
       };
       ctx.log(
         `Read current version.json: buildNumber=${currentVersionInfo.buildNumber}`,
-        'info',
+        'info'
       );
     }
   } catch (error) {
@@ -137,7 +137,7 @@ function buildVersionInfo(ctx, state) {
     daemonStart: getStateValue(
       state,
       'daemonStart',
-      new Date().toLocaleString(),
+      new Date().toLocaleString()
     ),
   };
 }
@@ -154,7 +154,7 @@ async function drawStartupInfo(device, versionInfo) {
     `PIDICON v${versionInfo.version}`,
     [32, LAYOUT.HEADER_Y],
     COLORS.HEADER,
-    'center',
+    'center'
   );
 
   // Main info section
@@ -163,7 +163,7 @@ async function drawStartupInfo(device, versionInfo) {
     `Build:${buildNumber}`,
     [32, LAYOUT.BUILD_NUMBER_Y],
     COLORS.BUILD_NUMBER,
-    'center',
+    'center'
   );
 
   // Git hash
@@ -171,7 +171,7 @@ async function drawStartupInfo(device, versionInfo) {
     `Commit:${gitCommit}`,
     [32, LAYOUT.GIT_HASH_Y],
     COLORS.GIT_HASH,
-    'center',
+    'center'
   );
 
   // Status indicator (centered, with white background box)
@@ -196,7 +196,7 @@ async function drawStartupInfo(device, versionInfo) {
   await device.fillRectangleRgba(
     [0, statusBoxY],
     [64, statusBoxHeight],
-    COLORS.STATUS_BOX,
+    COLORS.STATUS_BOX
   );
 
   // Draw status text in green, centered
@@ -204,7 +204,7 @@ async function drawStartupInfo(device, versionInfo) {
     STATUS_TEXT,
     [32, STATUS_Y],
     COLORS.STATUS_TEXT,
-    'center',
+    'center'
   );
 
   // // Latest tag/version (smaller)
@@ -223,7 +223,7 @@ async function drawStartupInfo(device, versionInfo) {
     currentDate,
     [32, LAYOUT.FOOTER_DATE_Y],
     COLORS.FOOTER_TEXT,
-    'center',
+    'center'
   );
 
   // Current time (24h format)
@@ -232,7 +232,7 @@ async function drawStartupInfo(device, versionInfo) {
     currentTime,
     [32, LAYOUT.FOOTER_TIME_Y],
     COLORS.FOOTER_TEXT,
-    'center',
+    'center'
   );
 }
 
@@ -244,6 +244,19 @@ const wantsLoop = true;
 const description =
   'Live startup scene with real-time updates every second. Displays build information, daemon version, git commit hash, and continuously updating current date and time. Perfect for monitoring system status and showing the device is actively running.';
 const category = 'System';
+const deviceTypes = ['pixoo64'];
+const tags = ['system', 'startup'];
+
+// Scene has no user-configurable parameters (uses system version info)
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 100;
 
 module.exports = {
   name,
@@ -253,4 +266,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

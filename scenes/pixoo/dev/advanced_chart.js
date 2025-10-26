@@ -23,7 +23,7 @@ const SCENE_NAME = 'advanced_chart';
 
 // Import shared utilities
 const { validateSceneContext } = require(
-  path.join(__dirname, '../../../lib/performance-utils'),
+  path.join(__dirname, '../../../lib/performance-utils')
 );
 
 /**
@@ -49,7 +49,7 @@ async function render(ctx) {
 
   // Initialize advanced chart renderer
   const { createAdvancedChartRenderer } = require(
-    path.join(__dirname, '../../../lib/advanced-chart'),
+    path.join(__dirname, '../../../lib/advanced-chart')
   );
   const chartRenderer = createAdvancedChartRenderer(device);
 
@@ -76,7 +76,7 @@ async function render(ctx) {
     title,
     [32, 2],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 
   // Add statistics
@@ -87,7 +87,7 @@ async function render(ctx) {
       statsText,
       [32, 58],
       [128, 128, 128, 255],
-      'center',
+      'center'
     );
   }
 
@@ -98,7 +98,7 @@ async function render(ctx) {
   if (result.success) {
     log?.(
       `📊 Rendered ${result.dataPoints} points in ${result.renderTime}ms`,
-      'debug',
+      'debug'
     );
   } else {
     log?.(`❌ Render failed: ${result.error}`, 'error');
@@ -159,6 +159,17 @@ const wantsLoop = false;
 const description =
   'Advanced charting scene with customizable data visualization. Supports power pricing, temperature monitoring, and random data demos. Features dynamic scaling, configurable update intervals, and professional styling. Accepts MQTT payloads for real-time data updates and mode switching. Perfect for displaying time-series data with smooth animations and clear visual hierarchy.';
 const category = 'Data';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'chart', 'data'];
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 210;
 
 module.exports = {
   name: SCENE_NAME,
@@ -168,4 +179,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

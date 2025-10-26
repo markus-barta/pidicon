@@ -41,7 +41,7 @@ async function render(context) {
   if (!isValidColor(color)) {
     context.log(
       `Invalid color format: ${JSON.stringify(color)}, expected [R,G,B,A] array with values 0-255`,
-      'error',
+      'error'
     );
     // Fallback to default color
     color = defaultColor;
@@ -75,6 +75,24 @@ const category = 'Test';
 const deviceTypes = ['pixoo64'];
 const tags = ['fallback'];
 
+const configSchema = {
+  color: {
+    type: 'color',
+    default: null, // null means random color
+    description:
+      'RGBA color array [R, G, B, A]. If not specified, generates random color.',
+    example: [255, 0, 0, 255],
+  },
+};
+
+// Scene metadata
+const sceneType = 'user';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 20;
+
 module.exports = {
   name,
   init,
@@ -85,6 +103,13 @@ module.exports = {
   category,
   deviceTypes,
   tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
   metadata: {
     color: [255, 0, 0, 255], // Example: red [R, G, B, A]
     description:

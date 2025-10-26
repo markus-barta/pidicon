@@ -11,7 +11,7 @@
 
 const path = require('path');
 const { DataScene } = require(
-  path.join(__dirname, '../../../lib/scene-framework'),
+  path.join(__dirname, '../../../lib/scene-framework')
 );
 
 const name = 'framework_data_demo';
@@ -84,7 +84,7 @@ class SensorDashboardScene extends DataScene {
       'Sensors',
       [28, 6], // Moved left to make room for indicator
       [255, 255, 255, 255],
-      'center',
+      'center'
     );
 
     // Temperature display
@@ -99,7 +99,7 @@ class SensorDashboardScene extends DataScene {
       `${data.temperature}°${temperatureUnit}`,
       [32, 16],
       tempColor,
-      'center',
+      'center'
     );
 
     // Humidity and pressure (moved down, pressure without fraction)
@@ -107,13 +107,13 @@ class SensorDashboardScene extends DataScene {
       `H:${data.humidity}%`,
       [8, 28],
       [200, 200, 255, 255],
-      'left',
+      'left'
     );
     await device.drawText(
       `P:${Math.round(data.pressure)}`,
       [8, 36],
       [255, 200, 200, 255],
-      'left',
+      'left'
     );
 
     // Device status (moved to avoid overlap)
@@ -128,7 +128,7 @@ class SensorDashboardScene extends DataScene {
       `${data.onlineCount}/${data.totalDevices}`,
       [56, 28],
       statusColor,
-      'right',
+      'right'
     );
     await device.drawText('Dev', [56, 36], [200, 200, 200, 255], 'right');
 
@@ -140,7 +140,7 @@ class SensorDashboardScene extends DataScene {
     await device.fillRect(
       [indicatorX, indicatorY],
       [indicatorSize, indicatorSize],
-      statusColor,
+      statusColor
     );
 
     // Animated pulse effect for the indicator
@@ -154,7 +154,7 @@ class SensorDashboardScene extends DataScene {
         indicatorY - (pulseSize - indicatorSize) / 2,
       ],
       [pulseSize, pulseSize],
-      [...statusColor.slice(0, 3), pulseAlpha],
+      [...statusColor.slice(0, 3), pulseAlpha]
     );
 
     // Framework info (moved up to fit new layout)
@@ -162,13 +162,13 @@ class SensorDashboardScene extends DataScene {
       'Framework Demo',
       [32, 46],
       [150, 150, 150, 255],
-      'center',
+      'center'
     );
     await device.drawText(
       `Frame: ${frameCount}`,
       [32, 54],
       [120, 120, 120, 255],
-      'center',
+      'center'
     );
 
     // Data freshness indicator (moved to avoid title overlap)
@@ -196,6 +196,35 @@ const wantsLoop = true;
 const description =
   'Demonstrates the DataScene base class with simulated sensor data and configurable refresh intervals. Shows how to handle dynamic data updates and state management in data-driven scenes.';
 const category = 'Framework';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'framework', 'data'];
+const configSchema = {
+  temperature: {
+    type: 'number',
+    default: null,
+    description: 'Temperature data source',
+  },
+  humidity: {
+    type: 'number',
+    default: null,
+    description: 'Humidity data source',
+  },
+  frames: {
+    type: 'number',
+    default: 100,
+    description: 'Number of frames to render',
+    min: 1,
+    max: 1000,
+  },
+};
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 240;
 
 module.exports = {
   name,
@@ -205,4 +234,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

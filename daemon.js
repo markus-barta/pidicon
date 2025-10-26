@@ -33,6 +33,7 @@ const DeviceService = require('./lib/services/device-service');
 const DiagnosticsService = require('./lib/services/diagnostics-service');
 const MqttConfigService = require('./lib/services/mqtt-config-service');
 const SceneService = require('./lib/services/scene-service');
+const SchedulerService = require('./lib/services/scheduler-service');
 const SystemService = require('./lib/services/system-service');
 const TestResultsParser = require('./lib/services/test-results-parser');
 const WatchdogService = require('./lib/services/watchdog-service');
@@ -123,7 +124,7 @@ async function bootstrap() {
   // Register services in DI container
   container.register(
     'sceneService',
-    ({ logger, sceneManager, mqttService }) =>
+    ({ logger, sceneManager, mqttService, deviceConfigStore }) =>
       new SceneService({
         logger,
         sceneManager,
@@ -131,6 +132,17 @@ async function bootstrap() {
         mqttService,
         versionInfo,
         publishOk, // Pass global publishOk callback for WebSocket broadcasts
+        deviceConfigStore,
+      })
+  );
+
+  container.register(
+    'schedulerService',
+    ({ logger, sceneService, deviceConfigStore }) =>
+      new SchedulerService({
+        logger,
+        sceneService,
+        deviceConfigStore,
       })
   );
 
@@ -475,6 +487,10 @@ async function bootstrap() {
   // Start watchdog service for all devices (health checks and recovery actions)
   const watchdogService = container.resolve('watchdogService');
   watchdogService.startAll();
+
+  // Start scheduler service for time-based scene activation
+  const schedulerService = container.resolve('schedulerService');
+  schedulerService.start();
 
   // Run automated tests in background to populate test results
   // This runs asynchronously and doesn't block daemon startup

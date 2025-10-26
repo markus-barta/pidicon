@@ -11,7 +11,7 @@
 
 const path = require('path');
 const { validateSceneContext } = require(
-  path.join(__dirname, '../../../lib/performance-utils'),
+  path.join(__dirname, '../../../lib/performance-utils')
 );
 
 const name = 'draw_api';
@@ -77,7 +77,7 @@ async function testPixels(device) {
     'PIXEL TEST',
     [16, 30],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 }
 
@@ -100,7 +100,7 @@ async function testRectangles(device) {
     'RECTANGLES',
     [16, 55],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 }
 
@@ -128,7 +128,7 @@ async function testLines(device) {
     'LINES',
     [32, 30],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 }
 
@@ -141,19 +141,19 @@ async function testText(device) {
     'LEFT',
     [0, 5],
     [255, 255, 255, 255],
-    'left',
+    'left'
   );
   await device.drawTextRgbaAligned(
     'CENTER',
     [32, 15],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
   await device.drawTextRgbaAligned(
     'RIGHT',
     [63, 25],
     [255, 255, 255, 255],
-    'right',
+    'right'
   );
 
   // Test different colors
@@ -166,20 +166,20 @@ async function testText(device) {
     '50% ALPHA',
     [20, 35],
     [255, 255, 255, 127],
-    'center',
+    'center'
   );
   await device.drawTextRgbaAligned(
     '100% ALPHA',
     [20, 43],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 
   await device.drawTextRgbaAligned(
     'TEXT TEST',
     [16, 59],
     [255, 255, 0, 255],
-    'center',
+    'center'
   );
 }
 
@@ -223,7 +223,7 @@ async function testGradients(device) {
     'GRADIENTS',
     [16, 2],
     [0, 0, 0, 255],
-    'center',
+    'center'
   );
 }
 
@@ -241,13 +241,13 @@ async function testAll(device) {
     'API',
     [35, 5],
     [255, 255, 255, 255],
-    'left',
+    'left'
   );
   await device.drawTextRgbaAligned(
     'TEST',
     [35, 13],
     [255, 255, 0, 255],
-    'left',
+    'left'
   );
 
   // Section 3: Pixel patterns (middle)
@@ -264,7 +264,7 @@ async function testAll(device) {
     for (let y = 40; y < 50; y++) {
       await device.drawPixelRgba(
         [x, y],
-        [intensity, 255 - intensity, 128, 255],
+        [intensity, 255 - intensity, 128, 255]
       );
     }
   }
@@ -277,7 +277,7 @@ async function testAll(device) {
     'FULL API TEST',
     [16, 59],
     [255, 255, 255, 255],
-    'center',
+    'center'
   );
 }
 
@@ -290,6 +290,17 @@ const wantsLoop = false;
 const description =
   'Comprehensive demonstration of the Pixoo drawing API capabilities. Tests all major functions including rectangles, lines, text rendering, pixel manipulation, gradients, and alpha blending. Perfect for developers testing API functionality and debugging display issues.';
 const category = 'Development';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'test'];
+const configSchema = null; // No configurable parameters
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 280;
 
 module.exports = {
   name,
@@ -299,4 +310,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

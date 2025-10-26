@@ -15,16 +15,16 @@ const path = require('path');
 const SunCalc = require('suncalc');
 
 const { drawVerticalGradientLine } = require(
-  path.join(__dirname, '../../../lib/gradient-renderer'),
+  path.join(__dirname, '../../../lib/gradient-renderer')
 );
 const GraphicsEngine = require(
-  path.join(__dirname, '../../../lib/graphics-engine'),
+  path.join(__dirname, '../../../lib/graphics-engine')
 );
 const { BaseSceneState, FrameCounter, SceneUtils } = require(
-  path.join(__dirname, '../../../lib/scene-base'),
+  path.join(__dirname, '../../../lib/scene-base')
 );
 const { AnimatedScene } = require(
-  path.join(__dirname, '../../../lib/scene-framework'),
+  path.join(__dirname, '../../../lib/scene-framework')
 );
 
 // Scene configuration - migrated from DisplayConfig
@@ -226,7 +226,7 @@ class PowerPriceScene extends AnimatedScene {
       await this.graphicsEngine.device.fillRect(
         [0, 57],
         [64, 7],
-        [0, 0, 0, 255],
+        [0, 0, 0, 255]
       );
 
       // Format ultra-compact display: "fps,decimal/frametime ms #framecount"
@@ -252,7 +252,7 @@ class PowerPriceScene extends AnimatedScene {
         `${fpsInt},${fpsDecimal}/`,
         [x, y],
         [255, 255, 255, 255],
-        'left',
+        'left'
       );
       x += 4 * 4 + 1; // "4,9/" width + 1px gap
 
@@ -262,7 +262,7 @@ class PowerPriceScene extends AnimatedScene {
         msVal,
         [x, y],
         [msColor[0], msColor[1], msColor[2], 255],
-        'left',
+        'left'
       );
       x += msVal.length * 4; // frametime width
       await this.graphicsEngine.device.drawText('ms', [x, y], darkGray, 'left');
@@ -275,7 +275,7 @@ class PowerPriceScene extends AnimatedScene {
         frameText,
         [frameX, y],
         [200, 200, 200, 255],
-        'left',
+        'left'
       );
     } catch {
       // Silently ignore performance metrics rendering errors
@@ -355,7 +355,7 @@ class PowerPriceScene extends AnimatedScene {
       // Add performance metrics display (bottom bar)
       await this._drawPerformanceMetrics(
         Math.round(1000 / (elapsedMs / frameCount || 1)),
-        elapsedMs / frameCount || 0,
+        elapsedMs / frameCount || 0
       );
 
       // Animation is now time-based, no need to track frame index
@@ -402,7 +402,7 @@ class PowerPriceScene extends AnimatedScene {
             image.position,
             image.dimensions,
             image.alpha || 255,
-            'multiply', // Multiply blend mode treats black backgrounds as transparent
+            'multiply' // Multiply blend mode treats black backgrounds as transparent
           );
         } catch {
           // Silently ignore image rendering errors
@@ -423,21 +423,21 @@ class PowerPriceScene extends AnimatedScene {
         grid.startPos[1] +
         i *
           Math.floor(
-            (grid.endPos[1] - grid.startPos[1]) / (grid.horizontal.count - 1),
+            (grid.endPos[1] - grid.startPos[1]) / (grid.horizontal.count - 1)
           );
       const alpha = Math.min(
         255,
         grid.horizontal.minAlpha +
           Math.round(
-            (i / (grid.horizontal.count - 1)) * grid.horizontal.alphaRange,
-          ),
+            (i / (grid.horizontal.count - 1)) * grid.horizontal.alphaRange
+          )
       );
       const color = [...grid.horizontal.color.slice(0, 3), alpha];
 
       await device.drawLineRgba(
         [grid.startPos[0] - grid.overhang, y],
         [grid.endPos[0] + grid.overhang, y],
-        color,
+        color
       );
     }
 
@@ -447,21 +447,19 @@ class PowerPriceScene extends AnimatedScene {
         grid.startPos[0] +
         i *
           Math.floor(
-            (grid.endPos[0] - grid.startPos[0]) / (grid.vertical.count - 1),
+            (grid.endPos[0] - grid.startPos[0]) / (grid.vertical.count - 1)
           );
       const alpha = Math.min(
         255,
         grid.vertical.minAlpha +
-          Math.round(
-            (i / (grid.vertical.count - 1)) * grid.vertical.alphaRange,
-          ),
+          Math.round((i / (grid.vertical.count - 1)) * grid.vertical.alphaRange)
       );
       const color = [...grid.vertical.color.slice(0, 3), alpha];
 
       await device.drawLineRgba(
         [x, grid.startPos[1] - grid.overhang],
         [x, grid.endPos[1] + grid.overhang],
-        color,
+        color
       );
     }
   }
@@ -505,7 +503,7 @@ class PowerPriceScene extends AnimatedScene {
           shadowColor: SCENE_CONFIG.CLOCK.shadow.color,
           shadowOffset: SCENE_CONFIG.CLOCK.shadow.offset,
         },
-      },
+      }
     );
 
     // Handle blinking separator with enhanced rendering
@@ -528,7 +526,7 @@ class PowerPriceScene extends AnimatedScene {
             ],
             shadowOffset: SCENE_CONFIG.CLOCK.shadow.offset,
           },
-        },
+        }
       );
     }
   }
@@ -553,7 +551,7 @@ class PowerPriceScene extends AnimatedScene {
     const fullPixels = Math.floor(pixelsToFill);
     const partialPixelAlpha = Math.max(
       0,
-      Math.min(255, Math.floor((pixelsToFill - fullPixels) * 255)),
+      Math.min(255, Math.floor((pixelsToFill - fullPixels) * 255))
     );
 
     // Render battery fill
@@ -596,7 +594,7 @@ class PowerPriceScene extends AnimatedScene {
     const fadeStartOpacity = 10;
     const fadeMaxOpacity = 255 - fadeStartOpacity;
     const statusImgAlpha = Math.floor(
-      fadeStartOpacity + normalizedProgress * fadeMaxOpacity,
+      fadeStartOpacity + normalizedProgress * fadeMaxOpacity
     );
 
     if (batteryStatus.BatteryCharging) {
@@ -604,14 +602,14 @@ class PowerPriceScene extends AnimatedScene {
         SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.path,
         SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.position,
         SCENE_CONFIG.IMAGES.CHARGE_LIGHTNING.dimensions,
-        statusImgAlpha,
+        statusImgAlpha
       );
     } else if (batteryStatus.BatteryDischarging) {
       await device.drawImageWithAlpha(
         SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.path,
         SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.position,
         SCENE_CONFIG.IMAGES.DISCHARGE_LIGHTNING.dimensions,
-        statusImgAlpha,
+        statusImgAlpha
       );
     }
   }
@@ -648,7 +646,7 @@ class PowerPriceScene extends AnimatedScene {
           shadow: true,
           shadowColor: [0, 0, 0, 180],
         },
-      },
+      }
     );
   }
 
@@ -678,7 +676,7 @@ class PowerPriceScene extends AnimatedScene {
         const scaledValue = (value / maxYieldWh) * chartHeight;
         const totalPixels = Math.min(
           chartHeight,
-          Math.max(1, Math.ceil(scaledValue)),
+          Math.max(1, Math.ceil(scaledValue))
         );
         const fullPixels = Math.floor(scaledValue);
         const remainder = scaledValue - fullPixels;
@@ -691,7 +689,7 @@ class PowerPriceScene extends AnimatedScene {
         if (remainder > 0) {
           partialPixelAlpha = Math.max(
             0,
-            Math.min(255, Math.floor(remainder * 255)),
+            Math.min(255, Math.floor(remainder * 255))
           );
         }
 
@@ -703,7 +701,7 @@ class PowerPriceScene extends AnimatedScene {
             pvConfig.colors.end,
             pvConfig.colors.start,
             partialPixelAlpha,
-            'start',
+            'start'
           );
         } catch {
           // Silently ignore PV bar rendering errors
@@ -728,7 +726,7 @@ class PowerPriceScene extends AnimatedScene {
         if (value > 0) {
           const scaledHeight = Math.min(
             chartHeight,
-            Math.max(0, (value / maxPredictionWh) * chartHeight),
+            Math.max(0, (value / maxPredictionWh) * chartHeight)
           );
           const barHeight = Math.round(scaledHeight);
 
@@ -770,7 +768,7 @@ class PowerPriceScene extends AnimatedScene {
             offset: 1,
             color: [0, 0, 0, 100],
           },
-        },
+        }
       );
       return;
     }
@@ -804,7 +802,7 @@ class PowerPriceScene extends AnimatedScene {
           shadow: true,
           shadowColor: [50, 0, 105, 150],
         },
-      },
+      }
     );
   }
 
@@ -832,7 +830,7 @@ class PowerPriceScene extends AnimatedScene {
       currentDate.getFullYear(),
       currentDate.getMonth(),
       currentDate.getDate(),
-      referenceHour,
+      referenceHour
     );
     const referenceHourKey = formatHourKey(referenceDate);
 
@@ -841,7 +839,7 @@ class PowerPriceScene extends AnimatedScene {
       priceData.data,
       referenceHourKey,
       currentHourKey,
-      SCENE_CONFIG.CHART.POWER_PRICE.settings.maxHoursToDraw,
+      SCENE_CONFIG.CHART.POWER_PRICE.settings.maxHoursToDraw
     );
 
     // Render the chart
@@ -872,7 +870,7 @@ class PowerPriceScene extends AnimatedScene {
         moonPosition,
         moonConfig.dimensions,
         moonAlpha,
-        'multiply',
+        'multiply'
       );
     } catch {
       // Error rendering moon phase - fallback to static moon with multiply blend
@@ -881,7 +879,7 @@ class PowerPriceScene extends AnimatedScene {
         moonConfig.position,
         moonConfig.dimensions,
         moonAlpha,
-        'multiply',
+        'multiply'
       );
     }
   }
@@ -1016,7 +1014,7 @@ async function drawPriceChart(device, prices) {
   const xStart = config.position[0];
   const maxPixels = Math.min(
     SCENE_CONFIG.DIMENSIONS.WIDTH - config.position[0],
-    config.settings.maxHoursToDraw * 2,
+    config.settings.maxHoursToDraw * 2
   );
 
   const zeroLineY = config.position[1] + 1;
@@ -1220,7 +1218,7 @@ async function renderPriceBar(device, priceData, config, x) {
         config,
         x,
         barColors,
-        isBlinkOn,
+        isBlinkOn
       );
     }
   }
@@ -1297,7 +1295,7 @@ async function drawPositiveBar(
   config,
   x,
   barColors,
-  isBlinkOn,
+  isBlinkOn
 ) {
   const { bottomY, fullPixels, remainder, isOverflow } = priceData;
   const barHeight = fullPixels;
@@ -1322,7 +1320,7 @@ async function drawPositiveBar(
     barColors.endColor,
     barColors.startColor,
     topPixelAlpha,
-    'start',
+    'start'
   );
 }
 
@@ -1345,7 +1343,7 @@ async function drawOverflowPixels(
   config,
   x,
   barColors,
-  isBlinkOn,
+  isBlinkOn
 ) {
   const { bottomY, fullPixels, overflowPixels } = priceData;
   const overflowStartY = bottomY - fullPixels;
@@ -1378,6 +1376,80 @@ const description =
   'Professional energy dashboard displaying real-time electricity pricing, photovoltaic generation, battery status, UV weather data, and animated digital clock. Shows 24-hour price forecast, current PV yield, battery charge/discharge status, and weather conditions. Optimized for 64x64 display with smooth animations and comprehensive data visualization.';
 const category = 'Energy';
 
+const configSchema = {
+  powerPriceData: {
+    type: 'object',
+    default: null,
+    description: 'Power price data object with hourly prices',
+  },
+  currentCentPrice: {
+    type: 'number',
+    default: null,
+    description: 'Current electricity price in cents per kWh',
+  },
+  dailyPvDataActual: {
+    type: 'array',
+    default: null,
+    description: 'Daily PV (solar) generation data in Wh per hour',
+  },
+  pvHourlyYieldPrediction: {
+    type: 'array',
+    default: null,
+    description: 'Hourly solar yield prediction data in Wh',
+  },
+  batteryStatus: {
+    type: 'object',
+    default: null,
+    description: 'Battery status (USOC %, charging/discharging state)',
+  },
+  uviData: {
+    type: 'object',
+    default: null,
+    description: 'UV index data and forecast',
+  },
+  localTimeData: {
+    type: 'object',
+    default: null,
+    description: 'Local time information',
+  },
+  moonPhaseData: {
+    type: 'object',
+    default: null,
+    description: 'Moon phase data',
+  },
+  enableDebug: {
+    type: 'boolean',
+    default: false,
+    description: 'Enable debug information overlay',
+  },
+  enableAnimation: {
+    type: 'boolean',
+    default: true,
+    description: 'Enable animations',
+  },
+  enableFPS: {
+    type: 'boolean',
+    default: false,
+    description: 'Show FPS counter',
+  },
+  frames: {
+    type: 'number',
+    default: null,
+    description: 'Number of frames to render (null for continuous)',
+    min: 1,
+  },
+};
+
+// Scene metadata
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'dashboard', 'power'];
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 310;
+
 module.exports = {
   name,
   render,
@@ -1386,6 +1458,15 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
   metadata: {
     powerPriceData: {
       data: {

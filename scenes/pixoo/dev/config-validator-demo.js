@@ -8,7 +8,7 @@
 
 const path = require('path');
 const ConfigValidator = require(
-  path.join(__dirname, '../../../lib/config-validator'),
+  path.join(__dirname, '../../../lib/config-validator')
 );
 
 class ConfigValidatorDemoScene {
@@ -28,7 +28,7 @@ class ConfigValidatorDemoScene {
     this.log = log; // Store for use in helper methods
     log?.(
       `⚙️ [${context.device.host}] Initializing Config Validator Demo`,
-      'info',
+      'info'
     );
 
     // Initialize config validator
@@ -68,7 +68,7 @@ class ConfigValidatorDemoScene {
 
       log?.(
         `⚙️ [${context.device.host}] Config Demo phase ${this.demoPhase}`,
-        'debug',
+        'debug'
       );
     }
 
@@ -108,7 +108,7 @@ class ConfigValidatorDemoScene {
         'CONFIG ERROR',
         [32, 32],
         [255, 0, 0, 255],
-        'center',
+        'center'
       );
       await context.device.push('config_validator_demo', context.publishOk);
 
@@ -123,7 +123,7 @@ class ConfigValidatorDemoScene {
     const presets = this.configValidator.getAllPresets();
     this.log?.(
       `📋 Available presets: ${Array.from(presets.keys()).join(', ')}`,
-      'info',
+      'info'
     );
 
     // Demonstrate preset creation
@@ -133,7 +133,7 @@ class ConfigValidatorDemoScene {
     });
     this.log?.(
       `📋 Created text config from preset: ${JSON.stringify(textConfig)}`,
-      'info',
+      'info'
     );
 
     // Demonstrate chart preset
@@ -142,7 +142,7 @@ class ConfigValidatorDemoScene {
     });
     this.log?.(
       `📋 Created chart config from preset: ${JSON.stringify(chartConfig)}`,
-      'info',
+      'info'
     );
   }
 
@@ -164,7 +164,7 @@ class ConfigValidatorDemoScene {
         position: [32, 20],
         color: [0, 255, 0, 255],
       },
-      'text',
+      'text'
     );
     this.validationErrors = [];
   }
@@ -179,7 +179,7 @@ class ConfigValidatorDemoScene {
         color: [255, 0, 0, 255],
         invalidProp: 'should not be here',
       },
-      'text',
+      'text'
     );
     this.validationErrors = this.configValidator.getErrors();
     this.currentConfig = null;
@@ -208,7 +208,7 @@ class ConfigValidatorDemoScene {
         this.currentConfig.text,
         this.currentConfig.position,
         this.currentConfig.color,
-        this.currentConfig.alignment,
+        this.currentConfig.alignment
       );
 
       // Show preset info
@@ -216,7 +216,7 @@ class ConfigValidatorDemoScene {
         'text-fancy',
         [32, 40],
         [200, 200, 200, 255],
-        'center',
+        'center'
       );
 
       await device.drawText('preset', [32, 48], [150, 150, 150, 255], 'center');
@@ -231,7 +231,7 @@ class ConfigValidatorDemoScene {
       'VALIDATION',
       [32, 8],
       [255, 255, 255, 255],
-      'center',
+      'center'
     );
 
     // Show validated config
@@ -240,7 +240,7 @@ class ConfigValidatorDemoScene {
         this.currentConfig.text,
         this.currentConfig.position,
         this.currentConfig.color,
-        this.currentConfig.alignment,
+        this.currentConfig.alignment
       );
 
       // Show validation status
@@ -250,7 +250,7 @@ class ConfigValidatorDemoScene {
         'text schema',
         [32, 48],
         [150, 150, 150, 255],
-        'center',
+        'center'
       );
     }
   }
@@ -271,14 +271,14 @@ class ConfigValidatorDemoScene {
         errorText,
         [32, 32],
         [255, 100, 100, 255],
-        'center',
+        'center'
       );
 
       await device.drawText(
         `${this.validationErrors.length} errors`,
         [32, 44],
         [200, 100, 100, 255],
-        'center',
+        'center'
       );
     }
   }
@@ -304,7 +304,7 @@ class ConfigValidatorDemoScene {
       `F:${this.frameCount}`,
       [50, 58],
       [150, 150, 150, 180],
-      'left',
+      'left'
     );
   }
 
@@ -312,7 +312,7 @@ class ConfigValidatorDemoScene {
     const { log } = context;
     log?.(
       `🧹 [${context.device.host}] Cleaning up Config Validator Demo`,
-      'info',
+      'info'
     );
 
     if (this.configValidator) {
@@ -333,6 +333,17 @@ const wantsLoop = true;
 const description =
   'Demonstrates configuration presets and validation using ConfigValidator. Shows how to use presets, validation, and error handling for scene configurations. Tests various config scenarios including valid/invalid parameters and preset loading.';
 const category = 'Development';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'config'];
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 220;
 
 module.exports = {
   name,
@@ -342,4 +353,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

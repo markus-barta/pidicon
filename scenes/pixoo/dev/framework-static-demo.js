@@ -11,7 +11,7 @@
 
 const path = require('path');
 const { StaticScene } = require(
-  path.join(__dirname, '../../../lib/scene-framework'),
+  path.join(__dirname, '../../../lib/scene-framework')
 );
 
 const name = 'framework_static_demo';
@@ -54,7 +54,7 @@ class StatusDisplayScene extends StaticScene {
       'Framework Demo',
       [32, 52],
       [150, 150, 150, 255],
-      'center',
+      'center'
     );
   }
 }
@@ -71,6 +71,17 @@ const wantsLoop = false;
 const description =
   "Demonstrates the StaticScene base class - renders once and completes. Shows the simplest scene pattern for static content that doesn't need animation or updates.";
 const category = 'Framework';
+const deviceTypes = ['pixoo64'];
+const tags = ['dev', 'framework'];
+const configSchema = null;
+
+// Scene metadata
+const sceneType = 'dev';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 260;
 
 module.exports = {
   name,
@@ -80,4 +91,13 @@ module.exports = {
   wantsLoop,
   description,
   category,
+  deviceTypes,
+  tags,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
 };

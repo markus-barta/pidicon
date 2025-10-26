@@ -34,12 +34,33 @@ const PHASE_DURATION = 45; // frames per phase (~9 seconds at 5fps) - Total ~90s
 const FADE_DURATION = 5; // frames for fades
 const IMAGE_PHASE_DURATION = 70; // images phase gets extra time
 
+const configSchema = null; // Scene is fully autonomous, no configurable parameters
+
+// Scene metadata
+const sceneType = 'example';
+const author = 'PIDICON Team';
+const version = '1.0.0';
+const thumbnail = null;
+const isHidden = false;
+const sortOrder = 50;
+const deviceTypes = ['pixoo64'];
+const tags = ['demo', 'showcase'];
+
 module.exports = {
   name: 'pixoo_showcase',
   description:
     '🔥 ULTIMATE Pixoo Demo - 11 phases of mind-blowing effects! Plasma, tunnels, 2D & 3D starfields, and more!',
   category: 'Demo',
   wantsLoop: true,
+  configSchema,
+  sceneType,
+  author,
+  version,
+  thumbnail,
+  isHidden,
+  sortOrder,
+  deviceTypes,
+  tags,
 
   async init(context) {
     context.setState('phase', PHASES.INTRO);
@@ -143,7 +164,7 @@ module.exports = {
           gfx,
           getState,
           setState,
-          phaseFrame,
+          phaseFrame
         );
         break;
       case PHASES.IMAGE_GALLERY:
@@ -213,7 +234,7 @@ module.exports = {
             [Math.floor(p.x), Math.floor(p.y)],
             innerRadius,
             outerRadius,
-            [...rgb, alpha],
+            [...rgb, alpha]
           );
         }
       }
@@ -236,7 +257,7 @@ module.exports = {
       [200, 200, 255, alpha],
       {
         alignment: 'center',
-      },
+      }
     );
   },
 
@@ -248,7 +269,7 @@ module.exports = {
     await gfx.drawGradientBackground(
       [10, 10, 30, 255],
       [5, 5, 15, 255],
-      'vertical',
+      'vertical'
     );
 
     // Shadow effect - higher, centered (1px offset, more visible)
@@ -312,15 +333,15 @@ module.exports = {
         const xWave = Math.sin((x + frame) * 0.1) * 0.2 + 0.8;
         const r = Math.max(
           0,
-          Math.min(255, Math.floor(rgb[0] * xWave * wave2)),
+          Math.min(255, Math.floor(rgb[0] * xWave * wave2))
         );
         const g = Math.max(
           0,
-          Math.min(255, Math.floor(rgb[1] * xWave * wave2)),
+          Math.min(255, Math.floor(rgb[1] * xWave * wave2))
         );
         const b = Math.max(
           0,
-          Math.min(255, Math.floor(rgb[2] * xWave * wave2)),
+          Math.min(255, Math.floor(rgb[2] * xWave * wave2))
         );
         await device.drawPixel([x, y], [r, g, b, 255]);
       }
@@ -372,7 +393,7 @@ module.exports = {
     await gfx.drawGradientBackground(
       [5, 5, 15, 255],
       [15, 5, 25, 255],
-      'vertical',
+      'vertical'
     );
 
     // Title
@@ -386,7 +407,7 @@ module.exports = {
       [32, 32],
       centerRadius,
       [255, 150, 0, 255],
-      [255, 50, 150, 200],
+      [255, 50, 150, 200]
     );
 
     // Rotating orbit with 6 circles
@@ -409,7 +430,7 @@ module.exports = {
         [Math.floor(orbitX), Math.floor(orbitY)],
         circleSize,
         circleSize + 2,
-        [...rgb, 255],
+        [...rgb, 255]
       );
     }
 
@@ -422,7 +443,7 @@ module.exports = {
       [32, 32],
       Math.floor(ringRadius),
       [100, 200, 255, 180],
-      ringThickness,
+      ringThickness
     );
   },
 
@@ -466,7 +487,7 @@ module.exports = {
       if (x >= 0 && x < 64 && y >= 0 && y < 64) {
         await device.drawPixel(
           [x, y],
-          [brightness, brightness, brightness, 255],
+          [brightness, brightness, brightness, 255]
         );
 
         // Add glow pixels around it for visibility
@@ -480,7 +501,7 @@ module.exports = {
               if (gx >= 0 && gx < 64 && gy >= 0 && gy < 64) {
                 await device.drawPixel(
                   [gx, gy],
-                  [glowBrightness, glowBrightness, glowBrightness, 150],
+                  [glowBrightness, glowBrightness, glowBrightness, 150]
                 );
               }
             }
@@ -542,7 +563,7 @@ module.exports = {
         // Draw star (single pixel for simplicity and performance)
         await device.drawPixel(
           [screenX, screenY],
-          [brightness, brightness, brightness, 255],
+          [brightness, brightness, brightness, 255]
         );
 
         // Draw trail for closer stars (motion blur effect)
@@ -553,7 +574,7 @@ module.exports = {
           if (trailX >= 0 && trailX < 64 && trailY >= 0 && trailY < 64) {
             await device.drawPixel(
               [trailX, trailY],
-              [brightness / 2, brightness / 2, brightness / 2, 200],
+              [brightness / 2, brightness / 2, brightness / 2, 200]
             );
           }
         }
@@ -609,7 +630,7 @@ module.exports = {
     await gfx.drawGradientBackground(
       [30, 30, 50, 255],
       [15, 15, 30, 255],
-      'vertical',
+      'vertical'
     );
 
     // Title at top center
@@ -629,7 +650,7 @@ module.exports = {
       device,
       [16, Math.floor(bounceY)],
       6,
-      [255, 150, 150, 255],
+      [255, 150, 150, 255]
     );
 
     // Rotating square - with zoom/shrink effect (almost to max)
@@ -646,7 +667,7 @@ module.exports = {
       await device.drawLine(
         [Math.floor(x1), Math.floor(y1)],
         [Math.floor(x2), Math.floor(y2)],
-        [150, 255, 150, 255],
+        [150, 255, 150, 255]
       );
     }
 
@@ -656,7 +677,7 @@ module.exports = {
       device,
       [48, 32],
       Math.floor(pulseRadius),
-      [150, 150, 255, 255],
+      [150, 150, 255, 255]
     );
 
     // Rainbow text at bottom
@@ -673,7 +694,7 @@ module.exports = {
     await gfx.drawGradientBackground(
       [5, 5, 20, 255],
       [15, 5, 30, 255],
-      'vertical',
+      'vertical'
     );
 
     // Moon phase cycling
@@ -702,7 +723,7 @@ module.exports = {
         [moonX, moonY],
         [6, 6],
         255,
-        'normal',
+        'normal'
       );
     } catch {
       // Fallback
@@ -711,7 +732,7 @@ module.exports = {
         '🌙',
         [moonX, moonY],
         [255, 255, 255, 255],
-        'center',
+        'center'
       );
     }
 
@@ -721,7 +742,7 @@ module.exports = {
       `Moon Phase: ${moonPhase}`,
       [32, 58],
       [180, 180, 255, 200],
-      'center',
+      'center'
     );
   },
 
@@ -766,7 +787,7 @@ module.exports = {
       if (p.x >= 0 && p.x < 64 && p.y >= 0 && p.y < 64 && alpha > 0) {
         await device.drawPixel(
           [Math.floor(p.x), Math.floor(p.y)],
-          [...rgb, alpha],
+          [...rgb, alpha]
         );
       }
     }
@@ -795,7 +816,7 @@ module.exports = {
             shadowOffset: 1,
             shadowColor: [30, 60, 80, Math.floor(alpha * 0.6)],
           },
-        },
+        }
       );
     }
   },
