@@ -54,6 +54,24 @@
             density="comfortable"
             clearable
           />
+          <div class="tests-dashboard__view-controls">
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-unfold-more-horizontal"
+              @click="expandAll"
+            >
+              Expand All
+            </v-btn>
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-unfold-less-horizontal"
+              @click="collapseAll"
+            >
+              Collapse All
+            </v-btn>
+          </div>
         </div>
 
         <v-alert
@@ -328,6 +346,16 @@ function toggleSection(key) {
   }
 }
 
+function expandAll() {
+  filteredSections.value.forEach((section) => {
+    expandedSections.add(section.key);
+  });
+}
+
+function collapseAll() {
+  expandedSections.clear();
+}
+
 function ensureSectionExpanded(key) {
   if (!expandedSections.has(key)) {
     expandedSections.add(key);
@@ -598,6 +626,12 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 16px;
   align-items: center;
+}
+
+.tests-dashboard__view-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .status-summary {
