@@ -1,6 +1,6 @@
 <template>
-  <v-app-bar app color="white" elevation="0" class="status-bar">
-    <v-container fluid class="status-container">
+  <v-app-bar app class="status-bar">
+    <v-container class="py-4 py-md-5">
       <!-- Header Row: Title + Status + Daemon Restart -->
       <div class="header-row">
         <div class="header-title">
@@ -110,14 +110,14 @@
       </div>
 
       <!-- Divider -->
-      <v-divider class="my-2" />
+      <v-divider class="my-3 my-md-4" />
 
       <!-- Navigation Tabs -->
       <v-tabs
         v-model="activeNav"
         color="primary"
         class="nav-tabs"
-        density="compact"
+        density="comfortable"
         show-arrows
         hide-slider
       >
@@ -478,20 +478,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.status-bar {
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  height: auto !important;
-}
-
-.status-bar :deep(.v-toolbar__content) {
-  height: auto !important;
-  padding: 0;
-}
-
-.status-container {
-  padding: 16px 24px 8px;
-}
+/* Additional header styling */
 
 .header-row {
   display: flex;
@@ -556,16 +543,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.nav-tabs :deep(.v-tab) {
-  min-height: 32px !important;
-  height: 32px !important;
-  padding: 0 12px;
-}
-
-.nav-tabs :deep(.v-tab--selected) {
-  background-color: rgba(139, 92, 246, 0.08);
-  border-radius: 8px 8px 0 0;
-}
+/* Rely on Vuetify defaults for tab sizing */
 
 .mqtt-tooltip {
   display: flex;

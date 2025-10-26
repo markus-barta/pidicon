@@ -41,5 +41,18 @@ export default createVuetify({
     VChip: {
       rounded: 'lg',
     },
+    VAppBar: {
+      flat: true,
+      elevation: 0,
+      density: 'comfortable',
+      border: 'b thin',
+    },
+    VMain: {
+      class: 'py-6 py-md-8',
+    },
+    VContainer: {
+      class: 'mx-auto px-4 px-md-6 px-lg-8',
+      maxWidth: 1920,
+    },
   },
 });

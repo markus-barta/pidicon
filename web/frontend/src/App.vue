@@ -7,17 +7,17 @@
     />
 
     <!-- Main Content -->
-    <v-main class="bg-grey-lighten-4 main-content">
-      <v-container fluid class="main-container">
+    <v-main class="bg-grey-lighten-4">
+      <v-container>
         <!-- Loading State -->
-        <v-alert
-          v-if="!dataLoaded && !error"
-          type="info"
-          variant="tonal"
-          prominent
-          icon="mdi-loading"
-          class="mb-4"
-        >
+          <v-alert
+            v-if="!dataLoaded && !error"
+            type="info"
+            variant="tonal"
+            prominent
+            icon="mdi-loading"
+            class="mb-4"
+          >
           <v-progress-linear indeterminate class="mb-2" />
           Loading Pixoo devices and scenes...
         </v-alert>
@@ -64,7 +64,10 @@
           </v-card>
 
           <!-- Device Grid -->
-          <v-row v-if="dataLoaded && deviceStore.devices.length > 0">
+          <v-row
+            v-if="dataLoaded && deviceStore.devices.length > 0"
+            class="gy-4"
+          >
             <v-col
               v-for="device in deviceStore.devices"
               :key="device.ip"
@@ -221,26 +224,6 @@ onUnmounted(() => {
 
 <style>
 /* Global app styles */
-.v-main {
-  min-height: 100vh;
-  padding-top: 114px !important;
-}
-
-.main-content {
-  min-width: 800px;
-}
-
-.main-container {
-  padding: 32px;
-  max-width: 1920px;
-  margin: 0 auto;
-}
-
-/* Custom utility classes */
-.border-b {
-  border-bottom: 1px solid #e5e7eb !important;
-}
-
 .bg-grey-lighten-4 {
   background-color: #f9fafb !important;
 }
@@ -248,19 +231,6 @@ onUnmounted(() => {
 /* Override Vuetify primary color text */
 .primary--text {
   color: #8b5cf6 !important;
-}
-
-/* Responsive breakpoints */
-@media (max-width: 1280px) {
-  .main-container {
-    padding: 24px;
-  }
-}
-
-@media (max-width: 800px) {
-  .main-container {
-    padding: 16px;
-  }
 }
 </style>
 
