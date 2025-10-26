@@ -492,6 +492,10 @@ async function runAutomatedTests() {
       await loadTests();
     } else if (response.error) {
       testsState.error = response.error;
+      // If there's a helpful message (e.g., for 501 errors), append it
+      if (response.message) {
+        testsState.error += '\n' + response.message;
+      }
     }
   } catch (error) {
     testsState.error = error.message || 'Failed to run automated tests.';

@@ -708,6 +708,17 @@ function startWebServer(container, logger) {
   // Run automated tests (npm test) on the server
   app.post('/api/tests/run-automated', async (req, res) => {
     try {
+      // Check if test infrastructure exists (not available in production Docker images)
+      const fs = require('fs');
+      const testScriptPath = path.join(process.cwd(), 'test');
+      if (!fs.existsSync(testScriptPath)) {
+        return res.status(501).json({
+          error: 'Test infrastructure not available in this environment',
+          message:
+            'Tests are pre-run during Docker build. Test results are already available.',
+        });
+      }
+
       // Check if tests are already running
       if (runningTestProcess && !runningTestProcess.killed) {
         return res.status(409).json({ error: 'Tests are already running' });

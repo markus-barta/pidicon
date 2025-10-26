@@ -21,6 +21,8 @@ COPY scenes/ ./scenes/
 COPY web/ ./web/
 COPY vite.config.mjs ./
 COPY scripts/build-version.js ./scripts/
+COPY test/ ./test/
+COPY scripts/run-node-tests.js ./scripts/
 
 # Build arguments for version info
 ARG GITHUB_SHA
@@ -37,6 +39,11 @@ ENV GIT_COMMIT_COUNT=${GIT_COMMIT_COUNT}
 # Build version info and Vue frontend
 RUN npm run build:version
 RUN npm run ui:build
+
+# Run tests to generate test results JSON for diagnostics UI
+# Ensure directory exists even if tests fail
+RUN mkdir -p /app/data/test-results && \
+    (npm test || true)
 
 # ============================================================================
 # Stage 2: Production Stage (minimal runtime image)
@@ -68,15 +75,18 @@ COPY web/server.js ./web/
 COPY scenes/ ./scenes/
 COPY config/ ./config/
 
-# Copy test infrastructure for server-side test execution
-COPY test/ ./test/
-COPY scripts/run-node-tests.js ./scripts/
+# Note: Test infrastructure is NOT copied to production image
+# Tests are run during build and results are baked into the image
+# If you need to run tests, use the builder stage or run locally
+
+# Create /data directory structure for persistent config
+RUN mkdir -p /data/test-results && chmod -R 755 /data
+
+# Copy pre-generated test results from builder stage (if they exist)
+COPY --from=builder /app/data/test-results/ ./data/test-results/
 
 # Make wrapper script executable
 RUN chmod +x start-daemon.sh
-
-# Create /data directory for persistent config
-RUN mkdir -p /data && chmod 755 /data
 
 # Set PATH
 ENV PATH="/usr/local/bin:$PATH"
