@@ -7,7 +7,7 @@
     />
 
     <!-- Main Content -->
-    <v-main class="bg-grey-lighten-4" data-test="main-content">
+    <v-main class="bg-grey-lighten-4 main-content" data-test="main-content">
       <v-container class="main-shell">
         <!-- Loading State -->
           <v-alert
@@ -226,6 +226,10 @@ onUnmounted(() => {
 /* Global app styles */
 .bg-grey-lighten-4 {
   background-color: #f9fafb !important;
+}
+
+.main-content {
+  padding-top: calc(56px + 44px + 16px);
 }
 
 /* Override Vuetify primary color text */

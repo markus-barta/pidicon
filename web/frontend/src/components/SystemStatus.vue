@@ -1,136 +1,144 @@
 <template>
-  <v-app-bar app class="status-bar">
-    <v-container class="status-container py-3 py-md-4">
-      <div class="header-row">
-        <div class="header-title">
-          <v-avatar color="primary" size="40" class="mr-3">
-            <v-icon color="white" size="24">mdi-television</v-icon>
-          </v-avatar>
-          <div class="title-text">
-            <div class="text-h6 font-weight-bold primary--text">
-              PIDICON<span class="app-subtitle">: Pixel Display Controller</span>
-            </div>
+  <v-app-bar
+    app
+    class="status-bar"
+    flat
+    density="comfortable"
+  >
+    <template #default>
+      <v-toolbar-title class="d-flex align-center">
+        <v-avatar color="primary" size="40" class="mr-3">
+          <v-icon color="white" size="24">mdi-television</v-icon>
+        </v-avatar>
+        <div class="title-text">
+          <div class="text-h6 font-weight-bold primary--text">
+            PIDICON<span class="app-subtitle">: Pixel Display Controller</span>
           </div>
         </div>
+      </v-toolbar-title>
 
-        <div class="header-status">
-          <div class="status-meta text-caption d-flex align-center">
-            <span class="d-inline-flex align-center">
+      <v-spacer />
+
+      <div class="status-meta text-caption d-flex align-center">
+        <span class="d-inline-flex align-center">
+          <span
+            class="status-dot"
+            :class="{ 'status-dot--heartbeat': status === 'running' && !connectionFailed }"
+            :style="statusDotStyles(statusColor)"
+            :key="lastHeartbeat"
+          ></span>
+          <span class="status-label">{{ statusLabel }}</span>
+        </span>
+        <span class="separator">•</span>
+        <v-tooltip
+          location="bottom"
+          :open-on-hover="true"
+          :open-on-focus="true"
+          content-class="mqtt-tooltip-panel"
+        >
+          <template #activator="{ props }">
+            <span
+              class="d-inline-flex align-center mqtt-status-trigger"
+              tabindex="0"
+              v-bind="props"
+            >
               <span
                 class="status-dot"
-                :class="{ 'status-dot--heartbeat': status === 'running' && !connectionFailed }"
-                :style="statusDotStyles(statusColor)"
-                :key="lastHeartbeat"
+                :class="{ 'status-dot--heartbeat': mqttConnected }"
+                :style="statusDotStyles(mqttStatusColor)"
+                :key="mqttStatusDetails.lastHeartbeatTs"
               ></span>
-              <span class="status-label">{{ statusLabel }}</span>
-            </span>
-            <span class="separator">•</span>
-            <v-tooltip
-              location="bottom"
-              :open-on-hover="true"
-              :open-on-focus="true"
-              content-class="mqtt-tooltip-panel"
-            >
-              <template #activator="{ props }">
-                <span
-                  class="d-inline-flex align-center mqtt-status-trigger"
-                  tabindex="0"
-                  v-bind="props"
-                >
-                  <span
-                    class="status-dot"
-                    :class="{ 'status-dot--heartbeat': mqttConnected }"
-                    :style="statusDotStyles(mqttStatusColor)"
-                    :key="mqttStatusDetails.lastHeartbeatTs"
-                  ></span>
-                  <span class="status-label">
-                    {{ mqttStatus }}
-                    <template v-if="mqttStatusDetails.lastHeartbeatTs">
-                      <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
-                        • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
-                      </span>
-                    </template>
+              <span class="status-label">
+                {{ mqttStatus }}
+                <template v-if="mqttStatusDetails.lastHeartbeatTs">
+                  <span class="last-heartbeat" :title="formatTimestamp(mqttStatusDetails.lastHeartbeatTs)">
+                    • {{ formatRelative(mqttStatusDetails.lastHeartbeatTs) }}
                   </span>
-                </span>
-              </template>
-              <div class="mqtt-tooltip">
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Connection</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Broker URL</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Retry Count</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Next Retry</span>
-                  <span class="tooltip-value">{{ nextRetryLabel }}</span>
-                </div>
-                <div class="tooltip-row">
-                  <span class="tooltip-label">Last Heartbeat</span>
-                  <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
-                </div>
-                <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
-                  <span class="tooltip-label">Last Error</span>
-                  <span class="tooltip-value tooltip-error">{{ mqttStatusDetails.lastError }}</span>
-                </div>
-              </div>
-            </v-tooltip>
-            <span class="separator status-detail-separator">•</span>
-            <span class="status-detail">{{ uptime }}</span>
-            <span class="separator status-detail-separator">•</span>
-            <span class="status-detail">{{ hostname }}</span>
-            <span class="separator status-detail-separator">•</span>
-            <span class="status-detail">Node {{ nodeVersion }}</span>
+                </template>
+              </span>
+            </span>
+          </template>
+          <div class="mqtt-tooltip">
+            <div class="tooltip-row">
+              <span class="tooltip-label">Connection</span>
+              <span class="tooltip-value">{{ mqttStatusDetails.connected ? 'Connected' : 'Disconnected' }}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Broker URL</span>
+              <span class="tooltip-value">{{ mqttStatusDetails.brokerUrl || 'Not configured' }}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Retry Count</span>
+              <span class="tooltip-value">{{ mqttStatusDetails.retryCount }}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Next Retry</span>
+              <span class="tooltip-value">{{ nextRetryLabel }}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Last Heartbeat</span>
+              <span class="tooltip-value">{{ mqttStatusDetails.lastHeartbeatTs ? formatTimestamp(mqttStatusDetails.lastHeartbeatTs) : '—' }}</span>
+            </div>
+            <div class="tooltip-row" v-if="mqttStatusDetails.lastError">
+              <span class="tooltip-label">Last Error</span>
+              <span class="tooltip-value tooltip-error">{{ mqttStatusDetails.lastError }}</span>
+            </div>
           </div>
-        </div>
-
-        <div class="header-actions">
-          <v-btn
-            size="small"
-            variant="outlined"
-            color="error"
-            @click="handleRestart"
-            :loading="restarting"
-            class="daemon-restart-btn critical-action"
-            data-test="daemon-restart"
-          >
-            <v-icon size="small" class="mr-1">mdi-restart-alert</v-icon>
-            <span class="text-caption">Daemon</span>
-            <v-tooltip activator="parent" location="bottom">
-              Restart entire daemon
-            </v-tooltip>
-          </v-btn>
-        </div>
+        </v-tooltip>
+        <span class="separator status-detail-separator">•</span>
+        <span class="status-detail">{{ uptime }}</span>
+        <span class="separator status-detail-separator">•</span>
+        <span class="status-detail">{{ hostname }}</span>
+        <span class="separator status-detail-separator">•</span>
+        <span class="status-detail">Node {{ nodeVersion }}</span>
       </div>
-    </v-container>
+
+      <v-spacer />
+
+      <div class="header-actions">
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="error"
+          @click="handleRestart"
+          :loading="restarting"
+          class="daemon-restart-btn critical-action"
+          data-test="daemon-restart"
+        >
+          <v-icon size="small" class="mr-1">mdi-restart-alert</v-icon>
+          <span class="text-caption">Daemon</span>
+          <v-tooltip activator="parent" location="bottom">
+            Restart entire daemon
+          </v-tooltip>
+        </v-btn>
+      </div>
+    </template>
 
     <template #extension>
       <v-divider class="status-divider" />
-      <v-container class="status-extension py-2 py-md-4">
-        <v-tabs
-          v-model="activeNav"
-          color="primary"
-          class="nav-tabs"
-          density="comfortable"
-          show-arrows
-          hide-slider
-        >
-          <v-tab
-            v-for="item in filteredNavItems"
-            :key="item.value"
-            :value="item.value"
-            :data-test="item.testId"
+      <div class="status-extension py-2 py-md-4" data-test="app-bar-extension">
+        <v-container class="nav-container">
+          <v-tabs
+            v-model="activeNav"
+            color="primary"
+            class="nav-tabs"
+            density="comfortable"
+            show-arrows
+            hide-slider
           >
-            <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
-            {{ item.label }}
-          </v-tab>
-        </v-tabs>
-      </v-container>
+            <v-tab
+              v-for="item in filteredNavItems"
+              :key="item.value"
+              :value="item.value"
+              :data-test="item.testId"
+              class="nav-tab"
+            >
+              <v-icon size="small" class="mr-2">{{ item.icon }}</v-icon>
+              {{ item.label }}
+            </v-tab>
+          </v-tabs>
+        </v-container>
+      </div>
     </template>
   </v-app-bar>
 
@@ -484,44 +492,6 @@ onUnmounted(() => {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.status-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-row {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.title-text {
-  min-width: 0;
-  line-height: 1.2;
-}
-
-.header-status {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  min-width: 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-}
-
 .status-meta {
   color: #6b7280;
   gap: 6px;
@@ -554,7 +524,15 @@ onUnmounted(() => {
 }
 
 .status-extension {
+  display: flex;
+  justify-content: center;
   padding-inline: 24px;
+}
+
+.nav-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .nav-tabs {
