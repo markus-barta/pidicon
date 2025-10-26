@@ -9,7 +9,7 @@
 <p align="center">
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pidicon)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![Release](https://img.shields.io/badge/release-v3.2.0-green)](https://github.com/markus-barta/pidicon)
 [![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pidicon)
 [![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)](https://github.com/markus-barta/pidicon)
@@ -493,7 +493,7 @@ Open an issue or PR and let's make something great together!
 
 ## 📄 License
 
-GNU GPL v3.0 — free as in freedom. See LICENSE for details.
+GNU AGPL v3.0 — free as in freedom. See LICENSE for details.
 
 ---
 
