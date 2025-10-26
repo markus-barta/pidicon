@@ -378,7 +378,9 @@ function formatAutomatedDescription(test) {
     parts.push(ancestorTitles.join(' › '));
   }
   if (filePath) {
-    parts.push(filePath.replace(process.cwd(), ''));
+    // Remove common path prefixes for cleaner display
+    const cleanPath = filePath.replace(/^.*\/(test\/|ui-tests\/)/, '$1');
+    parts.push(cleanPath);
   }
   return parts.join(' • ') || 'Automated test';
 }
