@@ -10,8 +10,9 @@
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/markus-barta/pidicon)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v3.0.0-green)](https://github.com/markus-barta/pidicon)
+[![Release](https://img.shields.io/badge/release-v3.2.0-green)](https://github.com/markus-barta/pidicon)
 [![Devices](https://img.shields.io/badge/devices-Pixoo%20%7C%20AWTRIX-blue)](https://github.com/markus-barta/pidicon)
+[![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)](https://github.com/markus-barta/pidicon)
 
 </p>
 
@@ -29,6 +30,8 @@ beautiful visuals. Control your displays with simple MQTT messages, through the 
 - **🌐 Modern Web UI** - Vue 3 + Vuetify 3 control panel with real-time WebSocket updates
 - **📡 MQTT Integration** - Full control via MQTT messages for home automation
 - **🎬 Smart Scene System** - Hot-swappable scenes with play/pause/stop controls per device
+- **⏰ Scene Scheduling** - Time-based scene activation with weekday filtering (NEW in v3.2)
+- **📊 Advanced Scene Manager** - Universal timing parameters, usage tracking, favorites (NEW in v3.2)
 - **🐕 Watchdog Monitoring** - Auto-restart, fallback scenes, or MQTT commands on device failure
 - **💨 Hot-Swap Drivers** - Switch between real and mock drivers on the fly
 
@@ -50,8 +53,8 @@ beautiful visuals. Control your displays with simple MQTT messages, through the 
 ## 🤔 Why PIDICON?
 
 **PIDICON (Pixel Display Controller)** started as `pidicon` for the Divoom Pixoo 64, but grew into a universal
-platform for managing any pixel display device. Version 3.0 introduces multi-device support, enabling you to control
-Pixoo, AWTRIX, and future devices from a single daemon with a unified API.
+platform for managing any pixel display device. Version 3.2 brings comprehensive scene management with scheduling,
+usage tracking, and advanced configuration options, making it the most powerful pixel display controller available.
 
 **Key Advantages:**
 
@@ -83,10 +86,11 @@ scope while maintaining 100% compatibility.
 **Features:**
 
 - 🎮 **Per-Device Control** - Independent scene selection and control for each device
-- ⚡ **WebSocket Updates** - Real-time state sync with < 100ms latency (NEW in v2.1)
+- ⚡ **WebSocket Updates** - Real-time state sync with < 100ms latency
 - 📊 **Real-Time Metrics** - FPS display, frametime monitoring, live scene performance
 - 🎛️ **Cassette Player Controls** - Play, pause, stop, restart, next, prior with visual feedback
 - 🎨 **Scene Browser** - Grouped by folder, numbered, with full path display
+- ⚙️ **Scene Manager** - Universal parameters, scheduling, usage tracking, bulk operations (NEW in v3.2)
 - 🔄 **Quick Actions** - Restart daemon, switch drivers, reset devices, display on/off
 - 💬 **Toast Notifications** - Non-blocking success/error messages (no more alerts!)
 - 📱 **Responsive Design** - Works beautifully on desktop, tablet, and mobile
@@ -319,7 +323,7 @@ Scenes are organized into three categories:
 **Run Tests:**
 
 ```bash
-npm test  # Full test suite (152 tests)
+npm test  # Full test suite (196 tests)
 ```
 
 **Live Testing Scripts:**
@@ -474,7 +478,8 @@ Open an issue or PR and let's make something great together!
 
 ## 📚 Documentation
 
-- [docs/API.md](docs/API.md) - **Complete API Reference** (NEW in v2.1)
+- [docs/API.md](docs/API.md) - **Complete API Reference**
+- [docs/reports/SCENE_MANAGER_IMPLEMENTATION.md](docs/reports/SCENE_MANAGER_IMPLEMENTATION.md) - **Scene Manager v3.2** (NEW)
 - [STANDARDS.md](STANDARDS.md) - Development standards and best practices
 - [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) - Code quality guidelines
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and patterns
