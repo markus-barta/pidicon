@@ -27,10 +27,21 @@
 
         <!-- Right: Build Info -->
         <div class="d-flex align-center">
-          <v-icon size="x-small" class="mr-1" style="vertical-align: middle;">mdi-source-commit</v-icon>
+          <v-icon 
+            size="x-small" 
+            class="mr-1 commit-check-icon" 
+            style="vertical-align: middle;"
+            @click="checkForNewBuild"
+            :class="{ 'checking': checkingForUpdate }"
+            title="Check for updates"
+          >
+            {{ checkingForUpdate ? 'mdi-loading' : 'mdi-source-commit' }}
+          </v-icon>
           <span v-if="buildNumber && gitCommit">
             <a :href="`https://github.com/markus-barta/pidicon/commit/${gitCommit}`" target="_blank" class="text-decoration-none text-primary">{{ gitCommit.slice(0, 7) }}</a>
-            (Build #{{ buildNumber}}) •
+            (Build #{{ buildNumber}})
+            <span v-if="newVersionAvailable" class="new-version-glow"> • New version available</span>
+            •
           </span>
           <a href="https://github.com/markus-barta/pidicon" target="_blank" class="text-decoration-none text-primary ml-1">
             <v-icon size="x-small" style="vertical-align: middle;">mdi-github</v-icon>
@@ -53,6 +64,10 @@ const api = useApi();
 
 const buildNumber = ref(null);
 const gitCommit = ref(null);
+const currentBuildNumber = ref(null);
+const currentGitCommit = ref(null);
+const newVersionAvailable = ref(false);
+const checkingForUpdate = ref(false);
 
 // Dev scenes toggle (shared via props with parent)
 const props = defineProps({
@@ -70,12 +85,45 @@ const toggleDiagnostics = () => {
   devMode.set(!devMode.enabled);
 };
 
+async function checkForNewBuild() {
+  if (checkingForUpdate.value) return; // Prevent multiple simultaneous checks
+  
+  try {
+    checkingForUpdate.value = true;
+    const status = await api.getSystemStatus();
+    
+    // If we have initial values and they differ, mark as new version available
+    if (currentBuildNumber.value && currentGitCommit.value) {
+      if (status.buildNumber !== currentBuildNumber.value || 
+          status.gitCommit !== currentGitCommit.value) {
+        newVersionAvailable.value = true;
+        buildNumber.value = status.buildNumber;
+        gitCommit.value = status.gitCommit;
+      } else {
+        // If manually checking and no new version, briefly reset the flag
+        newVersionAvailable.value = false;
+      }
+    }
+    
+    hasDevScenes.value = Boolean(status.devSceneCount);
+  } catch (error) {
+    console.error('Failed to check for new build:', error);
+  } finally {
+    checkingForUpdate.value = false;
+  }
+}
+
 onMounted(async () => {
   try {
     const status = await api.getSystemStatus();
     buildNumber.value = status.buildNumber;
     gitCommit.value = status.gitCommit;
+    currentBuildNumber.value = status.buildNumber;
+    currentGitCommit.value = status.gitCommit;
     hasDevScenes.value = Boolean(status.devSceneCount);
+    
+    // Check for updates after initial load (handles page reload scenario)
+    await checkForNewBuild();
   } catch (error) {
     console.error('Failed to load build info:', error);
   }
@@ -173,6 +221,48 @@ onMounted(async () => {
 .dev-toggle:focus-visible {
   outline: 2px solid rgba(59, 130, 246, 0.5);
   outline-offset: 2px;
+}
+
+/* Commit check icon - clickable */
+.commit-check-icon {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.commit-check-icon:hover {
+  color: #8b5cf6 !important;
+  transform: scale(1.2);
+}
+
+.commit-check-icon.checking {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* New version available glow effect */
+.new-version-glow {
+  font-weight: 600;
+  color: #f59e0b;
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 4px rgba(245, 158, 11, 0.6), 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.8), 0 0 16px rgba(245, 158, 11, 0.5), 0 0 24px rgba(245, 158, 11, 0.3);
+  }
 }
 
 /* Responsive breakpoints */
