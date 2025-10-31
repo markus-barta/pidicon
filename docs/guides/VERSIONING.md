@@ -148,26 +148,54 @@ Deploy container → Pixoo shows "Build:900"
 
 ---
 
-## Current State (Your Confusion Explained)
+## Understanding Version States
 
-- **package.json**: `"version": "3.2.0"` ← Target release version
-- **version.json**: `"buildNumber": 900` ← Last local build
-- **deploymentId**: `"v3.1.0-pre-scene-manager"` ← Dev phase marker
-- **README badge**: Shows `v3.2.0` ← Aspirational release number
+### Development vs Production
 
-**Why the mismatch?**
+During active development, you'll see different version numbers in different places:
 
-You're developing v3.2.0 features but haven't officially released yet. Build numbers keep
-incrementing with every commit (900, 901, 902...), but the semantic version stays at 3.2.0
-until you decide to tag and release it.
+| Location                 | What It Shows                 | Why                                               |
+| ------------------------ | ----------------------------- | ------------------------------------------------- |
+| **Local `version.json`** | Last generated build number   | Only updates when you run `npm run build:version` |
+| **Git commit count**     | True current build number     | `git rev-list --count HEAD`                       |
+| **Running daemon**       | Build baked into Docker image | From when container was built                     |
+| **GitHub Pages**         | Latest CI/CD published build  | Updated after each push to main                   |
 
-**Web UI says "Current: #901 Latest: #898"?**
+### Common Scenarios
 
-- **#901** = Your local development (you've made commits not pushed yet)
-- **#898** = Last published build on GitHub Pages
-- You're ahead of production, which is why it says "up to date"
+#### Scenario 1: Working locally, haven't pushed
 
-This is **normal and expected** during development!
+```text
+Local commits: Build #905
+GitHub Pages:  Build #902
+Production:    Build #902
+Status: You're ahead (normal during development)
+```
+
+#### Scenario 2: Just pushed to main
+
+```text
+Local commits: Build #905
+GitHub Pages:  Build #902 (building #905 now...)
+Production:    Build #902 (will update in ~3-5 min)
+Status: Deployment in progress
+```
+
+#### Scenario 3: Everything synced
+
+```text
+Local commits: Build #905
+GitHub Pages:  Build #905
+Production:    Build #905
+Status: All systems current
+```
+
+### Semantic Version vs Build Number
+
+- **Semantic version (v3.2.0)** stays the same during development
+- **Build numbers** increment with every commit
+- This is **intentional and correct** - you're working toward v3.2.0 release
+- Only bump semantic version when officially releasing
 
 ---
 
@@ -503,6 +531,15 @@ cat version.json | jq .buildNumber
 
 This happens if you have uncommitted changes. CI/CD builds from clean git state,
 local might have uncommitted work. Push your commits to sync.
+
+### "Web UI shows stale version info"
+
+With cache removed (as of build #902), the Web UI always fetches fresh version info from
+GitHub Pages. If it still shows old data:
+
+1. Hard refresh browser (Cmd+Shift+R)
+2. Check GitHub Pages directly: `curl https://markus-barta.github.io/pidicon/version.json`
+3. Verify CI/CD completed: Check GitHub Actions status
 
 ---
 
