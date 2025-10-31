@@ -5,7 +5,8 @@
 
 ## User Story
 
-As a user, I want devices to be automatically discovered on my network, so that I don't have to manually enter IP addresses and device information.
+As a user, I want devices to be automatically discovered on my network,
+so that I don't have to manually enter IP addresses and device information.
 
 ## Goal
 

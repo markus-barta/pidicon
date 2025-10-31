@@ -15,15 +15,17 @@ Increase test coverage to 80%+ for all critical modules.
 - Integration tests: Good
 - E2E tests: Manual only
   **Coverage Goals**:
-  | Module | Current | Target | Priority |
+
+  | Module             | Current | Target | Priority |
   | ------------------ | ------- | ------ | -------- |
-  | scene-manager.js | ~70% | 85%+ | High |
-  | device-adapter.js | ~75% | 85%+ | High |
-  | scene-framework.js | ~60% | 80%+ | Medium |
-  | graphics-engine.js | ~80% | 85%+ | Medium |
-  | mqtt-service.js | ~75% | 85%+ | High |
-  | command-handlers | ~80% | 85%+ | Medium |
-  | web/server.js | ~50% | 75%+ | Medium |
+  | scene-manager.js   | ~70%    | 85%+   | High     |
+  | device-adapter.js  | ~75%    | 85%+   | High     |
+  | scene-framework.js | ~60%    | 80%+   | Medium   |
+  | graphics-engine.js | ~80%    | 85%+   | Medium   |
+  | mqtt-service.js    | ~75%    | 85%+   | High     |
+  | command-handlers   | ~80%    | 85%+   | Medium   |
+  | web/server.js      | ~50%    | 75%+   | Medium   |
+
   **Implementation Plan**:
 
 1. Add c8 (Istanbul) for coverage reporting

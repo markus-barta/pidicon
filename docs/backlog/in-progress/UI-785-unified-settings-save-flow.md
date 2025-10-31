@@ -1,11 +1,12 @@
 # UI-785: Unified Settings Save Flow
 
-**Status**: In Progress (2025-10-21) – Single Save Settings CTA wired, unsaved-change pulse active. Awaiting | **Priority**: P1 (Important)
+**Status**: In Progress (2025-10-21) – Single Save Settings CTA wired, pulse active | **Priority**: P1 (Important)
 **Effort**: 4-6 hours | **Owner**: mba
 
 ## User Story
 
-As a user, I want a single save button for all settings with visual indication of unsaved changes, so that I don't accidentally leave configuration incomplete.
+As a user, I want a single save button for all settings with visual indication of unsaved changes,
+so that I don't accidentally leave configuration incomplete.
 
 ## Problem
 

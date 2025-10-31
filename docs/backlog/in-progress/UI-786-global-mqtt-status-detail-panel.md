@@ -1,6 +1,6 @@
 # UI-786: Global MQTT Status Detail Panel
 
-**Status**: In Progress (2025-10-21) – Detailed MQTT status card implemented in settings panel. Awaiting | **Priority**: P2 (Nice to Have)
+**Status**: In Progress (2025-10-21) – Detailed MQTT status card implemented | **Priority**: P2 (Nice to Have)
 **Effort**: 2-3 hours | **Owner**: mba
 
 ## Problem

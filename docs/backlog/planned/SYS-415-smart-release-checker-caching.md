@@ -5,7 +5,8 @@
 
 ## Problem
 
-ReleaseChecker now fetches from GitHub Pages on every check (no caching). For production with many users or frequent checks, this could create unnecessary network requests.
+ReleaseChecker now fetches from GitHub Pages on every check (no caching). For production with many users or
+frequent checks, this could create unnecessary network requests.
 
 ## Goal
 

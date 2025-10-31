@@ -1,6 +1,6 @@
 # UI-784: Global Settings Copy & Styling
 
-**Status**: In Progress (2025-10-21) – UI copy refreshed, slider restyled like device cards, unified defaults | **Priority**: P2 (Nice to Have)
+**Status**: In Progress (2025-10-21) – UI copy refreshed, slider restyled like device cards | **Priority**: P2 (Nice to Have)
 **Effort**: 3-4 hours | **Owner**: mba
 
 ## Problem
