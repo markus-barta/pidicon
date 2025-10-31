@@ -11,11 +11,11 @@ This directory contains all backlog items organized by status.
 
 ## Quick Stats
 
-- **Planned**: 19 items
+- **Planned**: 20 items
 - **In Progress**: 7 items
 - **Completed**: 61 items
 - **Cancelled**: 3 items
-- **Total**: 90 items
+- **Total**: 91 items
 
 ## File Naming
 

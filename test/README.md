@@ -262,9 +262,9 @@ it('test 1', () => {
 
 ## 📚 Related Documentation
 
-- [../STANDARDS.md](../STANDARDS.md#testing--performance) - Testing standards
-- [../docs/CODE_QUALITY.md](../docs/CODE_QUALITY.md#testing) - Test quality guidelines
-- [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) - Architecture and testability
+- [../docs/guides/DEVELOPMENT_STANDARDS.md](../docs/guides/DEVELOPMENT_STANDARDS.md#testing-strategy) - Testing standards
+- [../docs/guides/CODE_QUALITY.md](../docs/guides/CODE_QUALITY.md#testing) - Test quality guidelines
+- [../docs/guides/ARCHITECTURE.md](../docs/guides/ARCHITECTURE.md) - Architecture and testability
 
 ---
 

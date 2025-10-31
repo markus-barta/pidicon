@@ -205,5 +205,5 @@ Executed on the server to pull the latest code and restart the Docker container.
 ## 📚 Related Documentation
 
 - [VERSIONING.md](./VERSIONING.md) - Complete version management strategy
-- [STANDARDS.md](./STANDARDS.md) - Development standards
-- [lib/deployment-tracker.js](./lib/deployment-tracker.js) - Version tracker implementation
+- [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) - Development standards
+- [lib/deployment-tracker.js](../../lib/deployment-tracker.js) - Version tracker implementation

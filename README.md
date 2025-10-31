@@ -338,7 +338,7 @@ node scripts/live_test_perf_once.js    # Performance benchmark
 
 - Use `mock` driver for fast iteration
 - Test with real device only when needed
-- Check build number matches before live testing (see [STANDARDS.md](STANDARDS.md))
+- Check build number matches before live testing (see [docs/guides/DEVELOPMENT_STANDARDS.md](docs/guides/DEVELOPMENT_STANDARDS.md))
 
 ---
 
@@ -467,7 +467,7 @@ docker logs pidicon -f --timestamps --tail 100
 
 Contributions welcome! Please:
 
-- Follow the guidelines in [STANDARDS.md](STANDARDS.md) and [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md)
+- Follow the guidelines in [docs/guides/DEVELOPMENT_STANDARDS.md](docs/guides/DEVELOPMENT_STANDARDS.md) and [docs/guides/CODE_QUALITY.md](docs/guides/CODE_QUALITY.md)
 - Keep commits conventional (`feat:`, `fix:`, `docs:`)
 - Write tests for new features
 - Update documentation
@@ -478,16 +478,16 @@ Open an issue or PR and let's make something great together!
 
 ## 📚 Documentation
 
-- [docs/API.md](docs/API.md) - **Complete API Reference**
+- [docs/guides/API.md](docs/guides/API.md) - **Complete API Reference**
 - [docs/reports/SCENE_MANAGER_IMPLEMENTATION.md](docs/reports/SCENE_MANAGER_IMPLEMENTATION.md) - **Scene Manager v3.2** (NEW)
-- [STANDARDS.md](STANDARDS.md) - Development standards and best practices
-- [docs/CODE_QUALITY.md](docs/CODE_QUALITY.md) - Code quality guidelines
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and patterns
-- [docs/SCENE_DEVELOPMENT.md](docs/SCENE_DEVELOPMENT.md) - Scene development guide
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Deployment guide
-- [docs/VERSIONING.md](docs/VERSIONING.md) - Version management strategy
+- [docs/guides/DEVELOPMENT_STANDARDS.md](docs/guides/DEVELOPMENT_STANDARDS.md) - Development standards and best practices
+- [docs/guides/CODE_QUALITY.md](docs/guides/CODE_QUALITY.md) - Code quality guidelines
+- [docs/guides/ARCHITECTURE.md](docs/guides/ARCHITECTURE.md) - System design and patterns
+- [docs/guides/SCENE_DEVELOPMENT.md](docs/guides/SCENE_DEVELOPMENT.md) - Scene development guide
+- [docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md) - Deployment guide
+- [docs/guides/VERSIONING.md](docs/guides/VERSIONING.md) - Version management strategy
 - [MQTT_COMMANDS.md](MQTT_COMMANDS.md) - Complete MQTT command reference
-- [docs/BACKLOG.md](docs/BACKLOG.md) - Roadmap and backlog
+- [docs/backlog/README.md](docs/backlog/README.md) - Roadmap and backlog
 
 ---
 

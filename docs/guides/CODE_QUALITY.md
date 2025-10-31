@@ -208,7 +208,7 @@ canvas.drawRect(
   DISPLAY.CENTER_X,
   DISPLAY.CENTER_Y,
   DISPLAY.WIDTH,
-  DISPLAY.HEIGHT,
+  DISPLAY.HEIGHT
 );
 ```
 
@@ -430,7 +430,7 @@ throw new Error('Something went wrong');
 // ✅ GOOD - Actionable, specific
 throw new ValidationError('Email must be in format: user@domain.com');
 throw new DeviceError(
-  `Failed to connect to device ${ip} after ${MAX_RETRIES} retries`,
+  `Failed to connect to device ${ip} after ${MAX_RETRIES} retries`
 );
 ```
 
@@ -633,9 +633,9 @@ it('processes user', () => {
 
 ## 📚 Related Documentation
 
-- [STANDARDS.md](../STANDARDS.md) - Overall development standards
+- [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) - Overall development standards
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
-- [lib/README.md](../lib/README.md) - Module documentation
+- [lib/README.md](../../lib/README.md) - Module documentation
 
 ---
 

@@ -427,9 +427,9 @@ module.exports = { ... };
 
 ## 📚 Related Documentation
 
-- [API.md](../docs/API.md) - Complete API reference
-- [STANDARDS.md](../STANDARDS.md) - Development standards
-- [VERSIONING.md](../docs/VERSIONING.md) - Version management strategy
+- [API.md](../docs/guides/API.md) - Complete API reference
+- [DEVELOPMENT_STANDARDS.md](../docs/guides/DEVELOPMENT_STANDARDS.md) - Development standards
+- [VERSIONING.md](../docs/guides/VERSIONING.md) - Version management strategy
 - [scenes/README.md](../scenes/README.md) - Scene development guide
 - [SCENE_DEVELOPMENT.md](../docs/SCENE_DEVELOPMENT.md) - Best practices
 

@@ -14,6 +14,7 @@
 
 ### **Development Guides**
 
+- **[DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)** - Quick reference for development standards
 - **[SCENE_DEVELOPMENT.md](./SCENE_DEVELOPMENT.md)** - Complete guide for creating and registering scenes
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment pipeline, Docker, and CI/CD workflows
 - **[VERSIONING.md](./VERSIONING.md)** - Version management strategy and build numbering
@@ -65,7 +66,7 @@
 
 Start here:
 
-1. **[../STANDARDS.md](../STANDARDS.md)** - Quick reference for development standards
+1. **[DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)** - Quick reference for development standards
 2. **[CODE_QUALITY.md](./CODE_QUALITY.md)** - Code quality best practices
 3. **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Understanding the system design
 
@@ -90,16 +91,19 @@ Start here:
 ```text
 docs/
 ├── README.md                        # This file
-├── API.md                           # 🆕 Complete API reference (v2.1)
-├── ARCHITECTURE.md                  # System design & architecture
-├── CODE_QUALITY.md                  # ⭐ Code quality standards
-├── SCENE_DEVELOPMENT.md             # Scene development guide
-├── DEPLOYMENT.md                    # Deployment & ops guide
-├── VERSIONING.md                    # Version strategy
-├── CONFIG_AND_PERSISTENCE.md        # Configuration management
-├── WEB_UI_SETUP.md                  # Complete Web UI setup
-├── BACKLOG.md                       # Task tracking & roadmap
-├── BACKLOG_DONE.md                  # Archive of completed items
+├── guides/                          # Comprehensive guides
+│   ├── DEVELOPMENT_STANDARDS.md    # Quick reference for development
+│   ├── CODE_QUALITY.md             # ⭐ Code quality standards
+│   ├── ARCHITECTURE.md             # System design & architecture
+│   ├── SCENE_DEVELOPMENT.md        # Scene development guide
+│   ├── DEPLOYMENT.md               # Deployment & ops guide
+│   ├── VERSIONING.md               # Version strategy
+│   └── ...                         # Other guides
+├── backlog/                         # Task tracking
+│   ├── README.md                   # Backlog overview
+│   ├── in-progress/                # Active tasks
+│   ├── planned/                    # Future tasks
+│   └── completed/                  # Done tasks
 └── reports/                         # Archived completion docs
     ├── PHASE1_COMPLETE.md           # Phase 1 report
     ├── PHASE2_COMPLETE.md           # Phase 2 report

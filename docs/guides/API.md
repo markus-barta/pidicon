@@ -852,7 +852,7 @@ const alpha = engine.updateFadeTransition();
 await engine.drawGradientBackground(
   [255, 0, 0, 255],
   [0, 0, 255, 255],
-  'vertical',
+  'vertical'
 );
 ```
 
@@ -909,7 +909,7 @@ See [scenes/examples/](../scenes/examples/) for complete working examples:
 - **Documentation**: [docs/](../docs/)
 - **Issues**: GitHub Issues
 - **Code Quality**: [CODE_QUALITY.md](CODE_QUALITY.md)
-- **Standards**: [STANDARDS.md](../STANDARDS.md)
+- **Standards**: [DEVELOPMENT_STANDARDS.md](DEVELOPMENT_STANDARDS.md)
 
 ---
 

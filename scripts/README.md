@@ -131,7 +131,7 @@ node scripts/live_test_perf_once.js
 # 5. Record results in docs/BACKLOG.md
 ```
 
-See [../STANDARDS.md](../STANDARDS.md#testing-protocol) for complete protocol.
+See [../docs/guides/DEVELOPMENT_STANDARDS.md](../docs/guides/DEVELOPMENT_STANDARDS.md#testing-strategy) for complete protocol.
 
 ---
 
@@ -218,9 +218,9 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
 ## 🔗 Related Documentation
 
-- [../STANDARDS.md](../STANDARDS.md) - Development standards
-- [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) - Deployment guide
-- [../docs/VERSIONING.md](../docs/VERSIONING.md) - Version strategy
+- [../docs/guides/DEVELOPMENT_STANDARDS.md](../docs/guides/DEVELOPMENT_STANDARDS.md) - Development standards
+- [../docs/guides/DEPLOYMENT.md](../docs/guides/DEPLOYMENT.md) - Deployment guide
+- [../docs/guides/VERSIONING.md](../docs/guides/VERSIONING.md) - Version strategy
 
 ---
 
