@@ -16,8 +16,10 @@ export function getSimplePerformanceColor(frametime) {
     (CHART_MAX_FRAMETIME - CHART_MIN_FRAMETIME);
 
   if (ratio <= 0.2) {
+    // Cyan to blue-green (0-100ms) - excellent performance
+    // Start with bright cyan [0, 200, 255] instead of black [0, 0, 0]
     const blend = ratio / 0.2;
-    return [0, Math.round(200 * blend), Math.round(255 * blend), 255];
+    return [0, Math.round(200 + 55 * blend), 255, 255];
   }
   if (ratio <= 0.4) {
     const blend = (ratio - 0.2) / 0.2;
