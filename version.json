@@ -1,0 +1,12 @@
+{
+  "version": "3.2.0",
+  "deploymentId": "v3.2.0-9a018bd",
+  "buildNumber": 897,
+  "gitCommit": "9a018bd",
+  "gitCommitFull": "9a018bd92db916f3d6e89b943d03b7eb8d9551a2",
+  "gitCommitCount": 897,
+  "gitBranch": "main",
+  "gitTag": null,
+  "buildTime": "2025-10-31T16:24:13.847Z",
+  "environment": "development"
+}
