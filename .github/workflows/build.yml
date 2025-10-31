@@ -75,19 +75,22 @@ jobs:
       - name: Publish version info to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          # Save version.json before switching branches
+          cp version.json /tmp/version.json
+
           # Configure git
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
           # Create/checkout gh-pages branch
-          git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
-          git checkout gh-pages || git checkout --orphan gh-pages
+          git fetch origin gh-pages 2>/dev/null || true
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
 
-          # Remove all files except version.json
+          # Remove all files
           git rm -rf . 2>/dev/null || true
 
-          # Copy version.json from main branch
-          git checkout main -- version.json
+          # Copy version.json from temp location
+          cp /tmp/version.json version.json
 
           # Commit and push
           git add version.json
