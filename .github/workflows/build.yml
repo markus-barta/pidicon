@@ -75,6 +75,9 @@ jobs:
       - name: Publish version info to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
+          # Ensure we're in the repo root
+          cd $GITHUB_WORKSPACE
+
           # Save version.json before switching branches
           cp version.json /tmp/version.json
 
