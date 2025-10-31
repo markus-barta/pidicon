@@ -27,7 +27,7 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +56,7 @@ jobs:
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
+        id: docker_build
         with:
           context: .
           push: ${{ github.event_name == 'push' }}
@@ -70,3 +71,25 @@ jobs:
             BUILD_DATE=${{ steps.build_metadata.outputs.BUILD_DATE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Publish version info to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Configure git
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Create/checkout gh-pages branch
+          git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
+          git checkout gh-pages || git checkout --orphan gh-pages
+
+          # Remove all files except version.json
+          git rm -rf . 2>/dev/null || true
+
+          # Copy version.json from main branch
+          git checkout main -- version.json
+
+          # Commit and push
+          git add version.json
+          git commit -m "Update version info: Build ${{ steps.build_metadata.outputs.GIT_COMMIT_COUNT }}" || echo "No changes to commit"
+          git push origin gh-pages --force

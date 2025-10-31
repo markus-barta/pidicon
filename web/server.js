@@ -104,6 +104,18 @@ function startWebServer(container, logger) {
     }
   });
 
+  // GET /api/releases/check - Check for new releases via GitHub Pages
+  app.get('/api/releases/check', async (_req, res) => {
+    try {
+      const releaseChecker = container.resolve('releaseChecker');
+      const updateInfo = await releaseChecker.checkForUpdate();
+      res.json(updateInfo);
+    } catch (error) {
+      logger.error('API /api/releases/check error:', { error: error.message });
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/devices - List all devices
   app.get('/api/devices', async (req, res) => {
     try {

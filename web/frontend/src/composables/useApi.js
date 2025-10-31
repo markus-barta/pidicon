@@ -151,6 +151,10 @@ export function useApi() {
     });
   }
 
+  async function getLatestRelease() {
+    return await request('/releases/check');
+  }
+
   return {
     loading,
     error,
@@ -176,5 +180,6 @@ export function useApi() {
     restartDaemon,
     connectMqtt,
     disconnectMqtt,
+    getLatestRelease,
   };
 }

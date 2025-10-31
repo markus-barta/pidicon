@@ -32,6 +32,7 @@ const SceneManager = require('./lib/scene-manager');
 const DeviceService = require('./lib/services/device-service');
 const DiagnosticsService = require('./lib/services/diagnostics-service');
 const MqttConfigService = require('./lib/services/mqtt-config-service');
+const ReleaseChecker = require('./lib/services/release-checker');
 const SceneService = require('./lib/services/scene-service');
 const SchedulerService = require('./lib/services/scheduler-service');
 const SystemService = require('./lib/services/system-service');
@@ -90,6 +91,11 @@ async function bootstrap() {
     return new StateStore({ logger });
   });
   container.register('deploymentTracker', () => new DeploymentTracker());
+  container.register(
+    'releaseChecker',
+    ({ deploymentTracker, logger }) =>
+      new ReleaseChecker(deploymentTracker, logger)
+  );
   container.register('deviceConfigStore', () => new DeviceConfigStore());
   container.register(
     'sceneManager',

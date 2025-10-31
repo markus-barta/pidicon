@@ -90,33 +90,24 @@ async function checkForNewBuild() {
   
   try {
     checkingForUpdate.value = true;
-    const status = await api.getSystemStatus();
     
-    // Get the stored build info from localStorage
-    const storedBuildInfo = localStorage.getItem('pidicon:lastKnownBuild');
-    if (storedBuildInfo) {
-      const { buildNumber: storedBuild, gitCommit: storedCommit } = JSON.parse(storedBuildInfo);
-      
-      // Compare current with stored
-      if (status.buildNumber !== storedBuild || status.gitCommit !== storedCommit) {
-        newVersionAvailable.value = true;
-        buildNumber.value = status.buildNumber;
-        gitCommit.value = status.gitCommit;
-        console.log(`New build detected! Old: #${storedBuild} (${storedCommit}), New: #${status.buildNumber} (${status.gitCommit})`);
-      } else {
-        newVersionAvailable.value = false;
-      }
-      
-      // Update localStorage with current server build
-      localStorage.setItem('pidicon:lastKnownBuild', JSON.stringify({
-        buildNumber: status.buildNumber,
-        gitCommit: status.gitCommit
-      }));
+    // Check GitHub Pages for latest release
+    const releaseInfo = await api.getLatestRelease();
+    
+    if (releaseInfo.updateAvailable) {
+      newVersionAvailable.value = true;
+      console.log(`🎉 New version available! Current: Build #${releaseInfo.current.buildNumber}, Latest: Build #${releaseInfo.latest.buildNumber}`);
+    } else {
+      newVersionAvailable.value = false;
+      console.log(`✓ You're up to date (Build #${releaseInfo.current.buildNumber})`);
     }
     
-    hasDevScenes.value = Boolean(status.devSceneCount);
+    // Also update local build info
+    buildNumber.value = releaseInfo.current.buildNumber;
+    gitCommit.value = releaseInfo.current.gitCommit;
+    
   } catch (error) {
-    console.error('Failed to check for new build:', error);
+    console.error('Failed to check for updates:', error);
   } finally {
     checkingForUpdate.value = false;
   }
@@ -124,6 +115,7 @@ async function checkForNewBuild() {
 
 onMounted(async () => {
   try {
+    // Get system status for dev scenes count
     const status = await api.getSystemStatus();
     buildNumber.value = status.buildNumber;
     gitCommit.value = status.gitCommit;
@@ -131,26 +123,8 @@ onMounted(async () => {
     currentGitCommit.value = status.gitCommit;
     hasDevScenes.value = Boolean(status.devSceneCount);
     
-    // Get stored build from localStorage
-    const storedBuildInfo = localStorage.getItem('pidicon:lastKnownBuild');
-    
-    if (storedBuildInfo) {
-      // We have a previous build stored - check if current server build is different
-      const { buildNumber: storedBuild, gitCommit: storedCommit } = JSON.parse(storedBuildInfo);
-      
-      if (status.buildNumber !== storedBuild || status.gitCommit !== storedCommit) {
-        // New version detected!
-        newVersionAvailable.value = true;
-        console.log(`New build available! Stored: #${storedBuild} (${storedCommit}), Current: #${status.buildNumber} (${status.gitCommit})`);
-      }
-    }
-    
-    // Always update localStorage with the current server build
-    // This ensures the message shows only once per new deployment
-    localStorage.setItem('pidicon:lastKnownBuild', JSON.stringify({
-      buildNumber: status.buildNumber,
-      gitCommit: status.gitCommit
-    }));
+    // Auto-check for updates on mount (cached for 1 hour on backend)
+    checkForNewBuild();
   } catch (error) {
     console.error('Failed to load build info:', error);
   }
