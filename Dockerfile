@@ -17,9 +17,12 @@ COPY lib/ ./lib/
 COPY scenes/ ./scenes/
 COPY web/ ./web/
 COPY vite.config.mjs ./
-COPY scripts/build-version.js ./scripts/
+
+# Copy scripts needed for build
+RUN mkdir -p scripts
+COPY scripts/build-version.js scripts/run-node-tests.js ./scripts/
+
 COPY test/ ./test/
-COPY scripts/run-node-tests.js ./scripts/
 
 # Build arguments for version info
 ARG GITHUB_SHA

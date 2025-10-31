@@ -72,6 +72,9 @@ function createMockDeviceService(metricsByIp, healthEntries = {}) {
     async restartDevice(ip) {
       metricsByIp[ip].restartCalled = true;
     },
+    async resetDevice(ip) {
+      metricsByIp[ip].restartCalled = true;
+    },
     getHealthEntry(ip) {
       return healthEntries[ip];
     },
