@@ -56,11 +56,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useApi } from '../composables/useApi';
+import { useToast } from '../composables/useToast';
 import { useDevModeStore } from '../store/dev-mode';
 
 const devMode = useDevModeStore();
 
 const api = useApi();
+const toast = useToast();
 
 const buildNumber = ref(null);
 const gitCommit = ref(null);
@@ -85,20 +87,43 @@ const toggleDiagnostics = () => {
   devMode.set(!devMode.enabled);
 };
 
-async function checkForNewBuild() {
+async function checkForNewBuild(showToast = true) {
   if (checkingForUpdate.value) return; // Prevent multiple simultaneous checks
   
   try {
     checkingForUpdate.value = true;
+    
+    // Show checking toast (only if requested)
+    if (showToast) {
+      toast.info('🔄 Checking for updates...', 2000);
+    }
     
     // Check GitHub Pages for latest release
     const releaseInfo = await api.getLatestRelease();
     
     if (releaseInfo.updateAvailable) {
       newVersionAvailable.value = true;
+      
+      // Show update available toast with details (only if requested)
+      if (showToast) {
+        toast.warning(
+          `🎉 New version available!\n\nCurrent: Build #${releaseInfo.current.buildNumber}\nLatest: Build #${releaseInfo.latest.buildNumber}\n\nUpdate your container to get the latest features!`,
+          8000
+        );
+      }
+      
       console.log(`🎉 New version available! Current: Build #${releaseInfo.current.buildNumber}, Latest: Build #${releaseInfo.latest.buildNumber}`);
     } else {
       newVersionAvailable.value = false;
+      
+      // Show up-to-date toast (only if requested)
+      if (showToast) {
+        toast.success(
+          `✓ You're up to date!\n\nCurrent: Build #${releaseInfo.current.buildNumber}\nLatest: Build #${releaseInfo.latest.buildNumber}`,
+          5000
+        );
+      }
+      
       console.log(`✓ You're up to date (Build #${releaseInfo.current.buildNumber})`);
     }
     
@@ -108,6 +133,14 @@ async function checkForNewBuild() {
     
   } catch (error) {
     console.error('Failed to check for updates:', error);
+    
+    // Show error toast (only if requested)
+    if (showToast) {
+      toast.error(
+        '⚠️ Could not check for updates\n\nPlease try again later or check your network connection.',
+        5000
+      );
+    }
   } finally {
     checkingForUpdate.value = false;
   }
@@ -123,8 +156,8 @@ onMounted(async () => {
     currentGitCommit.value = status.gitCommit;
     hasDevScenes.value = Boolean(status.devSceneCount);
     
-    // Auto-check for updates on mount (cached for 1 hour on backend)
-    checkForNewBuild();
+    // Auto-check for updates on mount (silent, no toast)
+    checkForNewBuild(false);
   } catch (error) {
     console.error('Failed to load build info:', error);
   }
