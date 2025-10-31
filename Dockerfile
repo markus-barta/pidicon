@@ -3,9 +3,6 @@
 # ============================================================================
 FROM node:24-alpine AS builder
 
-# Install git for version detection
-RUN apk add --no-cache git
-
 WORKDIR /app
 
 # Copy package files first (for better layer caching)
