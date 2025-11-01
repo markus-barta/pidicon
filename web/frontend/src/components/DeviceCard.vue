@@ -694,7 +694,11 @@ const brightnessLoading = ref(false);
 const displayOn = ref(props.device.hardware?.displayOn !== false);
 const brightness = ref(props.device.hardware?.brightness ?? 75);
 const previousBrightness = ref(props.device.hardware?.brightness ?? 75);
-const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent');
+// Initialize logging level from backend, fallback to 'warning' for real devices, 'silent' for mock
+const loggingLevel = ref(
+  props.device.hardware?.loggingLevel ?? 
+  (props.device.driver === 'real' ? 'warning' : 'silent')
+);
 const confirmDialog = ref(null);
 
 // Device card preferences - persisted via usePreferences
@@ -727,6 +731,10 @@ watch(
       if (newHardware.brightness !== undefined && brightness.value !== newHardware.brightness) {
         console.log(`[${props.device.ip}] Syncing brightness: ${brightness.value} → ${newHardware.brightness}`);
         brightness.value = newHardware.brightness;
+      }
+      if (newHardware.loggingLevel !== undefined && loggingLevel.value !== newHardware.loggingLevel) {
+        console.log(`[${props.device.ip}] Syncing loggingLevel: ${loggingLevel.value} → ${newHardware.loggingLevel}`);
+        loggingLevel.value = newHardware.loggingLevel;
       }
     }
   },
