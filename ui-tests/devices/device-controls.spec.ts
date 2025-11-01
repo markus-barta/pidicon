@@ -81,6 +81,48 @@ test.describe('Devices view controls', () => {
     }
   });
 
+  test('logging level buttons update hardware state', async ({ page }) => {
+    const deviceCard = page.locator('.device-card').first();
+
+    // Get initial logging level from API
+    const devices = await fetchDevices(page);
+    const initial = devices[0].hardware?.loggingLevel ?? 'warning';
+
+    // Map logging levels to button selectors (using icons)
+    const loggingButtons = {
+      debug: deviceCard.locator('button:has(.v-icon.mdi-text-box-multiple-outline)').first(),
+      warning: deviceCard.locator('button:has(.v-icon.mdi-alert-outline)').first(),
+      silent: deviceCard.locator('button:has(.v-icon.mdi-cancel)').first(),
+    };
+
+    // Choose a different target level
+    const targetLevel = initial === 'debug' ? 'warning' : 'debug';
+    const targetButton = loggingButtons[targetLevel];
+
+    await expect(targetButton).toBeVisible({ timeout: 15_000 });
+
+    // Click the target logging level button
+    await targetButton.click();
+
+    // Wait for toast notification (indicates API call completed)
+    await expect(page.locator('.v-snackbar')).toBeVisible({ timeout: 5_000 });
+
+    // Verify logging level updated in backend state
+    await expect.poll(async () => (await fetchDevices(page))[0].hardware?.loggingLevel, {
+      timeout: 20_000,
+    }).toBe(targetLevel);
+
+    // Restore initial level if different
+    if (initial !== targetLevel) {
+      const restoreButton = loggingButtons[initial];
+      await restoreButton.click();
+
+      await expect.poll(async () => (await fetchDevices(page))[0].hardware?.loggingLevel, {
+        timeout: 20_000,
+      }).toBe(initial);
+    }
+  });
+
   test('scene selector switches scene', async ({ page }) => {
     const deviceCard = page.locator('[data-test="device-card"]').first();
     const sceneSelect = deviceCard.locator('[data-test="scene-selector"]');
