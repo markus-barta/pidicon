@@ -1,12 +1,12 @@
 {
-  "version": "3.2.0",
-  "deploymentId": "v3.2.0-4e3ecf6",
-  "buildNumber": 918,
-  "gitCommit": "4e3ecf6",
-  "gitCommitFull": "4e3ecf69a151f5ea09b46e8b4b36609bbb2ffda2",
-  "gitCommitCount": 918,
+  "version": "3.2.1",
+  "deploymentId": "v3.1.0-pre-scene-manager",
+  "buildNumber": 922,
+  "gitCommit": "1b21bf0",
+  "gitCommitFull": "1b21bf02dd3dc445490d613855aa9e7aa5d97b9a",
+  "gitCommitCount": 922,
   "gitBranch": "main",
-  "gitTag": null,
-  "buildTime": "2025-11-01T13:41:31.745Z",
+  "gitTag": "v3.1.0-pre-scene-manager",
+  "buildTime": "2025-11-01T14:31:28.089Z",
   "environment": "development"
 }
