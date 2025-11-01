@@ -11,7 +11,7 @@ As a user, I want all my UI preferences (device card state, filters, toggles) to
 
 Currently, almost all UI state is ephemeral and lost on page reload:
 
-### What's NOT Persisted (but should be):
+### What's NOT Persisted (but should be)
 
 - ❌ Device card collapsed/expanded state (per device IP)
 - ❌ Show scene details toggle (per device)
@@ -21,12 +21,12 @@ Currently, almost all UI state is ephemeral and lost on page reload:
 - ❌ Logs view filters and preferences
 - ❌ Current view (devices/settings/logs/tests)
 
-### What's Currently Persisted:
+### What's Currently Persisted
 
 - ✅ `showDevScenes` toggle (localStorage)
 - ✅ Device runtime state (brightness, scene) - via daemon StateStore
 
-### Impact:
+### Impact
 
 - Users lose their preferred UI layout on every reload
 - Device cards reset to default collapsed state (mock devices collapsed, real expanded)
@@ -201,14 +201,14 @@ const isCollapsed = computed({
 
 ## Technical Debt
 
-### Current Issues to Address:
+### Current Issues to Address
 
 1. `isCollapsed` in DeviceCard.vue is purely local (line 696)
 2. `showSceneDetails` and `showPerfMetrics` reset on reload
 3. Settings `activeTab` resets to 'devices' every time
 4. No centralized preferences management
 
-### Migration Path:
+### Migration Path
 
 1. Migrate `pidicon:showDevScenes` to new preferences schema
 2. Add version field for future migrations
