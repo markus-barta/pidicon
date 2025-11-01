@@ -45,8 +45,38 @@ jobs:
           echo "GIT_COMMIT_COUNT=$(git rev-list --count HEAD)" >> $GITHUB_OUTPUT
       - name: Generate version.json
         run: npm run build:version
-      - name: Backup version.json for GitHub Pages
-        run: cp version.json /tmp/version.json
+
+      # STEP 1: Publish to GitHub Pages FIRST (so version.json is available before Docker image)
+      # Pages deployment takes ~40s, Docker build takes 3-4 min, so no waiting needed
+      - name: Publish version info to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Save current state
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          # Configure git
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Create/checkout gh-pages branch
+          git fetch origin gh-pages 2>/dev/null || true
+          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+
+          # Remove all files except version.json
+          git rm -rf . 2>/dev/null || true
+
+          # Copy version.json from main branch working directory
+          git checkout $CURRENT_BRANCH -- version.json
+
+          # Commit and push (GitHub will deploy Pages in background ~40s)
+          git add version.json
+          git commit -m "Update version info: Build ${{ steps.build_metadata.outputs.GIT_COMMIT_COUNT }}" || echo "No changes to commit"
+          git push origin gh-pages --force
+
+          # Return to original branch
+          git checkout $CURRENT_BRANCH
+
+      # STEP 2: Build and push Docker image (takes 3-4 min, Pages will be live before this completes)
       - uses: docker/setup-buildx-action@v3
       - if: github.event_name == 'push'
         uses: docker/login-action@v3
@@ -80,28 +110,3 @@ jobs:
             BUILD_DATE=${{ steps.build_metadata.outputs.BUILD_DATE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Publish version info to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          # Ensure we're in the repo root
-          cd $GITHUB_WORKSPACE
-
-          # Configure git
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-          # Create/checkout gh-pages branch
-          git fetch origin gh-pages 2>/dev/null || true
-          git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
-
-          # Remove all files
-          git rm -rf . 2>/dev/null || true
-
-          # Copy version.json from backup (created before Docker build)
-          cp /tmp/version.json version.json
-
-          # Commit and push
-          git add version.json
-          git commit -m "Update version info: Build ${{ steps.build_metadata.outputs.GIT_COMMIT_COUNT }}" || echo "No changes to commit"
-          git push origin gh-pages --force

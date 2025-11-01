@@ -24,8 +24,7 @@ This is a **quick reference guide**. For comprehensive details, see:
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design patterns
 - **[SCENE_DEVELOPMENT.md](./SCENE_DEVELOPMENT.md)** - Scene development guide
 - **[TESTING.md](./TESTING.md)** - Testing strategy and protocols
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment workflows
-- **[VERSIONING.md](./VERSIONING.md)** - Version management
+- **[VERSIONING.md](./VERSIONING.md)** - Deployment & version management
 
 ---
 
@@ -232,7 +231,7 @@ Deployed commit `abc1234` (Build #650). Watchtower will pull shortly.
 git rev-list --count HEAD
 ```
 
-**👉 See [DEPLOYMENT.md](./DEPLOYMENT.md) and [VERSIONING.md](./VERSIONING.md) for details.**
+**👉 See [VERSIONING.md](./VERSIONING.md) for deployment and versioning details.**
 
 ---
 
@@ -342,8 +341,7 @@ performance (until proven otherwise).
 ### **Workflow Guides**
 
 - **[TESTING.md](./TESTING.md)** - Testing protocols and strategies
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment workflows
-- **[VERSIONING.md](./VERSIONING.md)** - Version management
+- **[VERSIONING.md](./VERSIONING.md)** - Deployment & version management
 - **[BACKLOG_MANAGEMENT.md](./BACKLOG_MANAGEMENT.md)** - Task tracking
 
 ### **Index**

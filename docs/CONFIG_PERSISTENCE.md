@@ -289,7 +289,7 @@ Expected output:
 ## See Also
 
 - [Architecture Documentation](ARCHITECTURE.md)
-- [Deployment Guide](DEPLOYMENT.md)
+- [Deployment Guide](guides/VERSIONING.md)
 - [Driver Development](DRIVER_DEVELOPMENT.md)
 
 ## Runtime State Persistence

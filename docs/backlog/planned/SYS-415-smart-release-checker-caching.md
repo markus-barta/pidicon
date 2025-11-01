@@ -33,3 +33,7 @@ Re-implement intelligent caching that balances freshness with efficiency:
 ## Notes
 
 Cache was removed in build #902 to fix stale deployment visibility. Only re-add if production traffic justifies it.
+
+## Related Changes
+
+**Build #919+**: CI workflow reordered to publish GitHub Pages before Docker build (parallel execution). Pages deployment (~40s) completes well before Docker build (~3-4 min), eliminating race condition where Docker was available before Pages. No artificial delays needed.

@@ -1,7 +1,83 @@
-# Version Management Guide
+# Deployment & Version Management
 
 **TL;DR**: Build numbers auto-increment with every commit. Semantic versions are manual for releases.
-Show build numbers to users (they're comparable). Show semantic versions for marketing.
+Docker deployment via CI/CD is fully automated with Watchtower. Show build numbers to users (they're comparable). Show semantic versions for marketing.
+
+---
+
+## 🚀 Automated Deployment
+
+### Quick Start
+
+Push to `main` branch → CI/CD builds and deploys automatically → Watchtower updates your container within minutes.
+
+### Pipeline Flow
+
+1. **GitHub Actions CI/CD**: Triggered on every push to `main`
+   - Runs tests
+   - Publishes version.json to GitHub Pages (~40s async deployment)
+   - Builds Docker image in parallel (takes 3-4 minutes)
+   - Tags with build number and git commit hash
+   - Pushes to GitHub Container Registry
+   - Pages is live well before Docker completes (no race condition)
+
+2. **Watchtower-Pixoo Service**: On-demand container monitoring
+   - Monitors pidicon container for image updates
+   - Checks every 5 seconds when running
+   - Pulls and restarts daemon automatically
+   - Stops after update or timeout
+
+3. **Husky Pre-commit Hook**: Prevents excessive CI builds
+   - Triggers watchtower before committing
+   - Runs for maximum 5 minutes
+   - Ensures container updates during development
+
+### Watchtower Configuration
+
+```yaml
+watchtower-pixoo:
+  image: containrrr/watchtower:latest
+  container_name: watchtower-pixoo
+  restart: unless-stopped
+  command: --interval 5 --label-enable --scope pixoo
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:rw
+  environment:
+    - 'WATCHTOWER_CLEANUP=true'
+    - 'WATCHTOWER_DEBUG=true'
+```
+
+### Manual Docker Deployment
+
+If needed, you can deploy manually:
+
+```bash
+# Build
+docker build -t pidicon:local .
+
+# Run
+docker run --rm -d --name pidicon \
+  -e MOSQITTO_HOST_MS24=your_broker_host \
+  -e MOSQITTO_USER_MS24=your_mqtt_user \
+  -e MOSQITTO_PASS_MS24=your_mqtt_pass \
+  -e PIXOO_DEVICE_TARGETS="192.168.1.159=real" \
+  pidicon:local
+```
+
+For production setup, see `other-code/server basics/docker-compose.yml`.
+
+### Deployment Verification
+
+After deployment, the startup scene displays:
+
+- Build number (from `version.json`)
+- Git commit hash
+- Current timestamp
+
+```bash
+# Trigger startup scene to verify
+mosquitto_pub -t "pixoo/192.168.1.159/state/upd" -m '{"scene":"startup"}'
+```
 
 ---
 
@@ -139,7 +215,11 @@ git push → Triggers CI/CD
          ↓
 CI/CD runs build-version.js → Fresh version.json with build #900
          ↓
-Docker build → Bakes version.json into image
+Publish to GitHub Pages → Starts async deployment (~40s to complete)
+         ↓
+Docker build → Starts immediately (takes 3-4 minutes)
+         ├→ GitHub Pages goes live after 40s
+         └→ Docker completes after 3-4 min
          ↓
 Docker images tagged: pidicon:900, pidicon:ecc3651, pidicon:latest
          ↓
@@ -172,13 +252,14 @@ Production:    Build #902
 Status: You're ahead (normal during development)
 ```
 
-#### Scenario 2: Just pushed to main
+#### Scenario 2: Just pushed to main (early in CI pipeline)
 
 ```text
 Local commits: Build #905
-GitHub Pages:  Build #902 (building #905 now...)
-Production:    Build #902 (will update in ~3-5 min)
-Status: Deployment in progress
+GitHub Pages:  Build #905 (updated first in CI)
+Production:    Build #902 (Docker image building now, ~2-3 min)
+Status: UI shows "update available" but Docker not ready yet
+Note: This is intentional - Watchtower polls every 10s and will update soon
 ```
 
 #### Scenario 3: Everything synced
@@ -241,9 +322,10 @@ git commit -m "feat: add new feature"
    ```
 
 5. **CI/CD automatically**:
-   - Builds Docker images
+   - Publishes version.json to GitHub Pages (deployment starts, takes ~40s)
+   - Builds Docker images in parallel (takes 3-4 minutes)
    - Tags as: `pidicon:v3.3.0`, `pidicon:901`, `pidicon:latest`
-   - Publishes version.json to GitHub Pages
+   - Pages is live well before Docker completes (no race condition)
 
 ### Verify Deployment
 

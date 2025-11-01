@@ -16,8 +16,7 @@
 
 - **[DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)** - Quick reference for development standards
 - **[SCENE_DEVELOPMENT.md](./SCENE_DEVELOPMENT.md)** - Complete guide for creating and registering scenes
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment pipeline, Docker, and CI/CD workflows
-- **[VERSIONING.md](./VERSIONING.md)** - Version management strategy and build numbering
+- **[VERSIONING.md](./guides/VERSIONING.md)** - Deployment, CI/CD, and version management
 
 ### **Configuration & Setup**
 
@@ -76,8 +75,7 @@ Start here:
 
 ### **For Deployment**
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment workflows
-- **[VERSIONING.md](./VERSIONING.md)** - Version numbering system
+- **[VERSIONING.md](./guides/VERSIONING.md)** - Complete deployment & version management guide
 
 ### **For Project Management**
 
@@ -96,8 +94,7 @@ docs/
 │   ├── CODE_QUALITY.md             # ⭐ Code quality standards
 │   ├── ARCHITECTURE.md             # System design & architecture
 │   ├── SCENE_DEVELOPMENT.md        # Scene development guide
-│   ├── DEPLOYMENT.md               # Deployment & ops guide
-│   ├── VERSIONING.md               # Version strategy
+│   ├── VERSIONING.md               # Deployment & version management
 │   └── ...                         # Other guides
 ├── backlog/                         # Task tracking
 │   ├── README.md                   # Backlog overview
@@ -160,7 +157,7 @@ docs/
 
 ### **Deployment Questions**
 
-→ [DEPLOYMENT.md](./DEPLOYMENT.md)
+→ [VERSIONING.md](./guides/VERSIONING.md)
 
 - Docker setup
 - CI/CD pipeline

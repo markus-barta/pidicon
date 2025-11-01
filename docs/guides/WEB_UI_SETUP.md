@@ -545,9 +545,9 @@ Edit `web/public/style.css` to customize the look and feel.
 
 ## 🔗 Related Documentation
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment guide
-- **[CONFIG_AND_PERSISTENCE.md](./CONFIG_AND_PERSISTENCE.md)** - Configuration management
-- **[BACKLOG.md](./BACKLOG.md)** - UI-401 completion status
+- **[VERSIONING.md](./VERSIONING.md)** - Deployment & version management guide
+- **[CONFIG_AND_PERSISTENCE.md](../CONFIG_AND_PERSISTENCE.md)** - Configuration management
+- **[BACKLOG.md](../backlog/README.md)** - UI-401 completion status
 
 ---
 
