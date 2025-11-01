@@ -1,5 +1,8 @@
 # Runtime State Persistence
 
+> **Scope**: This document covers **daemon/device runtime state** persistence (scenes, brightness, hardware state).  
+> For **UI preferences** persistence (collapsed cards, filters, view state), see [UI-787](../backlog/in-progress/UI-787-professional-ui-preferences-persistence.md).
+
 ## Overview
 
 The daemon now automatically persists critical runtime state to disk, allowing device state to survive daemon restarts and UI reconnections.
@@ -72,6 +75,18 @@ The daemon now automatically persists critical runtime state to disk, allowing d
 - `loopTimer` - Internal timer reference
 - `metrics` - Frame metrics (pushes, skipped, errors)
 
+**NOT in Scope (UI Preferences - handled separately):**
+
+- Device card collapsed/expanded state
+- Show scene details toggles
+- Show performance metrics toggles
+- Scene manager filters and selections
+- Settings page active tab
+- Current view (devices/settings/logs)
+
+> These UI preferences are managed by the frontend using browser localStorage.  
+> See [UI-787](../backlog/in-progress/UI-787-professional-ui-preferences-persistence.md) for details.
+
 ## Usage
 
 ### Daemon Startup
@@ -108,22 +123,22 @@ ws.on('open', () => {
 ### Flow Diagram
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                        Daemon                           │
+┌───────────────────────────────────────────────────────────┐
+│                        Daemon                             │
 │                                                           │
-│  ┌──────────────┐       ┌──────────────┐                │
-│  │  StateStore  │◄─────►│ DeviceService│                │
-│  │  (in-memory) │       │              │                │
-│  └──────┬───────┘       └──────────────┘                │
+│  ┌──────────────┐       ┌──────────────┐                  │
+│  │  StateStore  │◄─────►│ DeviceService│                  │
+│  │  (in-memory) │       │              │                  │
+│  └──────┬───────┘       └──────────────┘                  │
 │         │                                                 │
-│         │ Debounced (10s)                                │
+│         │ Debounced (10s)                                 │
 │         ▼                                                 │
-│  ┌──────────────────────┐                                │
-│  │ /data/runtime-state  │                                │
-│  │     .json            │                                │
-│  └──────────────────────┘                                │
+│  ┌──────────────────────┐                                 │
+│  │ /data/runtime-state  │                                 │
+│  │     .json            │                                 │
+│  └──────────────────────┘                                 │
 │                                                           │
-│         │ Real-time (WebSocket)                          │
+│         │ Real-time (WebSocket)                           │
 │         ▼                                                 │
 └─────────┼─────────────────────────────────────────────────┘
           │

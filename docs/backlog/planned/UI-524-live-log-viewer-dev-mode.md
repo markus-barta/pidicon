@@ -80,7 +80,7 @@ Transform the Logs tab into a fully functional live log viewer with:
 - [ ] **Global Daemon Log Level Control**
   - [ ] Add API endpoint `PUT /api/system/log-level` to change daemon log level
   - [ ] Add dropdown in Logs tab header to set global log level
-  - [ ] Persist log level preference (localStorage or config file)
+  - [ ] Persist log level preference using UI preferences system (see [UI-787](../in-progress/UI-787-professional-ui-preferences-persistence.md))
   - [ ] Show current log level in UI
 
 - [ ] **UI Error Capture**
