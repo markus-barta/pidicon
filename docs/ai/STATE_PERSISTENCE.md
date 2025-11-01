@@ -1,14 +1,15 @@
 # Runtime State Persistence
 
 > **Scope**: This document covers **daemon/device runtime state** persistence (scenes, brightness, hardware state).  
-> For **UI preferences** persistence (collapsed cards, filters, view state), see [UI-787](../backlog/in-progress/UI-787-professional-ui-preferences-persistence.md).
-
-> **Status**: Verified 2025-11-01 (UI-787 analysis). Device runtime persistence remains authoritative; UI preference
-> persistence is layered on top of this behaviour.
+> For **UI preferences** persistence (collapsed cards, filters, view state), see
+> [UI_PREFERENCES.md](../ui/UI_PREFERENCES.md).  
+> **Status**: Verified 2025-11-01 (UI-787 implementation). Device runtime persistence remains authoritative; UI
+> preference persistence is layered on top of this behaviour.
 
 ## Overview
 
-The daemon now automatically persists critical runtime state to disk, allowing device state to survive daemon restarts and UI reconnections.
+The daemon now automatically persists critical runtime state to disk, allowing device state to survive daemon
+restarts and UI reconnections.
 
 ## Problem Solved
 
@@ -88,7 +89,7 @@ The daemon now automatically persists critical runtime state to disk, allowing d
 - Current view (devices/settings/logs)
 
 > These UI preferences are managed by the frontend using browser localStorage.  
-> See [UI-787](../backlog/in-progress/UI-787-professional-ui-preferences-persistence.md) for details.
+> See [UI_PREFERENCES.md](../ui/UI_PREFERENCES.md) for details.
 
 ## Usage
 

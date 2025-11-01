@@ -103,6 +103,7 @@ import { useDevModeStore } from './store/dev-mode';
 import { useApi } from './composables/useApi';
 import { useToast } from './composables/useToast';
 import { useGlobalWebSocket } from './composables/useWebSocket';
+import { usePreferences } from './composables/usePreferences';
 import SystemStatus from './components/SystemStatus.vue';
 import DeviceCard from './components/DeviceCard.vue';
 import ToastNotifications from './components/ToastNotifications.vue';
@@ -117,22 +118,26 @@ const devModeStore = useDevModeStore();
 const api = useApi();
 const toast = useToast();
 const ws = useGlobalWebSocket();
+const prefs = usePreferences();
 
 const dataLoaded = ref(false);
 const error = ref(null);
 const lastSuccessfulLoad = ref(Date.now());
 const errorShown = ref(false);
 let pollInterval = null;
-const currentView = ref('devices'); // 'devices', 'settings', 'logs'
-const showDevScenes = ref(
-  JSON.parse(localStorage.getItem('pidicon:showDevScenes') || 'false'),
-);
+
+// Use preferences for currentView and showDevScenes
+const currentView = computed({
+  get: () => prefs.getPreference('currentView', 'devices'),
+  set: (value) => prefs.setPreference('currentView', value),
+});
+
+const showDevScenes = computed({
+  get: () => prefs.getPreference('showDevScenes', false),
+  set: (value) => prefs.setPreference('showDevScenes', value),
+});
 
 const showTestsTab = computed(() => devModeStore.enabled);
-
-watch(showDevScenes, (value) => {
-  localStorage.setItem('pidicon:showDevScenes', JSON.stringify(value));
-});
 
 const handleNavigation = (view) => {
   currentView.value = view;

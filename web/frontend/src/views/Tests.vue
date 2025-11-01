@@ -205,14 +205,39 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useApi } from '../composables/useApi';
+import { usePreferences } from '../composables/usePreferences';
 import TestDetailsDialog from '../components/TestDetailsDialog.vue';
 
 const api = useApi();
+const prefs = usePreferences();
 
-const searchQuery = ref('');
+// Preferences - persisted via usePreferences
+const searchQuery = computed({
+  get: () => prefs.getTestsViewPref('searchQuery', ''),
+  set: (value) => prefs.setTestsViewPref('searchQuery', value),
+});
+
+// Expanded sections - use Set for reactivity, sync with preferences
 const expandedSections = reactive(new Set());
+
+// Load expanded sections from preferences on mount
+onMounted(() => {
+  const saved = prefs.getTestsViewPref('expandedSections', []);
+  if (Array.isArray(saved)) {
+    saved.forEach((key) => expandedSections.add(key));
+  }
+
+  // Watch Set changes and persist to preferences
+  watch(
+    () => Array.from(expandedSections),
+    (newArray) => {
+      prefs.setTestsViewPref('expandedSections', newArray);
+    },
+    { deep: true },
+  );
+});
 const detailsDialog = reactive({ open: false, test: null });
 
 const testsState = reactive({

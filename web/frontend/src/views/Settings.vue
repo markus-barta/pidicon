@@ -68,6 +68,13 @@
             <v-icon class="mr-2">mdi-palette-advanced</v-icon>
             Scene Manager
           </v-tab>
+          <v-tab
+            value="advanced"
+            :class="{ 'tab-active': activeTab === 'advanced' }"
+          >
+            <v-icon class="mr-2">mdi-cog</v-icon>
+            Advanced
+          </v-tab>
         </v-tabs>
 
           <v-window v-model="activeTab" class="mt-6">
@@ -523,6 +530,125 @@
               </v-card>
             </v-window-item>
 
+            <!-- Advanced Tab -->
+            <v-window-item value="advanced">
+              <v-card class="tab-card">
+                <v-card-text class="pa-4">
+                  <div class="section">
+                    <div class="section-header">
+                      <v-icon class="mr-3" color="primary">mdi-cog</v-icon>
+                      <div>
+                        <h2 class="text-h6 mb-1">UI Preferences</h2>
+                        <p class="text-body-2 text-medium-emphasis mb-0">
+                          Manage UI layout preferences stored in browser localStorage.
+                        </p>
+                      </div>
+                    </div>
+
+                    <v-row class="ga-6 mt-4">
+                      <v-col cols="12">
+                        <v-card variant="outlined">
+                          <v-card-title class="text-h6">
+                            <v-icon class="mr-2" color="primary">mdi-database-eye</v-icon>
+                            View Current Preferences
+                          </v-card-title>
+                          <v-card-text>
+                            <p class="text-body-2 mb-3">
+                              View the current preference state stored in localStorage.
+                            </p>
+                            <v-btn
+                              color="primary"
+                              variant="outlined"
+                              @click="viewPreferences"
+                            >
+                              <v-icon class="mr-2">mdi-eye</v-icon>
+                              View Preferences
+                            </v-btn>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+
+                      <v-col cols="12" md="6">
+                        <v-card variant="outlined">
+                          <v-card-title class="text-h6">
+                            <v-icon class="mr-2" color="primary">mdi-export</v-icon>
+                            Export Preferences
+                          </v-card-title>
+                          <v-card-text>
+                            <p class="text-body-2 mb-3">
+                              Download preferences as JSON file for backup.
+                            </p>
+                            <v-btn
+                              color="primary"
+                              variant="outlined"
+                              @click="exportPreferences"
+                            >
+                              <v-icon class="mr-2">mdi-download</v-icon>
+                              Export
+                            </v-btn>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+
+                      <v-col cols="12" md="6">
+                        <v-card variant="outlined">
+                          <v-card-title class="text-h6">
+                            <v-icon class="mr-2" color="primary">mdi-import</v-icon>
+                            Import Preferences
+                          </v-card-title>
+                          <v-card-text>
+                            <p class="text-body-2 mb-3">
+                              Upload and restore preferences from JSON file.
+                            </p>
+                            <v-file-input
+                              v-model="preferencesImportFile"
+                              accept=".json"
+                              label="Select JSON file"
+                              variant="outlined"
+                              density="compact"
+                              class="mb-3"
+                            />
+                            <v-btn
+                              color="primary"
+                              variant="outlined"
+                              :disabled="!preferencesImportFile"
+                              @click="importPreferences"
+                            >
+                              <v-icon class="mr-2">mdi-upload</v-icon>
+                              Import
+                            </v-btn>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+
+                      <v-col cols="12">
+                        <v-card variant="outlined" class="border-error">
+                          <v-card-title class="text-h6 text-error">
+                            <v-icon class="mr-2" color="error">mdi-delete-forever</v-icon>
+                            Clear All Preferences
+                          </v-card-title>
+                          <v-card-text>
+                            <p class="text-body-2 mb-3">
+                              Reset all UI preferences to defaults. This will clear collapsed states, filters, and
+                              view preferences.
+                            </p>
+                            <v-btn
+                              color="error"
+                              variant="outlined"
+                              @click="confirmClearPreferences"
+                            >
+                              <v-icon class="mr-2">mdi-delete</v-icon>
+                              Clear All Preferences
+                            </v-btn>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-window-item>
+
             <!-- Import/Export Tab -->
             <v-window-item value="import-export">
               <v-card class="tab-card">
@@ -631,6 +757,57 @@
           </v-window>
         </v-sheet>
 
+    <!-- Preferences View Dialog -->
+    <v-dialog v-model="showPreferencesDialog" max-width="800px">
+      <v-card>
+        <v-card-title class="text-h5">
+          <v-icon class="mr-2">mdi-database-eye</v-icon>
+          Current Preferences
+        </v-card-title>
+        <v-card-text>
+          <v-textarea
+            :model-value="preferencesJson"
+            readonly
+            variant="outlined"
+            rows="20"
+            class="font-monospace"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showPreferencesDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Clear Preferences Confirmation Dialog -->
+    <v-dialog v-model="showClearPreferencesDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="text-h5 text-error">
+          Clear All Preferences?
+        </v-card-title>
+        <v-card-text>
+          <p>
+            Are you sure you want to clear all UI preferences? This will:
+          </p>
+          <ul>
+            <li>Reset all device card collapsed/expanded states</li>
+            <li>Clear all view filters and search queries</li>
+            <li>Reset active tabs and view selections</li>
+          </ul>
+          <br />
+          <strong>This action cannot be undone.</strong>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showClearPreferencesDialog = false">Cancel</v-btn>
+          <v-btn color="error" variant="flat" @click="clearPreferences">
+            Clear All
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Reset Confirmation Dialog -->
     <v-dialog v-model="showResetDialog" max-width="500px">
       <v-card>
@@ -679,6 +856,7 @@ import { ref, watch, computed, onMounted } from 'vue';
 import DeviceManagement from '../components/DeviceManagement.vue';
 import SceneManager from './SceneManager.vue';
 import { useApi } from '../composables/useApi';
+import { usePreferences } from '../composables/usePreferences';
 
 export default {
   name: 'SettingsView',
@@ -688,7 +866,11 @@ export default {
   },
   props: {},
   setup(props) {
-    const activeTab = ref('devices');
+    const prefs = usePreferences();
+    const activeTab = computed({
+      get: () => prefs.getPreference('settingsTab', 'devices'),
+      set: (value) => prefs.setPreference('settingsTab', value),
+    });
     const api = useApi();
 
     const savingGlobal = ref(false);
@@ -697,6 +879,9 @@ export default {
     const resetting = ref(false);
     const importFile = ref(null);
     const showResetDialog = ref(false);
+    const preferencesImportFile = ref(null);
+    const showPreferencesDialog = ref(false);
+    const preferencesJson = ref('');
     const showSnackbar = ref(false);
     const snackbarMessage = ref('');
     const snackbarColor = ref('success');
@@ -1173,6 +1358,58 @@ export default {
       showResetDialog.value = true;
     };
 
+    // Preferences management functions
+    const viewPreferences = () => {
+      preferencesJson.value = prefs.exportPreferences();
+      showPreferencesDialog.value = true;
+    };
+
+    const exportPreferences = () => {
+      const json = prefs.exportPreferences();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pidicon-preferences-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      snackbarMessage.value = 'Preferences exported successfully';
+      snackbarColor.value = 'success';
+      showSnackbar.value = true;
+    };
+
+    const importPreferences = async () => {
+      if (!preferencesImportFile.value) return;
+
+      try {
+        const text = await preferencesImportFile.value.text();
+        const success = prefs.importPreferences(text);
+        if (success) {
+          preferencesImportFile.value = null;
+          snackbarMessage.value = 'Preferences imported successfully';
+          snackbarColor.value = 'success';
+          showSnackbar.value = true;
+        }
+      } catch (error) {
+        snackbarMessage.value = `Failed to import preferences: ${error.message}`;
+        snackbarColor.value = 'error';
+        showSnackbar.value = true;
+      }
+    };
+
+    const showClearPreferencesDialog = ref(false);
+    const confirmClearPreferences = () => {
+      showClearPreferencesDialog.value = true;
+    };
+
+    const clearPreferences = () => {
+      prefs.clearAll();
+      showClearPreferencesDialog.value = false;
+      snackbarMessage.value = 'All preferences cleared';
+      snackbarColor.value = 'success';
+      showSnackbar.value = true;
+    };
+
     const resetToDefaults = async () => {
       resetting.value = true;
       try {
@@ -1325,6 +1562,16 @@ export default {
       snackbarMessage,
       snackbarColor,
       exportConfig,
+      // Preferences management
+      preferencesImportFile,
+      showPreferencesDialog,
+      preferencesJson,
+      showClearPreferencesDialog,
+      viewPreferences,
+      exportPreferences,
+      importPreferences,
+      confirmClearPreferences,
+      clearPreferences,
       importConfig,
       confirmReset,
       mqttOnline,

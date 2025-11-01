@@ -656,6 +656,7 @@ import { useDeviceStore } from '../store/devices';
 import { useSceneStore } from '../store/scenes';
 import { useApi } from '../composables/useApi';
 import { useToast } from '../composables/useToast';
+import { usePreferences } from '../composables/usePreferences';
 
 // Register ECharts components
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent]);
@@ -681,6 +682,7 @@ const deviceStore = useDeviceStore();
 const sceneStore = useSceneStore();
 const api = useApi();
 const toast = useToast();
+const prefs = usePreferences();
 
 const selectedScene = ref(props.device.currentScene || '');
 const loading = ref(false);
@@ -693,10 +695,24 @@ const displayOn = ref(props.device.hardware?.displayOn !== false);
 const brightness = ref(props.device.hardware?.brightness ?? 75);
 const previousBrightness = ref(props.device.hardware?.brightness ?? 75);
 const loggingLevel = ref(props.device.driver === 'real' ? 'warning' : 'silent');
-const isCollapsed = ref(props.device.driver === 'mock');
 const confirmDialog = ref(null);
-const showSceneDetails = ref(false);
-const showPerfMetrics = ref(false);
+
+// Device card preferences - persisted via usePreferences
+const defaultCollapsed = props.device.driver === 'mock';
+const isCollapsed = computed({
+  get: () => prefs.getDeviceCardPref(props.device.ip, 'collapsed', defaultCollapsed),
+  set: (value) => prefs.setDeviceCardPref(props.device.ip, 'collapsed', value),
+});
+
+const showSceneDetails = computed({
+  get: () => prefs.getDeviceCardPref(props.device.ip, 'showDetails', false),
+  set: (value) => prefs.setDeviceCardPref(props.device.ip, 'showDetails', value),
+});
+
+const showPerfMetrics = computed({
+  get: () => prefs.getDeviceCardPref(props.device.ip, 'showMetrics', false),
+  set: (value) => prefs.setDeviceCardPref(props.device.ip, 'showMetrics', value),
+});
 
 // Sync with backend hardware state (run immediately and on changes)
 watch(

@@ -371,10 +371,12 @@
 <script setup>
 import { ref, computed, watch, onMounted, h } from 'vue';
 import { useApi } from '../composables/useApi';
+import { usePreferences } from '../composables/usePreferences';
 import { marked } from 'marked';
 import { VTextField, VTextarea, VSwitch, VSelect } from 'vuetify/components';
 
 const api = useApi();
+const prefs = usePreferences();
 
 // Configure marked for safe rendering
 marked.setOptions({
@@ -385,11 +387,24 @@ marked.setOptions({
 // State
 const loadingDevices = ref(false);
 const devices = ref([]);
-const selectedDeviceIp = ref(null);
 const scenes = ref([]);
 const selectedScene = ref(null);
-const searchQuery = ref('');
-const sortBy = ref('sortOrder');
+
+// Preferences - persisted via usePreferences
+const selectedDeviceIp = computed({
+  get: () => prefs.getSceneManagerPref('selectedDeviceIp', null),
+  set: (value) => prefs.setSceneManagerPref('selectedDeviceIp', value),
+});
+
+const searchQuery = computed({
+  get: () => prefs.getSceneManagerPref('searchQuery', ''),
+  set: (value) => prefs.setSceneManagerPref('searchQuery', value),
+});
+
+const sortBy = computed({
+  get: () => prefs.getSceneManagerPref('sortBy', 'sortOrder'),
+  set: (value) => prefs.setSceneManagerPref('sortBy', value),
+});
 const paramValues = ref({});
 const paramValuesJson = ref({});
 const deviceSceneDefaults = ref({});
@@ -401,7 +416,10 @@ const testing = ref(false);
 const showSnackbar = ref(false);
 const snackbarMessage = ref('');
 const snackbarColor = ref('success');
-const bulkMode = ref(false);
+const bulkMode = computed({
+  get: () => prefs.getSceneManagerPref('bulkMode', false),
+  set: (value) => prefs.setSceneManagerPref('bulkMode', value),
+});
 const selectedSceneNames = ref([]);
 const devMode = ref(false);
 
