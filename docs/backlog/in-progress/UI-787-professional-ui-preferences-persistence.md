@@ -5,7 +5,8 @@
 
 ## User Story
 
-As a user, I want all my UI preferences (device card state, filters, toggles) to persist across page reloads and browser sessions, so I don't have to reconfigure the UI every time I visit the dashboard.
+As a user, I want all my UI preferences (device card state, filters, toggles) to persist across page reloads and browser
+sessions, so I don't have to reconfigure the UI every time I visit the dashboard.
 
 ## Problem
 
@@ -35,7 +36,8 @@ Currently, almost all UI state is ephemeral and lost on page reload:
 
 ## Goal
 
-Implement a robust, centralized UI preferences system using browser localStorage with proper key namespacing, versioning, and migration support.
+Implement a robust, centralized UI preferences system using browser localStorage with proper key namespacing, versioning,
+and migration support.
 
 ## Architecture
 

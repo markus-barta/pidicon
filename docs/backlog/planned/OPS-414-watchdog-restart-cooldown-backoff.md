@@ -6,7 +6,8 @@
 
 ## Problem
 
-When the watchdog detects an unresponsive device and attempts a restart, it currently lacks cooldown/backoff mechanisms. This can lead to:
+When the watchdog detects an unresponsive device and attempts a restart, it currently lacks cooldown/backoff mechanisms.
+This can lead to:
 
 - Restart spam when devices are persistently unresponsive
 - No breathing room after a restart command is sent
