@@ -51,8 +51,9 @@ jobs:
       - name: Publish version info to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          # Save current state
+          # Save current state and preserve generated file
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          cp version.json /tmp/version.json
 
           # Configure git
           git config user.name "GitHub Actions"
@@ -62,11 +63,11 @@ jobs:
           git fetch origin gh-pages 2>/dev/null || true
           git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
 
-          # Remove all files except version.json
+          # Remove all files
           git rm -rf . 2>/dev/null || true
 
-          # Copy version.json from main branch working directory
-          git checkout $CURRENT_BRANCH -- version.json
+          # Copy version.json from temp location
+          cp /tmp/version.json version.json
 
           # Commit and push (GitHub will deploy Pages in background ~40s)
           git add version.json
