@@ -5,12 +5,45 @@
 
 ## User Story
 
-As a user, I want all my UI preferences (device card state, filters, toggles) to persist across page reloads and browser
-sessions, so I don't have to reconfigure the UI every time I visit the dashboard.
+As a user, I want the UI to accurately reflect the current state of my devices at all times, including after page reloads
+and daemon restarts, so that I can trust what I see on screen matches reality.
+
+## Context: Device State Architecture
+
+### The Fundamental Challenge
+
+Devices have no persistent storage. Pixoo and Awtrix devices cannot remember their own state:
+
+- ❌ Devices don't remember their brightness setting
+- ❌ Devices don't remember which scene was running
+- ❌ Devices don't remember if display was on/off
+- ❌ Devices don't remember logging levels or performance settings
+
+#### Solution: Daemon as State Authority
+
+Since devices can't remember, the daemon must be the source of truth:
+
+- ✅ Daemon persists device state to `/data/runtime-state.json` (via StateStore)
+- ✅ On restart, daemon restores last known state for each device
+- ✅ WebSocket broadcasts state changes to all connected UI clients
+- ✅ UI syncs with daemon state on reconnection
+
+See [STATE_PERSISTENCE.md](../../ai/STATE_PERSISTENCE.md) for daemon state persistence details.
+
+### The UI Layer Problem
+
+While daemon persistence solves device state, the UI has its own display preferences that also need persistence:
+
+- UI layout preferences (collapsed/expanded cards)
+- Visibility toggles (show scene details, show performance metrics)
+- View state (current tab, filters, sort order)
+
+These UI preferences are separate from device state but equally important for user experience.
 
 ## Problem
 
-Currently, almost all UI state is ephemeral and lost on page reload:
+Currently, UI preferences are ephemeral and lost on page reload, making it impossible to maintain a consistent view of
+device state:
 
 ### What's NOT Persisted (but should be)
 
@@ -29,15 +62,88 @@ Currently, almost all UI state is ephemeral and lost on page reload:
 
 ### Impact
 
-- Users lose their preferred UI layout on every reload
-- Device cards reset to default collapsed state (mock devices collapsed, real expanded)
-- Scene manager resets to first device
-- Poor UX especially for multi-device setups
+**State Display Issues:**
+
+- Users lose visibility into device state when UI preferences reset
+- Collapsed cards hide whether devices are running correctly
+- Can't see performance metrics consistently to monitor device health
+- Scene details visibility resets, losing context about what's running
+
+**User Experience Issues:**
+
+- Users must reconfigure UI layout on every page reload
+- Multi-device setups become tedious to manage
+- Can't maintain preferred monitoring view
+- Loss of trust in UI accuracy when state seems to "forget" preferences
+
+**Technical Debt:**
+
+- No centralized preference management leads to inconsistent persistence patterns
+- Only one preference (`showDevScenes`) uses localStorage, others are purely in-memory
+- Risk of preference conflicts as features grow
 
 ## Goal
 
 Implement a robust, centralized UI preferences system using browser localStorage with proper key namespacing, versioning,
 and migration support.
+
+**What This Solves:**
+
+1. **Persistent UI Layout** - Remember how user prefers to view their devices
+2. **Consistent State Visibility** - Keep device monitoring view consistent across sessions
+3. **Seamless Reconnection** - UI preferences survive page reloads, daemon restarts, and browser sessions
+4. **Centralized Management** - Single source of truth for all UI preferences
+
+**What This Does NOT Solve (already solved by daemon):**
+
+- Device hardware state (brightness, display power) - handled by StateStore
+- Active scene tracking - handled by StateStore
+- Device runtime metrics - handled by daemon in-memory
+- MQTT connection state - handled by daemon services
+
+**The Complete Picture:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Browser                            │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  UI Preferences (localStorage)                   │   │
+│  │  - Collapsed/expanded cards per device           │   │
+│  │  - Show scene details toggles                    │   │
+│  │  - Show performance metrics toggles              │   │
+│  │  - Current view, active tabs, filters            │   │
+│  └──────────────────────────────────────────────────┘   │
+│                        ▲                                │
+│                        │ Persists across page reloads   │
+│                        ▼                                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  Vue Components (reactive state)                 │   │
+│  │  - Syncs with localStorage on mount/change       │   │
+│  │  - Syncs with daemon via WebSocket               │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+                         ▲
+                         │ WebSocket
+                         │ (state broadcasts)
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                      Daemon                             │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  StateStore (in-memory + /data/runtime-state)    │   │
+│  │  - Device hardware state (brightness, displayOn) │   │
+│  │  - Active scene, play state, logging level       │   │
+│  │  - Persists to disk, restores on restart         │   │
+│  └──────────────────────────────────────────────────┘   │
+│                        ▲                                │
+│                        │ Real-time control              │
+│                        ▼                                │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │  Devices (Pixoo/Awtrix - NO local storage)       │   │
+│  │  - Cannot remember their own state                │   │
+│  │  - Daemon is source of truth                      │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Architecture
 
@@ -194,12 +300,28 @@ const isCollapsed = computed({
 
 ## Success Criteria
 
-- ✅ All device card UI state persists across reloads
+**Primary Goals (State Visibility):**
+
+- ✅ UI accurately reflects device state at all times
+- ✅ Device monitoring view remains consistent across sessions
+- ✅ Users can trust that what they see matches device reality
+- ✅ State persistence works seamlessly with daemon StateStore (no conflicts)
+
+**Technical Goals (Preferences System):**
+
+- ✅ All device card UI preferences persist across reloads
 - ✅ Current view and active tabs persist
 - ✅ Scene manager state persists
 - ✅ No console errors or localStorage quota issues
 - ✅ Graceful handling of invalid/corrupted preferences
 - ✅ Clear separation between UI preferences (localStorage) and device state (daemon StateStore)
+
+**User Experience Goals:**
+
+- ✅ First-time users get sensible defaults
+- ✅ Returning users see their preferred layout immediately
+- ✅ Multi-device setups remain manageable and consistent
+- ✅ Preferences system is invisible when working correctly
 
 ## Technical Debt
 
