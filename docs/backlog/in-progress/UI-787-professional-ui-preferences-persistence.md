@@ -1,7 +1,7 @@
 # UI-787: Professional UI Preferences Persistence
 
 **Status**: In Progress (2025-11-01) | **Priority**: P1 (User Experience)  
-**Effort**: 6-8 hours | **Owner**: mba
+**Owner**: mba
 
 ## User Story
 
@@ -139,11 +139,88 @@ and migration support.
 │                        ▼                                │
 │  ┌──────────────────────────────────────────────────┐   │
 │  │  Devices (Pixoo/Awtrix - NO local storage)       │   │
-│  │  - Cannot remember their own state                │   │
-│  │  - Daemon is source of truth                      │   │
+│  │  - Cannot remember their own state               │   │
+│  │  - Daemon is source of truth                     │   │
 │  └──────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────┘
 ```
+
+## Current Implementation Status (2025-11-01 Code Review)
+
+**App shell** — `web/frontend/src/App.vue`
+
+- `currentView` is a local `ref` defaulting to `'devices'`; it resets on every reload.
+- `showDevScenes` is the only persisted preference (stored via `localStorage.getItem('pidicon:showDevScenes')`).
+- Navigation tabs in `SystemStatus.vue` mirror `currentView` but do not persist selection across sessions.
+- Polling/WebSocket orchestration keeps daemon state accurate; preference persistence must coexist with it.
+
+**Device cards** — `web/frontend/src/components/DeviceCard.vue`
+
+- Collapsed state (`isCollapsed`) defaults to `true` for mock drivers and `false` otherwise; never persisted per device.
+- Toggles for `showSceneDetails` and `showPerfMetrics` are local `ref`s; reloading resets to defaults.
+- Selected scene `selectedScene` is driven by backend state (`props.device.currentScene`) and kept in sync via
+  watchers — no additional persistence required beyond daemon state.
+- Brightness, display power, logging level, and metrics flow from daemon StateStore; these remain unchanged.
+
+**Settings view** — `web/frontend/src/views/Settings.vue`
+
+- `activeTab` defaults to `'devices'` each time; no persistence in place.
+- Global/MQTT form state is fetched from APIs and separate from UI preferences (should stay API-driven).
+
+**Scene manager** — `web/frontend/src/views/SceneManager.vue`
+
+- `selectedDeviceIp`, `sortBy`, `searchQuery`, and `bulkMode` reset on reload.
+- Dev mode toggle (`devMode`) is driven by global store but not persisted across sessions.
+
+**Logs view** — `web/frontend/src/views/Logs.vue`
+
+- `activeFilters` defaults to `['daemon', 'ui']`; future live log viewer (UI-524) will need preference persistence.
+
+**Tests/Diagnostics view** — `web/frontend/src/views/Tests.vue`
+
+- `searchQuery` resets on reload (test search filter).
+- `expandedSections` (Set) resets to empty; sections auto-expand on load but don't remember user's preference.
+
+**Dev mode store** — `web/frontend/src/store/dev-mode.js`
+
+- `enabled` flag is session-only; persisting dev mode is optional and should be a deliberate choice.
+
+**Daemon state** — `lib/state-store.js`
+
+- Device state persistence (`activeScene`, `playState`, `brightness`, `displayOn`, `loggingLevel`) already works.
+- UI-787 must avoid duplicating daemon persistence; focus is purely UI presentation state.
+
+### What NOT to Persist (Security & Separation)
+
+#### Critical: Do NOT persist backend configuration or credentials
+
+- ❌ **MQTT credentials** (username, password) - These are daemon configuration stored server-side via API. Storing in
+  localStorage would be a security vulnerability exposing credentials to client-side scripts.
+- ❌ **User authentication/login** - No user login system exists; the UI is open/unauthenticated by design.
+- ❌ **Backend configuration** - Global defaults (driver, brightness, paths), watchdog config, MQTT broker settings are
+  fetched from `/api/config/*` endpoints. These must remain API-driven to support multi-instance deployments.
+- ❌ **Device runtime state** - Device hardware state (`brightness`, `scene`, `displayOn`, `playState`) comes from daemon
+  StateStore via WebSocket. This is the authoritative source; localStorage must never override it.
+- ❌ **Form state tracking** - Variables like `hasUnsavedMqttChanges`, `originalMqttSettings` are transient UI state for
+  change detection. These should reset on reload so users see the current server-side configuration.
+
+#### Why this matters
+
+- Persisting backend config creates drift between what's saved server-side and what localStorage thinks it should be.
+- MQTT credentials in localStorage are accessible to any JavaScript running on the page (XSS vulnerability).
+- Device state in localStorage could conflict with daemon state during reconnection, creating UI bugs.
+
+## Gap Analysis — What Needs to Change
+
+1. **Centralized storage**: Introduce `usePreferences` as the single abstraction over `localStorage` with schema/versioning.
+2. **Per-device persistence**: Store `isCollapsed`, `showSceneDetails`, and `showPerfMetrics` keyed by device IP.
+3. **Global view state**: Persist `currentView`, settings `activeTab`, and navigation selection to match user expectations.
+4. **Filter/search persistence**: Capture scene manager filters, tests view filters, and future log filters to maintain workflows.
+5. **Tests view preferences**: Persist `searchQuery` and `expandedSections` state so test diagnostic view maintains
+   user's preferred layout.
+6. **Legacy migration**: Migrate `pidicon:showDevScenes` into the new schema without breaking existing behavior.
+7. **Recovery & reset**: Handle corrupt preference payloads gracefully and expose a reset pathway (e.g., settings debug
+   action).
 
 ## Architecture
 
@@ -186,40 +263,57 @@ Store preferences server-side per user/session for multi-device sync.
 
 ## Tasks
 
-### Phase 1: Core Infrastructure (2-3 hours)
+### Phase 1: Core Infrastructure
 
-- [ ] Create `composables/usePreferences.js` with localStorage wrapper
-- [ ] Implement preference schema with versioning
-- [ ] Add migration logic for schema changes
-- [ ] Unit tests for preferences composable
+- [ ] Create `composables/usePreferences.js` with typed getters/setters, defaults, and schema versioning.
+- [ ] Implement safe `localStorage` access with JSON parsing guards and in-memory fallback for SSR/tests.
+- [ ] Add migration layer to merge legacy keys (`pidicon:showDevScenes`) into the new schema.
+- [ ] Broadcast preference changes via `window.storage` listener so multiple tabs stay in sync.
+- [ ] Unit tests covering load/save/migrate/reset paths.
+- [ ] Add preference validation to prevent invalid data structures from corrupting state.
 
-### Phase 2: Device Card Preferences (2-3 hours)
+### Phase 2: Device Card Preferences
 
-- [ ] Persist `isCollapsed` state per device IP
-- [ ] Persist `showSceneDetails` toggle per device
-- [ ] Persist `showPerfMetrics` toggle per device
-- [ ] Update DeviceCard.vue to use preferences composable
-- [ ] Restore device card state on mount
+#### Critical: Avoid conflicts with daemon state
 
-### Phase 3: Global UI Preferences (2 hours)
+- [ ] Wire `isCollapsed`, `showSceneDetails`, and `showPerfMetrics` in `DeviceCard.vue` to preferences keyed by device IP.
+- [ ] Ensure watchers **only persist on explicit user action** (button click), never on daemon state updates via WebSocket.
+- [ ] Add helper methods (`getDeviceCardPref`, `setDeviceCardPref`) for ergonomic usage.
+- [ ] Verify persistence when devices reconnect or the daemon refreshes state.
+- [ ] Test edge case: daemon restarts, device state changes, ensure preferences don't override hardware state.
+- [ ] Playwright coverage: collapse card, reload, ensure state restored without breaking device controls.
 
-- [ ] Persist `currentView` (devices/settings/logs/tests)
-- [ ] Persist Settings page `activeTab`
-- [ ] Migrate existing `showDevScenes` to new system
-- [ ] Update App.vue and Settings.vue
+### Phase 3: Global UI Preferences
 
-### Phase 4: Scene Manager Preferences (1 hour)
+#### Critical: Don't interfere with backend configuration management
 
-- [ ] Persist selected device IP
-- [ ] Persist sort order and search query
-- [ ] Update SceneManager.vue
+- [ ] Persist `currentView` in `App.vue` and synchronize with `SystemStatus.vue` navigation tabs.
+- [ ] Persist settings `activeTab` in `Settings.vue` (devices/global/mqtt/import-export/scene-manager tabs).
+- [ ] Migrate/retain `showDevScenes` toggle inside preferences; remove direct `localStorage` usage.
+- [ ] Decide whether `devMode.enabled` should persist (consider: diagnostic mode shouldn't auto-enable on reload).
+- [ ] Ensure form state (`hasUnsavedMqttChanges`, `hasUnsavedGlobalChanges`) is **not** persisted.
+- [ ] Test: Load settings, make MQTT changes but don't save, reload → should show clean form, not unsaved state.
+- [ ] Add smoke tests verifying navigation/tab persistence doesn't break form workflows.
 
-### Phase 5: Documentation & Polish (1 hour)
+### Phase 4: View-Specific Preferences
 
-- [ ] Update STATE_PERSISTENCE.md to clarify scope (daemon vs UI)
-- [ ] Add UI_PREFERENCES.md documentation
-- [ ] Add localStorage key documentation
-- [ ] Add clear preferences button in Settings (debug feature)
+- [ ] **Scene Manager**: Persist `selectedDeviceIp`, `sortBy`, `searchQuery`, and `bulkMode` in `SceneManager.vue`.
+- [ ] **Tests View**: Persist `searchQuery` and `expandedSections` in `Tests.vue` (diagnostics view).
+- [ ] **Logs View**: Coordinate with UI-524 to persist upcoming log viewer filters (`Logs.vue`).
+- [ ] Add "Reset to defaults" button for each view (clears only that view's preferences).
+- [ ] Test: Preferences in one view don't affect other views.
+
+### Phase 5: Documentation & Safety
+
+- [ ] Update `STATE_PERSISTENCE.md` cross-reference (done).
+- [ ] Create `docs/ui/UI_PREFERENCES.md` documenting schema, keys, and migration strategy.
+- [ ] Add debug panel in Settings → Advanced with:
+  - "View Current Preferences" (show JSON)
+  - "Clear All Preferences" (with confirmation)
+  - "Export Preferences" (download JSON)
+  - "Import Preferences" (upload JSON, validate before applying)
+- [ ] Document localStorage key structure in repository README.
+- [ ] Add Playwright helpers to seed/clear preferences for deterministic tests.
 
 ## Implementation Details
 
@@ -255,6 +349,10 @@ Store preferences server-side per user/session for multi-device sync.
     "sortBy": "name",
     "searchQuery": ""
   },
+  "testsView": {
+    "searchQuery": "",
+    "expandedSections": ["system", "device", "mqtt"]
+  },
   "showDevScenes": false
 }
 ```
@@ -279,17 +377,104 @@ const isCollapsed = computed({
 
 ### Unit Tests
 
-- Preferences composable get/set/clear
-- Version migration logic
-- Default value fallbacks
-- Invalid data handling
+- `usePreferences` get/set/clear/merge behavior
+- Schema migration (legacy key import, version bumps)
+- Default value fallbacks when keys missing/corrupted
+- Handling of storage quota errors and JSON parsing failures
+- Storage event listener propagates remote tab updates
 
 ### Integration Tests (Playwright)
 
-- Device card state persists after page reload
-- Settings tab persists after navigation
-- Scene manager selections persist
-- Clear preferences button works
+- Device card state persists after reload (collapse + toggles)
+- Navigation view + settings tab persist across reload and WebSocket reconnects
+- Scene manager filters persist, clear/reset returns to defaults
+- Optional: dev mode preference (if enabled) persists correctly
+
+## Dependencies & Coordination
+
+### Critical integrations to avoid breaking existing functionality
+
+- **UI-524 (Live Log Viewer)**: Log filter persistence must reuse `usePreferences` namespace. Coordinate schema design.
+- **UI-785 (Unified Settings Save Flow)**: Preference persistence must **not** interfere with unsaved-change detection
+  (`hasUnsavedMqttChanges`, `hasUnsavedGlobalChanges`). These form state variables should remain ephemeral.
+- **Daemon StateStore**: Preferences only store UI presentation choices. Device state comes from daemon via WebSocket.
+  Never allow preferences to override daemon state during reconnection.
+- **Testing Harness**: Create Playwright fixtures to seed/clear preferences deterministically. Don't let persistent
+  state leak between test runs.
+- **WebSocket reconnection**: Ensure preference restoration doesn't race with WebSocket state sync. Daemon state wins.
+
+### Integration test scenarios
+
+1. **Settings form workflow**: Make MQTT changes → don't save → reload → form should be clean (not showing "unsaved
+   changes" state)
+2. **Device state conflict**: Persist card as collapsed → daemon restarts device → UI should show latest device state,
+   not stale preference
+3. **Multi-tab sync**: Change preference in tab A → tab B should update via storage event
+4. **Preference corruption**: Invalid JSON in localStorage → should reset gracefully, not crash UI
+
+## Implementation Notes
+
+**Technical constraints and design decisions:**
+
+- **Namespace**: Use `pidicon:preferences:v1` key to allow clean schema migrations without breaking older versions.
+- **Storage availability**: Guard for unavailable `localStorage` (private browsing, embedded browsers). Fall back to
+  in-memory storage with console warning. UI should remain functional.
+- **Reactivity**: Use `shallowRef`/computed wrappers when binding preferences to components. Avoid deep reactivity on
+  large preference objects to prevent performance issues.
+- **Ownership boundaries**: Never persist values the daemon owns (`playState`, `brightness`, `activeScene`). These come
+  from WebSocket and are authoritative.
+- **Cleanup**: Provide utilities to prune per-device preferences when devices are removed from configuration. Prevent
+  localStorage bloat from orphaned device entries.
+- **Validation**: Schema-validate preferences on load. If validation fails, log error, reset to defaults, show toast to user.
+- **Throttling**: For high-frequency updates (e.g., slider changes), debounce localStorage writes. Balance responsiveness
+  with write performance.
+
+### Rollback strategy
+
+If preferences cause issues, users can:
+
+1. Clear via debug panel in Settings
+2. Manually delete `pidicon:preferences:v1` from browser DevTools → Application → Local Storage
+3. Use `?reset_preferences=1` URL parameter to auto-clear on load (emergency escape hatch)
+
+## Risks & Mitigations
+
+### Risk 1: Corrupted localStorage breaks UI
+
+- **Mitigation**: Wrap all localStorage access in try-catch. Validate JSON schema on load. If invalid, reset to defaults
+  and notify user via toast.
+- **Test**: Manually corrupt localStorage JSON, reload, verify UI doesn't crash and shows reset message.
+
+### Risk 2: Preferences override daemon state
+
+- **Mitigation**: Establish clear precedence: daemon state always wins for device hardware. Preferences only affect UI
+  presentation. On WebSocket reconnect, preferences should adapt to device state, not vice versa.
+- **Test**: Persist preference showing device card expanded → daemon restarts → device state changes → verify preference
+  doesn't override new device state.
+
+### Risk 3: Form state persistence breaks workflows
+
+- **Mitigation**: Explicitly exclude form state variables (`hasUnsavedMqttChanges`, `originalMqttSettings`) from
+  persistence. Document which variables are intentionally ephemeral.
+- **Test**: Make MQTT changes, don't save, reload → form should be clean, not showing "unsaved changes".
+
+### Risk 4: Multiple tabs cause conflicts
+
+- **Mitigation**: Use `storage` events to propagate preference changes across tabs. Handle race conditions gracefully
+  (last write wins).
+- **Test**: Open 2 tabs, change preference in tab A, verify tab B updates within 1 second.
+
+### Risk 5: localStorage quota exceeded
+
+- **Mitigation**: Monitor payload size. Implement per-device preference pruning. Show warning if approaching quota.
+  Typical limit is 5-10MB; well within bounds for hundreds of devices.
+- **Test**: Create preferences for 100+ mock devices, verify under quota.
+
+### Risk 6: Migration breaks existing users
+
+- **Mitigation**: Gracefully handle missing version field. Preserve legacy `pidicon:showDevScenes` key during migration.
+  Never delete old keys until new schema is confirmed working.
+- **Test**: Seed localStorage with old format, reload, verify migration succeeds and old preferences preserved.
 
 ## Non-Goals
 
