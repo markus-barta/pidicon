@@ -1,6 +1,6 @@
 # ROADMAP-006: Device Profiles & Testing UI
 
-**Status**: Not Started | **Priority**: P2 (Nice to Have)
+**Status**: Planned | **Priority**: P2 (Nice to Have)
 **Effort**: 2-3 hours | **Risk**: Low
 
 ## Goal

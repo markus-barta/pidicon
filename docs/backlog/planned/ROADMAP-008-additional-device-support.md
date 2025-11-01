@@ -1,6 +1,6 @@
 # ROADMAP-008: Additional Device Support
 
-**Status**: Not Started | **Priority**: P2 (Nice to Have)
+**Status**: Planned | **Priority**: P2 (Nice to Have)
 **Effort**: Varies (5-15 hours per device) | **Risk**: Medium to High (device-specific)
 
 ## Goal

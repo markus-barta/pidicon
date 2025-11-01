@@ -1,6 +1,6 @@
 # TST-301: Improve Test Coverage (P1) 🟡
 
-**Status**: planned | **Priority**: P1 (Quality & Maintainability)
+**Status**: Planned | **Priority**: P1 (Quality & Maintainability)
 **Effort**: 3-5 days | **Risk**: Low
 
 ## Problem

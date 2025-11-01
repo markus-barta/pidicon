@@ -1,6 +1,6 @@
 # BACKLOG-045: Per-Device MQTT Override
 
-**Status**: Not Started | **Priority**: P1 (Important)
+**Status**: Planned | **Priority**: P1 (Important)
 **Effort**: 6-8 hours | **Risk**: Medium (security, UI complexity)
 
 ## Goal

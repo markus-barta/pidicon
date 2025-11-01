@@ -1,6 +1,6 @@
 # PERF-301: Performance Optimizations (P1) 🟡
 
-**Status**: planned | **Priority**: P1 (Polish & Scale)
+**Status**: Planned | **Priority**: P1 (Polish & Scale)
 **Effort**: 2-3 days | **Risk**: Low
 
 ## Problem

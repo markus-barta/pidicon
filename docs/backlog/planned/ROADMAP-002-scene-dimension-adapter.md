@@ -1,6 +1,6 @@
 # ROADMAP-002: Scene Dimension Adapter
 
-**Status**: Not Started | **Priority**: P1 (Important)
+**Status**: Planned | **Priority**: P1 (Important)
 **Effort**: 3-5 hours | **Risk**: Low
 
 ## Goal

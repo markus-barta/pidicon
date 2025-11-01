@@ -1,6 +1,6 @@
 # UI-601: Scene Editor (P2) 🟢
 
-**Status**: proposed | **Priority**: P2 (Advanced feature)
+**Status**: Planned | **Priority**: P2 (Advanced feature)
 **Effort**: 5-7 days | **Risk**: High
 
 ## Problem

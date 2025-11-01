@@ -1,6 +1,6 @@
 # SCN-201: Scene Library Expansion (P2) 🟢
 
-**Status**: ongoing | **Priority**: P2 (Content)
+**Status**: Cancelled | **Priority**: P2 (Content)
 **Effort**: Ongoing | **Risk**: Low
 
 ## Problem

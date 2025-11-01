@@ -1,6 +1,6 @@
 # DOC-011: API Documentation (P1) 🟡
 
-**Status**: planned | **Priority**: P1 (Developer Experience)
+**Status**: Planned | **Priority**: P1 (Developer Experience)
 **Effort**: 2-3 days | **Risk**: Low
 
 ## Problem

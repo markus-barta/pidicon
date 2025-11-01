@@ -1,6 +1,6 @@
 # ROADMAP-010: Scene Marketplace
 
-**Status**: Not Started | **Priority**: P2 (Future)
+**Status**: Planned | **Priority**: P2 (Future)
 **Effort**: 10-15 hours | **Risk**: Medium (moderation required)
 
 ## Goal

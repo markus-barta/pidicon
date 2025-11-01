@@ -1,6 +1,6 @@
 # UI-505: Config Page (P2) 🟢
 
-**Status**: proposed | **Priority**: P2 (Admin convenience)
+**Status**: Planned | **Priority**: P2 (Admin convenience)
 **Effort**: 3-4 days | **Risk**: Medium
 
 ## Problem

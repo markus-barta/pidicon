@@ -1,6 +1,6 @@
 # ROADMAP-005: Multi-Device Scene Manager
 
-**Status**: Not Started | **Priority**: P2 (Nice to Have)
+**Status**: Planned | **Priority**: P2 (Nice to Have)
 **Effort**: 3-5 hours | **Risk**: Low
 
 ## Goal

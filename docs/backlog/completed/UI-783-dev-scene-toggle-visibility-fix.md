@@ -1,6 +1,6 @@
 # UI-783: Dev Scene Toggle Visibility Fix
 
-**Status**: In Progress (2025-10-21) | **Priority**: P1 (Important)
+**Status**: Completed (2025-11-01) | **Priority**: P1 (Important)
 **Effort**: 4-5 hours | **Owner**: mba
 
 ## Problem

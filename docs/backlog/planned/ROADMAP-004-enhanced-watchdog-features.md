@@ -1,6 +1,6 @@
 # ROADMAP-004: Enhanced Watchdog Features
 
-**Status**: Partially Complete (basic watchdog exists) | **Priority**: P1 (Important)
+**Status**: Planned | **Priority**: P1 (Important)
 **Effort**: 3-5 hours | **Risk**: Low
 
 ## Goal

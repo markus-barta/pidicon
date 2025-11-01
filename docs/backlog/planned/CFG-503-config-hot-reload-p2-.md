@@ -1,6 +1,6 @@
 # CFG-503: Config Hot Reload (P2) 🟢
 
-**Status**: proposed | **Priority**: P2 (Convenience)
+**Status**: Planned | **Priority**: P2 (Convenience)
 **Effort**: 2 days | **Risk**: Medium
 
 ## Problem

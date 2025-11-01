@@ -1,6 +1,6 @@
 # SYS-415: Smart Release Checker Caching
 
-**Status**: Backlog (2025-10-31) | **Priority**: P2 (Nice to Have)
+**Status**: Planned (2025-10-31) | **Priority**: P2 (Nice to Have)
 **Effort**: 2-4 hours | **Owner**: mba
 
 ## Problem

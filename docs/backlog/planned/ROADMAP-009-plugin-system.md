@@ -1,6 +1,6 @@
 # ROADMAP-009: Plugin System
 
-**Status**: Not Started | **Priority**: P2 (Future)
+**Status**: Planned | **Priority**: P2 (Future)
 **Effort**: 8-12 hours | **Risk**: High (architecture change)
 
 ## Goal

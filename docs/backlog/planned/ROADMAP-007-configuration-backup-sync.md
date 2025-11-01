@@ -1,6 +1,6 @@
 # ROADMAP-007: Configuration Backup & Sync
 
-**Status**: Not Started | **Priority**: P2 (Nice to Have)
+**Status**: Planned | **Priority**: P2 (Nice to Have)
 **Effort**: 2-3 hours | **Risk**: Low
 
 ## Goal

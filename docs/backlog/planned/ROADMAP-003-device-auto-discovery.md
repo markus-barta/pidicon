@@ -1,6 +1,6 @@
 # ROADMAP-003: Device Auto-Discovery
 
-**Status**: Not Started | **Priority**: P2 (Nice to Have)
+**Status**: Planned | **Priority**: P2 (Nice to Have)
 **Effort**: 5-8 hours | **Risk**: Medium (network scanning)
 
 ## User Story
