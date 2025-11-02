@@ -37,19 +37,6 @@
                 </span>
               </span>
             </v-chip>
-            <v-chip
-              :color="driverBadgeColor"
-              size="small"
-              :variant="driverVariant"
-              class="status-badge driver-badge"
-            >
-              <span class="driver-badge__content">
-                <v-icon size="x-small" :color="driverIconColor" class="mr-1">
-                  {{ driverIcon }}
-                </v-icon>
-                <span :style="{ color: driverTextColor }">{{ driverLabel }}</span>
-              </span>
-            </v-chip>
           </div>
 
           <!-- Info items (stay in line when space available) -->
@@ -503,16 +490,6 @@
                   <span class="text-subtitle-2 font-weight-bold mr-2">
                     {{ formatSceneName(currentSceneInfo.name) }}
                   </span>
-                  <!-- Combined State Badge -->
-                  <v-chip
-                    :color="combinedStateColor"
-                    size="small"
-                    variant="flat"
-                    :title="combinedStateHint"
-                  >
-                    <v-icon start size="x-small">{{ combinedStateIcon }}</v-icon>
-                    {{ combinedStateLabel }}
-                  </v-chip>
                 </div>
 
                 <!-- Scene badges moved to right -->
@@ -1100,24 +1077,6 @@ const successRate = computed(() => {
 const playState = computed(() => props.device?.playState || 'stopped');
 
 // Combined state badge (replaces separate play-state and scene-state badges)
-const combinedStateLabel = computed(() => {
-  const state = playState.value;
-  const sceneState = props.device?.sceneState;
-  const isAnimated = currentSceneInfo.value?.wantsLoop;
-  
-  // Completed state takes priority
-  if (sceneState?.testCompleted) return 'Complete';
-  
-  // Static scenes show "Displayed" when stopped (since they're shown)
-  if (!isAnimated && state === 'stopped') return 'Displayed';
-  
-  // Otherwise use play state
-  if (state === 'playing') return isAnimated ? 'Playing' : 'Displayed';
-  if (state === 'paused') return 'Paused';
-  if (state === 'stopped') return 'Stopped';
-  
-  return 'Unknown';
-});
 
 const combinedStateColor = computed(() => {
   const sceneState = props.device?.sceneState;
@@ -1177,28 +1136,6 @@ const playStateTextColor = computed(() => {
   return '#ffffff';
 });
 
-const combinedStateHint = computed(() => {
-  const sceneState = props.device?.sceneState;
-  const isAnimated = currentSceneInfo.value?.wantsLoop;
-  
-  if (sceneState?.testCompleted) {
-    return 'Scene has finished rendering all frames';
-  }
-  
-  const state = playState.value;
-  
-  if (state === 'playing') {
-    return isAnimated ? 'Scene is actively animating' : 'Static scene displayed';
-  }
-  if (state === 'paused') {
-    return 'Animation paused - press Play to resume';
-  }
-  if (state === 'stopped') {
-    return isAnimated ? 'Animation stopped - display cleared' : 'Static scene displayed';
-  }
-  
-  return '';
-});
 
 function isPressed(button) {
   const state = playState.value;
@@ -1943,36 +1880,6 @@ onUnmounted(() => {
   // ECharts cleans up automatically via v-chart component!
 });
 
-const driverIcon = computed(() => {
-  return props.device.driver === 'real' ? 'mdi-chip' : 'mdi-robot';
-});
-
-const driverBadgeColor = computed(() =>
-  props.device.driver === 'real' ? '#1565c0' : '#7e57c2',
-);
-
-const driverVariant = computed(() =>
-  props.device.driver === 'real' ? 'flat' : 'flat',
-);
-
-const driverTextColor = computed(() =>
-  props.device.driver === 'real' ? '#ffffff' : '#ffffff',
-);
-
-const driverIconColor = computed(() =>
-  props.device.driver === 'real' ? '#ffffff' : '#ffffff',
-);
-
-const driverLabel = computed(() =>
-  props.device.driver === 'real' ? 'Hardware' : 'Simulated',
-);
-
-// Driver status icon next to device name
-const driverStatusLabel = computed(() => {
-  return props.device.driver === 'real' 
-    ? 'Connected to real hardware device' 
-    : 'Using simulated mock device';
-});
 </script>
 
 <style scoped>
@@ -2465,16 +2372,6 @@ const driverStatusLabel = computed(() => {
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
-.driver-badge {
-  border-color: rgba(76, 29, 149, 0.18) !important;
-}
-
-.driver-badge__content {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
 
 .scene-state-chip {
   background-image: linear-gradient(135deg, rgba(22, 163, 74, 0.12), rgba(15, 118, 110, 0.12));
