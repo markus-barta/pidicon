@@ -1,12 +1,12 @@
 {
   "version": "3.2.1",
   "deploymentId": "v3.1.0-pre-scene-manager",
-  "buildNumber": 924,
-  "gitCommit": "b9a264b",
-  "gitCommitFull": "b9a264bb006fd30775e76e466a0a1e8110ea5273",
-  "gitCommitCount": 924,
+  "buildNumber": 925,
+  "gitCommit": "e2131ef",
+  "gitCommitFull": "e2131efac984dcc12137a14b13eeb96cc59a95e1",
+  "gitCommitCount": 925,
   "gitBranch": "main",
   "gitTag": "v3.1.0-pre-scene-manager",
-  "buildTime": "2025-11-02T14:55:42.898Z",
+  "buildTime": "2025-11-02T17:20:34.124Z",
   "environment": "development"
 }
