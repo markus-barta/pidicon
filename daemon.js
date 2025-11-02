@@ -544,18 +544,32 @@ async function bootstrap() {
   });
 
   mqttService.connect().catch((err) => {
-    logger.error('Failed to connect to MQTT broker:', { error: err.message });
+    logger.error('Failed to connect to MQTT broker:', {
+      error: err.message,
+      brokerUrl: mqttConfig.brokerUrl,
+    });
+    logger.warn(
+      'MQTT functionality disabled until connection is restored. Daemon will continue operating without MQTT publishing.'
+    );
     reconnectMqttWithBackoff();
   });
 
   function reconnectMqttWithBackoff(attempt = 1) {
     const delayMs = Math.min(30000, attempt * 5000);
     logger.info(
-      `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`
+      `Retrying MQTT connection in ${delayMs / 1000}s (attempt ${attempt})`,
+      {
+        brokerUrl: mqttConfig.brokerUrl,
+        nextRetryInMs: delayMs,
+      }
     );
     setTimeout(() => {
       mqttService.connect().catch((err) => {
-        logger.error('MQTT reconnect failed:', { error: err.message, attempt });
+        logger.error('MQTT reconnect failed:', {
+          error: err.message,
+          attempt,
+          nextRetryInMs: Math.min(30000, (attempt + 1) * 5000),
+        });
         reconnectMqttWithBackoff(attempt + 1);
       });
     }, delayMs);

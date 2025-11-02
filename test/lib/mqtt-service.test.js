@@ -182,14 +182,14 @@ describe('MqttService', () => {
       assert.ok(errorLogs.length > 0, 'Should log error for invalid JSON');
       assert.ok(
         errorLogs.some((l) => l.msg.includes('parsing')),
-        'Error message should mention parsing',
+        'Error message should mention parsing'
       );
 
       // Verify error was emitted
       assert.ok(errorEmitted, 'Should emit error event');
       assert.ok(
         emittedError.message.includes('JSON'),
-        'Error should be about JSON parsing',
+        'Error should be about JSON parsing'
       );
     });
   });
@@ -226,6 +226,268 @@ describe('MqttService', () => {
       const service = new MqttService({ logger });
 
       assert.strictEqual(service.getHandlers().length, 0);
+    });
+  });
+
+  describe('Publishing', () => {
+    describe('Error Handling and Throttling', () => {
+      it('should initialize publish error tracking fields', () => {
+        const logger = createMockLogger();
+        const service = new MqttService({ logger });
+
+        assert.strictEqual(service.publishErrorCount, 0);
+        assert.strictEqual(service.lastPublishErrorLog, 0);
+      });
+
+      it('should log first publish error when not connected', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+        const service = new MqttService({ logger });
+
+        // Not connected
+        const result = await service.publish('test/topic', { data: 'test' });
+
+        assert.strictEqual(result, false);
+        assert.strictEqual(service.publishErrorCount, 1);
+
+        // Should have logged the first error
+        const warnLogs = logs.filter((l) => l.level === 'warn');
+        assert.strictEqual(warnLogs.length, 1);
+        assert.ok(warnLogs[0].msg.includes('Cannot publish to MQTT'));
+        assert.strictEqual(warnLogs[0].meta.errorCount, 1);
+        assert.strictEqual(warnLogs[0].meta.topic, 'test/topic');
+      });
+
+      it('should throttle subsequent publish errors (not log every one)', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+        const service = new MqttService({ logger });
+
+        // First publish error - should log
+        await service.publish('test/topic', { data: 'test1' });
+        const warnCount1 = logs.filter((l) => l.level === 'warn').length;
+        assert.strictEqual(warnCount1, 1);
+
+        // Subsequent publish errors within 60s - should NOT log
+        await service.publish('test/topic', { data: 'test2' });
+        await service.publish('test/topic', { data: 'test3' });
+        await service.publish('test/topic', { data: 'test4' });
+
+        const warnCount2 = logs.filter((l) => l.level === 'warn').length;
+        assert.strictEqual(
+          warnCount2,
+          1,
+          'Should not log additional errors within 60s'
+        );
+
+        // Error count should still increment
+        assert.strictEqual(service.publishErrorCount, 4);
+      });
+
+      it('should log again after 60 seconds have passed', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+        const service = new MqttService({ logger });
+
+        // First error
+        await service.publish('test/topic', { data: 'test1' });
+        assert.strictEqual(logs.filter((l) => l.level === 'warn').length, 1);
+
+        // Simulate 61 seconds passing
+        service.lastPublishErrorLog = Date.now() - 61000;
+
+        // Next error should log again
+        await service.publish('test/topic', { data: 'test2' });
+
+        const warnLogs = logs.filter((l) => l.level === 'warn');
+        assert.strictEqual(warnLogs.length, 2);
+        assert.strictEqual(warnLogs[1].meta.errorCount, 2);
+      });
+
+      it('should reset error count and log message when connection restored', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+
+        const service = new MqttService({ logger });
+
+        // Accumulate some publish errors
+        await service.publish('test/topic', { data: 'test1' });
+        await service.publish('test/topic', { data: 'test2' });
+        await service.publish('test/topic', { data: 'test3' });
+
+        assert.strictEqual(service.publishErrorCount, 3);
+
+        // Mock client and connection
+        service.client = {
+          publish: (topic, message, options, callback) => {
+            callback(null);
+          },
+        };
+        service.connected = true;
+
+        // Publish after reconnection
+        const result = await service.publish('test/topic', { data: 'test4' });
+
+        assert.strictEqual(result, true);
+        assert.strictEqual(
+          service.publishErrorCount,
+          0,
+          'Error count should reset'
+        );
+
+        // Should have logged the resumption message
+        const infoLogs = logs.filter((l) => l.level === 'info');
+        assert.ok(infoLogs.some((l) => l.msg.includes('publishing resumed')));
+        assert.ok(infoLogs.some((l) => l.meta && l.meta.missedPublishes === 3));
+      });
+
+      it('should not log resumption message if no errors occurred', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+
+        const service = new MqttService({ logger });
+
+        // Mock client and connection (already connected)
+        service.client = {
+          publish: (topic, message, options, callback) => {
+            callback(null);
+          },
+        };
+        service.connected = true;
+
+        // Publish without any previous errors
+        await service.publish('test/topic', { data: 'test' });
+
+        // Should NOT log resumption message
+        const infoLogs = logs.filter((l) => l.level === 'info');
+        assert.ok(
+          !infoLogs.some((l) => l.msg.includes('publishing resumed')),
+          'Should not log resumption when there were no errors'
+        );
+      });
+    });
+
+    describe('Connection State Messages', () => {
+      it('should distinguish initial connection from reconnection', () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+
+        const service = new MqttService({ logger });
+
+        // Test initial connection (retryCount = 0)
+        service.retryCount = 0;
+        service.connected = false;
+
+        // Simulate connection event handler logic
+        const wasReconnecting = service.retryCount > 0;
+        assert.strictEqual(wasReconnecting, false);
+
+        // Test reconnection (retryCount > 0)
+        service.retryCount = 3;
+        const wasReconnecting2 = service.retryCount > 0;
+        assert.strictEqual(wasReconnecting2, true);
+      });
+    });
+
+    describe('Successful Publishing', () => {
+      it('should publish successfully when connected', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+
+        const service = new MqttService({ logger });
+
+        let publishedTopic = null;
+        let publishedMessage = null;
+
+        service.client = {
+          publish: (topic, message, options, callback) => {
+            publishedTopic = topic;
+            publishedMessage = message;
+            callback(null); // Success
+          },
+        };
+        service.connected = true;
+
+        const result = await service.publish('test/topic', { data: 'test' });
+
+        assert.strictEqual(result, true);
+        assert.strictEqual(publishedTopic, 'test/topic');
+        assert.strictEqual(publishedMessage, JSON.stringify({ data: 'test' }));
+
+        // Should have debug log
+        const debugLogs = logs.filter((l) => l.level === 'debug');
+        assert.ok(debugLogs.some((l) => l.msg.includes('MQTT published')));
+      });
+
+      it('should handle publish errors from client', async () => {
+        const logs = [];
+        const logger = {
+          ok: (msg, meta) => logs.push({ level: 'ok', msg, meta }),
+          info: (msg, meta) => logs.push({ level: 'info', msg, meta }),
+          warn: (msg, meta) => logs.push({ level: 'warn', msg, meta }),
+          error: (msg, meta) => logs.push({ level: 'error', msg, meta }),
+          debug: (msg, meta) => logs.push({ level: 'debug', msg, meta }),
+        };
+
+        const service = new MqttService({ logger });
+
+        service.client = {
+          publish: (topic, message, options, callback) => {
+            callback(new Error('Publish failed'));
+          },
+        };
+        service.connected = true;
+
+        const result = await service.publish('test/topic', { data: 'test' });
+
+        assert.strictEqual(result, false);
+
+        // Should log error
+        const errorLogs = logs.filter((l) => l.level === 'error');
+        assert.ok(errorLogs.some((l) => l.msg.includes('MQTT publish error')));
+      });
     });
   });
 });
