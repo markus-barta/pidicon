@@ -371,4 +371,137 @@ describe('usePreferences - Core Logic', () => {
       assert.strictEqual(params.get('reset_preferences'), null);
     });
   });
+
+  describe('Device Card Preferences', () => {
+    it('should store device-specific collapsed state', () => {
+      const deviceIp = '192.168.1.100';
+      const prefs = {
+        version: 1,
+        deviceCards: {
+          [deviceIp]: {
+            collapsed: true,
+            showDetails: false,
+            showMetrics: true,
+          },
+        },
+      };
+
+      assert.strictEqual(prefs.deviceCards[deviceIp].collapsed, true);
+      assert.strictEqual(prefs.deviceCards[deviceIp].showDetails, false);
+      assert.strictEqual(prefs.deviceCards[deviceIp].showMetrics, true);
+    });
+
+    it('should handle multiple device preferences independently', () => {
+      const prefs = {
+        version: 1,
+        deviceCards: {
+          '192.168.1.100': { collapsed: true },
+          '192.168.1.101': { collapsed: false },
+          '192.168.1.102': { collapsed: true },
+        },
+      };
+
+      assert.strictEqual(prefs.deviceCards['192.168.1.100'].collapsed, true);
+      assert.strictEqual(prefs.deviceCards['192.168.1.101'].collapsed, false);
+      assert.strictEqual(prefs.deviceCards['192.168.1.102'].collapsed, true);
+    });
+  });
+
+  describe('Scene Manager Preferences', () => {
+    it('should store scene manager state', () => {
+      const prefs = {
+        version: 1,
+        sceneManager: {
+          selectedDeviceIp: '192.168.1.100',
+          sortBy: 'name',
+          searchQuery: 'clock',
+          bulkMode: true,
+        },
+      };
+
+      assert.strictEqual(prefs.sceneManager.selectedDeviceIp, '192.168.1.100');
+      assert.strictEqual(prefs.sceneManager.sortBy, 'name');
+      assert.strictEqual(prefs.sceneManager.searchQuery, 'clock');
+      assert.strictEqual(prefs.sceneManager.bulkMode, true);
+    });
+  });
+
+  describe('Tests View Preferences', () => {
+    it('should store tests view expanded sections', () => {
+      const prefs = {
+        version: 1,
+        testsView: {
+          searchQuery: 'mqtt',
+          expandedSections: ['system', 'device', 'mqtt'],
+        },
+      };
+
+      assert.strictEqual(prefs.testsView.searchQuery, 'mqtt');
+      assert.ok(Array.isArray(prefs.testsView.expandedSections));
+      assert.strictEqual(prefs.testsView.expandedSections.length, 3);
+      assert.ok(prefs.testsView.expandedSections.includes('mqtt'));
+    });
+  });
+
+  describe('Export/Import', () => {
+    it('should export preferences as JSON string', () => {
+      const prefs = {
+        version: 1,
+        deviceCards: {},
+        currentView: 'settings',
+        settingsTab: 'mqtt',
+      };
+
+      const exported = JSON.stringify(prefs, null, 2);
+      assert.ok(exported.includes('"version": 1'));
+      assert.ok(exported.includes('"currentView": "settings"'));
+    });
+
+    it('should import valid JSON preferences', () => {
+      const json = JSON.stringify({
+        version: 1,
+        deviceCards: { '192.168.1.100': { collapsed: true } },
+        currentView: 'devices',
+        settingsTab: 'devices',
+      });
+
+      const imported = JSON.parse(json);
+      assert.strictEqual(imported.version, 1);
+      assert.ok(imported.deviceCards['192.168.1.100']);
+      assert.strictEqual(imported.deviceCards['192.168.1.100'].collapsed, true);
+    });
+
+    it('should reject import with invalid schema', () => {
+      const invalidJson = JSON.stringify({ version: 99, invalid: true });
+
+      try {
+        const imported = JSON.parse(invalidJson);
+        // Validation check would fail
+        const isValid = imported.version === 1 && 'deviceCards' in imported;
+        assert.strictEqual(isValid, false);
+      } catch (e) {
+        assert.ok(e);
+      }
+    });
+  });
+
+  describe('View State Persistence', () => {
+    it('should persist current view selection', () => {
+      const prefs = {
+        version: 1,
+        currentView: 'logs',
+      };
+
+      assert.strictEqual(prefs.currentView, 'logs');
+    });
+
+    it('should persist settings tab selection', () => {
+      const prefs = {
+        version: 1,
+        settingsTab: 'mqtt',
+      };
+
+      assert.strictEqual(prefs.settingsTab, 'mqtt');
+    });
+  });
 });

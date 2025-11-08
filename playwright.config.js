@@ -35,7 +35,7 @@ module.exports = defineConfig({
   // Reporter configuration
   reporter: [
     ['list'], // Console output
-    ['html', { outputFolder: 'test-results/playwright-html' }], // HTML report
+    ['html', { outputFolder: 'playwright-report' }], // HTML report (separate from test-results)
     ['json', { outputFile: 'data/test-results/playwright-tests.json' }], // JSON for dashboard
   ],
 
