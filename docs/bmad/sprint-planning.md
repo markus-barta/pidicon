@@ -60,17 +60,17 @@ v4.0 (Q4 2025 - Target: Oct 2026)
 
 ---
 
-## Sprint 0: Current Sprint (In Progress)
+## Sprint 0: COMPLETE ✅
 
-**Duration:** Ongoing  
+**Duration:** November 8, 2025  
 **Goal:** Complete UI-787 (UI Preferences Persistence)  
-**Status:** 🚧 In Progress
+**Status:** ✅ **COMPLETE**
 
 ### Sprint Backlog
 
-| ID     | Story                      | Priority | Status         | Points | Owner |
-| ------ | -------------------------- | -------- | -------------- | ------ | ----- |
-| UI-787 | UI Preferences Persistence | P1       | 🚧 In Progress | 5      | mba   |
+| ID     | Story                      | Priority | Status      | Points | Owner |
+| ------ | -------------------------- | -------- | ----------- | ------ | ----- |
+| UI-787 | UI Preferences Persistence | P1       | ✅ Complete | 5      | mba   |
 
 ### Sprint Goal
 
@@ -82,50 +82,51 @@ Complete the centralized UI preferences system using localStorage with proper ke
 
 **Phase 1: Foundation (Core Infrastructure)**
 
-- ⏳ Create `usePreferences` composable
-- ⏳ Implement localStorage abstraction
-- ⏳ Add versioning and migration support
-- ⏳ Write comprehensive tests
+- ✅ Create `usePreferences` composable
+- ✅ Implement localStorage abstraction
+- ✅ Add versioning and migration support
+- ✅ Write comprehensive tests
 
 **Phase 2: Device Card Preferences**
 
-- ⏳ Persist collapsed/expanded state per device
-- ⏳ Persist show scene details toggle per device
-- ⏳ Persist show performance metrics per device
+- ✅ Persist collapsed/expanded state per device
+- ✅ Persist show scene details toggle per device
+- ✅ Persist show performance metrics per device
 
 **Phase 3: Settings View Preferences**
 
-- ⏳ Persist active tab (devices/global/mqtt/scenes)
-- ⏳ Maintain scroll position
+- ✅ Persist active tab (devices/global/mqtt/scenes)
+- ✅ Maintain scroll position (in-memory, not persisted)
 
 **Phase 4: Scene Manager Preferences**
 
-- ⏳ Persist selected device filter
-- ⏳ Persist search query
-- ⏳ Persist sort order
+- ✅ Persist selected device filter
+- ✅ Persist search query
+- ✅ Persist sort order
+- ✅ Persist bulk mode toggle
 
 **Phase 5: Logs View Preferences**
 
-- ⏳ Persist filter settings
-- ⏳ Persist auto-scroll toggle
+- ⏳ Persist filter settings (deferred - logs view not implemented)
+- ⏳ Persist auto-scroll toggle (deferred - logs view not implemented)
 
 ### Definition of Done
 
-- All acceptance criteria met
-- Unit tests passing (add 20+ new tests for `usePreferences.js` composable)
-- **E2E tests passing (18 Playwright test files covering all phases):**
-  - Phase 1: 4 core infrastructure tests (init, migration, corruption, quota)
-  - Phase 2: 4 device card preference tests (collapse, toggles, per-device, daemon conflict)
-  - Phase 3: 4 navigation & view persistence tests (view, tabs, unsaved changes, WebSocket)
-  - Phase 4: 4 view-specific preference tests (scene manager, tests view)
-  - Phase 5: 4 multi-tab & edge case tests (sync, reset, export/import, URL param)
-- Test coverage ≥ 90% for preferences logic
-- No flaky tests (all deterministic with proper fixtures)
-- Documentation updated (`web/frontend/src/composables/README.md`)
-- No regression in existing functionality (all existing Playwright tests pass)
-- Code review complete
-- Deployed to production
-- CI/CD pipeline green with all tests passing
+- ✅ All acceptance criteria met (except deferred logs view)
+- ✅ Unit tests passing (25 tests for `usePreferences.js` composable)
+- ✅ **E2E tests passing (18 Playwright test files, 123 test cases covering all phases):**
+  - Phase 1: 4 test files - core infrastructure (init, migration, corruption, quota)
+  - Phase 2: 4 test files - device card preferences (collapse, toggles, per-device, daemon conflict)
+  - Phase 3: 4 test files - navigation & view persistence (view, tabs, unsaved changes, WebSocket)
+  - Phase 4: 4 test files - view-specific preferences (scene manager, tests view, logs future, existing tests)
+  - Phase 5: 4 test files - multi-tab & edge cases (sync, reset, export/import, URL param)
+- ✅ Test coverage ≥ 90% for preferences logic
+- ✅ No flaky tests (all deterministic with proper fixtures)
+- ✅ Documentation updated (README, E2E test report, sprint status report)
+- ✅ No regression in existing functionality (all existing Playwright tests pass)
+- ✅ Code review complete (self-review with AI assistance)
+- ✅ Deployed to production (miniserver24:10829)
+- ✅ Production validation complete (comprehensive E2E testing on live environment)
 
 ---
 
@@ -142,8 +143,9 @@ Complete the centralized UI preferences system using localStorage with proper ke
 | ROADMAP-001 | AWTRIX Driver Full Implementation | P1       | ⏳ Planned | 8      | mba   |
 | PERF-301    | Performance Optimizations         | P1       | ⏳ Planned | 3      | mba   |
 | BUG-011     | Performance Scene Reset Bug       | P2       | ⏳ Planned | 2      | mba   |
+| DEV-001     | BMAD Sprint Status Display Scene  | P2       | ⏳ Planned | 3      | mba   |
 
-**Total Sprint Points:** 13 (may split across 2 sprints)
+**Total Sprint Points:** 16 (may split across 2 sprints)
 
 ### Sprint Goal
 
@@ -175,13 +177,24 @@ Enable full AWTRIX support with complete scene rendering and optimize system per
 - Update performance test scene
 - Add regression test
 
+**DEV-001: BMAD Sprint Status Display Scene**
+
+- Create 64x64 pixel scene showing sprint status
+- Display current in-progress story with short description
+- Show BMAD workflow stage and progress
+- Visualize story completion metrics
+- Parse sprint-status.yaml for data
+- Optimize layout for readability on pixel display
+- Test on physical Pixoo 64 device
+
 ### Definition of Done
 
 - AWTRIX device fully functional
 - At least 3 AWTRIX-optimized scenes
 - Performance metrics show improvement
 - All tests passing (including AWTRIX integration tests)
-- Documentation updated with AWTRIX setup
+- BMAD sprint status scene functional and readable on Pixoo 64
+- Documentation updated with AWTRIX setup and BMAD scene
 - Deployed to production
 
 ---
