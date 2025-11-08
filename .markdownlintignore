@@ -12,6 +12,10 @@ docs/guides/**
 docs/BACKLOG.md
 docs/BACKLOG-TABLE.md
 
+# BMAD Method generated documentation (formatting not critical)
+docs/bmad/
+docs/bmad/**
+
 # Licensing and meta files
 LICENSE
 COPYING
