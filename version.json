@@ -1,12 +1,12 @@
 {
   "version": "3.2.1",
-  "deploymentId": "v3.1.0-pre-scene-manager",
-  "buildNumber": 925,
-  "gitCommit": "e2131ef",
-  "gitCommitFull": "e2131efac984dcc12137a14b13eeb96cc59a95e1",
-  "gitCommitCount": 925,
+  "deploymentId": "bmad-foundation-v1.0",
+  "buildNumber": 929,
+  "gitCommit": "23eb332",
+  "gitCommitFull": "23eb3324d25861f5112287f0de4e191443342461",
+  "gitCommitCount": 929,
   "gitBranch": "main",
-  "gitTag": "v3.1.0-pre-scene-manager",
-  "buildTime": "2025-11-02T17:20:34.124Z",
+  "gitTag": "bmad-foundation-v1.0",
+  "buildTime": "2025-11-08T13:26:57.636Z",
   "environment": "development"
 }
