@@ -1,1 +1,1 @@
-commit and push to git
+add all new files, commit and push to git
