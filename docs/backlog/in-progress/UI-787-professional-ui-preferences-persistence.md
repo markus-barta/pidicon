@@ -385,10 +385,63 @@ const isCollapsed = computed({
 
 ### Integration Tests (Playwright)
 
-- Device card state persists after reload (collapse + toggles)
-- Navigation view + settings tab persist across reload and WebSocket reconnects
-- Scene manager filters persist, clear/reset returns to defaults
-- Optional: dev mode preference (if enabled) persists correctly
+#### Required E2E Test Coverage (Playwright)
+
+**Phase 1: Core Infrastructure Tests**
+
+- [ ] `preferences-init.spec.js` - First-time load creates default preferences
+- [ ] `preferences-migration.spec.js` - Legacy `pidicon:showDevScenes` migrates to new schema
+- [ ] `preferences-corruption.spec.js` - Invalid JSON resets gracefully without crashing
+- [ ] `preferences-quota.spec.js` - Large preference objects stay under localStorage quota
+
+**Phase 2: Device Card Preferences Tests**
+
+- [ ] `device-card-collapse.spec.js` - Collapse device card → reload → verify state restored
+- [ ] `device-card-toggles.spec.js` - Toggle scene details + performance metrics → reload → verify persisted
+- [ ] `device-card-per-device.spec.js` - Different preferences per device IP → reload → verify independent
+- [ ] `device-card-daemon-conflict.spec.js` - Daemon restarts with state change → preferences don't override device state
+
+**Phase 3: Navigation & View Persistence Tests**
+
+- [ ] `navigation-view.spec.js` - Switch to Settings/Logs/Tests view → reload → verify view remembered
+- [ ] `settings-active-tab.spec.js` - Switch settings tab (devices/global/mqtt) → reload → verify tab persisted
+- [ ] `settings-unsaved-changes.spec.js` - Make MQTT changes without saving → reload → verify form is clean (not persisted)
+- [ ] `websocket-reconnect.spec.js` - View persists across WebSocket disconnect/reconnect
+
+**Phase 4: View-Specific Preferences Tests**
+
+- [ ] `scene-manager-filters.spec.js` - Set device filter, sort, search → reload → verify all persisted
+- [ ] `scene-manager-reset.spec.js` - Click "Reset to defaults" → verify filters cleared
+- [ ] `tests-view-search.spec.js` - Search diagnostics → reload → verify search persisted
+- [ ] `tests-view-expanded.spec.js` - Expand test sections → reload → verify sections remembered
+
+**Phase 5: Multi-Tab & Edge Cases Tests**
+
+- [ ] `multi-tab-sync.spec.js` - Change preference in tab A → verify tab B updates via storage event
+- [ ] `preferences-reset.spec.js` - Use debug panel "Clear All Preferences" → verify reset to defaults
+- [ ] `preferences-export-import.spec.js` - Export preferences → import in new session → verify restored
+- [ ] `url-reset-param.spec.js` - Load with `?reset_preferences=1` → verify preferences cleared
+
+**Integration Scenarios (Critical Path)**
+
+1. ✅ **Happy Path**: User sets all preferences → reload → all preserved
+2. ✅ **Conflict Resolution**: Preferences vs. daemon state → daemon wins
+3. ✅ **Form Workflow**: Unsaved changes → reload → form shows server state (not unsaved)
+4. ✅ **Graceful Degradation**: localStorage unavailable → app works with in-memory fallback
+
+**Test Fixtures Required**
+
+- [ ] `preferences.fixture.js` - Seed/clear preferences for deterministic tests
+- [ ] `mockDevices.fixture.js` - Generate multiple device states for per-device preference testing
+- [ ] `localStorage.fixture.js` - Mock localStorage for quota/corruption scenarios
+
+**Acceptance Criteria for E2E Tests**
+
+- [ ] All 18 Playwright test files created and passing
+- [ ] Test coverage ≥ 90% for `usePreferences.js` composable
+- [ ] No flaky tests (deterministic, no race conditions)
+- [ ] Tests run in < 5 minutes total
+- [ ] CI/CD integration with failure reporting
 
 ## Dependencies & Coordination
 

@@ -112,12 +112,20 @@ Complete the centralized UI preferences system using localStorage with proper ke
 ### Definition of Done
 
 - All acceptance criteria met
-- Unit tests passing (add 20+ new tests)
-- E2E tests passing (update existing Playwright tests)
+- Unit tests passing (add 20+ new tests for `usePreferences.js` composable)
+- **E2E tests passing (18 Playwright test files covering all phases):**
+  - Phase 1: 4 core infrastructure tests (init, migration, corruption, quota)
+  - Phase 2: 4 device card preference tests (collapse, toggles, per-device, daemon conflict)
+  - Phase 3: 4 navigation & view persistence tests (view, tabs, unsaved changes, WebSocket)
+  - Phase 4: 4 view-specific preference tests (scene manager, tests view)
+  - Phase 5: 4 multi-tab & edge case tests (sync, reset, export/import, URL param)
+- Test coverage ≥ 90% for preferences logic
+- No flaky tests (all deterministic with proper fixtures)
 - Documentation updated (`web/frontend/src/composables/README.md`)
-- No regression in existing functionality
+- No regression in existing functionality (all existing Playwright tests pass)
 - Code review complete
 - Deployed to production
+- CI/CD pipeline green with all tests passing
 
 ---
 
