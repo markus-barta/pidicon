@@ -32,9 +32,10 @@ echo ""
 # Run cloc for SOURCE CODE only (excludes root bmad/ framework, not docs/bmad/)
 echo -e "${YELLOW}Analyzing source code...${NC}"
 SOURCE_OUTPUT=$(cloc . \
-  --exclude-dir=node_modules,coverage,bmad,docs,playwright-report,test-results,data,.devenv,.direnv \
+  --exclude-dir=node_modules,coverage,bmad,docs,playwright-report,test-results,data,.devenv,.direnv,.cursor,.nyc_output \
   --exclude-ext=lock,md \
   --fullpath --not-match-d='(web/public)' \
+  --not-match-f='version\.json' \
   2>&1 | grep -v "Wrote /" || true)
 
 echo "$SOURCE_OUTPUT"
