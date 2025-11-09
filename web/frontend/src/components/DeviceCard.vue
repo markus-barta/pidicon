@@ -49,7 +49,10 @@
                     <span 
                       v-if="device.driver === 'real'"
                       class="device-responsive-dot"
-                      :class="{ 'device-responsive-dot--heartbeat': deviceHealthStatus === 'online' || deviceHealthStatus === 'degraded' }"
+                      :class="{ 
+                        'device-responsive-dot--heartbeat': deviceHealthStatus === 'online',
+                        'device-responsive-dot--pulse': deviceHealthStatus === 'degraded'
+                      }"
                       :style="{ backgroundColor: deviceHealthColor }"
                       :key="device.health?.lastSeenTs"
                     ></span>
@@ -2424,6 +2427,22 @@ onUnmounted(() => {
   50% {
     transform: scale(1.1);
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 0 8px 2px rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* Story 0.2: Degraded state animation - amber/yellow pulse */
+.device-responsive-dot--pulse {
+  animation: device-degraded-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes device-degraded-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2), 0 0 8px 2px rgba(245, 158, 11, 0.3);
   }
 }
 
