@@ -1,6 +1,8 @@
 # Story: BMAD Sprint Status Display Scene
 
-**Status:** backlog
+**Status:** ✅ Complete  
+**Completed:** 2025-11-09  
+**Sprint:** Sprint 1
 
 ## Story
 

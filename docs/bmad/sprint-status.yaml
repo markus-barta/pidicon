@@ -1,0 +1,18 @@
+current_sprint:
+  goal: 'Complete Sprint 1: AWTRIX Implementation & Performance'
+  start_date: '2025-11-09'
+  status: 'in-progress'
+
+workflow_stage: 'dev-story'
+workflow_progress: { current: 3, total: 8 }
+
+development_status:
+  'ROADMAP-001-awtrix-driver-implementation':
+    status: 'done'
+    title: 'AWTRIX Driver Implementation'
+  'BUG-011-performance-scene-reset':
+    status: 'done'
+    title: 'Performance Scene Reset Bug'
+  'DEV-001-bmad-sprint-status-display':
+    status: 'in-progress'
+    title: 'BMAD Sprint Status Display Scene'

@@ -556,27 +556,35 @@ async function init(context) {
 }
 
 async function cleanup(context) {
-  const { log } = context;
+  const { log, getState, setState } = context;
   try {
-    const { getState, setState } = context;
+    // Clear any pending timers
     const loopTimer = getState?.('loopTimer');
     if (loopTimer) {
       clearTimeout(loopTimer);
       setState('loopTimer', null);
     }
-    // Ensure the next run fully re-initializes
+
+    // Reset ALL state variables to ensure clean restart
+    // Use PerformanceTestState.reset() to ensure consistency
+    const performanceState = new PerformanceTestState(getState, setState);
+    performanceState.reset();
+
+    // Reset additional control flags
     setState?.('loopScheduled', false);
     setState?.('inFrame', false);
-    setState?.('isRunning', false);
-    setState?.('framesPushed', 0);
     setState?.('chartInitialized', false);
     setState?.('hasPrevPoint', false);
     setState?.('testCompleted', true);
     setState?.('config', null);
+    setState?.('chartX', CHART_CONFIG.CHART_START_X + 1);
+    setState?.('lastY', 0);
+    setState?.('lastValue', 0);
+
+    log?.(`🧹 Scene fully cleaned up and reset`, 'debug');
   } catch (e) {
     log?.(`⚠️ Cleanup encountered an issue: ${e?.message}`, 'warning');
   }
-  log?.(`🧹 Scene cleaned up`, 'debug');
 }
 
 async function updateStatistics(frametime, getState, setState) {

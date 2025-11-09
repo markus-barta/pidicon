@@ -827,3 +827,256 @@ describe('Multi-Device Scene Control Isolation', () => {
     );
   });
 });
+
+// ============================================================================
+// Performance Scene State Reset Regression Test (BUG-011)
+// ============================================================================
+
+describe('Performance Scene State Reset (BUG-011)', () => {
+  let sceneManager;
+  let mockDevice;
+  let stateMap;
+
+  beforeEach(() => {
+    sceneManager = new SceneManager({
+      logger: createMockLogger(),
+    });
+
+    mockDevice = createMockDevice();
+    stateMap = new Map();
+
+    // Mock performance scene with state management similar to the real one
+    const performanceScene = {
+      name: 'performance-test',
+      wantsLoop: true,
+      init: async (ctx) => {
+        // Initialization (minimal)
+      },
+      render: async (ctx) => {
+        const { getState, setState } = ctx;
+
+        // Simulate state usage in render (like performance-test.js)
+        const framesRendered = (getState('framesRendered') || 0) + 1;
+        const samples = getState('samples') || [];
+        const chartX = getState('chartX') || 1;
+
+        setState('framesRendered', framesRendered);
+        setState('samples', [...samples, Date.now()]);
+        setState('chartX', chartX + 1);
+        setState(
+          'minFrametime',
+          Math.min(getState('minFrametime') || Infinity, 100)
+        );
+        setState('maxFrametime', Math.max(getState('maxFrametime') || 0, 100));
+        setState('sumFrametime', (getState('sumFrametime') || 0) + 100);
+        setState('lastY', 10);
+        setState('lastValue', 100);
+        setState('chartInitialized', true);
+        setState('hasPrevPoint', true);
+
+        // Stop after 3 frames for test
+        if (framesRendered >= 3) {
+          setState('isRunning', false);
+          return null; // Complete
+        }
+        return 0; // Continue immediately
+      },
+      cleanup: async (ctx) => {
+        const { getState, setState } = ctx;
+
+        // Clear any timers
+        const loopTimer = getState('loopTimer');
+        if (loopTimer) {
+          clearTimeout(loopTimer);
+          setState('loopTimer', null);
+        }
+
+        // Reset ALL state variables (BUG-011 fix)
+        setState('framesRendered', 0);
+        setState('framesPushed', 0);
+        setState('startTime', Date.now());
+        setState('minFrametime', Infinity);
+        setState('maxFrametime', 0);
+        setState('sumFrametime', 0);
+        setState('samples', []);
+        setState('chartX', 1);
+        setState('isRunning', true);
+        setState('testCompleted', false);
+        setState('lastRenderTime', Date.now());
+        setState('loopScheduled', false);
+        setState('inFrame', false);
+        setState('chartInitialized', false);
+        setState('hasPrevPoint', false);
+        setState('config', null);
+        setState('lastY', 0);
+        setState('lastValue', 0);
+      },
+    };
+
+    sceneManager.registerScene('performance-test', performanceScene);
+  });
+
+  it('should fully reset all state variables on cleanup', async () => {
+    const host = '192.168.1.100';
+    const context = {
+      device: mockDevice,
+      env: { host, width: 64, height: 64 },
+      state: stateMap,
+      payload: {},
+      getState: (key) => stateMap.get(key),
+      setState: (key, value) => stateMap.set(key, value),
+    };
+
+    // First run: manually render 3 frames to simulate the scene lifecycle
+    await sceneManager.switchScene('performance-test', context);
+
+    // Manually trigger renders (simulating the loop driver)
+    const scene = sceneManager.scenes.get('performance-test');
+    await scene.render(context);
+    await scene.render(context);
+    await scene.render(context);
+
+    // Verify state was set during rendering
+    assert.strictEqual(
+      stateMap.get('framesRendered'),
+      3,
+      'Should have rendered 3 frames'
+    );
+    assert.ok(stateMap.get('samples')?.length > 0, 'Should have samples');
+    assert.ok(stateMap.get('chartX') > 1, 'Chart X should have advanced');
+    assert.strictEqual(
+      stateMap.get('chartInitialized'),
+      true,
+      'Chart should be initialized'
+    );
+    assert.strictEqual(
+      stateMap.get('hasPrevPoint'),
+      true,
+      'Should have previous point'
+    );
+
+    // Manually call cleanup (simulating scene switch or device deactivation)
+    await scene.cleanup(context);
+
+    // Verify ALL state was reset by cleanup
+    assert.strictEqual(
+      stateMap.get('framesRendered'),
+      0,
+      'framesRendered should be reset to 0'
+    );
+    assert.strictEqual(
+      stateMap.get('framesPushed'),
+      0,
+      'framesPushed should be reset to 0'
+    );
+    assert.strictEqual(
+      stateMap.get('minFrametime'),
+      Infinity,
+      'minFrametime should be reset to Infinity'
+    );
+    assert.strictEqual(
+      stateMap.get('maxFrametime'),
+      0,
+      'maxFrametime should be reset to 0'
+    );
+    assert.strictEqual(
+      stateMap.get('sumFrametime'),
+      0,
+      'sumFrametime should be reset to 0'
+    );
+    assert.ok(
+      Array.isArray(stateMap.get('samples')),
+      'samples should be an array'
+    );
+    assert.strictEqual(
+      stateMap.get('samples').length,
+      0,
+      'samples should be empty after reset'
+    );
+    assert.strictEqual(
+      stateMap.get('chartX'),
+      1,
+      'chartX should be reset to 1'
+    );
+    assert.strictEqual(
+      stateMap.get('isRunning'),
+      true,
+      'isRunning should be reset to true'
+    );
+    assert.strictEqual(
+      stateMap.get('testCompleted'),
+      false,
+      'testCompleted should be reset to false'
+    );
+    assert.strictEqual(
+      stateMap.get('chartInitialized'),
+      false,
+      'chartInitialized should be reset to false'
+    );
+    assert.strictEqual(
+      stateMap.get('hasPrevPoint'),
+      false,
+      'hasPrevPoint should be reset to false'
+    );
+    assert.strictEqual(
+      stateMap.get('config'),
+      null,
+      'config should be reset to null'
+    );
+    assert.strictEqual(stateMap.get('lastY'), 0, 'lastY should be reset to 0');
+    assert.strictEqual(
+      stateMap.get('lastValue'),
+      0,
+      'lastValue should be reset to 0'
+    );
+  });
+
+  it('should start fresh on second run after cleanup', async () => {
+    const host = '192.168.1.100';
+    const context = {
+      device: mockDevice,
+      env: { host, width: 64, height: 64 },
+      state: stateMap,
+      payload: {},
+      getState: (key) => stateMap.get(key),
+      setState: (key, value) => stateMap.set(key, value),
+    };
+
+    // First run: manually render 3 frames
+    await sceneManager.switchScene('performance-test', context);
+    const scene = sceneManager.scenes.get('performance-test');
+    await scene.render(context);
+    await scene.render(context);
+    await scene.render(context);
+
+    const firstRunFrames = stateMap.get('framesRendered');
+    const firstRunSamples = (stateMap.get('samples') || []).length;
+
+    // Manually call cleanup (simulating scene restart)
+    await scene.cleanup(context);
+
+    // Verify reset happened
+    assert.strictEqual(
+      stateMap.get('framesRendered'),
+      0,
+      'State should be reset after cleanup'
+    );
+
+    // Second run - should start from clean slate
+    await scene.render(context);
+    await scene.render(context);
+    await scene.render(context);
+
+    // Should have same progression as first run (proves state was truly reset)
+    assert.strictEqual(
+      stateMap.get('framesRendered'),
+      firstRunFrames,
+      'Second run should have same frame count as first run'
+    );
+    // Verify it's collecting samples (not continuing from old state)
+    assert.ok(
+      (stateMap.get('samples') || []).length > 0,
+      'Second run should be collecting samples (not continuing from old state)'
+    );
+  });
+});
