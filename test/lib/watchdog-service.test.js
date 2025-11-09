@@ -1172,3 +1172,296 @@ test('watchdog handles missing device config gracefully', async () => {
 
   assert.ok(true, 'should handle missing config gracefully');
 });
+
+// ============================================================================
+// NEW: Device Health State Tests (Phase 1 - Epic 0, Story 0.1)
+// ============================================================================
+
+test('updateDeviceHealth initializes health state on first check', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      name: 'Test Device',
+      watchdog: {
+        enabled: true,
+        timeoutMinutes: 120,
+        healthCheckIntervalSeconds: 10,
+      },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  const healthResult = { success: true, latencyMs: 45 };
+  watchdog.updateDeviceHealth('192.168.1.100', healthResult);
+
+  const health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.ok(health, 'health state should exist');
+  assert.strictEqual(health.deviceId, '192.168.1.100');
+  assert.strictEqual(health.deviceName, 'Test Device');
+  assert.strictEqual(health.status, 'online');
+  assert.ok(health.lastSeenTs, 'lastSeenTs should be set');
+  assert.strictEqual(health.consecutiveSuccesses, 1);
+  assert.strictEqual(health.consecutiveFailures, 0);
+});
+
+test('updateDeviceHealth tracks consecutive successes', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  // Three successful checks
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: true,
+    latencyMs: 45,
+  });
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: true,
+    latencyMs: 50,
+  });
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: true,
+    latencyMs: 48,
+  });
+
+  const health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.strictEqual(health.consecutiveSuccesses, 3);
+  assert.strictEqual(health.consecutiveFailures, 0);
+  assert.strictEqual(health.totalChecks, 3);
+  assert.strictEqual(health.status, 'online');
+});
+
+test('updateDeviceHealth tracks consecutive failures', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  // First success, then two failures
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: true,
+    latencyMs: 45,
+  });
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: false,
+    error: 'timeout',
+  });
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: false,
+    error: 'timeout',
+  });
+
+  const health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.strictEqual(health.consecutiveSuccesses, 0);
+  assert.strictEqual(health.consecutiveFailures, 2);
+  assert.strictEqual(health.status, 'degraded'); // 2+ failures = degraded
+  assert.ok(health.offlineSince, 'offlineSince should be set');
+});
+
+test('device status transitions: online → degraded → offline', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: { enabled: true, timeoutMinutes: 1 }, // 1 minute threshold for testing
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  // Start: Online
+  watchdog.updateDeviceHealth('192.168.1.100', { success: true });
+  let health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.strictEqual(health.status, 'online');
+
+  // Two failures: Degraded
+  watchdog.updateDeviceHealth('192.168.1.100', { success: false });
+  watchdog.updateDeviceHealth('192.168.1.100', { success: false });
+  health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.strictEqual(health.status, 'degraded');
+
+  // Simulate time passing (mock lastSeenTs to be old)
+  health.lastSeenTs = Date.now() - 2 * 60 * 1000; // 2 minutes ago
+  assert.strictEqual(watchdog._calculateDeviceStatus(health), 'offline');
+});
+
+test('device recovery from offline is logged', async () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      name: 'Test Device',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  // Device goes offline
+  watchdog.updateDeviceHealth('192.168.1.100', { success: false });
+  let health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.ok(health.offlineSince, 'offlineSince should be set');
+
+  // Wait a bit to ensure measurable duration
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  // Device recovers
+  watchdog.updateDeviceHealth('192.168.1.100', { success: true });
+  health = watchdog.getDeviceHealth('192.168.1.100');
+  assert.strictEqual(
+    health.offlineSince,
+    null,
+    'offlineSince should be cleared'
+  );
+  assert.ok(health.recoveredAt, 'recoveredAt should be set');
+  assert.ok(
+    health.offlineDuration >= 10,
+    'offlineDuration should be at least 10ms'
+  );
+});
+
+test('getDeviceHealthSummary returns simplified state', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  watchdog.updateDeviceHealth('192.168.1.100', {
+    success: true,
+    latencyMs: 45,
+  });
+
+  const summary = watchdog.getDeviceHealthSummary('192.168.1.100');
+  assert.ok(summary, 'summary should exist');
+  assert.strictEqual(summary.status, 'online');
+  assert.ok(summary.lastSeenTs, 'lastSeenTs should be present');
+  assert.ok(summary.lastCheck, 'lastCheck should be present');
+  assert.strictEqual(summary.lastCheck.success, true);
+  assert.strictEqual(summary.lastCheck.latencyMs, 45);
+  assert.strictEqual(summary.consecutiveFailures, 0);
+});
+
+test('getAllDeviceHealth returns all device states', () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+    '192.168.1.101': {
+      ip: '192.168.1.101',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdog = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {}
+  );
+
+  // Device 1: online
+  watchdog.updateDeviceHealth('192.168.1.100', { success: true });
+
+  // Device 2: Start online, then two failures = degraded
+  watchdog.updateDeviceHealth('192.168.1.101', { success: true });
+  watchdog.updateDeviceHealth('192.168.1.101', { success: false });
+  watchdog.updateDeviceHealth('192.168.1.101', { success: false });
+
+  const allHealth = watchdog.getAllDeviceHealth();
+  assert.ok(allHealth instanceof Map, 'should return a Map');
+  assert.strictEqual(allHealth.size, 2);
+  assert.strictEqual(allHealth.get('192.168.1.100').status, 'online');
+  assert.strictEqual(allHealth.get('192.168.1.101').status, 'degraded');
+});
+
+test('performHealthCheck updates deviceHealth in parallel', async () => {
+  const configStore = new MockConfigStore({
+    '192.168.1.100': {
+      ip: '192.168.1.100',
+      name: 'Test Device',
+      watchdog: { enabled: true, timeoutMinutes: 120 },
+    },
+  });
+
+  const watchdogService = createTrackedWatchdogService(
+    configStore,
+    createMockDeviceService(),
+    createMockSceneService(),
+    createMockStateStore(),
+    {
+      getDevice() {
+        return {
+          impl: {
+            healthCheck: async () => ({ success: true, latencyMs: 42 }),
+          },
+          health: {
+            recordCheckStart: () => {},
+            recordCheckResult: () => {},
+            updateLastSeen: () => {},
+          },
+        };
+      },
+    }
+  );
+
+  // Perform health check
+  await watchdogService.performHealthCheck('192.168.1.100');
+
+  // Verify NEW deviceHealth was updated
+  const health = watchdogService.getDeviceHealth('192.168.1.100');
+  assert.ok(health, 'deviceHealth should be populated');
+  assert.strictEqual(health.status, 'online');
+  assert.ok(health.lastSeenTs, 'lastSeenTs should be set');
+  assert.strictEqual(health.lastHealthCheck.success, true);
+  assert.strictEqual(health.lastHealthCheck.latencyMs, 42);
+  assert.strictEqual(health.consecutiveSuccesses, 1);
+});

@@ -143,8 +143,31 @@ function startWebServer(container, logger) {
   // GET /api/devices/:ip/metrics - Get device metrics
   app.get('/api/devices/:ip/metrics', async (req, res) => {
     try {
-      const metrics = await deviceService.getDeviceMetrics(req.params.ip);
-      res.json(metrics);
+      const ip = req.params.ip;
+
+      // Get performance metrics from device service
+      const metrics = await deviceService.getDeviceMetrics(ip);
+
+      // Phase 2 (Epic 0): Augment with watchdog health data
+      const watchdogService = container.resolve('watchdogService');
+      const healthSummary = watchdogService.getDeviceHealthSummary(ip);
+
+      // Return combined response (backward compatible + new structure)
+      res.json({
+        // Old fields (backward compatibility)
+        ...metrics,
+
+        // New structure (Phase 2)
+        performance: {
+          pushCount: metrics.pushCount,
+          frameCount: metrics.frameCount,
+          skipped: metrics.skipped,
+          errorCount: metrics.errorCount,
+          frametime: metrics.frametime,
+          fps: metrics.fps,
+        },
+        health: healthSummary || null,
+      });
     } catch (error) {
       logger.error(`API /api/devices/${req.params.ip}/metrics error:`, {
         error: error.message,

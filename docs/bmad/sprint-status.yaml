@@ -29,46 +29,66 @@
 # - SM typically drafts next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
 
-generated: 2025-11-09
+generated: 2025-11-11
 project: pidicon
 project_key: pidicon
 tracking_system: file-system
 story_location: '{project-root}/docs/bmad/stories'
+sprint_plan_location: '{project-root}/docs/bmad/sprints'
+
+# Current Sprint Information
+current_sprint:
+  number: 2
+  start_date: 2025-11-12
+  end_date: 2025-11-18
+  goal: "Fix the watchdog's false positive issue comprehensively through root cause analysis, architectural redesign, and thorough validation"
+  committed_points: 8
+  stories:
+    - 0-1-watchdog-root-cause-analysis
+  stretch_stories:
+    - 0-2-three-tier-device-state-indicator
 
 development_status:
+  # Epic 0: System Stability & Watchdog Reliability (v3.3 - CURRENT PRIORITY)
+  epic-0-system-stability: in-progress
+  0-1-watchdog-root-cause-analysis: in-progress # Sprint 2, Charlie, 8pts, STARTED 2025-11-12
+  0-2-three-tier-device-state-indicator: ready-for-dev # Sprint 2/3, Charlie or other, 5pts, after 0.1
+  0-3-stability-test-suite: ready-for-dev # Sprint 3, Bob+Dana, 5pts, after 0.1 & 0.2
+  epic-0-retrospective: optional
+
   # Epic 1: Core Foundation (v3.3 - Complete)
   epic-1-core-foundation: contexted
   1-1-ui-preferences-persistence: done
   1-2-awtrix-driver-implementation: done
   1-3-performance-scene-reset-bug: done
   1-4-bmad-sprint-status-display-scene: done
-  epic-1-retrospective: optional
+  epic-1-retrospective: done
 
-  # Epic 2: Configuration & Observability (v3.3 - Next Sprint)
-  epic-2-configuration-observability: backlog
+  # Epic 2: Configuration & Observability (v3.3 - POSTPONED until Epic 0 complete)
+  epic-2-configuration-observability: blocked
   2-1-config-hot-reload: drafted
   2-2-live-log-viewer: drafted
   2-3-watchdog-restart-cooldown-backoff: drafted
   2-4-smart-release-checker-caching: drafted
   epic-2-retrospective: optional
 
-  # Epic 3: Testing & Documentation (v3.3)
-  epic-3-testing-documentation: backlog
+  # Epic 3: Testing & Documentation (v3.3 - POSTPONED until Epic 0 complete)
+  epic-3-testing-documentation: blocked
   3-1-improve-test-coverage-to-80-percent: backlog
   3-2-api-documentation-enhancement: backlog
   3-3-testing-framework-enhancements: backlog
   epic-3-retrospective: optional
 
-  # Epic 4: Scene Marketplace & Advanced Features (v3.4)
-  epic-4-scene-marketplace: backlog
+  # Epic 4: Scene Marketplace & Advanced Features (v3.4 - POSTPONED until Epic 0 complete)
+  epic-4-scene-marketplace: blocked
   4-1-scene-marketplace: backlog
   4-2-scene-dimension-adapter: backlog
   4-3-multi-device-scene-manager: backlog
   4-4-scene-editor: backlog
   epic-4-retrospective: optional
 
-  # Epic 5: Mobile & Offline Capabilities (v3.5)
-  epic-5-mobile-offline: backlog
+  # Epic 5: Mobile & Offline Capabilities (v3.5 - POSTPONED until Epic 0 complete)
+  epic-5-mobile-offline: blocked
   5-1-mobile-app-capacitor: backlog
   5-2-offline-mode-service-worker: backlog
   5-3-advanced-scheduling: backlog
