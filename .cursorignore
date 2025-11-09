@@ -1,6 +1,24 @@
+# Dependencies
 node_modules/
+
+# Environment
 .env
+
+# Build artifacts
 web/public/
 web/frontend/dist/
-other-code/
 
+# Test artifacts (large, not useful for AI context)
+coverage/
+test-results/
+playwright-report/
+
+# Development environment cache (Nix/DevEnv)
+.devenv/
+.direnv/
+
+# Secrets
+data/secrets/
+
+# Test data (auto-generated)
+data/test-results/

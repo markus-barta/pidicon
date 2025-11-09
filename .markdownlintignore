@@ -1,29 +1,17 @@
-# Ignore Cursor rules from markdownlint (CLI and editor)
+# Cursor rules (use special syntax, don't lint)
 .cursor/rules/
 .cursor/rules/**
 
-# Legacy documentation snapshots (AI-generated or historical)
-docs/ai/
-docs/ai/**
-docs/legacy/
-docs/legacy/**
-docs/guides/
-docs/guides/**
-docs/BACKLOG.md
-docs/BACKLOG-TABLE.md
-
-# BMAD Method generated documentation (formatting not critical)
-docs/bmad/
-docs/bmad/**
-bmad/
-bmad/**
-
-# Licensing and meta files
+# License files (not markdown documents)
 LICENSE
 COPYING
 CHANGELOG
 NOTICE
 
-# Planning documents (formatting not critical)
-docs/BL_SCENE_MGR.md
-docs/reports/SCENE_MANAGER_IMPLEMENTATION.md
+# BMAD method rules (special syntax)
+bmad/bmm/
+bmad/bmm/**
+bmad/core/
+bmad/core/**
+
+# NOTE: docs/bmad/ is NOT excluded - we want to lint our project docs!
