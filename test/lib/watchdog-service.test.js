@@ -1201,14 +1201,35 @@ test('updateDeviceHealth initializes health state on first check', () => {
   const healthResult = { success: true, latencyMs: 45 };
   watchdog.updateDeviceHealth('192.168.1.100', healthResult);
 
-  const health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.ok(health, 'health state should exist');
-  assert.strictEqual(health.deviceId, '192.168.1.100');
-  assert.strictEqual(health.deviceName, 'Test Device');
-  assert.strictEqual(health.status, 'online');
-  assert.ok(health.lastSeenTs, 'lastSeenTs should be set');
-  assert.strictEqual(health.consecutiveSuccesses, 1);
-  assert.strictEqual(health.consecutiveFailures, 0);
+  // Extract primitive values immediately - don't store health object
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.100'),
+    'health state should exist'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').deviceId,
+    '192.168.1.100'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').deviceName,
+    'Test Device'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'online'
+  );
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.100').lastSeenTs,
+    'lastSeenTs should be set'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveSuccesses,
+    1
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveFailures,
+    0
+  );
 });
 
 test('updateDeviceHealth tracks consecutive successes', () => {
@@ -1241,11 +1262,20 @@ test('updateDeviceHealth tracks consecutive successes', () => {
     latencyMs: 48,
   });
 
-  const health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.strictEqual(health.consecutiveSuccesses, 3);
-  assert.strictEqual(health.consecutiveFailures, 0);
-  assert.strictEqual(health.totalChecks, 3);
-  assert.strictEqual(health.status, 'online');
+  // Don't store health object - access values directly
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveSuccesses,
+    3
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveFailures,
+    0
+  );
+  assert.strictEqual(watchdog.getDeviceHealth('192.168.1.100').totalChecks, 3);
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'online'
+  );
 });
 
 test('updateDeviceHealth tracks consecutive failures', () => {
@@ -1278,11 +1308,23 @@ test('updateDeviceHealth tracks consecutive failures', () => {
     error: 'timeout',
   });
 
-  const health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.strictEqual(health.consecutiveSuccesses, 0);
-  assert.strictEqual(health.consecutiveFailures, 2);
-  assert.strictEqual(health.status, 'degraded'); // 2+ failures = degraded
-  assert.ok(health.offlineSince, 'offlineSince should be set');
+  // Don't store health object - access values directly
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveSuccesses,
+    0
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').consecutiveFailures,
+    2
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'degraded'
+  );
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.100').offlineSince,
+    'offlineSince should be set'
+  );
 });
 
 test('device status transitions: online → degraded → offline', () => {
@@ -1303,18 +1345,30 @@ test('device status transitions: online → degraded → offline', () => {
 
   // Start: Online
   watchdog.updateDeviceHealth('192.168.1.100', { success: true });
-  let health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.strictEqual(health.status, 'online');
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'online'
+  );
 
   // Two failures: Degraded
   watchdog.updateDeviceHealth('192.168.1.100', { success: false });
   watchdog.updateDeviceHealth('192.168.1.100', { success: false });
-  health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.strictEqual(health.status, 'degraded');
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'degraded'
+  );
 
-  // Simulate time passing (mock lastSeenTs to be old)
-  health.lastSeenTs = Date.now() - 2 * 60 * 1000; // 2 minutes ago
-  assert.strictEqual(watchdog._calculateDeviceStatus(health), 'offline');
+  // Test offline status calculation (without storing health object)
+  // Create a mock health state for the time-based test
+  const mockHealthState = {
+    lastSeenTs: Date.now() - 2 * 60 * 1000, // 2 minutes ago
+    offlineThresholdMinutes: 1, // 1 minute threshold
+    consecutiveFailures: 2,
+  };
+  assert.strictEqual(
+    watchdog._calculateDeviceStatus(mockHealthState),
+    'offline'
+  );
 });
 
 test('device recovery from offline is logged', async () => {
@@ -1336,23 +1390,28 @@ test('device recovery from offline is logged', async () => {
 
   // Device goes offline
   watchdog.updateDeviceHealth('192.168.1.100', { success: false });
-  let health = watchdog.getDeviceHealth('192.168.1.100');
-  assert.ok(health.offlineSince, 'offlineSince should be set');
+  // Don't store health object - just check the specific field
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.100').offlineSince,
+    'offlineSince should be set'
+  );
 
   // Wait a bit to ensure measurable duration
   await new Promise((resolve) => setTimeout(resolve, 10));
 
   // Device recovers
   watchdog.updateDeviceHealth('192.168.1.100', { success: true });
-  health = watchdog.getDeviceHealth('192.168.1.100');
+  // Extract values immediately after await - don't keep health object in scope
+  const recoveredHealth = watchdog.getDeviceHealth('192.168.1.100');
   assert.strictEqual(
-    health.offlineSince,
+    recoveredHealth.offlineSince,
     null,
     'offlineSince should be cleared'
   );
-  assert.ok(health.recoveredAt, 'recoveredAt should be set');
+  assert.ok(recoveredHealth.recoveredAt, 'recoveredAt should be set');
   assert.ok(
-    typeof health.offlineDuration === 'number' && health.offlineDuration > 0,
+    typeof recoveredHealth.offlineDuration === 'number' &&
+      recoveredHealth.offlineDuration > 0,
     'offlineDuration should be a positive number'
   );
 });
@@ -1416,17 +1475,26 @@ test('getAllDeviceHealth returns all device states', () => {
   watchdog.updateDeviceHealth('192.168.1.101', { success: false });
   watchdog.updateDeviceHealth('192.168.1.101', { success: false });
 
-  // Verify we can get individual device health (tests getDeviceHealth internally)
-  const device1Health = watchdog.getDeviceHealth('192.168.1.100');
-  const device2Health = watchdog.getDeviceHealth('192.168.1.101');
-
-  assert.ok(device1Health, 'device 1 health should exist');
-  assert.ok(device2Health, 'device 2 health should exist');
-  assert.strictEqual(device1Health.status, 'online');
-  assert.strictEqual(device2Health.status, 'degraded');
+  // Verify we can get individual device health (don't store objects - extract values immediately)
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.100'),
+    'device 1 health should exist'
+  );
+  assert.ok(
+    watchdog.getDeviceHealth('192.168.1.101'),
+    'device 2 health should exist'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.100').status,
+    'online'
+  );
+  assert.strictEqual(
+    watchdog.getDeviceHealth('192.168.1.101').status,
+    'degraded'
+  );
 
   // Verify getAllDeviceHealth returns a Map with correct size
-  // (but don't store/iterate the Map to avoid serialization issues in test runner)
+  // (don't store/iterate the Map to avoid serialization issues in test runner)
   assert.strictEqual(watchdog.getAllDeviceHealth().size, 2);
   assert.ok(watchdog.getAllDeviceHealth() instanceof Map);
 });
@@ -1464,12 +1532,29 @@ test('performHealthCheck updates deviceHealth in parallel', async () => {
   // Perform health check
   await watchdogService.performHealthCheck('192.168.1.100');
 
-  // Verify NEW deviceHealth was updated
-  const health = watchdogService.getDeviceHealth('192.168.1.100');
-  assert.ok(health, 'deviceHealth should be populated');
-  assert.strictEqual(health.status, 'online');
-  assert.ok(health.lastSeenTs, 'lastSeenTs should be set');
-  assert.strictEqual(health.lastHealthCheck.success, true);
-  assert.strictEqual(health.lastHealthCheck.latencyMs, 42);
-  assert.strictEqual(health.consecutiveSuccesses, 1);
+  // Verify NEW deviceHealth was updated (don't store health object)
+  assert.ok(
+    watchdogService.getDeviceHealth('192.168.1.100'),
+    'deviceHealth should be populated'
+  );
+  assert.strictEqual(
+    watchdogService.getDeviceHealth('192.168.1.100').status,
+    'online'
+  );
+  assert.ok(
+    watchdogService.getDeviceHealth('192.168.1.100').lastSeenTs,
+    'lastSeenTs should be set'
+  );
+  assert.strictEqual(
+    watchdogService.getDeviceHealth('192.168.1.100').lastHealthCheck.success,
+    true
+  );
+  assert.strictEqual(
+    watchdogService.getDeviceHealth('192.168.1.100').lastHealthCheck.latencyMs,
+    42
+  );
+  assert.strictEqual(
+    watchdogService.getDeviceHealth('192.168.1.100').consecutiveSuccesses,
+    1
+  );
 });
