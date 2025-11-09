@@ -1,12 +1,12 @@
 {
   "version": "3.2.1",
   "deploymentId": "bmad-foundation-v1.0",
-  "buildNumber": 952,
-  "gitCommit": "e060a8e",
-  "gitCommitFull": "e060a8e9fc05c82b865dfbff89765a2965175c0f",
-  "gitCommitCount": 952,
+  "buildNumber": 953,
+  "gitCommit": "54e4ad4",
+  "gitCommitFull": "54e4ad41f27106f6a0d6b84437b0c8009e7b8231",
+  "gitCommitCount": 953,
   "gitBranch": "main",
   "gitTag": "bmad-foundation-v1.0",
-  "buildTime": "2025-11-09T09:09:27.004Z",
+  "buildTime": "2025-11-09T09:11:04.937Z",
   "environment": "development"
 }
