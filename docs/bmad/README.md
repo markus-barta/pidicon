@@ -1,351 +1,216 @@
-# PIDICON Project Documentation Index
-
-**Generated:** 2025-11-08  
-**Project:** pidicon v3.2.1  
-**Documentation Version:** 1.0.0
-
-## 📖 Quick Start
-
-New to PIDICON? Start here:
-
-1. **[PRD (Product Requirements)](PRD.md)** - Product vision, goals, and requirements (Retrospective)
-2. **[Architecture Document](ARCHITECTURE.md)** - Architectural decisions and patterns (ADRs)
-3. **[Project Overview](project-overview.md)** - Understand the system at a glance
-4. **[Architecture - Daemon](architecture-daemon.md)** - Backend system design
-5. **[Architecture - Web](architecture-web.md)** - Frontend architecture
-6. **[Source Tree Analysis](source-tree-analysis.md)** - Navigate the codebase
-7. **[Scene System](scene-system.md)** - Build custom scenes
-
-## 🎯 For Product Planning (PRD)
-
-If you're planning new features or creating a PRD:
-
-### Key Documents for Requirements Analysis
-
-1. **[PRD (Product Requirements Document)](PRD.md)** ⭐ NEW
-   - Product vision and strategic goals
-   - Complete functional requirements (6 epics)
-   - Non-functional requirements (performance, reliability, security)
-   - Success metrics and KPIs
-   - Epic breakdown (8 completed, 1 in-progress, 5 planned)
-   - Technical architecture and design decisions
-   - Future roadmap (v3.3 - v4.0)
-
-2. **[Project Overview](project-overview.md)**
-   - System classification and capabilities
-   - Technology stack summary
-   - Current feature set
-   - Integration points
-
-3. **[Architecture - Daemon](architecture-daemon.md)**
-   - Service layer capabilities
-   - Command system architecture
-   - Driver extensibility
-   - State management patterns
-
-4. **[Architecture - Web](architecture-web.md)**
-   - UI component inventory
-   - Real-time communication patterns
-   - State management (Pinia)
-   - User interaction flows
-
-5. **[Source Tree Analysis](source-tree-analysis.md)**
-   - File organization
-   - Module boundaries
-   - Extension points
-   - Integration patterns
-
-### Existing Documentation (Reference)
-
-- **[Architecture Guide](../guides/ARCHITECTURE.md)** - Detailed system design (v3.0+)
-- **[API Reference](../guides/API.md)** - Complete API documentation (917 lines)
-- **[Development Standards](../guides/DEVELOPMENT_STANDARDS.md)** - Code quality and patterns
-- **[Testing Guide](../guides/TESTING.md)** - Testing strategy and infrastructure
-- **[Backlog](../backlog/README.md)** - Project roadmap (93 items)
-
-## 📁 Documentation Structure
-
-```
-docs/
-├── bmad/                           # ⭐ NEW: BMAD-generated documentation
-│   ├── README.md                   # This file (master index)
-│   ├── PRD.md                      # Product Requirements Document (Retrospective)
-│   ├── ARCHITECTURE.md             # Architecture Decision Records (ADRs)
-│   ├── project-overview.md         # Executive summary and quick reference
-│   ├── architecture-daemon.md      # Backend architecture deep-dive
-│   ├── architecture-web.md         # Frontend architecture deep-dive
-│   ├── source-tree-analysis.md     # Codebase structure and navigation
-│   ├── scene-system.md             # Scene framework documentation
-│   ├── bmm-workflow-status.yaml    # BMAD workflow tracking
-│   └── project-scan-report.json    # Scan metadata (internal)
-│
-├── guides/                         # Comprehensive guides
-│   ├── ARCHITECTURE.md             # System architecture (legacy, still valid)
-│   ├── API.md                      # API reference (917 lines)
-│   ├── SCENE_DEVELOPMENT.md        # Scene creation guide
-│   ├── DRIVER_DEVELOPMENT.md       # Custom driver guide
-│   ├── DEVELOPMENT_STANDARDS.md    # Coding standards
-│   ├── TESTING.md                  # Testing guide
-│   ├── CODE_QUALITY.md             # Quality metrics
-│   ├── VERSIONING.md               # Release management
-│   ├── BACKLOG_MANAGEMENT.md       # Backlog workflow
-│   ├── WEB_UI_SETUP.md             # Frontend setup
-│   └── DEV_AND_CI_SETUP.md         # Development environment
-│
-├── backlog/                        # Project management
-│   ├── README.md                   # Backlog overview
-│   ├── planned/                    # Future work (21 items)
-│   ├── in-progress/                # Active work (1 item)
-│   ├── completed/                  # Done (66 items)
-│   └── cancelled/                  # Archived (5 items)
-│
-├── ai/                             # AI-specific documentation
-│   ├── CONFIG_AND_PERSISTENCE.md
-│   ├── LAST_SEEN_SOLUTION.md
-│   ├── PIDICON_MIGRATION_PLAN.md
-│   ├── PIDICON_REFACTOR_STATUS.md
-│   ├── SCENE_LOGGING_AUDIT.md
-│   ├── STATE_PERSISTENCE.md
-│   ├── WATCHDOG_HEALTH.md
-│   └── WEBSOCKET_ARCHITECTURE.md
-│
-├── reports/                        # Implementation reports (20 files)
-│   └── *.md                        # Feature completion reports
-│
-├── tests/                          # Test-specific docs
-│   └── ui-control-map.md
-│
-└── ui/                             # UI-specific docs
-    └── UI_PREFERENCES.md
-```
-
-## 🎯 Documentation by Role
-
-### For Product Managers
-
-**Understanding the Product:**
-
-1. Read [PRD](PRD.md) for product vision and requirements
-2. Read [Project Overview](project-overview.md) for technical capabilities
-3. Review [Backlog](../backlog/README.md) for ongoing work
-4. Check [Architecture - Daemon](architecture-daemon.md) for technical constraints
-5. Reference [API.md](../guides/API.md) for integration capabilities
-
-**Planning Features:**
-
-1. [Source Tree Analysis](source-tree-analysis.md) - Find extension points
-2. [Development Standards](../guides/DEVELOPMENT_STANDARDS.md) - Technical requirements
-3. [Testing Guide](../guides/TESTING.md) - Quality expectations
-
-### For Architects
-
-**System Design:**
-
-1. [Architecture - Daemon](architecture-daemon.md) - Backend patterns
-2. [Architecture - Web](architecture-web.md) - Frontend patterns
-3. [Architecture Guide](../guides/ARCHITECTURE.md) - Legacy comprehensive view
-4. [API.md](../guides/API.md) - Integration contracts
-
-**Technical Decisions:**
-
-1. [Source Tree Analysis](source-tree-analysis.md) - Module boundaries
-2. [Driver Development](../guides/DRIVER_DEVELOPMENT.md) - Extensibility
-3. [Scene System](scene-system.md) - Scene framework
-
-### For Developers
-
-**Getting Started:**
-
-1. [Development Standards](../guides/DEVELOPMENT_STANDARDS.md) - Code quality
-2. [Source Tree Analysis](source-tree-analysis.md) - Navigate codebase
-3. [Architecture - Daemon](architecture-daemon.md) - Backend structure
-4. [Architecture - Web](architecture-web.md) - Frontend structure
-
-**Building Features:**
-
-1. [API.md](../guides/API.md) - API contracts
-2. [Scene Development](../guides/SCENE_DEVELOPMENT.md) - Custom scenes
-3. [Driver Development](../guides/DRIVER_DEVELOPMENT.md) - New drivers
-4. [Testing Guide](../guides/TESTING.md) - Testing strategy
-
-**Debugging:**
-
-1. [Scene System](scene-system.md) - Scene lifecycle
-2. [State Persistence](../ai/STATE_PERSISTENCE.md) - State management
-3. [Watchdog Health](../ai/WATCHDOG_HEALTH.md) - Health monitoring
-
-### For Testers
-
-1. [Testing Guide](../guides/TESTING.md) - Testing infrastructure (522 tests)
-2. [Code Quality](../guides/CODE_QUALITY.md) - Quality metrics
-3. [API.md](../guides/API.md) - API contracts for testing
-4. [Scene System](scene-system.md) - Scene testing patterns
-
-### For UX Designers
-
-1. [Architecture - Web](architecture-web.md) - UI component inventory
-2. [UI Preferences](../ui/UI_PREFERENCES.md) - User preference system
-3. [WebSocket Architecture](../ai/WEBSOCKET_ARCHITECTURE.md) - Real-time updates
-4. [Backlog - UI Items](../backlog/completed/) - Completed UI features
-
-## 📊 Project Statistics
-
-- **Codebase Size:** ~15,000 LOC (backend + frontend)
-- **Test Coverage:** 522 tests passing
-- **Components:** 16 Vue components
-- **Services:** 11 backend services
-- **Scenes:** 18 scene implementations
-- **Documentation:** 100+ markdown files
-- **Build Number:** 924 (active development)
-
-## 🔄 Integration Points
-
-### Backend ↔ MQTT Broker
-
-- **Topics:** `pixoo/+/state/upd`, `pixoo/+/scene/set`, `pixoo/+/driver/set`
-- **Docs:** [Architecture - Daemon](architecture-daemon.md), [API.md](../guides/API.md)
-
-### Backend ↔ Devices
-
-- **Protocols:** HTTP (Pixoo), MQTT (AWTRIX)
-- **Docs:** [Driver Development](../guides/DRIVER_DEVELOPMENT.md), [Scene System](scene-system.md)
-
-### Backend ↔ Frontend
-
-- **Protocols:** WebSocket (Socket.IO), REST API
-- **Docs:** [Architecture - Web](architecture-web.md), [API.md](../guides/API.md)
-
-### Frontend ↔ Browser
-
-- **Storage:** localStorage (UI preferences)
-- **Docs:** [Architecture - Web](architecture-web.md), [UI Preferences](../ui/UI_PREFERENCES.md)
-
-## 🛠️ Development Resources
-
-### Setup & Configuration
-
-- [Development Environment](../guides/DEV_AND_CI_SETUP.md)
-- [Web UI Setup](../guides/WEB_UI_SETUP.md)
-- [Configuration Examples](../../config/README.md)
-
-### Standards & Processes
-
-- [Development Standards](../guides/DEVELOPMENT_STANDARDS.md)
-- [Versioning](../guides/VERSIONING.md)
-- [Backlog Management](../guides/BACKLOG_MANAGEMENT.md)
-
-### Reference Implementations
-
-- [Source Tree Analysis](source-tree-analysis.md) - Find examples
-- [Backlog - Completed](../backlog/completed/) - Implementation reports
-- [Reports](../reports/) - Feature completion reports
-
-## 🎓 Learning Paths
-
-### New to PIDICON?
-
-**Day 1: Understand the Product**
-
-1. Read [PRD](PRD.md) for product vision and goals
-2. Read [Project Overview](project-overview.md) for technical overview
-3. Explore [Source Tree Analysis](source-tree-analysis.md)
-4. Review [Architecture - Daemon](architecture-daemon.md)
-5. Skim [Architecture - Web](architecture-web.md)
-
-**Day 2: Deep Dive**
-
-1. Read [API.md](../guides/API.md) - Understand integration points
-2. Read [Scene System](scene-system.md) - Core functionality
-3. Review [Testing Guide](../guides/TESTING.md)
-4. Check [Development Standards](../guides/DEVELOPMENT_STANDARDS.md)
-
-**Week 1: Build Something**
-
-1. Follow [Scene Development](../guides/SCENE_DEVELOPMENT.md)
-2. Create a custom scene
-3. Add tests following [Testing Guide](../guides/TESTING.md)
-4. Submit PR following [Development Standards](../guides/DEVELOPMENT_STANDARDS.md)
-
-### Planning a Feature?
-
-**Step 1: Research**
-
-1. Read [PRD](PRD.md) to understand product vision and existing features
-2. Search [Backlog](../backlog/) for related work
-3. Read [Project Overview](project-overview.md) for current capabilities
-4. Review [Architecture - Daemon](architecture-daemon.md) and [Architecture - Web](architecture-web.md)
-
-**Step 2: Design**
-
-1. Identify integration points in [API.md](../guides/API.md)
-2. Find extension points in [Source Tree Analysis](source-tree-analysis.md)
-3. Consult [Development Standards](../guides/DEVELOPMENT_STANDARDS.md)
-
-**Step 3: Implement**
-
-1. Follow patterns in existing code (see [Source Tree Analysis](source-tree-analysis.md))
-2. Add tests (see [Testing Guide](../guides/TESTING.md))
-3. Update documentation
-
-## 📝 Documentation Maintenance
-
-### When to Update This Documentation
-
-**BMAD-Generated Docs** (this folder):
-
-- **Project Overview:** After major feature releases (quarterly)
-- **Architecture Docs:** When architectural patterns change
-- **Source Tree Analysis:** After significant refactoring
-- **Scene System:** When scene contract changes
-
-**Existing Docs** (`docs/guides/`):
-
-- **API.md:** After any API changes (immediate)
-- **Development Standards:** When coding standards evolve
-- **Testing Guide:** When test infrastructure changes
-
-**Backlog:**
-
-- Update on every feature completion
-- Follow [Backlog Management](../guides/BACKLOG_MANAGEMENT.md)
-
-### Documentation Principles
-
-1. **Keep Both Updated:** BMAD docs and existing guides complement each other
-2. **BMAD = High-Level:** Architecture, overview, navigation
-3. **Guides = Detail:** Step-by-step, API contracts, standards
-4. **Single Source of Truth:** API.md is canonical for API contracts
-5. **Link Liberally:** Cross-reference between documents
-
-## 🚀 Quick Reference Links
-
-### Most Referenced Documents
-
-1. [PRD](PRD.md) - Product requirements and vision
-2. [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture decisions (ADRs) ⭐ NEW
-3. [API.md](../guides/API.md) - API contracts (updated frequently)
-4. [Project Overview](project-overview.md) - System summary (BMAD)
-5. [Development Standards](../guides/DEVELOPMENT_STANDARDS.md) - Code quality
-6. [Testing Guide](../guides/TESTING.md) - Test strategy
-7. [Backlog README](../backlog/README.md) - Project roadmap
-
-### By Feature Area
-
-- **Scenes:** [Scene System](scene-system.md), [Scene Development](../guides/SCENE_DEVELOPMENT.md)
-- **Drivers:** [Architecture - Daemon](architecture-daemon.md), [Driver Development](../guides/DRIVER_DEVELOPMENT.md)
-- **Web UI:** [Architecture - Web](architecture-web.md), [Web UI Setup](../guides/WEB_UI_SETUP.md)
-- **MQTT:** [API.md](../guides/API.md), [Architecture - Daemon](architecture-daemon.md)
-- **State:** [State Persistence](../ai/STATE_PERSISTENCE.md), [Architecture - Daemon](architecture-daemon.md)
-
-## 📧 Contact & Contribution
-
-- **Author:** Markus Barta (mba)
-- **Repository:** GitHub (ghcr.io/markus-barta/pidicon)
-- **License:** GPL-3.0-or-later
-- **Contributions:** Follow [Development Standards](../guides/DEVELOPMENT_STANDARDS.md)
+# PIDICON Documentation Hub
+
+**Version:** 3.2.1  
+**Last Updated:** 2025-11-09  
+**Documentation Structure:** BMAD BMM
 
 ---
 
-**Last Updated:** 2025-11-08  
-**Generated By:** BMAD document-project workflow  
-**Documentation Version:** 1.0.0
+## 📚 Quick Navigation
+
+### 🎯 Planning & Requirements
+
+- **[PRD.md](./PRD.md)** - Product Requirements Document
+- **[sprint-status.yaml](./sprint-status.yaml)** - Current sprint tracking
+- **[sprint-planning.md](./sprint-planning.md)** - Sprint planning reference
+
+### 🏗️ Architecture & Design
+
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete system architecture
+- **[architecture-daemon.md](./architecture-daemon.md)** - Daemon architecture details
+- **[architecture-web.md](./architecture-web.md)** - Web UI architecture
+- **[scene-system.md](./scene-system.md)** - Scene rendering system
+
+### 📋 Epics & Stories
+
+- **[epics/](./epics/)** - All epic files (Epic 1-5)
+- **[stories/](./stories/)** - Active story files
+- **[sprint-status.yaml](./sprint-status.yaml)** - Story status tracking
+
+### 📖 Developer Guides
+
+- **[guides/API.md](./guides/API.md)** - REST API & WebSocket reference
+- **[guides/SCENE_DEVELOPMENT.md](./guides/SCENE_DEVELOPMENT.md)** - Scene development
+- **[guides/DRIVER_DEVELOPMENT.md](./guides/DRIVER_DEVELOPMENT.md)** - Driver development
+- **[guides/TESTING.md](./guides/TESTING.md)** - Testing strategy
+- **[guides/DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)** - Code standards
+- **[guides/CODE_QUALITY.md](./guides/CODE_QUALITY.md)** - Quality guidelines
+- **[guides/VERSIONING.md](./guides/VERSIONING.md)** - Version management
+- **[guides/AWTRIX_INTEGRATION.md](./guides/AWTRIX_INTEGRATION.md)** - AWTRIX guide
+
+### 🔄 BMAD Workflows
+
+- **[bmad-migration-guide.md](./bmad-migration-guide.md)** - BMAD structure guide
+- **[DOCUMENTATION_MIGRATION_PLAN.md](./DOCUMENTATION_MIGRATION_PLAN.md)** - Migration plan
+- **Access via:** `@bmad/bmm/agents/sm` for Scrum Master workflows
+
+---
+
+## 🗂️ Document Structure
+
+```
+docs/bmad/
+├── README.md                    # This file
+├── PRD.md                       # Product requirements
+├── ARCHITECTURE.md              # Technical architecture
+├── sprint-status.yaml           # Sprint tracking
+├── sprint-planning.md           # Sprint reference
+│
+├── epics/                       # Epic files
+│   ├── epic-1-core-foundation.md
+│   ├── epic-2-configuration-observability.md
+│   ├── epic-3-testing-documentation.md
+│   ├── epic-4-scene-marketplace.md
+│   └── epic-5-mobile-offline.md
+│
+├── stories/                     # Story files
+│   ├── 1-4-bmad-sprint-status-display-scene.md
+│   ├── 2-1-config-hot-reload.md
+│   ├── 2-2-live-log-viewer.md
+│   ├── 2-3-watchdog-restart-cooldown-backoff.md
+│   └── 2-4-smart-release-checker-caching.md
+│
+├── guides/                      # Developer documentation
+│   ├── API.md
+│   ├── ARCHITECTURE.md
+│   ├── SCENE_DEVELOPMENT.md
+│   ├── DRIVER_DEVELOPMENT.md
+│   ├── TESTING.md
+│   ├── DEVELOPMENT_STANDARDS.md
+│   ├── CODE_QUALITY.md
+│   ├── VERSIONING.md
+│   ├── WEB_UI_SETUP.md
+│   ├── AWTRIX_INTEGRATION.md
+│   └── BACKLOG_MANAGEMENT.md
+│
+└── migrations/                  # Migration documentation
+    ├── bmad-migration-guide.md
+    └── DOCUMENTATION_MIGRATION_PLAN.md
+```
+
+---
+
+## 🚀 Current Sprint Status
+
+**Sprint 1:** ✅ Complete (Epic 1 - Core Foundation)
+
+- All 4 stories complete
+- 18 story points delivered
+
+**Sprint 2:** 🎯 Ready (Epic 2 - Configuration & Observability)
+
+- 4 stories planned
+- 13 story points
+- Target: 2 weeks
+
+---
+
+## 📖 Getting Started
+
+### For Developers
+
+1. Read [ARCHITECTURE.md](./ARCHITECTURE.md) - System overview
+2. Review [DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md) - Code standards
+3. Check [API.md](./guides/API.md) - API reference
+4. See [SCENE_DEVELOPMENT.md](./guides/SCENE_DEVELOPMENT.md) - Scene guide
+
+### For Project Management
+
+1. Review [PRD.md](./PRD.md) - Product vision
+2. Check [sprint-status.yaml](./sprint-status.yaml) - Current status
+3. Read [bmad-migration-guide.md](./bmad-migration-guide.md) - BMAD workflows
+4. Use `@bmad/bmm/agents/sm` - Access Scrum Master agent
+
+### For Contributors
+
+1. Read [DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)
+2. Review [CODE_QUALITY.md](./guides/CODE_QUALITY.md)
+3. Check [TESTING.md](./guides/TESTING.md)
+4. See [VERSIONING.md](./guides/VERSIONING.md)
+
+---
+
+## 🔄 BMAD Workflow Quick Reference
+
+**Access Scrum Master:**
+
+```
+@bmad/bmm/agents/sm
+```
+
+**Common Commands:**
+
+- `*sprint-planning` - Update sprint status
+- `*create-story` - Create story from epic
+- `*story-context` - Generate story context
+- `*dev-story` - Implement story
+- `*workflow-status` - Check workflow state
+
+---
+
+## 📊 Project Metrics
+
+- **Version:** v3.2.1 (production)
+- **Epics:** 5 (1 complete, 4 planned)
+- **Stories:** 18 total (4 done, 14 planned)
+- **Tests:** 522+ passing
+- **Architecture Docs:** Comprehensive
+- **Developer Guides:** 11 guides
+
+---
+
+## 🗄️ Legacy Documentation
+
+**Note:** Legacy backlog and old documentation has been archived to:
+
+```
+docs/X_backlog_legacy/
+```
+
+This directory contains historical items for reference only. All active work is tracked through the BMAD structure above.
+
+---
+
+## 📝 Documentation Standards
+
+### Epic Files
+
+- Located in `epics/`
+- Named: `epic-{number}-{kebab-case-title}.md`
+- Contains all stories for that epic
+
+### Story Files
+
+- Located in `stories/`
+- Named: `{epic}-{story}-{kebab-case-title}.md`
+- Full BMAD story format
+
+### Status Tracking
+
+- **sprint-status.yaml** - Single source of truth
+- Generated by `*sprint-planning` workflow
+- Status: backlog → drafted → ready-for-dev → in-progress → review → done
+
+---
+
+## 🤝 Contributing
+
+1. Check [sprint-status.yaml](./sprint-status.yaml) for current work
+2. Use BMAD workflows for story creation
+3. Follow [DEVELOPMENT_STANDARDS.md](./guides/DEVELOPMENT_STANDARDS.md)
+4. Submit PRs with tests and documentation
+
+---
+
+## 📞 Support
+
+- **Documentation Issues:** Update relevant guide and submit PR
+- **BMAD Questions:** See [bmad-migration-guide.md](./bmad-migration-guide.md)
+- **Architecture Questions:** See [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **API Questions:** See [guides/API.md](./guides/API.md)
+
+---
+
+**Documentation Status:** ✅ Active  
+**BMAD Migration:** ✅ Complete (2025-11-09)  
+**Maintainer:** mba

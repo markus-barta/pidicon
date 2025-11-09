@@ -1,18 +1,75 @@
-current_sprint:
-  goal: 'Complete Sprint 1: AWTRIX Implementation & Performance'
-  start_date: '2025-11-09'
-  status: 'in-progress'
+# generated: 2025-11-09
+# project: pidicon
+# project_key: pidicon
+# tracking_system: file-system
+# story_location: {project-root}/docs/bmad/stories
 
-workflow_stage: 'dev-story'
-workflow_progress: { current: 3, total: 8 }
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
+
+generated: 2025-11-09
+project: pidicon
+project_key: pidicon
+tracking_system: file-system
+story_location: '{project-root}/docs/bmad/stories'
 
 development_status:
-  'ROADMAP-001-awtrix-driver-implementation':
-    status: 'done'
-    title: 'AWTRIX Driver Implementation'
-  'BUG-011-performance-scene-reset':
-    status: 'done'
-    title: 'Performance Scene Reset Bug'
-  'DEV-001-bmad-sprint-status-display':
-    status: 'in-progress'
-    title: 'BMAD Sprint Status Display Scene'
+  # Epic 1: Core Foundation (v3.3 - Complete)
+  epic-1-core-foundation: contexted
+  1-1-ui-preferences-persistence: done
+  1-2-awtrix-driver-implementation: done
+  1-3-performance-scene-reset-bug: done
+  1-4-bmad-sprint-status-display-scene: done
+  epic-1-retrospective: optional
+
+  # Epic 2: Configuration & Observability (v3.3 - Next Sprint)
+  epic-2-configuration-observability: backlog
+  2-1-config-hot-reload: backlog
+  2-2-live-log-viewer: backlog
+  2-3-watchdog-restart-cooldown-backoff: backlog
+  2-4-smart-release-checker-caching: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Testing & Documentation (v3.3)
+  epic-3-testing-documentation: backlog
+  3-1-improve-test-coverage-to-80-percent: backlog
+  3-2-api-documentation-enhancement: backlog
+  3-3-testing-framework-enhancements: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Scene Marketplace & Advanced Features (v3.4)
+  epic-4-scene-marketplace: backlog
+  4-1-scene-marketplace: backlog
+  4-2-scene-dimension-adapter: backlog
+  4-3-multi-device-scene-manager: backlog
+  4-4-scene-editor: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Mobile & Offline Capabilities (v3.5)
+  epic-5-mobile-offline: backlog
+  5-1-mobile-app-capacitor: backlog
+  5-2-offline-mode-service-worker: backlog
+  5-3-advanced-scheduling: backlog
+  epic-5-retrospective: optional
