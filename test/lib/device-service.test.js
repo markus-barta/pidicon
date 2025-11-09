@@ -43,6 +43,17 @@ function createMockStateStore() {
         deviceStates.set(ip, {});
       }
     },
+    getSnapshot() {
+      const devices = {};
+      for (const [ip, state] of deviceStates.entries()) {
+        devices[ip] = state;
+      }
+      return { devices };
+    },
+    // Add flush() method for UI-508 immediate persistence
+    async flush() {
+      // Mock: no-op for tests
+    },
   };
 }
 

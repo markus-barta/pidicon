@@ -580,6 +580,32 @@ async function bootstrap() {
   });
 }
 
+// Graceful shutdown handler
+async function shutdown(signal) {
+  logger.warn(`Received ${signal}, shutting down gracefully...`);
+  try {
+    const stateStore = container.resolve('stateStore');
+    logger.info('Flushing state to disk...');
+    await stateStore.flush();
+    logger.ok('State persisted successfully');
+
+    const mqttService = container.resolve('mqttService');
+    logger.info('Disconnecting from MQTT...');
+    await mqttService.disconnect();
+    logger.ok('MQTT disconnected');
+
+    logger.ok('✅ Shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown:', { error: error.message });
+    process.exit(1);
+  }
+}
+
+// Register shutdown handlers
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
 bootstrap().catch((error) => {
   logger.error('Fatal daemon initialization error:', { error: error.message });
   process.exit(1);
