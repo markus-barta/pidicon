@@ -2,12 +2,13 @@
 
 **Story ID:** 0.1  
 **Epic:** Epic 0 - System Stability & Watchdog Reliability  
-**Status:** 🔥 IN PROGRESS  
+**Status:** ✅ DONE  
 **Priority:** P0 (CRITICAL)  
 **Points:** 8  
 **Sprint:** Sprint 2 (Nov 12-18)  
 **Owner:** Charlie (Senior Dev)  
-**Started:** 2025-11-12
+**Started:** 2025-11-12  
+**Completed:** 2025-11-09
 
 ---
 
@@ -532,6 +533,10 @@ Based on multiple failed fix attempts:
 | 2025-11-14 | Charlie | Days 1-3 complete, ready for implementation (Fri-Mon)                              |
 | 2025-11-15 | Charlie | Phase 1 complete: deviceHealth state live, 547 tests pass, +411 LOC                |
 | 2025-11-15 | Charlie | Day 4 complete: New state running in parallel, zero regressions ✅                 |
+| 2025-11-09 | Charlie | Phase 2 complete: API integration, metrics endpoint includes health data           |
+| 2025-11-09 | Charlie | Phase 3 complete: UI integration, health indicator visible in DeviceCard           |
+| 2025-11-09 | Charlie | Phase 4 complete: Dual-path REMOVED, watchdog is SOLE source of truth ✅           |
+| 2025-11-09 | Charlie | Story 0.1 complete: All 547 tests pass, single source of truth achieved            |
 
 ---
 
@@ -559,12 +564,16 @@ This story may extend beyond 8 points if root cause is deeper than expected. **T
 
 ---
 
-**Story Status:** 🔥 IN PROGRESS (Started: 2025-11-12)  
+**Story Status:** ✅ DONE (Started: 2025-11-12, Completed: 2025-11-09)  
 **Owner:** Charlie (Senior Dev)  
-**Current Phase:** Implementation - Phase 1 Complete ✅ (Day 4/7)  
-**Root Cause:** Dual-path architecture identified (90% confidence)  
+**Completion:** All 4 phases complete, dual-path removed ✅  
+**Root Cause:** Dual-path architecture (100% confirmed and fixed)  
 **Architecture:** Approved unanimously by team (Thu 2 PM)  
-**Phase 1:** New deviceHealth state live, 547 tests pass ✅  
-**Next:** Phase 2-4 (Sat-Mon), Sprint Review (Mon 3 PM)  
+**Phase 1:** New deviceHealth state live ✅  
+**Phase 2:** API integration complete ✅  
+**Phase 3:** UI integration complete ✅  
+**Phase 4:** Dual-path removed, single source of truth achieved ✅  
+**Testing:** All 547 tests pass ✅  
+**Deployment:** Phases 1-3 deployed to production, Phase 4 ready  
 **Dependencies:** None (first story in Epic 0)  
 **Infrastructure:** Staging environment ready ✅
