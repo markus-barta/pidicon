@@ -41,7 +41,7 @@
 
           <!-- Info items (stay in line when space available) -->
           <div class="device-info-items">
-            <!-- Combined Status: Responsive indicator + Last Seen -->
+            <!-- Device Status: Health indicator + Last Seen -->
             <div class="header-info-item">
               <v-tooltip location="bottom">
                 <template v-slot:activator="{ props: tooltipProps }">
@@ -49,9 +49,9 @@
                     <span 
                       v-if="device.driver === 'real'"
                       class="device-responsive-dot"
-                      :class="{ 'device-responsive-dot--heartbeat': deviceResponsiveColor === '#10b981' }"
-                      :style="{ backgroundColor: deviceResponsiveColor }"
-                      :key="device.metrics?.lastSeenTs"
+                      :class="{ 'device-responsive-dot--heartbeat': deviceHealthStatus === 'online' || deviceHealthStatus === 'degraded' }"
+                      :style="{ backgroundColor: deviceHealthColor }"
+                      :key="device.health?.lastSeenTs"
                     ></span>
                     <v-icon 
                       v-else
@@ -64,24 +64,8 @@
                     <span>{{ device.driver === 'real' ? lastSeen : 'Mock Mode' }}</span>
                   </span>
                 </template>
-                <span v-if="device.driver === 'real'">{{ deviceResponsiveLabel }} • {{ lastSeenTooltip }}</span>
+                <span v-if="device.driver === 'real'">{{ deviceHealthLabel }} • {{ lastSeenTooltip }}</span>
                 <span v-else>Simulated device - no real hardware connection</span>
-              </v-tooltip>
-            </div>
-
-            <!-- Phase 3 (Epic 0): Watchdog Health Status -->
-            <div v-if="device.driver === 'real' && watchdogHealthStatus" class="header-info-item">
-              <v-tooltip location="bottom">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <span v-bind="tooltipProps" class="info-content">
-                    <span 
-                      class="device-health-dot"
-                      :style="{ backgroundColor: watchdogHealthColor }"
-                    ></span>
-                    <span>{{ watchdogHealthLabel }}</span>
-                  </span>
-                </template>
-                <span>Watchdog Status: {{ watchdogHealthStatus }} (single source of truth)</span>
               </v-tooltip>
             </div>
 
@@ -840,84 +824,52 @@ const lastSeenTooltip = computed(() => {
   });
 });
 
-// Device responsiveness indicator (all real devices)
-const deviceResponsiveColor = computed(() => {
+// Device health status (from watchdog - single source of truth)
+const deviceHealthStatus = computed(() => {
   if (props.device.driver !== 'real') {
-    return '#4c1d95';
-  }
-  
-  const lastSeenTs = props.device?.metrics?.lastSeenTs;
-  if (!lastSeenTs) {
-    return '#ef4444'; // red - never seen
-  }
-  
-  const now = Date.now();
-  const diff = now - lastSeenTs;
-  
-  // Debounced: If >6 seconds since last seen, device is unresponsive (1s debounce)
-  if (diff > 6000) {
-    return '#ef4444'; // red
-  }
-  
-  return '#10b981'; // green - responsive
-});
-
-const deviceResponsiveLabel = computed(() => {
-  if (props.device.driver !== 'real') {
-    return 'Mock device';
-  }
-  
-  const lastSeenTs = props.device?.metrics?.lastSeenTs;
-  if (!lastSeenTs) {
-    return 'Unresponsive';
-  }
-  
-  const now = Date.now();
-  const diff = now - lastSeenTs;
-  
-  // Debounced: If >6 seconds since last seen, device is unresponsive (1s debounce)
-  if (diff > 6000) {
-    return 'Unresponsive';
-  }
-  
-  return 'Responsive';
-});
-
-// Phase 3 (Epic 0): Watchdog health status from new single-source-of-truth system
-const watchdogHealthStatus = computed(() => {
-  if (props.device.driver !== 'real') {
-    return null; // Mock devices don't have watchdog
+    return 'mock';
   }
   
   const health = props.device?.health;
   if (!health || !health.status) {
-    return null; // Health data not available yet
+    return 'unknown'; // Health data not available yet
   }
   
   return health.status; // 'online', 'degraded', or 'offline'
 });
 
-const watchdogHealthColor = computed(() => {
-  const status = watchdogHealthStatus.value;
-  if (!status) return '#6b7280'; // gray - not available
+const deviceHealthColor = computed(() => {
+  const status = deviceHealthStatus.value;
   
   switch (status) {
     case 'online':
-      return '#10b981'; // green
+      return '#10b981'; // green - healthy
     case 'degraded':
-      return '#f59e0b'; // amber/yellow
+      return '#f59e0b'; // amber/yellow - slow but functional
     case 'offline':
-      return '#ef4444'; // red
+      return '#ef4444'; // red - not responding
+    case 'mock':
+      return '#4c1d95'; // purple - mock device
     default:
-      return '#6b7280'; // gray
+      return '#6b7280'; // gray - unknown/not available
   }
 });
 
-const watchdogHealthLabel = computed(() => {
-  const status = watchdogHealthStatus.value;
-  if (!status) return 'Health: N/A';
+const deviceHealthLabel = computed(() => {
+  const status = deviceHealthStatus.value;
   
-  return `Health: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+  switch (status) {
+    case 'online':
+      return 'Responsive';
+    case 'degraded':
+      return 'Degraded';
+    case 'offline':
+      return 'OFFLINE';
+    case 'mock':
+      return 'Mock device';
+    default:
+      return 'Status unknown';
+  }
 });
 
 // Battery indicator (Awtrix only)
@@ -2474,13 +2426,4 @@ onUnmounted(() => {
   }
 }
 
-/* Phase 3 (Epic 0): Watchdog health indicator dot */
-.device-health-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 6px;
-  transition: all 0.3s ease;
-}
 </style>

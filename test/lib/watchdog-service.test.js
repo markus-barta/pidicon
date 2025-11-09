@@ -563,7 +563,9 @@ test('watchdog action "notify" only logs, no device action', async () => {
 // Health Check Tests
 // ============================================================================
 
-test('health check updates lastSeenTs when successful', async () => {
+test.skip('health check updates lastSeenTs when successful', async () => {
+  // Phase 4 (Epic 0): This test is obsolete - tests OLD device.health.updateLastSeen() system
+  // Replaced by new deviceHealth Map system - tested in 'performHealthCheck updates deviceHealth in parallel'
   const configStore = new MockConfigStore({
     '192.168.1.100': {
       ip: '192.168.1.100',
