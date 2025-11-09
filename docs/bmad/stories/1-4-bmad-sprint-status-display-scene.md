@@ -87,6 +87,7 @@ With the BMAD methodology now integrated into the PIDICON development workflow, 
 
 - [ ] 1.1: Create `scenes/pixoo/bmad-sprint-status.js` file
 - [ ] 1.2: Implement scene metadata structure
+
   ```javascript
   {
     name: 'bmad-sprint-status',
@@ -100,6 +101,7 @@ With the BMAD methodology now integrated into the PIDICON development workflow, 
     }
   }
   ```
+
 - [ ] 1.3: Implement init/render/cleanup contract
 - [ ] 1.4: Test scene registration and loading
 
@@ -123,12 +125,14 @@ With the BMAD methodology now integrated into the PIDICON development workflow, 
 
 - [ ] 3.1: Design status indicator visual (top 10 pixels)
 - [ ] 3.2: Implement status detection logic:
+
   ```
   - "In Progress" if any story has status="in-progress"
   - "Blocked" if blockers exist
   - "Completed" if all stories done
   - "Planning" if all stories in backlog
   ```
+
 - [ ] 3.3: Implement color-coded background or icon
 - [ ] 3.4: Add status text label (abbreviated if needed)
 

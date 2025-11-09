@@ -75,7 +75,7 @@ After enabling linting for `docs/bmad/`:
 - **Files checked:** 42 markdown files
 - **Issues found:** ~200 (mostly formatting, not critical)
 
-### Issue Breakdown:
+### Issue Breakdown
 
 1. **MD013 (line-length):** ~80 instances - Lines > 120 characters
 2. **MD026 (trailing-punctuation):** ~30 instances - Headings with `:` or `!`
@@ -93,7 +93,7 @@ After enabling linting for `docs/bmad/`:
 
 User asked: _"How do we provide a way to temporarily allow files that are Cursor ignored?"_
 
-### ✅ Recommended Approaches:
+### ✅ Recommended Approaches
 
 #### 1. **@Mention (Best Practice)**
 
@@ -213,12 +213,12 @@ pidicon/
 
 ## 📊 Token Optimization Impact
 
-### Before Cleanup:
+### Before Cleanup
 
 - Cursor indexed: `coverage/`, `test-results/`, `playwright-report/`, `other-code/`
 - Estimated waste: **~50,000+ tokens per index**
 
-### After Cleanup:
+### After Cleanup
 
 - All build artifacts and test results excluded
 - Token savings: **~50,000+ tokens per session**

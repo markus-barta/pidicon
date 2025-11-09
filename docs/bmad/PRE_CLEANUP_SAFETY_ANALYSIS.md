@@ -142,7 +142,7 @@ deploymentId: (versionData.deploymentId,
 
 **Conflict Analysis:**
 
-#### `pidicon.mdc` Rules:
+#### `pidicon.mdc` Rules
 
 1. ✅ Split tasks > 30 min
 2. ✅ JavaScript quality (no magic numbers, ≤50 LOC functions)

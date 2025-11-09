@@ -237,7 +237,7 @@ Ensure these are in `.gitignore`:
 - `test-dashboard-figma/` (if not used)
 - `tools/` (if empty)
 
-### Files to Keep: Everything else!
+### Files to Keep: Everything else
 
 **Overall:** 🎉 **Repository is in excellent shape!** Only 1-2 critical issues (broken directory, legacy file).
 

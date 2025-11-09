@@ -2,7 +2,7 @@
 
 **Date:** November 8, 2025  
 **Tester:** AI Assistant (Claude Sonnet 4.5)  
-**Test Environment:** Production (http://miniserver24:10829)  
+**Test Environment:** Production (<http://miniserver24:10829>)  
 **Browser:** Chrome (via Playwright Browser Extension)  
 **Sprint:** Sprint 0 - UI Preferences Persistence (UI-787)
 
@@ -289,17 +289,17 @@ Sprint 0 (UI-787 - UI Preferences Persistence) is **COMPLETE** and **PRODUCTION-
 
 ## Appendix A: Test Timeline
 
-| Time  | Action                                | Result                                |
-| ----- | ------------------------------------- | ------------------------------------- |
-| 00:00 | Navigate to http://miniserver24:10829 | Page loaded successfully              |
-| 00:10 | Check initial localStorage            | Default preferences found             |
-| 00:20 | Collapse device P01 (192.168.1.189)   | ✅ Collapsed, localStorage updated    |
-| 00:30 | Navigate to Settings                  | ✅ View changed, localStorage updated |
-| 00:40 | Switch to MQTT Connectivity tab       | ✅ Tab changed, localStorage updated  |
-| 01:00 | Reload page (F5)                      | ✅ Settings view restored             |
-| 01:10 | Navigate to Dashboard                 | ✅ Device collapse state restored     |
-| 01:20 | Verify localStorage final state       | ✅ All data persisted correctly       |
-| 01:30 | Take screenshot for documentation     | ✅ Evidence captured                  |
+| Time  | Action                                  | Result                                |
+| ----- | --------------------------------------- | ------------------------------------- |
+| 00:00 | Navigate to <http://miniserver24:10829> | Page loaded successfully              |
+| 00:10 | Check initial localStorage              | Default preferences found             |
+| 00:20 | Collapse device P01 (192.168.1.189)     | ✅ Collapsed, localStorage updated    |
+| 00:30 | Navigate to Settings                    | ✅ View changed, localStorage updated |
+| 00:40 | Switch to MQTT Connectivity tab         | ✅ Tab changed, localStorage updated  |
+| 01:00 | Reload page (F5)                        | ✅ Settings view restored             |
+| 01:10 | Navigate to Dashboard                   | ✅ Device collapse state restored     |
+| 01:20 | Verify localStorage final state         | ✅ All data persisted correctly       |
+| 01:30 | Take screenshot for documentation       | ✅ Evidence captured                  |
 
 ---
 

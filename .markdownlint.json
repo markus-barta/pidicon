@@ -1,27 +1,18 @@
 {
+  "$schema": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
   "default": true,
-  "MD013": {
-    "line_length": 120,
-    "code_blocks": false,
-    "tables": false
+  "MD013": false,
+  "MD024": {
+    "siblings_only": true
   },
-  "MD033": {
-    "allowed_elements": ["p", "br", "img"]
+  "MD029": false,
+  "MD033": false,
+  "MD036": false,
+  "MD040": false,
+  "MD041": false,
+  "MD026": {
+    "punctuation": ".,;:"
   },
   "MD051": false,
-  "MD041": false,
-  "MD024": false,
-  "MD029": {
-    "style": "ordered"
-  },
-  "MD007": {
-    "indent": 2
-  },
-  "MD012": false,
-  "MD026": {
-    "punctuation": ".,;:!"
-  },
-  "MD046": { "style": "fenced" },
-  "MD040": false,
-  "MD046-fenced-code-language": true
+  "MD056": false
 }
