@@ -780,17 +780,17 @@ const lastSeen = computed(() => {
     return 'N/A';
   }
   
-  // Use lastSeenTs which is set ONLY when real hardware responds
-  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  // Phase 4 (Epic 0): Use watchdog health data (single source of truth)
+  const lastSeenTs = props.device?.health?.lastSeenTs;
   if (!lastSeenTs) {
-    return 'Never'; // Real device but no ACK yet
+    return 'Never'; // Real device but watchdog hasn't seen it yet
   }
   
-  // Show relative time from last hardware ACK
+  // Show relative time from last watchdog health check
   const now = Date.now();
   const diff = now - lastSeenTs;
   if (diff < 5000) {
-    return 'Just now'; // Extended to 5s as requested
+    return 'Just now';
   } else if (diff < 60000) {
     const seconds = Math.floor(diff / 1000);
     return `${seconds}s ago`;
@@ -806,7 +806,8 @@ const lastSeen = computed(() => {
 });
 
 const lastSeenTooltip = computed(() => {
-  const lastSeenTs = props.device?.metrics?.lastSeenTs;
+  // Phase 4 (Epic 0): Use watchdog health data (single source of truth)
+  const lastSeenTs = props.device?.health?.lastSeenTs;
   if (!lastSeenTs) {
     return 'Device has not responded yet';
   }
