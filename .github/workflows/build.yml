@@ -21,7 +21,8 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: npm run lint --if-present
-      - run: npm test --if-present
+      - name: Run tests (native Node test runner)
+        run: npm run build:version && node --test test/**/*.test.js
 
   docker:
     needs: build-test
