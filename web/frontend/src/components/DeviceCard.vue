@@ -69,6 +69,22 @@
               </v-tooltip>
             </div>
 
+            <!-- Phase 3 (Epic 0): Watchdog Health Status -->
+            <div v-if="device.driver === 'real' && watchdogHealthStatus" class="header-info-item">
+              <v-tooltip location="bottom">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <span v-bind="tooltipProps" class="info-content">
+                    <span 
+                      class="device-health-dot"
+                      :style="{ backgroundColor: watchdogHealthColor }"
+                    ></span>
+                    <span>{{ watchdogHealthLabel }}</span>
+                  </span>
+                </template>
+                <span>Watchdog Status: {{ watchdogHealthStatus }} (single source of truth)</span>
+              </v-tooltip>
+            </div>
+
             <!-- IP -->
             <div class="header-info-item">
               <v-icon size="small" class="mr-1">mdi-ip-network</v-icon>
@@ -865,6 +881,43 @@ const deviceResponsiveLabel = computed(() => {
   }
   
   return 'Responsive';
+});
+
+// Phase 3 (Epic 0): Watchdog health status from new single-source-of-truth system
+const watchdogHealthStatus = computed(() => {
+  if (props.device.driver !== 'real') {
+    return null; // Mock devices don't have watchdog
+  }
+  
+  const health = props.device?.health;
+  if (!health || !health.status) {
+    return null; // Health data not available yet
+  }
+  
+  return health.status; // 'online', 'degraded', or 'offline'
+});
+
+const watchdogHealthColor = computed(() => {
+  const status = watchdogHealthStatus.value;
+  if (!status) return '#6b7280'; // gray - not available
+  
+  switch (status) {
+    case 'online':
+      return '#10b981'; // green
+    case 'degraded':
+      return '#f59e0b'; // amber/yellow
+    case 'offline':
+      return '#ef4444'; // red
+    default:
+      return '#6b7280'; // gray
+  }
+});
+
+const watchdogHealthLabel = computed(() => {
+  const status = watchdogHealthStatus.value;
+  if (!status) return 'Health: N/A';
+  
+  return `Health: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
 });
 
 // Battery indicator (Awtrix only)
@@ -2419,5 +2472,15 @@ onUnmounted(() => {
     transform: scale(1.1);
     box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 0 8px 2px rgba(16, 185, 129, 0.3);
   }
+}
+
+/* Phase 3 (Epic 0): Watchdog health indicator dot */
+.device-health-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  transition: all 0.3s ease;
 }
 </style>

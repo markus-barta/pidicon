@@ -57,14 +57,14 @@
 
 ## ✅ Stakeholder Feedback (Markus - Product Lead)
 
-### Direction Confirmed:
+### Direction Confirmed
 
 1. **Remove dual-path architecture** - One source of truth
 2. **Complete independence** - Health check separate from scene system
 3. **Clear separation:** Scene = performance metrics, Watchdog = liveness
 4. **Watchdog = SINGLE source of truth** for "last seen"
 
-### Key Quote:
+### Key Quote
 
 > "Scene rendering shall only provide metrics for frame counter and frames per second analysis chart and stuff. In the UI, the last seen shall come from the health check from the watchdog."
 
@@ -92,7 +92,7 @@
 
 ## 🎯 Proposed Solution
 
-### Target Architecture:
+### Target Architecture
 
 **Scene Rendering System (Performance Metrics Only):**
 

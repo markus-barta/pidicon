@@ -168,6 +168,7 @@ async function bootstrap() {
         stateStore,
         softReset,
         deviceConfigStore,
+        container, // Phase 3: Pass container for lazy watchdogService resolution
       })
   );
 

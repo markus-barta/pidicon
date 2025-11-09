@@ -314,7 +314,7 @@ Solution: Complete separation, single source of truth
 
 ## End of Day 2 Deliverables
 
-### Documents to Complete:
+### Documents to Complete
 
 1. ✅ `watchdog-architecture-design.md` - Complete design document
 2. ✅ State structure diagrams
@@ -324,7 +324,7 @@ Solution: Complete separation, single source of truth
 6. ✅ Testing approach document
 7. ✅ Migration strategy
 
-### Preparation for Thursday Review:
+### Preparation for Thursday Review
 
 - Clean, clear presentation of architecture
 - Diagrams ready to share
@@ -336,7 +336,7 @@ Solution: Complete separation, single source of truth
 
 ## Questions to Resolve
 
-### Open Questions:
+### Open Questions
 
 1. **DeviceHealthStore:** Deprecate or repurpose?
    - Current: Used by both scene and watchdog
@@ -358,7 +358,7 @@ Solution: Complete separation, single source of truth
    - Current: After timeout (60-120 min)
    - Should we use consecutive failures instead?
 
-### Decisions Needed from Thursday Review:
+### Decisions Needed from Thursday Review
 
 - Approve state structure
 - Approve API changes

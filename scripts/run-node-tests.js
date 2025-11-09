@@ -159,10 +159,6 @@ function runTestFile(testFile) {
     child.stdout.on('data', (data) => {
       const chunk = data.toString();
       tapOutput += chunk;
-      // DEBUG: Output raw TAP for watchdog tests
-      if (testFile.includes('watchdog-service.test.js')) {
-        process.stderr.write(chunk);
-      }
     });
 
     child.on('error', (error) => {

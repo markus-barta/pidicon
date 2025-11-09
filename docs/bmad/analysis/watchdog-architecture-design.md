@@ -426,6 +426,7 @@ Solution: Separate state, separate concerns, no conflicts
    ```
 
 5. **`lib/drivers/awtrix/awtrix-driver.js`** - Minor
+
    ```javascript
    async healthCheck() {
      const stats = await this._httpRequest('GET', '/stats');

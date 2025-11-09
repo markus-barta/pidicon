@@ -69,6 +69,7 @@ Initial code audit reveals **TWO INDEPENDENT PATHS** updating device `lastSeenTs
    ```
 
 3. `DeviceHealthEntry.updateFromPush()` (device-health.js line 64-81):
+
    ```javascript
    updateFromPush({ timestamp = Date.now(), frametime = null, driver = 'real' } = {}) {
      if (driver === 'real') {
@@ -122,6 +123,7 @@ Initial code audit reveals **TWO INDEPENDENT PATHS** updating device `lastSeenTs
    ```
 
 3. Then in `checkDevice()` (watchdog-service.js line 259-305):
+
    ```javascript
    async checkDevice(ip, timeoutMs) {
      // Perform active health check (updates lastSeenTs via health.updateLastSeen)
@@ -152,6 +154,7 @@ Initial code audit reveals **TWO INDEPENDENT PATHS** updating device `lastSeenTs
 
 1. Watchdog calls `deviceService.getMetrics(ip)`
 2. DeviceService calls `device.getMetrics()` (device-adapter.js line 425-453):
+
    ```javascript
    getMetrics() {
      // Merge proxy metrics with driver metrics
@@ -437,7 +440,7 @@ I have a strong hypothesis, validated by Product Lead:
 
 ## Initial Observations Summary
 
-### What We Know:
+### What We Know
 
 1. Watchdog service uses `setInterval()` timers (independent event loop) ✓
 2. Health checks update `device.health.lastSeenTs` ✓
@@ -445,13 +448,13 @@ I have a strong hypothesis, validated by Product Lead:
 4. Watchdog reads back lastSeenTs via `getMetrics()` ✓
 5. False positives occur (P00 case) ✓
 
-### What We Suspect:
+### What We Suspect
 
 1. Health check can fail while scene rendering succeeds ⚠️
 2. Watchdog trusts health check over scene rendering ⚠️
 3. Timing/race conditions possible ⚠️
 
-### What We Don't Know Yet:
+### What We Don't Know Yet
 
 1. Exact timing of P00 false positive ❓
 2. Why health check fails when scene rendering works ❓
