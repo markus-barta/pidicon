@@ -46,10 +46,10 @@ development_status:
 
   # Epic 2: Configuration & Observability (v3.3 - Next Sprint)
   epic-2-configuration-observability: backlog
-  2-1-config-hot-reload: backlog
-  2-2-live-log-viewer: backlog
-  2-3-watchdog-restart-cooldown-backoff: backlog
-  2-4-smart-release-checker-caching: backlog
+  2-1-config-hot-reload: drafted
+  2-2-live-log-viewer: drafted
+  2-3-watchdog-restart-cooldown-backoff: drafted
+  2-4-smart-release-checker-caching: drafted
   epic-2-retrospective: optional
 
   # Epic 3: Testing & Documentation (v3.3)

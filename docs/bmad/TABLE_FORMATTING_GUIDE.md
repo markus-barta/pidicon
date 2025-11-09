@@ -35,7 +35,7 @@ AI agents (like Claude) often create markdown tables that look good in preview b
 
 ## 📊 How It Works
 
-### Before (AI-generated or hand-written):
+### Before (AI-generated or hand-written)
 
 ```markdown
 | Name   | Status    | Description                |
@@ -44,7 +44,7 @@ AI agents (like Claude) often create markdown tables that look good in preview b
 | Epic 2 | 🚀 Active | Short                      |
 ```
 
-### After (auto-formatted by Prettier on save):
+### After (auto-formatted by Prettier on save)
 
 ```markdown
 | Name   | Status    | Description                |
@@ -104,7 +104,7 @@ AI agents (like Claude) often create markdown tables that look good in preview b
 
 ## 🎯 Workflow for AI-Generated Tables
 
-### When AI Creates a Table:
+### When AI Creates a Table
 
 1. **AI writes table** (possibly misaligned):
 
@@ -231,7 +231,7 @@ git commit -m "docs: add status table"
 
 ## ✅ Verification
 
-### Manual Test:
+### Manual Test
 
 1. Create a markdown file with a messy table:
 
@@ -260,7 +260,7 @@ cat /tmp/test-table.md
 | Item 2 | 🚀     | In progress |
 ```
 
-### Automated Test (Pre-commit):
+### Automated Test (Pre-commit)
 
 ```bash
 # Create a markdown file with messy table
@@ -280,14 +280,14 @@ git commit -m "test: table formatting"
 
 ## 📝 Best Practices for AI Agents
 
-### When Creating Tables:
+### When Creating Tables
 
 1. **Don't worry about alignment** - Prettier will fix it
 2. **Use simple pipe syntax** - `| A | B | C |`
 3. **Include header separator** - `|---|---|---|`
 4. **Let Prettier handle spacing** - It knows emoji widths
 
-### When Reviewing AI-Generated Tables:
+### When Reviewing AI-Generated Tables
 
 1. **Save the file** - Prettier auto-formats
 2. **Check the preview** - Should look perfect
