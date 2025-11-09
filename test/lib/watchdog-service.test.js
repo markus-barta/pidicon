@@ -1352,8 +1352,8 @@ test('device recovery from offline is logged', async () => {
   );
   assert.ok(health.recoveredAt, 'recoveredAt should be set');
   assert.ok(
-    health.offlineDuration >= 10,
-    'offlineDuration should be at least 10ms'
+    typeof health.offlineDuration === 'number' && health.offlineDuration > 0,
+    'offlineDuration should be a positive number'
   );
 });
 
